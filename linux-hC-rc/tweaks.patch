@@ -1,7 +1,7 @@
 From 5400955eb4ef05b8e6c39632c2b4b25e5bb7d6a9 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 16 Sep 2019 04:53:20 +0200
-Subject: [PATCH 01/27] ZEN: Add sysctl and CONFIG to disallow unprivileged
+Subject: [PATCH 01/29] ZEN: Add sysctl and CONFIG to disallow unprivileged
  CLONE_NEWUSER
 
 Our default behavior continues to match the vanilla kernel.
@@ -156,7 +156,7 @@ index aa0b2e47f2f2..d74d857b1696 100644
 From 87255071cdd4a59f1a2bea8046abbd4c64a48b74 Mon Sep 17 00:00:00 2001
 From: Javier Martinez Canillas <javierm@redhat.com>
 Date: Thu, 19 May 2022 14:40:07 +0200
-Subject: [PATCH 02/27] drivers/firmware: skip simpledrm if
+Subject: [PATCH 02/29] drivers/firmware: skip simpledrm if
  nvidia-drm.modeset=1 is set
 
 The Nvidia proprietary driver has some bugs that leads to issues if used
@@ -246,7 +246,7 @@ index 7c5c03f274b9..a60b0a4faf29 100644
 From ede3afefd791f886a5557aedb278335c6ad2b593 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
-Subject: [PATCH 03/27] ZEN: Initialize ata before graphics
+Subject: [PATCH 03/29] ZEN: Initialize ata before graphics
 
 ATA init is the long pole in the boot process, and its asynchronous.
 move the graphics init after it so that ata and graphics initialize
@@ -295,7 +295,7 @@ index 45d1c3e630f7..4f5ab2429a7f 100644
 From eba597ef1270f61f66e59ff4a465434936407762 Mon Sep 17 00:00:00 2001
 From: Kenny Levinsen <kl@kl.wtf>
 Date: Sun, 27 Dec 2020 14:43:13 +0000
-Subject: [PATCH 04/27] ZEN: Input: evdev - use call_rcu when detaching client
+Subject: [PATCH 04/29] ZEN: Input: evdev - use call_rcu when detaching client
 
 Significant time was spent on synchronize_rcu in evdev_detach_client
 when applications closed evdev devices. Switching VT away from a
@@ -406,7 +406,7 @@ index b5cbb57ee5f6..a0f7fa1518c6 100644
 From 30f5fab774945c83ef9bbce0c564d3b894d09266 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 13 Dec 2018 01:00:49 +0000
-Subject: [PATCH 05/27] sched/wait: Do accept() in LIFO order for cache
+Subject: [PATCH 05/29] sched/wait: Do accept() in LIFO order for cache
  efficiency
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -498,7 +498,7 @@ index e4decfb270fa..38bff2d8a740 100644
 From 88c271eed5be8e5c935c6edaf0c44de1acb0f578 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
-Subject: [PATCH 06/27] XANMOD: dcache: cache_pressure = 50 decreases the rate
+Subject: [PATCH 06/29] XANMOD: dcache: cache_pressure = 50 decreases the rate
  at which VFS caches are reclaimed
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -526,7 +526,7 @@ index 9cc0d47da321..be6c51189bc1 100644
 From c6de8bcb942bcb5c158982605fdd35f3ac42a934 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Sat, 21 May 2022 15:15:09 -0500
-Subject: [PATCH 07/27] ZEN: dm-crypt: Disable workqueues for crypto ops
+Subject: [PATCH 07/29] ZEN: dm-crypt: Disable workqueues for crypto ops
 
 Queueing in dm-crypt for crypto operations reduces performance on modern
 systems.  As discussed in an article from Cloudflare, they discovered
@@ -562,7 +562,7 @@ index 02a2919f4e5a..a6bdafcb4fbd 100644
 From a9725a412cdce0e11b7f84980871cf6aaf1c8c6b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 5 May 2024 10:49:42 +0200
-Subject: [PATCH 08/27] Cachy: intel-pstate: Implement "enable" parameter
+Subject: [PATCH 08/29] Cachy: intel-pstate: Implement "enable" parameter
 
 If intel-pstate is compiled into the kernel, it will preempt the loading
 of acpi-cpufreq so you can take advantage of hardware p-states without
@@ -625,7 +625,7 @@ index 9c4cc01fd51a..06a3c53e116e 100644
 From 92e0f1da73cc418196e7ce76f300a106840097aa Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:13:21 +0100
-Subject: [PATCH 09/27] Add hells option for a few tweaks
+Subject: [PATCH 09/29] Add hells option for a few tweaks
 
 ---
  init/Kconfig | 6 ++++++
@@ -655,7 +655,7 @@ index f851b6c83a93..cd3e9f447a6a 100644
 From 1b4f6ebc1dacc0eda4925a3cbbf07771dcc95364 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 27 Jan 2020 18:21:09 +0100
-Subject: [PATCH 10/27] hells: Enable background reclaim of hugepages
+Subject: [PATCH 10/29] hells: Enable background reclaim of hugepages
 
 Use [defer+madvise] as default khugepaged defrag strategy:
 
@@ -706,7 +706,7 @@ index 3d3ebdc002d5..e9a9d4605c44 100644
 From 5687caf49ebf118aac61008e888552a73f76d81a Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 28 Mar 2020 13:06:28 -0700
-Subject: [PATCH 11/27] hells: Disable watermark boosting by default
+Subject: [PATCH 11/29] hells: Disable watermark boosting by default
 
 What watermark boosting does is preemptively fire up kswapd to free
 memory when there hasn't been an allocation failure. It does this by
@@ -758,7 +758,7 @@ index 579789600a3c..85df6452f01e 100644
 From 945bbc40b098835984715214e58a65ccf5ec91f4 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 24 Oct 2020 22:17:49 -0700
-Subject: [PATCH 12/27] hells: Disable proactive compaction by default
+Subject: [PATCH 12/29] hells: Disable proactive compaction by default
 
 On-demand compaction works fine assuming that you don't have a need to
 spam the page allocator nonstop for large order page allocations.
@@ -791,7 +791,7 @@ index 12ed8425fa17..fdb0250f61ba 100644
 From a92da798f3e18796657c9bad29205265fd8453b2 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:21:54 +0100
-Subject: [PATCH 13/27] hells: VM_READAHEAD_PAGES 8M
+Subject: [PATCH 13/29] hells: VM_READAHEAD_PAGES 8M
 
 ---
  include/linux/pagemap.h | 2 +-
@@ -817,7 +817,7 @@ index 47bfc6b1b632..435901dbc742 100644
 From ae96d0ad7d6a7cedbe7ec3c6f1efc23bb2624a37 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Sun, 18 Feb 2018 23:35:41 +0000
-Subject: [PATCH 14/27] locking: rwsem: spin faster
+Subject: [PATCH 14/29] locking: rwsem: spin faster
 
 tweak rwsem owner spinning a bit
 
@@ -855,7 +855,7 @@ index 2ddb827e3bea..464049c4af3f 100644
 From e9676e85ee78d07d75c18e617a65b58eaedbb874 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sun, 19 Apr 2020 19:59:18 -0700
-Subject: [PATCH 15/27] ZEN: mm: Stop kswapd early when nothing's waiting for
+Subject: [PATCH 15/29] ZEN: mm: Stop kswapd early when nothing's waiting for
  it to free pages
 
 Contains:
@@ -1032,7 +1032,7 @@ index c767d71c43d7..d481288280f9 100644
 From ece9ac4c62c8a210aefece6e406a77b2ce9d3194 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Fri, 20 Jan 2023 11:16:42 +0000
-Subject: [PATCH 16/27] initcall: only print non-zero initcall debug to speed
+Subject: [PATCH 16/29] initcall: only print non-zero initcall debug to speed
  up boot
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1078,7 +1078,7 @@ index 2a1757826397..334146c65fc7 100644
 From 2607d22d3e1bd3e9beadc75f6b6acdb35c00547e Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Wed, 11 Feb 2015 17:28:14 -0600
-Subject: [PATCH 17/27] smpboot: reuse timer calibration
+Subject: [PATCH 17/29] smpboot: reuse timer calibration
 
 NO point recalibrating for known-constant tsc ...
 saves 200ms+ of boot time.
@@ -1107,7 +1107,7 @@ index 34dec0b72ea8..76a0d1c8e25f 100644
 From 6f68ee059ba2eeaea12d34158a9624a506d1ff6e Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 16 Nov 2021 17:39:25 +0000
-Subject: [PATCH 18/27] itmt_epb: use epb to scale itmt
+Subject: [PATCH 18/29] itmt_epb: use epb to scale itmt
 
 ---
  arch/x86/include/asm/topology.h |  1 +
@@ -1200,7 +1200,7 @@ index 9cea1fc36c18..81932842e1d2 100644
 From a1db0b3d52dfc4ec2df081b17d8e4c9c5918d26e Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Thu, 18 Nov 2021 16:09:47 +0000
-Subject: [PATCH 19/27] itmt2 ADL fixes
+Subject: [PATCH 19/29] itmt2 ADL fixes
 
 On systems with overclocking enabled, CPPC Highest Performance can be
 hard coded to 0xff. In this case even if we have cores with different
@@ -1244,7 +1244,7 @@ index 06a3c53e116e..d015342e97b1 100644
 From 599f30309ff9a153248a3ce33115507741dec34e Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 23 Nov 2021 17:38:50 +0000
-Subject: [PATCH 20/27] add a per cpu minimum high watermark an tune batch size
+Subject: [PATCH 20/29] add a per cpu minimum high watermark an tune batch size
 
 make sure there's at least 1024 per cpu pages... a reasonably small
 amount for todays system
@@ -1277,7 +1277,7 @@ index 023130466736..b33238cd5638 100644
 From 39b0123330977fb8de9d911c3d87a3b196a3a8f4 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Wed, 3 May 2023 17:31:05 +0100
-Subject: [PATCH 21/27] clocksource: only perform extended clocksource checks
+Subject: [PATCH 21/29] clocksource: only perform extended clocksource checks
  for AMD systems
 
 Signed-off-by: Colin Ian King <colin.king@intel.com>
@@ -1315,7 +1315,7 @@ index b4330a01a566..e41cd5c68855 100644
 From 019980acf6883088b1917def24118b159aa7b765 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Tue, 27 Jun 2023 14:12:27 +0100
-Subject: [PATCH 22/27] ACPI: align slab for improved memory performance
+Subject: [PATCH 22/29] ACPI: align slab for improved memory performance
 
 Enabling SLAB_HWCACHE_ALIGN for the ACPI object caches improves
 boot speed in the ACPICA core for object allocation and free'ing
@@ -1351,7 +1351,7 @@ index 5ff343096ece..229c2c6e51ab 100644
 From fa73077430387382e4e08298184eb34d83eefc03 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:11:19 +0800
-Subject: [PATCH 23/27] clear: sched/fair: Tweak idle balance calculation
+Subject: [PATCH 23/29] clear: sched/fair: Tweak idle balance calculation
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1378,7 +1378,7 @@ index ce2e94ccad0c..2f9846151477 100644
 From 58b59ab87ef15934ba270f131c44facfd87a850c Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:15:25 +0800
-Subject: [PATCH 24/27] clear: fs/binfmt_elf: Properly handle memory mapping
+Subject: [PATCH 24/29] clear: fs/binfmt_elf: Properly handle memory mapping
  for PIE binaries
 
 Place libraries right below the binary for PIE binaries, this helps code locality
@@ -1409,7 +1409,7 @@ index 8054f44d39cf..f7016bfb3e27 100644
 From 79a6a8fa48c8eb7b7908b1f8a4055ab7eb8f398f Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@intel.com>
 Date: Wed, 24 Apr 2024 16:45:47 +0100
-Subject: [PATCH 25/27] net: sock: increase default number of _SK_MEM_PACKETS
+Subject: [PATCH 25/29] net: sock: increase default number of _SK_MEM_PACKETS
  to 1024
 
 scale these by a factor of 4 to improve socket performance
@@ -1439,7 +1439,7 @@ index 8036b3b79cd8..81bc795c5eed 100644
 From 18ae8e02269c2a2d65f760200de0b11b08f44012 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:21:24 +0800
-Subject: [PATCH 26/27] clear: net/sock: Introduce 64KB reclaim threshold
+Subject: [PATCH 26/29] clear: net/sock: Introduce 64KB reclaim threshold
 
 Allows more efficient memory management by reclaiming only surplus memory beyond the threshold instead of
 always calling `sk_mem_reclaim`.
@@ -1479,7 +1479,7 @@ index 81bc795c5eed..009f341291d1 100644
 From cf6b894d0aff88b7f246ecec17bfff895ae0a5e8 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:25:10 +0800
-Subject: [PATCH 27/27] clear: init/init_task: Tweak timer_slack value
+Subject: [PATCH 27/29] clear: init/init_task: Tweak timer_slack value
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1502,3 +1502,227 @@ index e557f622bd90..ca1ef66774b3 100644
 -- 
 2.48.1
 
+
+From 237a9c10ce5e03161997ac3a761435e20f7041a9 Mon Sep 17 00:00:00 2001
+From: Peter Jung <admin@ptr1337.dev>
+Date: Sun, 28 Jul 2024 18:55:38 +0200
+Subject: [PATCH 28/29] cachy: move AMD_PRIVATE_COLOR to Kconfig
+
+Co-authored-by: PedroHLC <root@pedrohlc.com>
+Signed-off-by: Peter Jung <admin@ptr1337.dev>
+---
+ drivers/gpu/drm/amd/display/Kconfig                     | 6 ++++++
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c       | 2 +-
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c | 2 +-
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c  | 6 +++---
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c | 6 +++---
+ 5 files changed, 14 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/gpu/drm/amd/display/Kconfig b/drivers/gpu/drm/amd/display/Kconfig
+index abd3b6564373..46937e6fa78d 100644
+--- a/drivers/gpu/drm/amd/display/Kconfig
++++ b/drivers/gpu/drm/amd/display/Kconfig
+@@ -56,4 +56,10 @@ config DRM_AMD_SECURE_DISPLAY
+ 	  This option enables the calculation of crc of specific region via
+ 	  debugfs. Cooperate with specific DMCU FW.
+ 
++config AMD_PRIVATE_COLOR
++	bool "Enable KMS color management by AMD for AMD"
++	default n
++	help
++	  This option extends the KMS color management API with AMD driver-specific properties to enhance the color management support on AMD Steam Deck.
++
+ endmenu
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+index ac3fd81fecef..f0aa1640d72e 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+@@ -4582,7 +4582,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
+ 		return r;
+ 	}
+ 
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ 	if (amdgpu_dm_create_color_properties(adev)) {
+ 		dc_state_release(state->context);
+ 		kfree(state);
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
+index ebabfe3a512f..4d3ebcaacca1 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
+@@ -97,7 +97,7 @@ static inline struct fixed31_32 amdgpu_dm_fixpt_from_s3132(__u64 x)
+ 	return val;
+ }
+ 
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ /* Pre-defined Transfer Functions (TF)
+  *
+  * AMD driver supports pre-defined mathematical functions for transferring
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
+index 36a830a7440f..a8fc8bd52d51 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
+@@ -470,7 +470,7 @@ static int amdgpu_dm_crtc_late_register(struct drm_crtc *crtc)
+ }
+ #endif
+ 
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ /**
+  * dm_crtc_additional_color_mgmt - enable additional color properties
+  * @crtc: DRM CRTC
+@@ -552,7 +552,7 @@ static const struct drm_crtc_funcs amdgpu_dm_crtc_funcs = {
+ #if defined(CONFIG_DEBUG_FS)
+ 	.late_register = amdgpu_dm_crtc_late_register,
+ #endif
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ 	.atomic_set_property = amdgpu_dm_atomic_crtc_set_property,
+ 	.atomic_get_property = amdgpu_dm_atomic_crtc_get_property,
+ #endif
+@@ -731,7 +731,7 @@ int amdgpu_dm_crtc_init(struct amdgpu_display_manager *dm,
+ 
+ 	drm_mode_crtc_set_gamma_size(&acrtc->base, MAX_COLOR_LEGACY_LUT_ENTRIES);
+ 
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ 	dm_crtc_additional_color_mgmt(&acrtc->base);
+ #endif
+ 	return 0;
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
+index 774cc3f4f3fd..d5066e407ad5 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
+@@ -1595,7 +1595,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
+ 	drm_atomic_helper_plane_destroy_state(plane, state);
+ }
+ 
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ static void
+ dm_atomic_plane_attach_color_mgmt_properties(struct amdgpu_display_manager *dm,
+ 					     struct drm_plane *plane)
+@@ -1786,7 +1786,7 @@ static const struct drm_plane_funcs dm_plane_funcs = {
+ 	.atomic_duplicate_state = amdgpu_dm_plane_drm_plane_duplicate_state,
+ 	.atomic_destroy_state = amdgpu_dm_plane_drm_plane_destroy_state,
+ 	.format_mod_supported = amdgpu_dm_plane_format_mod_supported,
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ 	.atomic_set_property = dm_atomic_plane_set_property,
+ 	.atomic_get_property = dm_atomic_plane_get_property,
+ #endif
+@@ -1882,7 +1882,7 @@ int amdgpu_dm_plane_init(struct amdgpu_display_manager *dm,
+ 	else
+ 		drm_plane_helper_add(plane, &dm_plane_helper_funcs);
+ 
+-#ifdef AMD_PRIVATE_COLOR
++#ifdef CONFIG_AMD_PRIVATE_COLOR
+ 	dm_atomic_plane_attach_color_mgmt_properties(dm, plane);
+ #endif
+ 	/* Create (reset) the plane state */
+-- 
+2.48.1
+
+
+From 58e27a2d653099406ce2f1f6c3193aeededd7d96 Mon Sep 17 00:00:00 2001
+From: Steven Barrett <steven@liquorix.net>
+Date: Fri, 15 Mar 2024 12:36:51 -0500
+Subject: [PATCH 29/29] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
+ with ignore_min_pcap
+
+---
+ drivers/gpu/drm/amd/amdgpu/amdgpu.h       |  1 +
+ drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c   | 10 ++++++++++
+ drivers/gpu/drm/amd/pm/amdgpu_pm.c        |  3 +++
+ drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c | 14 ++++++++++++--
+ 4 files changed, 26 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu.h b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
+index 69895fccb474..5884de0f23bb 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu.h
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
+@@ -160,6 +160,7 @@ struct amdgpu_watchdog_timer {
+  */
+ extern int amdgpu_modeset;
+ extern unsigned int amdgpu_vram_limit;
++extern int amdgpu_ignore_min_pcap;
+ extern int amdgpu_vis_vram_limit;
+ extern int amdgpu_gart_size;
+ extern int amdgpu_gtt_size;
+diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
+index 817116e53d44..2b4a4eed2ae4 100644
+--- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
++++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
+@@ -137,6 +137,7 @@ enum AMDGPU_DEBUG_MASK {
+ };
+ 
+ unsigned int amdgpu_vram_limit = UINT_MAX;
++int amdgpu_ignore_min_pcap = 0; /* do not ignore by default */
+ int amdgpu_vis_vram_limit;
+ int amdgpu_gart_size = -1; /* auto */
+ int amdgpu_gtt_size = -1; /* auto */
+@@ -255,6 +256,15 @@ struct amdgpu_watchdog_timer amdgpu_watchdog_timer = {
+ 	.period = 0x0, /* default to 0x0 (timeout disable) */
+ };
+ 
++/**
++ * DOC: ignore_min_pcap (int)
++ * Ignore the minimum power cap.
++ * Useful on graphics cards where the minimum power cap is very high.
++ * The default is 0 (Do not ignore).
++ */
++MODULE_PARM_DESC(ignore_min_pcap, "Ignore the minimum power cap");
++module_param_named(ignore_min_pcap, amdgpu_ignore_min_pcap, int, 0600);
++
+ /**
+  * DOC: vramlimit (int)
+  * Restrict the total amount of VRAM in MiB for testing.  The default is 0 (Use full VRAM).
+diff --git a/drivers/gpu/drm/amd/pm/amdgpu_pm.c b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
+index e8ae7681bf0a..8a0d873983f3 100644
+--- a/drivers/gpu/drm/amd/pm/amdgpu_pm.c
++++ b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
+@@ -3178,6 +3178,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
+ 					 struct device_attribute *attr,
+ 					 char *buf)
+ {
++	if (amdgpu_ignore_min_pcap)
++		return sysfs_emit(buf, "%i\n", 0);
++
+ 	return amdgpu_hwmon_show_power_cap_generic(dev, attr, buf, PP_PWR_LIMIT_MIN);
+ }
+ 
+diff --git a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
+index 8ca793c222ff..8a06a6c35a4b 100644
+--- a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
++++ b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
+@@ -2822,7 +2822,10 @@ int smu_get_power_limit(void *handle,
+ 			*limit = smu->max_power_limit;
+ 			break;
+ 		case SMU_PPT_LIMIT_MIN:
+-			*limit = smu->min_power_limit;
++			if (amdgpu_ignore_min_pcap)
++				*limit = 0;
++			else
++				*limit = smu->min_power_limit;
+ 			break;
+ 		default:
+ 			return -EINVAL;
+@@ -2846,7 +2849,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
+ 		if (smu->ppt_funcs->set_power_limit)
+ 			return smu->ppt_funcs->set_power_limit(smu, limit_type, limit);
+ 
+-	if ((limit > smu->max_power_limit) || (limit < smu->min_power_limit)) {
++	if (amdgpu_ignore_min_pcap) {
++		if ((limit > smu->max_power_limit)) {
++			dev_err(smu->adev->dev,
++				"New power limit (%d) is over the max allowed %d\n",
++				limit, smu->max_power_limit);
++			return -EINVAL;
++		}
++	} else if ((limit > smu->max_power_limit) || (limit < smu->min_power_limit)) {
+ 		dev_err(smu->adev->dev,
+ 			"New power limit (%d) is out of range [%d,%d]\n",
+ 			limit, smu->min_power_limit, smu->max_power_limit);
+-- 
+2.48.1
