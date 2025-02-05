@@ -27,6 +27,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.14/misc/dkms-clang.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.14/sched/0001-bore.patch
 	source = https://raw.githubusercontent.com/graysky2/kernel_compiler_patch/refs/heads/master/more-ISA-levels-and-uarches-for-kernel-6.1.79%2B.patch
+	source = 0001-linux6.14.y-le9uo-1.10.patch
 	source = amd-pstate.patch
 	source = amd-tlb-broadcast.patch
 	source = block.patch
