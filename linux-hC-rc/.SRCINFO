@@ -37,6 +37,7 @@ pkgbase = linux-hC-rc
 	source = crypto.patch
 	source = fixes.patch
 	source = rcu-Change-sched_setscheduler_nocheck-calls-t.patch
+	source = reduce-tasklist-lock.patch
 	source = tweaks.patch
 	source = zstd.patch
 	b2sums=('SKIP')
