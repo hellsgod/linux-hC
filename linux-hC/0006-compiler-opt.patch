@@ -1,21 +1,29 @@
-From 4650bd063772278e9835462b6ab2564896b9f46f Mon Sep 17 00:00:00 2001
+From f76a05115036de593b0476468033bad55e1bb295 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Mon, 3 Feb 2025 13:40:45 +0100
-Subject: [PATCH] Makefile: compiler-opt V2
+Date: Mon, 3 Feb 2025 19:40:31 +0100
+Subject: [PATCH] Makefile: Compiler-opt V2
+
+---
+ Makefile     | 14 +++++++-------
+ init/Kconfig |  4 ++--
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 7904d5d88088..cbdc55659e19 100644
+index b9464c88ac72..6c3f1f0e78d9 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,7 +462,7 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,9 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
 -			 -O2 -fomit-frame-pointer -std=gnu11
 +			 -O3 -fomit-frame-pointer -std=gnu11
  KBUILD_USERCFLAGS  := $(KBUILD_USERHOSTCFLAGS) $(USERCFLAGS)
- KBUILD_USERLDFLAGS := $(USERLDFLAGS)
+-KBUILD_USERLDFLAGS := $(USERLDFLAGS)
++KBUILD_USERLDFLAGS := -lto-CGO3 -lto-O3 -Wl,-O3 -Wl,--gc-sections -Wl,--no-undefined -Wl,--as-needed -Wl,-z,common -Wl,--icf=safe -Wl,-z,now -Wl,--relax -Wl,--relro -Wl,--emit-relocs -Wl,--compress-debug-sections=zstd -Wl,--exclude-libs,ALL -Wl,--strip-debug $(USERLDFLAGS)
  
+ # These flags apply to all Rust code in the tree, including the kernel and
+ # host programs.
 @@ -491,7 +491,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
@@ -25,44 +33,6 @@ index 7904d5d88088..cbdc55659e19 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -858,7 +858,7 @@ endif # need-config
- KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
- 
- ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
--KBUILD_CFLAGS += -O2
-+KBUILD_CFLAGS += -O3
- KBUILD_RUSTFLAGS += -Copt-level=2
- else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
- KBUILD_CFLAGS += -Os
-diff --git a/init/Kconfig b/init/Kconfig
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -1401,10 +1401,10 @@ choice
- 	default CC_OPTIMIZE_FOR_PERFORMANCE
-
- config CC_OPTIMIZE_FOR_PERFORMANCE
--	bool "Optimize for performance (-O2)"
-+	bool "Optimize for performance (-O3)"
- 	help
- 	  This is the default optimization level for the kernel, building
--	  with the "-O2" compiler flag for best performance and most
-+	  with the "-O3" compiler flag for best performance and most
- 	  helpful compile-time warnings.
-
- config CC_OPTIMIZE_FOR_SIZE
-diff --git a/Makefile b/Makefile
-index a871b6036aec..45d8524e0984 100644
---- a/Makefile
-+++ b/Makefile
-@@ -464,7 +464,7 @@ HOSTPKG_CONFIG	= pkg-config
- KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
- 			 -O3 -fomit-frame-pointer -std=gnu11
- KBUILD_USERCFLAGS  := $(KBUILD_USERHOSTCFLAGS) $(USERCFLAGS)
--KBUILD_USERLDFLAGS := $(USERLDFLAGS)
-+KBUILD_USERLDFLAGS := -lto-CGO3 -lto-O3 -Wl,-O3 -Wl,--gc-sections -Wl,--no-undefined -Wl,--as-needed -Wl,-z,common -Wl,--icf=safe -Wl,-z,now -Wl,--relax -Wl,--relro -Wl,--emit-relocs -Wl,--compress-debug-sections=zstd -Wl,--exclude-libs,ALL -Wl,--strip-debug $(USERLDFLAGS)
- 
- # These flags apply to all Rust code in the tree, including the kernel and
- # host programs.
 @@ -552,7 +552,7 @@ LDFLAGS_MODULE  =
  CFLAGS_KERNEL	=
  RUSTFLAGS_KERNEL =
@@ -81,5 +51,33 @@ index a871b6036aec..45d8524e0984 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
+@@ -858,8 +858,8 @@ endif # need-config
+ KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
+ 
+ ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
+-KBUILD_CFLAGS += -O2
+-KBUILD_RUSTFLAGS += -Copt-level=2
++KBUILD_CFLAGS += -O3
++KBUILD_RUSTFLAGS += -Copt-level=3
+ else ifdef CONFIG_CC_OPTIMIZE_FOR_SIZE
+ KBUILD_CFLAGS += -Os
+ KBUILD_RUSTFLAGS += -Copt-level=s
+diff --git a/init/Kconfig b/init/Kconfig
+index a20e6efd3f0f..a3c3450b18f6 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -1446,10 +1446,10 @@ choice
+ 	default CC_OPTIMIZE_FOR_PERFORMANCE
+ 
+ config CC_OPTIMIZE_FOR_PERFORMANCE
+-	bool "Optimize for performance (-O2)"
++	bool "Optimize for performance (-O3)"
+ 	help
+ 	  This is the default optimization level for the kernel, building
+-	  with the "-O2" compiler flag for best performance and most
++	  with the "-O3" compiler flag for best performance and most
+ 	  helpful compile-time warnings.
+ 
+ config CC_OPTIMIZE_FOR_SIZE
 -- 
 2.48.1
