@@ -1,7 +1,7 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 20 improved hC kernel - Release Candidate
 	pkgver = 6.14.rc1
-	pkgrel = 3
+	pkgrel = 4
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
 	license = GPL-2.0-only

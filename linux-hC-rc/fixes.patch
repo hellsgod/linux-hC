@@ -1,7 +1,7 @@
 From 7cf6b417caac394f37a53f514ff238af89072ac5 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/3] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/4] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index b8a4ff365582..9b087f9bb413 100644
 From 009dabe606f3ab5198f194d9cc9b21af886aceaf Mon Sep 17 00:00:00 2001
 From: Hamza Mahfooz <hamza.mahfooz@amd.com>
 Date: Wed, 1 Nov 2023 17:00:36 -0400
-Subject: [PATCH 2/3] drm/edid: add a quirk for two 240Hz Samsung monitors
+Subject: [PATCH 2/4] drm/edid: add a quirk for two 240Hz Samsung monitors
 
 Without this fix the 5120x1440@240 timing of these monitors
 leads to screen flickering.
@@ -154,7 +154,7 @@ index 13bc4c290b17..9b741e6262bc 100644
 From 2b503e6fc25c3e13477223066e3ce9d85a66fac3 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 3/3] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 3/4] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -185,3 +185,42 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 -- 
 2.48.1
 
+
+From cf15d102af544a32550ce383875250dccc04fcf0 Mon Sep 17 00:00:00 2001
+From: Vlastimil Babka <vbabka@suse.cz>
+Date: Fri, 7 Feb 2025 19:35:25 +0100
+Subject: [PATCH 4/4] fuse: prevent folio use-after-free in readahead
+
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/110
+---
+ fs/fuse/file.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+index 7d92a5479998..a40d65ffb94d 100644
+--- a/fs/fuse/file.c
++++ b/fs/fuse/file.c
+@@ -955,8 +955,10 @@ static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
+ 		fuse_invalidate_atime(inode);
+ 	}
+ 
+-	for (i = 0; i < ap->num_folios; i++)
++	for (i = 0; i < ap->num_folios; i++) {
+ 		folio_end_read(ap->folios[i], !err);
++		folio_put(ap->folios[i]);
++	}
+ 	if (ia->ff)
+ 		fuse_file_put(ia->ff, false);
+ 
+@@ -1048,7 +1050,7 @@ static void fuse_readahead(struct readahead_control *rac)
+ 		ap = &ia->ap;
+ 
+ 		while (ap->num_folios < cur_pages) {
+-			folio = readahead_folio(rac);
++			folio = __readahead_folio(rac);
+ 			ap->folios[ap->num_folios] = folio;
+ 			ap->descs[ap->num_folios].length = folio_size(folio);
+ 			ap->num_folios++;
+-- 
+2.48.1

@@ -1,7 +1,7 @@
 From ac0eea0c90b575ebc0cbe7367a50c710bf826716 Mon Sep 17 00:00:00 2001
 From: Hamza Mahfooz <hamza.mahfooz@amd.com>
 Date: Wed, 1 Nov 2023 17:00:36 -0400
-Subject: [PATCH 1/4] drm/edid: add a quirk for two 240Hz Samsung monitors
+Subject: [PATCH 1/6] drm/edid: add a quirk for two 240Hz Samsung monitors
 
 Without this fix the 5120x1440@240 timing of these monitors
 leads to screen flickering.
@@ -115,7 +115,7 @@ index 855beafb76ff..ad78059ee954 100644
 From d34ba7b3662e202c6b10d337aac580b07d1313e4 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/4] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/6] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -150,7 +150,7 @@ index dca706617adc..89d3aef160b7 100644
 From b29609581b1998e5a32168b852b9262bfb38e005 Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Tue, 19 Nov 2024 15:35:26 +0100
-Subject: [PATCH 3/4] get_task_exe_file: check PF_KTHREAD locklessly
+Subject: [PATCH 3/6] get_task_exe_file: check PF_KTHREAD locklessly
 
 Same thing as 8ac5dc66599c ("get_task_mm: check PF_KTHREAD lockless")
 
@@ -195,7 +195,7 @@ index 9b301180fd41..19d7fe31869b 100644
 From b496810c92420d5d5d50a12793e9d35d1a989272 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
 Date: Thu, 21 Nov 2024 08:38:08 +0100
-Subject: [PATCH 4/4] kprobes: Reduce preempt disable scope in
+Subject: [PATCH 4/6] kprobes: Reduce preempt disable scope in
  check_kprobe_access_safe()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -302,5 +302,84 @@ index b027a4030976..5cc750200f19 100644
  	jump_label_unlock();
  
  	return ret;
+-- 
+2.48.1
+
+
+From a0d0e31dc4fa13f391267239899acde50813b1d3 Mon Sep 17 00:00:00 2001
+From: Vlastimil Babka <vbabka@suse.cz>
+Date: Fri, 7 Feb 2025 19:35:25 +0100
+Subject: [PATCH 5/6] fuse: prevent folio use-after-free in readahead
+
+Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
+Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/110
+---
+ fs/fuse/file.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+index 7d92a5479998..a40d65ffb94d 100644
+--- a/fs/fuse/file.c
++++ b/fs/fuse/file.c
+@@ -955,8 +955,10 @@ static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
+ 		fuse_invalidate_atime(inode);
+ 	}
+ 
+-	for (i = 0; i < ap->num_folios; i++)
++	for (i = 0; i < ap->num_folios; i++) {
+ 		folio_end_read(ap->folios[i], !err);
++		folio_put(ap->folios[i]);
++	}
+ 	if (ia->ff)
+ 		fuse_file_put(ia->ff, false);
+ 
+@@ -1048,7 +1050,7 @@ static void fuse_readahead(struct readahead_control *rac)
+ 		ap = &ia->ap;
+ 
+ 		while (ap->num_folios < cur_pages) {
+-			folio = readahead_folio(rac);
++			folio = __readahead_folio(rac);
+ 			ap->folios[ap->num_folios] = folio;
+ 			ap->descs[ap->num_folios].length = folio_size(folio);
+ 			ap->num_folios++;
+-- 
+2.48.1
+
+
+From dc2ffcfdd00422315845c5f0a558a3826dc09dfe Mon Sep 17 00:00:00 2001
+From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
+Date: Sat, 13 Jan 2024 15:29:25 +0100
+Subject: [PATCH 6/6] arch/Kconfig: Default to maximum amount of ASLR bits
+
+To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
+avoid having to enable `CONFIG_EXPERT`.
+
+Signed-off-by: Eric Naim <dnaim@cachyos.org>
+---
+ arch/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/Kconfig b/arch/Kconfig
+index 6682b2a53e34..fe54298ae05c 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
+ 	int "Number of bits to use for ASLR of mmap base address" if EXPERT
+ 	range ARCH_MMAP_RND_BITS_MIN ARCH_MMAP_RND_BITS_MAX
+ 	default ARCH_MMAP_RND_BITS_DEFAULT if ARCH_MMAP_RND_BITS_DEFAULT
+-	default ARCH_MMAP_RND_BITS_MIN
++	default ARCH_MMAP_RND_BITS_MAX
+ 	depends on HAVE_ARCH_MMAP_RND_BITS
+ 	help
+ 	  This value can be used to select the number of bits to use to
+@@ -1171,7 +1171,7 @@ config ARCH_MMAP_RND_COMPAT_BITS
+ 	int "Number of bits to use for ASLR of mmap base address for compatible applications" if EXPERT
+ 	range ARCH_MMAP_RND_COMPAT_BITS_MIN ARCH_MMAP_RND_COMPAT_BITS_MAX
+ 	default ARCH_MMAP_RND_COMPAT_BITS_DEFAULT if ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
+-	default ARCH_MMAP_RND_COMPAT_BITS_MIN
++	default ARCH_MMAP_RND_COMPAT_BITS_MAX
+ 	depends on HAVE_ARCH_MMAP_RND_COMPAT_BITS
+ 	help
+ 	  This value can be used to select the number of bits to use to
 -- 
 2.48.1
