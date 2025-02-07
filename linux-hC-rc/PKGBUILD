@@ -60,14 +60,8 @@
 # a new kernel is released, but again, convenient for package bumps.
 : "${_use_current:=no}"
 
-### Enable KBUILD_CFLAGS -O3
-: "${_cc_harder:=yes}"
-
 ### Set performance governor as default
 : "${_per_gov:=no}"
-
-### Enable TCP_CONG_BBR3
-: "${_tcp_bbr3:=no}"
 
 ### Running with a 1000HZ, 750Hz, 600 Hz, 500Hz, 300Hz, 250Hz and 100Hz tick rate
 : "${_HZ_ticks:=1000}"
@@ -452,13 +446,6 @@ prepare() {
         echo "Selecting '$_preempt' preempt type..."
     fi
 
-    ### Enable O3
-    if [ "$_cc_harder" = "yes" ]; then
-        echo "Enabling KBUILD_CFLAGS -O3..."
-        scripts/config -d CC_OPTIMIZE_FOR_PERFORMANCE \
-            -e CC_OPTIMIZE_FOR_PERFORMANCE_O3
-    fi
-
     ### CI-only stuff
     if [[ -n "$CI" || -n "$GITHUB_RUN_ID" ]]; then
         echo "Detected build inside CI"
@@ -473,20 +460,6 @@ prepare() {
             -d LATENCYTOP \
             -d SCHED_DEBUG \
             -d DEBUG_PREEMPT
-    fi
-
-    ### Enable bbr3
-    if [ "$_tcp_bbr3" = "yes" ]; then
-        echo "Disabling TCP_CONG_CUBIC..."
-        scripts/config -m TCP_CONG_CUBIC \
-            -d DEFAULT_CUBIC \
-            -e TCP_CONG_BBR \
-            -e DEFAULT_BBR \
-            --set-str DEFAULT_TCP_CONG bbr \
-            -m NET_SCH_FQ_CODEL \
-            -e NET_SCH_FQ \
-            -d CONFIG_DEFAULT_FQ_CODEL \
-            -e CONFIG_DEFAULT_FQ
     fi
 
     ### Select THP
