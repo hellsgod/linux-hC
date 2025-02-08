@@ -54,7 +54,6 @@ pkgname = linux-hC-rc
 	provides = VIRTUALBOX-GUEST-MODULES
 	provides = WIREGUARD-MODULE
 	provides = KSMBD-MODULE
-	provides = UKSMD-BUILTIN
 	provides = NTSYNC-MODULE
 
 pkgname = linux-hC-rc-headers
