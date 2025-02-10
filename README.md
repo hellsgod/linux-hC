@@ -16,7 +16,7 @@ I modified it slightly for my personal use and I use patches from ZEN/Cachy/Clea
 
 ### Features:
 - Default built with BORE (Burst-Oriented Response Enhancer) by Masahito Suzuki: [Repository](https://github.com/firelzrd/bore-scheduler)
-- Default built with Clang 20 and thinLTO
+- Default built with Clang 21 and thinLTO
 - Default built with a custom set of Compiler Optimization Flags
 - AMD P-State Preferred Core / amd-pstate Enhancements and Fixes
 - Patches to improve performance of CRC32 and AES128 crypto
@@ -35,19 +35,19 @@ Set your cpu optimization in the PKGBUILD `${_processor_opt:=}` - I have set it 
 #### Step 2:
 Remove my custom compiler path under `BUILD_FLAGS:`
 ```
-CC=/home/hellsgod/clang20/bin/clang
-LD=/home/hellsgod/clang20/bin/ld.lld
-AR=/home/hellsgod/clang20/bin/llvm-ar
-NM=/home/hellsgod/clang20/bin/llvm-nm
-STRIP=/home/hellsgod/clang20/bin/llvm-strip
-OBJCOPY=/home/hellsgod/clang20/bin/llvm-objcopy
-OBJDUMP=/home/hellsgod/clang20/bin/llvm-objdump
-RANLIB=/home/hellsgod/clang20/bin/llvm-ranlib
-READELF=/home/hellsgod/clang20/bin/llvm-readelf
-AS=/home/hellsgod/clang20/bin/llvm-as
+CC=/home/hellsgod/clang21/bin/clang
+LD=/home/hellsgod/clang21/bin/ld.lld
+AR=/home/hellsgod/clang21/bin/llvm-ar
+NM=/home/hellsgod/clang21/bin/llvm-nm
+STRIP=/home/hellsgod/clang21/bin/llvm-strip
+OBJCOPY=/home/hellsgod/clang21/bin/llvm-objcopy
+OBJDUMP=/home/hellsgod/clang21/bin/llvm-objdump
+RANLIB=/home/hellsgod/clang21/bin/llvm-ranlib
+READELF=/home/hellsgod/clang21/bin/llvm-readelf
+AS=/home/hellsgod/clang21/bin/llvm-as
 ```
 #### Step 3:
-Install clang 20, because some of my compiler flags only work with clang 20. If you use a clang compiler in your home directory, modify Step 2 to your compiler path. If you don't want to install clang 20 and you want to use your system wide clang, which is 19.1.7 on Arch Linux, head over to Step 4.
+Install clang 20 or clang 21, because some of my compiler flags only work with clang 20 and up. If you use a clang compiler in your home directory, modify Step 2 to your compiler path. If you don't want to install clang 20/21 and you want to use your system wide clang, which is 19.1.7 on Arch Linux, head over to Step 4.
 
 #### Step 4 (instead of step 3):
 Remove following compiler flags from my compiler-opt.patch:
@@ -63,6 +63,6 @@ And you should be able to compile the kernel with clang 19.1.7, which is the sys
 Run `makepkg -si` to install dependencies and build the kernel. You can also modify the PKGBUILD to change tickrate, etc to your liking.
 
 ### Clang 20
-I use a custom built Full LTO, PGO and BOLT optimized Clang 20, which you can find here: [CLANG](https://github.com/Mandi-Sa/clang/releases)
+I use a custom built Full LTO, PGO and BOLT optimized Clang 21, which you can find here: [CLANG](https://github.com/Mandi-Sa/clang/releases)
 
 
