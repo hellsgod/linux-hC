@@ -167,7 +167,7 @@ pkgbase="linux-$_pkgsuffix"
 _major=6.14
 _minor=0
 #_minorc=$((_minor+1))
-_rcver=rc1
+_rcver=rc2
 pkgver=${_major}.${_rcver}
 #_stable=${_major}.${_minor}
 #_stable=${_major}
@@ -175,7 +175,7 @@ _stable=${_major}-${_rcver}
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
 pkgdesc='Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 20 improved hC kernel - Release Candidate'
-pkgrel=4
+pkgrel=1
 _kernver="$pkgver-$pkgrel"
 _kernuname="${pkgver}-${_pkgsuffix}"
 arch=('x86_64')
@@ -762,12 +762,12 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('aeedf103a3076bacaa8b5d38bf06fa048fc8265dd2bea551e9266155086f638ded2171800ee10bfeaf9aa4b28391db5b55162889e6a4a709186af2255ac5dca1'
+b2sums=('0241ecc131ac1322bb66dd14424c19a1c54f17d07aab228589d9294cddf07dce02cef5efb733a0e8fc06c89e9494a00ae64ae453057aa000bfbcf431084a6896'
         'ec19fe8af88003383ab733a7780ab29291b51a9d59f9c7c1a414154dfb759fa0d3e701f1e345b8c6b428be8eb916fa9bd673be38f0aeca9e26a65a1b5d6d852b'
         '390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab'
         '61f2477534ba03ef50a81a861057ff53ec5d9825014caaf9b48fe32df62b402729729debf6fff7c282b514b9942194feb12ab9c28434751351a6c54c6c8dbd57'
         '1b97372883b81f549eb0b0905219697ab8bdb96a8add9dc5a168c643e7f29293cfa145565127b9ddb73dcc0fa3b1924770365f11b9b8543a444964a9219984fa'
-        '05b7a9f5b59f02b59653459b173956cef57bc29c819b57460413d9bd7e3733fa145aa70e89e5b406930238bd3d41c5e5016184f1aa421490d6825dbe6a9b24fd'
+        '1b350a0c93a0e7a0fcea43211d314e0e8e5c02d43c908bbb06f2b7373160bbc18fb4e3eab15d3f89143b96526148b17e790250046664c46f281151eec3c49b55'
         '1752e8876deee49972d83f6ba8aceb7fc831ba4f8c024cbee45df0107637cf0ceaadc9286d9dcef2a00c3fc229c527ac5635db84ba2235523574a480801abb0a'
         '8646f47f5e1fc94814b6d0c1b5b95c78134c7fd54c3491b4d67967c00aa88cea62ae01c51f897395197b9fad5f40105ada0fd0e22a372989e49071ec81a27980'
         '94148d4f200d0e69bfdb050a7ce997a29c888d925e4bdf7ae2e1a781b44e7dd9fa5f220ccc336e9370e39e4aac163698567a0eeea713763293cde48f319310be'
