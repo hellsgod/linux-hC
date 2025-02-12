@@ -1,7 +1,7 @@
-From e4f45e4d4e95c10ce80f8044d044f99693975491 Mon Sep 17 00:00:00 2001
+From 79a4e4b6c9192d87b3509b45b7f8054d62e3d598 Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Thu, 6 Feb 2025 17:44:10 +0100
-Subject: [PATCH 01/10] exit: perform add_device_randomness() without
+Subject: [PATCH 01/11] exit: perform add_device_randomness() without
  tasklist_lock
 
 Parallel calls to add_device_randomness() contend on their own.
@@ -44,10 +44,10 @@ index 3485e5fc499e..9d7acd7b0040 100644
 2.48.1
 
 
-From cde1b1e2141f681a4acac5af71615f505fdb0b50 Mon Sep 17 00:00:00 2001
+From ebb196c8d4a609b268be363be269534090220d75 Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Thu, 6 Feb 2025 17:44:11 +0100
-Subject: [PATCH 02/10] exit: hoist get_pid() in release_task() outside of
+Subject: [PATCH 02/11] exit: hoist get_pid() in release_task() outside of
  tasklist_lock
 
 Reduces hold time as get_pid() contains an atomic.
@@ -79,10 +79,10 @@ index 9d7acd7b0040..8c39c84582b7 100644
 2.48.1
 
 
-From d3a3b45074380249a996ec91281647c94bfd5a87 Mon Sep 17 00:00:00 2001
+From f4725424911c915d7f5df7d8b0919aab0efcfdfa Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Thu, 6 Feb 2025 17:44:12 +0100
-Subject: [PATCH 03/10] pid: sprinkle tasklist_lock asserts
+Subject: [PATCH 03/11] pid: sprinkle tasklist_lock asserts
 
 They cost nothing on production kernels and document the requirement of
 holding the tasklist_lock lock in respective routines.
@@ -146,10 +146,10 @@ index 924084713be8..2ae872f689a7 100644
 2.48.1
 
 
-From 2ac71e38a56ec2d22ed1f9927b1fe3357a2d7538 Mon Sep 17 00:00:00 2001
+From caab3b7cdee8b3f735dd1997562ce8046a601cf0 Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Thu, 6 Feb 2025 17:44:13 +0100
-Subject: [PATCH 04/10] pid: perform free_pid() calls outside of tasklist_lock
+Subject: [PATCH 04/11] pid: perform free_pid() calls outside of tasklist_lock
 
 As the clone side already executes pid allocation with only pidmap_lock
 held, issuing free_pid() while still holding tasklist_lock exacerbates
@@ -442,10 +442,10 @@ index cb366ff8703a..4efca8a97d62 100644
 2.48.1
 
 
-From 177c49f467ed3479e41898d44d8a024c96d950ee Mon Sep 17 00:00:00 2001
+From e7d2f758282100aeb90414fc976629b112c30896 Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Thu, 6 Feb 2025 17:44:14 +0100
-Subject: [PATCH 05/10] pid: drop irq disablement around pidmap_lock
+Subject: [PATCH 05/11] pid: drop irq disablement around pidmap_lock
 
 It no longer serves any purpose now that the tasklist_lock ->
 pidmap_lock ordering got eliminated.
@@ -557,10 +557,10 @@ index 73625f28c166..900193de4232 100644
 2.48.1
 
 
-From 5b3e0fbe5dee8852829c591e97307a498cc4f2db Mon Sep 17 00:00:00 2001
+From f09917d17362dad4662ee9e98a90a9492b828fe8 Mon Sep 17 00:00:00 2001
 From: SeongJae Park <sj@kernel.org>
 Date: Wed, 5 Feb 2025 22:15:14 -0800
-Subject: [PATCH 06/10] mm/madvise: split out mmap locking operations for
+Subject: [PATCH 06/11] mm/madvise: split out mmap locking operations for
  madvise()
 
 Patch series "mm/madvise: remove redundant mmap_lock operations from
@@ -739,10 +739,10 @@ index 49f3a75046f6..ae0964bc4d88 100644
 2.48.1
 
 
-From e7657f3b089a3971ea24963c6ed065fa3dcad977 Mon Sep 17 00:00:00 2001
+From 4c25d6d516ce32f6d2fc6fc8de2bdf624387ec71 Mon Sep 17 00:00:00 2001
 From: SeongJae Park <sj@kernel.org>
 Date: Wed, 5 Feb 2025 22:15:15 -0800
-Subject: [PATCH 07/10] mm/madvise: split out madvise input validity check
+Subject: [PATCH 07/11] mm/madvise: split out madvise input validity check
 
 Split out the madvise parameters validation logic from do_madvise(), for
 easy reuse of the logic from a future change.
@@ -818,10 +818,10 @@ index ae0964bc4d88..9cc31efe875a 100644
 2.48.1
 
 
-From d8d45f2697f1753e10dd7d3235ecdb7cfd4a0b0e Mon Sep 17 00:00:00 2001
+From 2ccd17afd2aaa5ebb0bd710c8251c143f08655ea Mon Sep 17 00:00:00 2001
 From: SeongJae Park <sj@kernel.org>
 Date: Wed, 5 Feb 2025 22:15:16 -0800
-Subject: [PATCH 08/10] mm/madvise: split out madvise() behavior execution
+Subject: [PATCH 08/11] mm/madvise: split out madvise() behavior execution
 
 Split out the madvise behavior applying logic from do_madvise() to make
 it easier to reuse from the following change.
@@ -921,10 +921,10 @@ index 9cc31efe875a..913936a5c353 100644
 2.48.1
 
 
-From 32876afac010a62b67fc90ad2693f1a2028331c3 Mon Sep 17 00:00:00 2001
+From a10a53795180b8f968778ec3fa09f6d501206e7e Mon Sep 17 00:00:00 2001
 From: SeongJae Park <sj@kernel.org>
 Date: Wed, 5 Feb 2025 22:15:17 -0800
-Subject: [PATCH 09/10] mm/madvise: remove redundant mmap_lock operations from
+Subject: [PATCH 09/11] mm/madvise: remove redundant mmap_lock operations from
  process_madvise()
 
 Optimize redundant mmap lock operations from process_madvise() by directly
@@ -999,10 +999,10 @@ index 913936a5c353..6eb7cf1cccce 100644
 2.48.1
 
 
-From 0929ce2c5a94c7c80244af86e4c0ecdb1e306321 Mon Sep 17 00:00:00 2001
+From 2940ee86cf34b5df3c5b9db5c5d5a5caddf26a96 Mon Sep 17 00:00:00 2001
 From: Andrew Morton <akpm@linux-foundation.org>
 Date: Thu, 6 Feb 2025 16:34:29 -0800
-Subject: [PATCH 10/10] 
+Subject: [PATCH 10/11] 
  mm-madvise-remove-redundant-mmap_lock-operations-from-process_madvise-fix
 
 update comment, per Lorenzo
@@ -1032,5 +1032,79 @@ index 6eb7cf1cccce..cf741a29247a 100644
  		 * try again. We check for fatal signals in case we need exit
  		 * early anyway.
  		 */
+-- 
+2.48.1
+
+
+From 29cabd8bb13913ae34f4068810f5540bcc01d2ce Mon Sep 17 00:00:00 2001
+From: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Date: Tue, 11 Feb 2025 10:44:26 +0000
+Subject: [PATCH 11/11] mm/madvise: fix madvise_[un]lock() issue
+
+We are asymmetric in our locking/unlocking in the case of memory failure
+madvise() behaviour options, correct this and abstract the memory failure
+check.
+
+Signed-off-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: SeongJae Park <sj@kernel.org>
+Tested-by: SeongJae Park <sj@kernel.org>
+---
+ mm/madvise.c | 29 +++++++++++++++++++++++------
+ 1 file changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index cf741a29247a..e310569aa176 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1566,14 +1566,29 @@ int madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
+ }
+ #endif /* CONFIG_ANON_VMA_NAME */
+ 
+-static int madvise_lock(struct mm_struct *mm, int behavior)
+-{
+-
+ #ifdef CONFIG_MEMORY_FAILURE
+-	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
+-		return 0;
++static bool is_memory_failure(int behavior)
++{
++	switch (behavior) {
++	case MADV_HWPOISON:
++	case MADV_SOFT_OFFLINE:
++		return true;
++	default:
++		return false;
++	}
++}
++#else
++static bool is_memory_failure(int behavior)
++{
++	return false;
++}
+ #endif
+ 
++static int madvise_lock(struct mm_struct *mm, int behavior)
++{
++	if (is_memory_failure(behavior))
++	    return 0;
++
+ 	if (madvise_need_mmap_write(behavior)) {
+ 		if (mmap_write_lock_killable(mm))
+ 			return -EINTR;
+@@ -1581,11 +1596,13 @@ static int madvise_lock(struct mm_struct *mm, int behavior)
+ 		mmap_read_lock(mm);
+ 	}
+ 	return 0;
+-
+ }
+ 
+ static void madvise_unlock(struct mm_struct *mm, int behavior)
+ {
++	if (is_memory_failure(behavior))
++	    return;
++
+ 	if (madvise_need_mmap_write(behavior))
+ 		mmap_write_unlock(mm);
+ 	else
 -- 
 2.48.1
