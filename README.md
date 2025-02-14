@@ -62,7 +62,37 @@ And you should be able to compile the kernel with clang 19.1.7, which is the sys
 #### Step 5:
 Run `makepkg -si` to install dependencies and build the kernel. You can also modify the PKGBUILD to change tickrate, etc to your liking.
 
-### Clang 20
+### Clang 20:
 I use a custom built Full LTO, PGO and BOLT optimized Clang 21, which you can find here: [CLANG](https://github.com/Mandi-Sa/clang/releases)
 
+### Nvidia module for clang 20 and up:
+Be aware the nvidia module won't compile for you, if you compile your kernel with clang 20 and up. But there's a workaround for that. If you don't use clang 20 and up as your system wide compiler, the nvidia module will try to compile with the system wide compiler, which is clang 19.1.7 on Arch an will therefore fail.
+
+I'm using the nvidia-dkms closed module, since the open module produces stutters in UI animations for me and I can only give you a workaround for that one. You have to find a way for your used driver by yourself.
+
+I'm refering to the latest nvidia driver 570.86.16: 
+Navigate to: `/usr/src/nvidia-570.86.16/Makefile`
+
+In the Makefile you will find the following: 
+```
+CC ?= cc
+LD ?= ld
+OBJDUMP ?= objdump
+```
+It refers to the compiler it reads from the kernel, GCC or Clang. But even if it reads clang from the kernel, it will use your system wide compiler, which you don't want. So, replace it with:
+```
+ifeq ($(shell echo $(KERNEL_UNAME) | grep -o hC),hC)
+    CC := /home/hellsgod/clang21/bin/clang
+    LD := /home/hellsgod/clang21/bin/ld.lld
+    OBJDUMP=/home/hellsgod/clang21/bin/llvm-objdump
+else
+  CC ?= cc
+  LD ?= ld
+  OBJDUMP ?= objdump
+endif
+```
+Instead of just reading the kernel config for the compiler, it'll read the name of the kernel itself and if "hC" is in the name, it will use your custom compiler path. You have to modify it for your own compiler path of course.
+
+### Other modules:
+If you use other modules, they probably need a modification, too. You are on your own for them. Maybe you can use a similar way like I do for the nvidia module. Another way could be to ignore cc mismatch, but I don't recommend that.
 
