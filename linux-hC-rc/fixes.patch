@@ -1,7 +1,7 @@
-From 7cf6b417caac394f37a53f514ff238af89072ac5 Mon Sep 17 00:00:00 2001
+From 726db5d3f6864c90276a023d6c3f4e3c271da81d Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/5] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/4] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -37,124 +37,10 @@ index b8a4ff365582..9b087f9bb413 100644
 2.48.1
 
 
-From 009dabe606f3ab5198f194d9cc9b21af886aceaf Mon Sep 17 00:00:00 2001
-From: Hamza Mahfooz <hamza.mahfooz@amd.com>
-Date: Wed, 1 Nov 2023 17:00:36 -0400
-Subject: [PATCH 2/5] drm/edid: add a quirk for two 240Hz Samsung monitors
-
-Without this fix the 5120x1440@240 timing of these monitors
-leads to screen flickering.
-
-Cc: stable@vger.kernel.org # 6.1+
-Link: https://gitlab.freedesktop.org/drm/amd/-/issues/1442
-Co-developed-by: Harry Wentland <harry.wentland@amd.com>
-Signed-off-by: Harry Wentland <harry.wentland@amd.com>
-Signed-off-by: Hamza Mahfooz <hamza.mahfooz@amd.com>
----
- drivers/gpu/drm/drm_edid.c | 47 +++++++++++++++++++++++++++++++++++---
- 1 file changed, 44 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/gpu/drm/drm_edid.c b/drivers/gpu/drm/drm_edid.c
-index 13bc4c290b17..9b741e6262bc 100644
---- a/drivers/gpu/drm/drm_edid.c
-+++ b/drivers/gpu/drm/drm_edid.c
-@@ -94,6 +94,8 @@ static int oui(u8 first, u8 second, u8 third)
- #define EDID_QUIRK_NON_DESKTOP			(1 << 12)
- /* Cap the DSC target bitrate to 15bpp */
- #define EDID_QUIRK_CAP_DSC_15BPP		(1 << 13)
-+/* Fix up a particular 5120x1440@240Hz timing */
-+#define EDID_QUIRK_FIXUP_5120_1440_240		(1 << 14)
- 
- #define MICROSOFT_IEEE_OUI	0xca125c
- 
-@@ -182,6 +184,12 @@ static const struct edid_quirk {
- 	EDID_QUIRK('S', 'A', 'M', 596, EDID_QUIRK_PREFER_LARGE_60),
- 	EDID_QUIRK('S', 'A', 'M', 638, EDID_QUIRK_PREFER_LARGE_60),
- 
-+	/* Samsung C49G95T */
-+	EDID_QUIRK('S', 'A', 'M', 0x7053, EDID_QUIRK_FIXUP_5120_1440_240),
-+
-+	/* Samsung S49AG95 */
-+	EDID_QUIRK('S', 'A', 'M', 0x71ac, EDID_QUIRK_FIXUP_5120_1440_240),
-+
- 	/* Sony PVM-2541A does up to 12 bpc, but only reports max 8 bpc */
- 	EDID_QUIRK('S', 'N', 'Y', 0x2541, EDID_QUIRK_FORCE_12BPC),
- 
-@@ -6759,7 +6767,37 @@ static void update_display_info(struct drm_connector *connector,
- 	drm_edid_to_eld(connector, drm_edid);
- }
- 
--static struct drm_display_mode *drm_mode_displayid_detailed(struct drm_device *dev,
-+static void drm_mode_displayid_detailed_edid_quirks(struct drm_connector *connector,
-+						    struct drm_display_mode *mode)
-+{
-+	unsigned int hsync_width;
-+	unsigned int vsync_width;
-+
-+	if (connector->display_info.quirks & EDID_QUIRK_FIXUP_5120_1440_240) {
-+		if (mode->hdisplay == 5120 && mode->vdisplay == 1440 &&
-+		    mode->clock == 1939490) {
-+			hsync_width = mode->hsync_end - mode->hsync_start;
-+			vsync_width = mode->vsync_end - mode->vsync_start;
-+
-+			mode->clock = 2018490;
-+			mode->hdisplay = 5120;
-+			mode->hsync_start = 5120 + 8;
-+			mode->hsync_end = 5120 + 8 + hsync_width;
-+			mode->htotal = 5200;
-+
-+			mode->vdisplay = 1440;
-+			mode->vsync_start = 1440 + 165;
-+			mode->vsync_end = 1440 + 165 + vsync_width;
-+			mode->vtotal = 1619;
-+
-+			drm_dbg_kms(connector->dev,
-+				    "[CONNECTOR:%d:%s] Samsung 240Hz mode quirk applied\n",
-+				    connector->base.id, connector->name);
-+		}
-+	}
-+}
-+
-+static struct drm_display_mode *drm_mode_displayid_detailed(struct drm_connector *connector,
- 							    struct displayid_detailed_timings_1 *timings,
- 							    bool type_7)
- {
-@@ -6778,7 +6816,7 @@ static struct drm_display_mode *drm_mode_displayid_detailed(struct drm_device *d
- 	bool hsync_positive = (timings->hsync[1] >> 7) & 0x1;
- 	bool vsync_positive = (timings->vsync[1] >> 7) & 0x1;
- 
--	mode = drm_mode_create(dev);
-+	mode = drm_mode_create(connector->dev);
- 	if (!mode)
- 		return NULL;
- 
-@@ -6801,6 +6839,9 @@ static struct drm_display_mode *drm_mode_displayid_detailed(struct drm_device *d
- 
- 	if (timings->flags & 0x80)
- 		mode->type |= DRM_MODE_TYPE_PREFERRED;
-+
-+	drm_mode_displayid_detailed_edid_quirks(connector, mode);
-+
- 	drm_mode_set_name(mode);
- 
- 	return mode;
-@@ -6823,7 +6864,7 @@ static int add_displayid_detailed_1_modes(struct drm_connector *connector,
- 	for (i = 0; i < num_timings; i++) {
- 		struct displayid_detailed_timings_1 *timings = &det->timings[i];
- 
--		newmode = drm_mode_displayid_detailed(connector->dev, timings, type_7);
-+		newmode = drm_mode_displayid_detailed(connector, timings, type_7);
- 		if (!newmode)
- 			continue;
- 
--- 
-2.48.1
-
-
-From 2b503e6fc25c3e13477223066e3ce9d85a66fac3 Mon Sep 17 00:00:00 2001
+From 9aeab59eebdcdfed1f0cbb7b431d2999827af01d Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 3/5] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/4] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -186,50 +72,10 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 2.48.1
 
 
-From cf15d102af544a32550ce383875250dccc04fcf0 Mon Sep 17 00:00:00 2001
-From: Vlastimil Babka <vbabka@suse.cz>
-Date: Fri, 7 Feb 2025 19:35:25 +0100
-Subject: [PATCH 4/5] fuse: prevent folio use-after-free in readahead
-
-Signed-off-by: Vlastimil Babka <vbabka@suse.cz>
-Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/110
----
- fs/fuse/file.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
-
-diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index 7d92a5479998..a40d65ffb94d 100644
---- a/fs/fuse/file.c
-+++ b/fs/fuse/file.c
-@@ -955,8 +955,10 @@ static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
- 		fuse_invalidate_atime(inode);
- 	}
- 
--	for (i = 0; i < ap->num_folios; i++)
-+	for (i = 0; i < ap->num_folios; i++) {
- 		folio_end_read(ap->folios[i], !err);
-+		folio_put(ap->folios[i]);
-+	}
- 	if (ia->ff)
- 		fuse_file_put(ia->ff, false);
- 
-@@ -1048,7 +1050,7 @@ static void fuse_readahead(struct readahead_control *rac)
- 		ap = &ia->ap;
- 
- 		while (ap->num_folios < cur_pages) {
--			folio = readahead_folio(rac);
-+			folio = __readahead_folio(rac);
- 			ap->folios[ap->num_folios] = folio;
- 			ap->descs[ap->num_folios].length = folio_size(folio);
- 			ap->num_folios++;
--- 
-2.48.1
-
-
-From 27ac05cf286f478bfa4bb5e125e1e1881e44516b Mon Sep 17 00:00:00 2001
+From 20d6f0f7fedc12fce06e3849febe4c440f657697 Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 5/5] sched/fair: Refactor can_migrate_task() to elimate
+Subject: [PATCH 3/4] sched/fair: Refactor can_migrate_task() to elimate
  looping
 
 The function "can_migrate_task()" utilize "for_each_cpu_and" with a
@@ -262,10 +108,10 @@ Link: https://lkml.kernel.org/r/20250210103019.283824-1-richard120310@gmail.com
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index ce2e94ccad0c..f464ff5880ce 100644
+index 1c0ef435a7aa..bbb6dd5973c9 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9396,12 +9396,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
+@@ -9415,12 +9415,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
  			return 0;
  
  		/* Prevent to re-select dst_cpu via env's CPUs: */
@@ -283,5 +129,99 @@ index ce2e94ccad0c..f464ff5880ce 100644
  		}
  
  		return 0;
+-- 
+2.48.1
+
+
+From d77da896087aebeab4b0c3bccb4162ac28792595 Mon Sep 17 00:00:00 2001
+From: Joanne Koong <joannelkoong@gmail.com>
+Date: Tue, 11 Feb 2025 13:47:50 -0800
+Subject: [PATCH 4/4] fuse: revert back to __readahead_folio() for readahead
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+In 3eab9d7bc2f4 ("fuse: convert readahead to use folios"), the logic
+was converted to using the new folio readahead code, which drops the
+reference on the folio once it is locked, using an inferred reference
+on the folio. Previously we held a reference on the folio for the
+entire duration of the readpages call.
+
+This is fine, however for the case for splice pipe responses where we
+will remove the old folio and splice in the new folio (see
+fuse_try_move_page()), we assume that there is a reference held on the
+folio for ap->folios, which is no longer the case.
+
+To fix this, revert back to __readahead_folio() which allows us to hold
+the reference on the folio for the duration of readpages until either we
+drop the reference ourselves in fuse_readpages_end() or the reference is
+dropped after it's replaced in the page cache in the splice case.
+This will fix the UAF bug that was reported.
+
+Link: https://lore.kernel.org/linux-fsdevel/2f681f48-00f5-4e09-8431-2b3dbfaa881e@heusel.eu/
+Fixes: 3eab9d7bc2f4 ("fuse: convert readahead to use folios")
+Reported-by: Christian Heusel <christian@heusel.eu>
+Closes: https://lore.kernel.org/all/2f681f48-00f5-4e09-8431-2b3dbfaa881e@heusel.eu/
+Closes: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/110
+Reported-by: Mantas Mikulėnas <grawity@gmail.com>
+Closes: https://lore.kernel.org/all/34feb867-09e2-46e4-aa31-d9660a806d1a@gmail.com/
+Closes: https://bugzilla.opensuse.org/show_bug.cgi?id=1236660
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Joanne Koong <joannelkoong@gmail.com>
+Reviewed-by: Jeff Layton <jlayton@kernel.org>
+---
+ fs/fuse/dev.c  |  6 ++++++
+ fs/fuse/file.c | 13 +++++++++++--
+ 2 files changed, 17 insertions(+), 2 deletions(-)
+
+diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
+index 5b5f789b37eb..2b2d1b755544 100644
+--- a/fs/fuse/dev.c
++++ b/fs/fuse/dev.c
+@@ -838,6 +838,12 @@ static int fuse_check_folio(struct folio *folio)
+ 	return 0;
+ }
+ 
++/*
++ * Attempt to steal a page from the splice() pipe and move it into the
++ * pagecache. If successful, the pointer in @pagep will be updated. The
++ * folio that was originally in @pagep will lose a reference and the new
++ * folio returned in @pagep will carry a reference.
++ */
+ static int fuse_try_move_page(struct fuse_copy_state *cs, struct page **pagep)
+ {
+ 	int err;
+diff --git a/fs/fuse/file.c b/fs/fuse/file.c
+index 7d92a5479998..d63e56fd3dd2 100644
+--- a/fs/fuse/file.c
++++ b/fs/fuse/file.c
+@@ -955,8 +955,10 @@ static void fuse_readpages_end(struct fuse_mount *fm, struct fuse_args *args,
+ 		fuse_invalidate_atime(inode);
+ 	}
+ 
+-	for (i = 0; i < ap->num_folios; i++)
++	for (i = 0; i < ap->num_folios; i++) {
+ 		folio_end_read(ap->folios[i], !err);
++		folio_put(ap->folios[i]);
++	}
+ 	if (ia->ff)
+ 		fuse_file_put(ia->ff, false);
+ 
+@@ -1048,7 +1050,14 @@ static void fuse_readahead(struct readahead_control *rac)
+ 		ap = &ia->ap;
+ 
+ 		while (ap->num_folios < cur_pages) {
+-			folio = readahead_folio(rac);
++			/*
++			 * This returns a folio with a ref held on it.
++			 * The ref needs to be held until the request is
++			 * completed, since the splice case (see
++			 * fuse_try_move_page()) drops the ref after it's
++			 * replaced in the page cache.
++			 */
++			folio = __readahead_folio(rac);
+ 			ap->folios[ap->num_folios] = folio;
+ 			ap->descs[ap->num_folios].length = folio_size(folio);
+ 			ap->num_folios++;
 -- 
 2.48.1
