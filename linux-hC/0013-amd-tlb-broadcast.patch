@@ -659,9 +659,9 @@ index 6cf881a942bb..ac2149a6281e 100644
 2.48.1
 
 
-From 2050a6bf0a517d7f459f1f890dc1cecfbd5451ce Mon Sep 17 00:00:00 2001
+From 7ed872f301a0d52b146f2bbb85982895b6ab3895 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Thu, 20 Feb 2025 19:53:03 -0500
+Date: Thu, 20 Feb 2025 21:25:08 -0500
 Subject: [PATCH 08/20] x86/mm: get INVLPGB count max from CPUID
 
 The CPU advertises the maximum number of pages that can be shot down
@@ -682,7 +682,7 @@ Acked-by: Dave Hansen <dave.hansen@intel.com>
  4 files changed, 12 insertions(+)
 
 diff --git a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
-index 2a7279d80460..bb6943c21b7f 100644
+index 2a7279d80460..c371b94aa5d7 100644
 --- a/arch/x86/Kconfig.cpu
 +++ b/arch/x86/Kconfig.cpu
 @@ -401,6 +401,10 @@ menuconfig PROCESSOR_SELECT
@@ -691,7 +691,7 @@ index 2a7279d80460..bb6943c21b7f 100644
  
 +config X86_BROADCAST_TLB_FLUSH
 +	def_bool y
-+	depends on CPU_SUP_AMD && 64BIT
++	depends on 64BIT
 +
  config CPU_SUP_INTEL
  	default y
@@ -755,7 +755,7 @@ index 3e9037690814..8c5cefb16335 100644
 2.48.1
 
 
-From 783a74284f9805e382eaf31431567d0c360acc73 Mon Sep 17 00:00:00 2001
+From acd3972469ad917d3b5a0d7606711b9f1a1f29a0 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:04 -0500
 Subject: [PATCH 09/20] x86/mm: add INVLPGB support code
@@ -917,7 +917,7 @@ index 4d3c9d00d6b6..53a00ceb8f1d 100644
 2.48.1
 
 
-From 2a7551103acca2d4ace63728d2de1afd6c38e3db Mon Sep 17 00:00:00 2001
+From f0d3aa1ea2e82c17d10f0f62dc6467c87f7e48fd Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:05 -0500
 Subject: [PATCH 10/20] x86/mm: use INVLPGB for kernel TLB flushes
@@ -999,7 +999,7 @@ index ac2149a6281e..0a3d388cdace 100644
 2.48.1
 
 
-From 78dcc20a9e59c0dab06c5aba7391fc2ea92c456e Mon Sep 17 00:00:00 2001
+From 88a7240e32c938be04edc4e91a63ca2a4e1a761c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:06 -0500
 Subject: [PATCH 11/20] x86/mm: use INVLPGB in flush_tlb_all
@@ -1053,7 +1053,7 @@ index 0a3d388cdace..a53093865f9c 100644
 2.48.1
 
 
-From e8c84509a60d455f32d65a83cad9e7eba08163a0 Mon Sep 17 00:00:00 2001
+From 227e39e58ab23a5a8429cd325e0f392c97bcc181 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:07 -0500
 Subject: [PATCH 12/20] x86/mm: use broadcast TLB flushing for page reclaim TLB
@@ -1100,7 +1100,7 @@ index a53093865f9c..0fb63f3068f6 100644
 2.48.1
 
 
-From a73c29e21883af4eefc177bcd8ee9f04255e0093 Mon Sep 17 00:00:00 2001
+From e8615b409ec372435f8bae06ee0280188a7947c6 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:08 -0500
 Subject: [PATCH 13/20] x86/mm: global ASID allocation helper functions
@@ -1378,7 +1378,7 @@ index 0fb63f3068f6..a58d10ddd0da 100644
 2.48.1
 
 
-From 05201faa8e0c4e5b896466a08747e1c37e902430 Mon Sep 17 00:00:00 2001
+From acfc38e660b9f0dc247b07377350db0b2a50cade Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:09 -0500
 Subject: [PATCH 14/20] x86/mm: global ASID context switch & TLB flush handling
@@ -1584,7 +1584,7 @@ index a58d10ddd0da..d2338c98a3a0 100644
 2.48.1
 
 
-From 18b092c8f3922101f205f8ee0399254b1a0ea219 Mon Sep 17 00:00:00 2001
+From 86e55cd6ebc02ea24404bf76dd35eafadcb7f6b2 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:10 -0500
 Subject: [PATCH 15/20] x86/mm: global ASID process exit helpers
@@ -1641,7 +1641,7 @@ index 795fdd53bd0a..d670699d32c2 100644
 2.48.1
 
 
-From b50dd25fd8d41069c5d1037961b06b5577042e2b Mon Sep 17 00:00:00 2001
+From 856af2b5029277414d0886bb55ba4747c8f23a16 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:11 -0500
 Subject: [PATCH 16/20] x86/mm: enable broadcast TLB invalidation for
@@ -1797,7 +1797,7 @@ index d2338c98a3a0..55d03f04f8ba 100644
 2.48.1
 
 
-From 309bc484d5687c25a3cc24dd950a5c3ad1ad4dae Mon Sep 17 00:00:00 2001
+From 813f78d58f2766d57edd2822bea7669c45322a75 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:12 -0500
 Subject: [PATCH 17/20] x86/mm: do targeted broadcast flushing from tlbbatch
@@ -2033,7 +2033,7 @@ index 55d03f04f8ba..1fd258b29441 100644
 2.48.1
 
 
-From 9a0477263b1b372467e8f553c95a9a0422654ae3 Mon Sep 17 00:00:00 2001
+From b95c6a2cbefd6e7e61216559e5ac8699fbfec0e2 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:13 -0500
 Subject: [PATCH 18/20] x86/mm: enable AMD translation cache extensions
@@ -2125,7 +2125,7 @@ index 3ae84c3b8e6d..dc1c1057f26e 100644
 2.48.1
 
 
-From 1bf8596a2e5bfe5cb68d0bbee99ae740c6455b3a Mon Sep 17 00:00:00 2001
+From 3ffddd4c814a468050ea27c4f58a3f8a41ab373c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:14 -0500
 Subject: [PATCH 19/20] x86/mm: only invalidate final translations with INVLPGB
@@ -2214,7 +2214,7 @@ index 1fd258b29441..c9e35341766e 100644
 2.48.1
 
 
-From 81fd4d813b4525ad89a66258a36e8eb1b1a1e785 Mon Sep 17 00:00:00 2001
+From af390dab763de7d5aab6ffd38badbf7909e82e20 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 20 Feb 2025 19:53:15 -0500
 Subject: [PATCH 20/20] x86/mm: add noinvlpgb commandline option
