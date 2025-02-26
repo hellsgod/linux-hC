@@ -1,7 +1,7 @@
-From 0a6e95e2e4b4ad0a983d452ed9c45cbb384d1ab6 Mon Sep 17 00:00:00 2001
+From a51a15411b2c4515a8a626bda43646703c01e22c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 13 Feb 2025 11:13:52 -0500
-Subject: [PATCH 01/16] x86/mm: make MMU_GATHER_RCU_TABLE_FREE unconditional
+Subject: [PATCH 01/15] x86/mm: make MMU_GATHER_RCU_TABLE_FREE unconditional
 
 Currently x86 uses CONFIG_MMU_GATHER_TABLE_FREE when using
 paravirt, and not when running on bare metal.
@@ -154,10 +154,10 @@ index 1fef5ad32d5a..b1c1f72c1fd1 100644
 2.48.1
 
 
-From 01bc7c4380fb4d2fa06e1b95110adfb358be73e0 Mon Sep 17 00:00:00 2001
+From 222251d44d97863addd0b8be6dcf290031ee68c5 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 13 Feb 2025 11:13:53 -0500
-Subject: [PATCH 02/16] x86/mm: remove pv_ops.mmu.tlb_remove_table call
+Subject: [PATCH 02/15] x86/mm: remove pv_ops.mmu.tlb_remove_table call
 
 Every pv_ops.mmu.tlb_remove_table call ends up calling tlb_remove_table.
 
@@ -257,10 +257,10 @@ index d078de2c952b..38971c6dcd4b 100644
 2.48.1
 
 
-From c6f2ea53222350500834b5d5d081041bf4d34448 Mon Sep 17 00:00:00 2001
+From 80dcab720990e606436c77bd79311c1918b60d8d Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:51 -0500
-Subject: [PATCH 03/16] x86/mm: consolidate full flush threshold decision
+Date: Tue, 25 Feb 2025 22:00:36 -0500
+Subject: [PATCH 03/15] x86/mm: consolidate full flush threshold decision
 
 Reduce code duplication by consolidating the decision point
 for whether to do individual invalidations or a full flush
@@ -270,6 +270,7 @@ Signed-off-by: Rik van Riel <riel@surriel.com>
 Suggested-by: Dave Hansen <dave.hansen@intel.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 Acked-by: Dave Hansen <dave.hansen@intel.com>
+Reviewed-by: Borislav Petkov (AMD) <bp@alien8.de>
 ---
  arch/x86/mm/tlb.c | 41 +++++++++++++++++++----------------------
  1 file changed, 19 insertions(+), 22 deletions(-)
@@ -349,10 +350,10 @@ index 6cf881a942bb..ac2149a6281e 100644
 2.48.1
 
 
-From 29e6ee2a0615969dd36cb2cd53e7d3ef8c7c48d5 Mon Sep 17 00:00:00 2001
+From 97f2f90e17b057c553078018c0b134bc73ed033e Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:52 -0500
-Subject: [PATCH 04/16] x86/mm: get INVLPGB count max from CPUID
+Date: Tue, 25 Feb 2025 22:00:37 -0500
+Subject: [PATCH 04/15] x86/mm: get INVLPGB count max from CPUID
 
 The CPU advertises the maximum number of pages that can be shot down
 with one INVLPGB instruction in the CPUID data.
@@ -368,8 +369,8 @@ Acked-by: Dave Hansen <dave.hansen@intel.com>
  arch/x86/Kconfig.cpu               | 4 ++++
  arch/x86/include/asm/cpufeatures.h | 1 +
  arch/x86/include/asm/tlbflush.h    | 3 +++
- arch/x86/kernel/cpu/amd.c          | 8 ++++++++
- 4 files changed, 16 insertions(+)
+ arch/x86/kernel/cpu/amd.c          | 6 ++++++
+ 4 files changed, 14 insertions(+)
 
 diff --git a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
 index 2a7279d80460..981def9cbfac 100644
@@ -399,21 +400,21 @@ index 508c0dad116b..b5c66b7465ba 100644
  #define X86_FEATURE_WBNOINVD		(13*32+ 9) /* "wbnoinvd" WBNOINVD instruction */
  #define X86_FEATURE_AMD_IBPB		(13*32+12) /* Indirect Branch Prediction Barrier */
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 02fc2aa06e9e..722309d7ada5 100644
+index 02fc2aa06e9e..7d79d2d3dee4 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
 @@ -183,6 +183,9 @@ static inline void cr4_init_shadow(void)
  extern unsigned long mmu_cr4_features;
  extern u32 *trampoline_cr4_features;
  
-+/* How many pages can we invalidate with one INVLPGB. */
++/* How many pages can be invalidated with one INVLPGB. */
 +extern u16 invlpgb_count_max;
 +
  extern void initialize_tlbstate_and_flush(void);
  
  /*
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 54194f5995de..3e8180354303 100644
+index 54194f5995de..3c75c174a274 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -29,6 +29,8 @@
@@ -425,16 +426,14 @@ index 54194f5995de..3e8180354303 100644
  static inline int rdmsrl_amd_safe(unsigned msr, unsigned long long *p)
  {
  	u32 gprs[8] = { 0 };
-@@ -1139,6 +1141,12 @@ static void cpu_detect_tlb_amd(struct cpuinfo_x86 *c)
+@@ -1139,6 +1141,10 @@ static void cpu_detect_tlb_amd(struct cpuinfo_x86 *c)
  		tlb_lli_2m[ENTRIES] = eax & mask;
  
  	tlb_lli_4m[ENTRIES] = tlb_lli_2m[ENTRIES] >> 1;
 +
 +	/* Max number of pages INVLPGB can invalidate in one shot */
-+	if (boot_cpu_has(X86_FEATURE_INVLPGB)) {
-+		cpuid(0x80000008, &eax, &ebx, &ecx, &edx);
-+		invlpgb_count_max = (edx & 0xffff) + 1;
-+	}
++	if (boot_cpu_has(X86_FEATURE_INVLPGB))
++		invlpgb_count_max = (cpuid_edx(0x80000008) & 0xffff) + 1;
  }
  
  static const struct cpu_dev amd_cpu_dev = {
@@ -442,13 +441,13 @@ index 54194f5995de..3e8180354303 100644
 2.48.1
 
 
-From ddd406f8208159c0c4fe02d790bec34156d37941 Mon Sep 17 00:00:00 2001
+From 21db7157a9fcb5e312042736a7786ead993be2bf Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:53 -0500
-Subject: [PATCH 05/16] x86/mm: add INVLPGB support code
+Date: Tue, 25 Feb 2025 22:00:38 -0500
+Subject: [PATCH 05/15] x86/mm: add INVLPGB support code
 
-Add invlpgb.h with the helper functions and definitions needed to use
-broadcast TLB invalidation on AMD EPYC 3 and newer CPUs.
+Add helper functions and definitions needed to use broadcast TLB
+invalidation on AMD EPYC 3 and newer CPUs.
 
 All the functions defined in invlpgb.h are used later in the series.
 
@@ -461,29 +460,28 @@ Tested-by: Brendan Jackman <jackmanb@google.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 Acked-by: Dave Hansen <dave.hansen@intel.com>
 ---
- arch/x86/include/asm/disabled-features.h |  9 ++-
- arch/x86/include/asm/tlb.h               | 92 ++++++++++++++++++++++++
- 2 files changed, 100 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/disabled-features.h |  8 +-
+ arch/x86/include/asm/tlb.h               | 98 ++++++++++++++++++++++++
+ 2 files changed, 105 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/include/asm/disabled-features.h b/arch/x86/include/asm/disabled-features.h
-index c492bdc97b05..95997caf0935 100644
+index c492bdc97b05..625a89259968 100644
 --- a/arch/x86/include/asm/disabled-features.h
 +++ b/arch/x86/include/asm/disabled-features.h
-@@ -129,6 +129,13 @@
+@@ -129,6 +129,12 @@
  #define DISABLE_SEV_SNP		(1 << (X86_FEATURE_SEV_SNP & 31))
  #endif
  
 +#ifdef CONFIG_X86_BROADCAST_TLB_FLUSH
 +#define DISABLE_INVLPGB		0
 +#else
-+/* Keep 32 bit kernels smaller by compiling out the INVLPGB code. */
 +#define DISABLE_INVLPGB		(1 << (X86_FEATURE_INVLPGB & 31))
 +#endif
 +
  /*
   * Make sure to add features to the correct mask
   */
-@@ -146,7 +153,7 @@
+@@ -146,7 +152,7 @@
  #define DISABLED_MASK11	(DISABLE_RETPOLINE|DISABLE_RETHUNK|DISABLE_UNRET| \
  			 DISABLE_CALL_DEPTH_TRACKING|DISABLE_USER_SHSTK)
  #define DISABLED_MASK12	(DISABLE_FRED|DISABLE_LAM)
@@ -493,7 +491,7 @@ index c492bdc97b05..95997caf0935 100644
  #define DISABLED_MASK15	0
  #define DISABLED_MASK16	(DISABLE_PKU|DISABLE_OSPKE|DISABLE_LA57|DISABLE_UMIP| \
 diff --git a/arch/x86/include/asm/tlb.h b/arch/x86/include/asm/tlb.h
-index 77f52bc1578a..b3cd521e5e2f 100644
+index 77f52bc1578a..91c9a4da3ace 100644
 --- a/arch/x86/include/asm/tlb.h
 +++ b/arch/x86/include/asm/tlb.h
 @@ -6,6 +6,9 @@
@@ -506,7 +504,7 @@ index 77f52bc1578a..b3cd521e5e2f 100644
  
  static inline void tlb_flush(struct mmu_gather *tlb)
  {
-@@ -25,4 +28,93 @@ static inline void invlpg(unsigned long addr)
+@@ -25,4 +28,99 @@ static inline void invlpg(unsigned long addr)
  	asm volatile("invlpg (%0)" ::"r" (addr) : "memory");
  }
  
@@ -539,10 +537,16 @@ index 77f52bc1578a..b3cd521e5e2f 100644
 +	asm volatile(".byte 0x0f, 0x01, 0xfe" : : "a" (rax), "c" (ecx), "d" (edx));
 +}
 +
-+/* Wait for INVLPGB originated by this CPU to complete. */
 +static inline void __tlbsync(void)
 +{
++	/*
++	 * tlbsync waits for invlpgb instructions originating on the
++	 * same CPU to have completed. Print a warning if we could have
++	 * migrated, and might not be waiting on all the invlpgbs issued
++	 * during this TLB invalidation sequence.
++	 */
 +	cant_migrate();
++
 +	/* TLBSYNC: supported in binutils >= 0.36. */
 +	asm volatile(".byte 0x0f, 0x01, 0xff" ::: "memory");
 +}
@@ -604,36 +608,34 @@ index 77f52bc1578a..b3cd521e5e2f 100644
 2.48.1
 
 
-From 26688ad36b9c8614e839a4ab3e63abe0b1b8a5ea Mon Sep 17 00:00:00 2001
+From bf1acdf89184e510564d5c12e4a9f28cacca050e Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:54 -0500
-Subject: [PATCH 06/16] x86/mm: use INVLPGB for kernel TLB flushes
+Date: Tue, 25 Feb 2025 22:00:39 -0500
+Subject: [PATCH 06/15] x86/mm: use INVLPGB for kernel TLB flushes
 
 Use broadcast TLB invalidation for kernel addresses when available.
 
 Remove the need to send IPIs for kernel TLB flushes.
 
 Signed-off-by: Rik van Riel <riel@surriel.com>
-Reviewed-by: Nadav Amit <nadav.amit@gmail.com>
 Tested-by: Manali Shukla <Manali.Shukla@amd.com>
 Tested-by: Brendan Jackman <jackmanb@google.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 ---
- arch/x86/mm/tlb.c | 34 ++++++++++++++++++++++++++++++++--
- 1 file changed, 32 insertions(+), 2 deletions(-)
+ arch/x86/mm/tlb.c | 32 ++++++++++++++++++++++++++++++--
+ 1 file changed, 30 insertions(+), 2 deletions(-)
 
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index ac2149a6281e..0a3d388cdace 100644
+index ac2149a6281e..a27e9e1b92af 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
-@@ -1077,6 +1077,20 @@ void flush_tlb_all(void)
+@@ -1077,6 +1077,18 @@ void flush_tlb_all(void)
  	on_each_cpu(do_flush_tlb_all, NULL, 1);
  }
  
-+static bool invlpgb_kernel_range_flush(struct flush_tlb_info *info)
++static void invlpgb_kernel_range_flush(struct flush_tlb_info *info)
 +{
-+	unsigned long addr;
-+	unsigned long nr;
++	unsigned long addr, nr;
 +
 +	for (addr = info->start; addr < info->end; addr += nr << PAGE_SHIFT) {
 +		nr = (info->end - addr) >> PAGE_SHIFT;
@@ -641,13 +643,12 @@ index ac2149a6281e..0a3d388cdace 100644
 +		invlpgb_flush_addr_nosync(addr, nr);
 +	}
 +	__tlbsync();
-+	return true;
 +}
 +
  static void do_kernel_range_flush(void *info)
  {
  	struct flush_tlb_info *f = info;
-@@ -1087,6 +1101,22 @@ static void do_kernel_range_flush(void *info)
+@@ -1087,6 +1099,22 @@ static void do_kernel_range_flush(void *info)
  		flush_tlb_one_kernel(addr);
  }
  
@@ -670,7 +671,7 @@ index ac2149a6281e..0a3d388cdace 100644
  void flush_tlb_kernel_range(unsigned long start, unsigned long end)
  {
  	struct flush_tlb_info *info;
-@@ -1097,9 +1127,9 @@ void flush_tlb_kernel_range(unsigned long start, unsigned long end)
+@@ -1097,9 +1125,9 @@ void flush_tlb_kernel_range(unsigned long start, unsigned long end)
  				  TLB_GENERATION_INVALID);
  
  	if (info->end == TLB_FLUSH_ALL)
@@ -686,10 +687,10 @@ index ac2149a6281e..0a3d388cdace 100644
 2.48.1
 
 
-From fe256782ee81e56efd9b59a26deb429f8273c854 Mon Sep 17 00:00:00 2001
+From 4f5881317c8eac5099f21923cbf4c795e422fa7f Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:55 -0500
-Subject: [PATCH 07/16] x86/mm: use INVLPGB in flush_tlb_all
+Date: Tue, 25 Feb 2025 22:00:40 -0500
+Subject: [PATCH 07/15] x86/mm: use INVLPGB in flush_tlb_all
 
 The flush_tlb_all() function is not used a whole lot, but we might
 as well use broadcast TLB flushing there, too.
@@ -699,38 +700,32 @@ Tested-by: Manali Shukla <Manali.Shukla@amd.com>
 Tested-by: Brendan Jackman <jackmanb@google.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 ---
- arch/x86/mm/tlb.c | 16 ++++++++++++++++
- 1 file changed, 16 insertions(+)
+ arch/x86/mm/tlb.c | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 0a3d388cdace..a53093865f9c 100644
+index a27e9e1b92af..d8c024fb34f8 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
-@@ -1065,6 +1065,16 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+@@ -1064,7 +1064,6 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+ 	mmu_notifier_arch_invalidate_secondary_tlbs(mm, start, end);
  }
  
- 
-+static bool broadcast_flush_tlb_all(void)
-+{
-+	if (!cpu_feature_enabled(X86_FEATURE_INVLPGB))
-+		return false;
-+
-+	guard(preempt)();
-+	invlpgb_flush_all();
-+	return true;
-+}
-+
+-
  static void do_flush_tlb_all(void *info)
  {
  	count_vm_tlb_event(NR_TLB_REMOTE_FLUSH_RECEIVED);
-@@ -1074,6 +1084,12 @@ static void do_flush_tlb_all(void *info)
+@@ -1074,6 +1073,15 @@ static void do_flush_tlb_all(void *info)
  void flush_tlb_all(void)
  {
  	count_vm_tlb_event(NR_TLB_REMOTE_FLUSH);
 +
 +	/* First try (faster) hardware-assisted TLB invalidation. */
-+	if (broadcast_flush_tlb_all())
++	if (cpu_feature_enabled(X86_FEATURE_INVLPGB)) {
++		guard(preempt)();
++		invlpgb_flush_all();
 +		return;
++	}
 +
 +	/* Fall back to the IPI-based invalidation. */
  	on_each_cpu(do_flush_tlb_all, NULL, 1);
@@ -740,10 +735,10 @@ index 0a3d388cdace..a53093865f9c 100644
 2.48.1
 
 
-From 37dee0edff86513fe6696a43c9a1a9a71f35aa5a Mon Sep 17 00:00:00 2001
+From eaac566a08e248745dd4cdd75f58c17993213f6b Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:56 -0500
-Subject: [PATCH 08/16] x86/mm: use broadcast TLB flushing for page reclaim TLB
+Date: Tue, 25 Feb 2025 22:00:41 -0500
+Subject: [PATCH 08/15] x86/mm: use broadcast TLB flushing for page reclaim TLB
  flushing
 
 In the page reclaim code, we only track the CPU(s) where the TLB needs
@@ -757,9 +752,6 @@ tasks in the next patch gets properly flushed from the page
 reclaim code, because the IPI based flushing in arch_tlbbatch_flush
 only flushes the currently loaded TLB context on each CPU.
 
-Patch 10 replaces this with the actual mechanism used to do
-broadcast TLB flushing from the page reclaim code.
-
 Signed-off-by: Rik van Riel <riel@surriel.com>
 Tested-by: Manali Shukla <Manali.Shukla@amd.com>
 Tested-by: Brendan Jackman <jackmanb@google.com>
@@ -769,10 +761,10 @@ Tested-by: Michael Kelley <mhklinux@outlook.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index a53093865f9c..0fb63f3068f6 100644
+index d8c024fb34f8..7652415eaa12 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
-@@ -1326,7 +1326,9 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
+@@ -1316,7 +1316,9 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  	 * a local TLB flush is needed. Optimize this use-case by calling
  	 * flush_tlb_func_local() directly in this case.
  	 */
@@ -787,30 +779,28 @@ index a53093865f9c..0fb63f3068f6 100644
 2.48.1
 
 
-From 3ea20ab3ca0bd8510e25651324cd9026afc8159b Mon Sep 17 00:00:00 2001
+From a34d0c5020651dbd47de1ae2b3a5f5cc901cdf8c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:57 -0500
-Subject: [PATCH 09/16] x86/mm: global ASID allocation helper functions
+Date: Tue, 25 Feb 2025 22:00:42 -0500
+Subject: [PATCH 09/15] x86/mm: add global ASID allocation helper functions
 
-Functions to manage global ASID space. Multithreaded processes that
+Add functions to manage global ASID space. Multithreaded processes that
 are simultaneously active on 4 or more CPUs can get a global ASID,
 resulting in the same PCID being used for that process on every CPU.
 
 This in turn will allow the kernel to use hardware-assisted TLB flushing
 through AMD INVLPGB or Intel RAR for these processes.
 
-Helper functions split out by request.
-
 Signed-off-by: Rik van Riel <riel@surriel.com>
-Reviewed-by: Nadav Amit <nadav.amit@gmail.com>
 Tested-by: Manali Shukla <Manali.Shukla@amd.com>
 Tested-by: Brendan Jackman <jackmanb@google.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 ---
- arch/x86/include/asm/mmu.h      |  11 +++
- arch/x86/include/asm/tlbflush.h |  43 ++++++++++
- arch/x86/mm/tlb.c               | 144 +++++++++++++++++++++++++++++++-
- 3 files changed, 195 insertions(+), 3 deletions(-)
+ arch/x86/include/asm/mmu.h         |  11 +++
+ arch/x86/include/asm/mmu_context.h |   2 +
+ arch/x86/include/asm/tlbflush.h    |  43 +++++++++
+ arch/x86/mm/tlb.c                  | 146 ++++++++++++++++++++++++++++-
+ 4 files changed, 199 insertions(+), 3 deletions(-)
 
 diff --git a/arch/x86/include/asm/mmu.h b/arch/x86/include/asm/mmu.h
 index 3b496cdcb74b..edb5942d4829 100644
@@ -834,8 +824,21 @@ index 3b496cdcb74b..edb5942d4829 100644
  } mm_context_t;
  
  #define INIT_MM_CONTEXT(mm)						\
+diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
+index 795fdd53bd0a..a2c70e495b1b 100644
+--- a/arch/x86/include/asm/mmu_context.h
++++ b/arch/x86/include/asm/mmu_context.h
+@@ -139,6 +139,8 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
+ #define enter_lazy_tlb enter_lazy_tlb
+ extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
+ 
++extern void mm_free_global_asid(struct mm_struct *mm);
++
+ /*
+  * Init a new mm.  Used on mm copies, like at fork()
+  * and on mm's that are brand-new, like at execve().
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 722309d7ada5..fee05f88b4d8 100644
+index 7d79d2d3dee4..ee286b30a6a2 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
 @@ -6,6 +6,7 @@
@@ -871,7 +874,7 @@ index 722309d7ada5..fee05f88b4d8 100644
 +	return asid;
 +}
 +
-+static inline void assign_mm_global_asid(struct mm_struct *mm, u16 asid)
++static inline void mm_assign_global_asid(struct mm_struct *mm, u16 asid)
 +{
 +	/*
 +	 * Notably flush_tlb_mm_range() -> broadcast_tlb_flush() ->
@@ -887,7 +890,7 @@ index 722309d7ada5..fee05f88b4d8 100644
 +	return 0;
 +}
 +
-+static inline void assign_mm_global_asid(struct mm_struct *mm, u16 asid)
++static inline void mm_assign_global_asid(struct mm_struct *mm, u16 asid)
 +{
 +}
 +#endif
@@ -896,7 +899,7 @@ index 722309d7ada5..fee05f88b4d8 100644
  #include <asm/paravirt.h>
  #endif
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 0fb63f3068f6..a58d10ddd0da 100644
+index 7652415eaa12..ea211b66fa23 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -74,13 +74,15 @@
@@ -918,14 +921,14 @@ index 0fb63f3068f6..a58d10ddd0da 100644
   *         for KPTI each mm has two address spaces and thus needs two
   *         PCID values, but we can still do with a single ASID denomination
   *         for each mm. Corresponds to kPCID + 2048.
-@@ -251,6 +253,142 @@ static void choose_new_asid(struct mm_struct *next, u64 next_tlb_gen,
+@@ -251,6 +253,144 @@ static void choose_new_asid(struct mm_struct *next, u64 next_tlb_gen,
  	*need_flush = true;
  }
  
 +/*
 + * Global ASIDs are allocated for multi-threaded processes that are
 + * active on multiple CPUs simultaneously, giving each of those
-+ * processes the same PCIDs on every CPU, for use with hardware-assisted
++ * processes the same PCID on every CPU, for use with hardware-assisted
 + * TLB shootdown on remote CPUs, like AMD INVLPGB or Intel RAR.
 + *
 + * These global ASIDs are held for the lifetime of the process.
@@ -974,7 +977,7 @@ index 0fb63f3068f6..a58d10ddd0da 100644
 +
 +	asid = find_next_zero_bit(global_asid_used, MAX_ASID_AVAILABLE, last_global_asid);
 +
-+	if (asid >= MAX_ASID_AVAILABLE) {
++	if (asid >= MAX_ASID_AVAILABLE && !global_asid_available) {
 +		/* This should never happen. */
 +		VM_WARN_ONCE(1, "Unable to allocate global ASID despite %d available\n",
 +				global_asid_available);
@@ -989,7 +992,7 @@ index 0fb63f3068f6..a58d10ddd0da 100644
 +}
 +
 +/*
-+ * Check whether a process is currently active on more than "threshold" CPUs.
++ * Check whether a process is currently active on more than @threshold CPUs.
 + * This is a cheap estimation on whether or not it may make sense to assign
 + * a global ASID to this process, and use broadcast TLB invalidation.
 + */
@@ -1041,10 +1044,10 @@ index 0fb63f3068f6..a58d10ddd0da 100644
 +	if (!asid)
 +		return;
 +
-+	assign_mm_global_asid(mm, asid);
++	mm_assign_global_asid(mm, asid);
 +}
 +
-+void destroy_context_free_global_asid(struct mm_struct *mm)
++void mm_free_global_asid(struct mm_struct *mm)
 +{
 +	if (!mm_global_asid(mm))
 +		return;
@@ -1052,10 +1055,12 @@ index 0fb63f3068f6..a58d10ddd0da 100644
 +	guard(raw_spinlock_irqsave)(&global_asid_lock);
 +
 +	/* The global ASID can be re-used only after flush at wrap-around. */
++#ifdef CONFIG_X86_BROADCAST_TLB_FLUSH
 +	__set_bit(mm->context.global_asid, global_asid_freed);
 +
 +	mm->context.global_asid = 0;
 +	global_asid_available++;
++#endif
 +}
 +
  /*
@@ -1065,10 +1070,10 @@ index 0fb63f3068f6..a58d10ddd0da 100644
 2.48.1
 
 
-From a1bb12a0553aa902962365366998e600460dcfd3 Mon Sep 17 00:00:00 2001
+From 879933ba7c8bfa237e00f383ab78c086210a592c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:58 -0500
-Subject: [PATCH 10/16] x86/mm: global ASID context switch & TLB flush handling
+Date: Tue, 25 Feb 2025 22:00:43 -0500
+Subject: [PATCH 10/15] x86/mm: global ASID context switch & TLB flush handling
 
 Context switch and TLB flush support for processes that use a global
 ASID & PCID across all CPUs.
@@ -1083,14 +1088,13 @@ kept up to date across CPUs, even while the process is not
 running on a CPU.
 
 Signed-off-by: Rik van Riel <riel@surriel.com>
-Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
  arch/x86/include/asm/tlbflush.h | 18 ++++++++
- arch/x86/mm/tlb.c               | 79 ++++++++++++++++++++++++++++++---
- 2 files changed, 90 insertions(+), 7 deletions(-)
+ arch/x86/mm/tlb.c               | 77 ++++++++++++++++++++++++++++++---
+ 2 files changed, 88 insertions(+), 7 deletions(-)
 
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index fee05f88b4d8..2dadb9253afa 100644
+index ee286b30a6a2..6cf618c97df6 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
 @@ -240,6 +240,11 @@ static inline bool is_dyn_asid(u16 asid)
@@ -1105,7 +1109,7 @@ index fee05f88b4d8..2dadb9253afa 100644
  #ifdef CONFIG_X86_BROADCAST_TLB_FLUSH
  static inline u16 mm_global_asid(struct mm_struct *mm)
  {
-@@ -266,6 +271,14 @@ static inline void assign_mm_global_asid(struct mm_struct *mm, u16 asid)
+@@ -266,6 +271,14 @@ static inline void mm_assign_global_asid(struct mm_struct *mm, u16 asid)
  	mm->context.asid_transition = true;
  	smp_store_release(&mm->context.global_asid, asid);
  }
@@ -1121,7 +1125,7 @@ index fee05f88b4d8..2dadb9253afa 100644
  static inline u16 mm_global_asid(struct mm_struct *mm)
  {
 @@ -275,6 +288,11 @@ static inline u16 mm_global_asid(struct mm_struct *mm)
- static inline void assign_mm_global_asid(struct mm_struct *mm, u16 asid)
+ static inline void mm_assign_global_asid(struct mm_struct *mm, u16 asid)
  {
  }
 +
@@ -1133,7 +1137,7 @@ index fee05f88b4d8..2dadb9253afa 100644
  
  #ifdef CONFIG_PARAVIRT
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index a58d10ddd0da..b7a52bd97514 100644
+index ea211b66fa23..23b5a357c35e 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -227,6 +227,20 @@ static void choose_new_asid(struct mm_struct *next, u64 next_tlb_gen,
@@ -1157,19 +1161,10 @@ index a58d10ddd0da..b7a52bd97514 100644
  	if (this_cpu_read(cpu_tlbstate.invalidate_other))
  		clear_asid_other();
  
-@@ -382,11 +396,30 @@ void destroy_context_free_global_asid(struct mm_struct *mm)
+@@ -391,6 +405,23 @@ void mm_free_global_asid(struct mm_struct *mm)
+ #endif
+ }
  
- 	guard(raw_spinlock_irqsave)(&global_asid_lock);
- 
-+#ifdef CONFIG_X86_BROADCAST_TLB_FLUSH
- 	/* The global ASID can be re-used only after flush at wrap-around. */
- 	__set_bit(mm->context.global_asid, global_asid_freed);
- 
- 	mm->context.global_asid = 0;
- 	global_asid_available++;
-+#endif
-+}
-+
 +/*
 + * Is the mm transitioning from a CPU-local ASID to a global ASID?
 + */
@@ -1185,10 +1180,12 @@ index a58d10ddd0da..b7a52bd97514 100644
 +		return true;
 +
 +	return false;
- }
- 
++}
++
  /*
-@@ -694,7 +727,8 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
+  * Given an ASID, flush the corresponding user ASID.  We can delay this
+  * until the next time we switch to it.
+@@ -696,7 +727,8 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
  	 */
  	if (prev == next) {
  		/* Not actually switching mm's */
@@ -1198,7 +1195,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  			   next->context.ctx_id);
  
  		/*
-@@ -711,6 +745,20 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
+@@ -713,6 +745,20 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
  				 !cpumask_test_cpu(cpu, mm_cpumask(next))))
  			cpumask_set_cpu(cpu, mm_cpumask(next));
  
@@ -1219,7 +1216,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  		/*
  		 * If the CPU is not in lazy TLB mode, we are just switching
  		 * from one thread in a process to another thread in the same
-@@ -744,6 +792,13 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
+@@ -746,6 +792,13 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
  		 */
  		cond_mitigation(tsk);
  
@@ -1233,7 +1230,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  		/*
  		 * Leave this CPU in prev's mm_cpumask. Atomic writes to
  		 * mm_cpumask can be expensive under contention. The CPU
-@@ -758,14 +813,12 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
+@@ -760,14 +813,12 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
  		next_tlb_gen = atomic64_read(&next->context.tlb_gen);
  
  		choose_new_asid(next, next_tlb_gen, &new_asid, &need_flush);
@@ -1250,7 +1247,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  		this_cpu_write(cpu_tlbstate.ctxs[new_asid].ctx_id, next->context.ctx_id);
  		this_cpu_write(cpu_tlbstate.ctxs[new_asid].tlb_gen, next_tlb_gen);
  		load_new_mm_cr3(next->pgd, new_asid, new_lam, true);
-@@ -884,7 +937,7 @@ static void flush_tlb_func(void *info)
+@@ -886,7 +937,7 @@ static void flush_tlb_func(void *info)
  	const struct flush_tlb_info *f = info;
  	struct mm_struct *loaded_mm = this_cpu_read(cpu_tlbstate.loaded_mm);
  	u32 loaded_mm_asid = this_cpu_read(cpu_tlbstate.loaded_mm_asid);
@@ -1259,7 +1256,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  	bool local = smp_processor_id() == f->initiating_cpu;
  	unsigned long nr_invalidate = 0;
  	u64 mm_tlb_gen;
-@@ -907,6 +960,16 @@ static void flush_tlb_func(void *info)
+@@ -909,6 +960,16 @@ static void flush_tlb_func(void *info)
  	if (unlikely(loaded_mm == &init_mm))
  		return;
  
@@ -1276,7 +1273,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  	VM_WARN_ON(this_cpu_read(cpu_tlbstate.ctxs[loaded_mm_asid].ctx_id) !=
  		   loaded_mm->context.ctx_id);
  
-@@ -924,6 +987,8 @@ static void flush_tlb_func(void *info)
+@@ -926,6 +987,8 @@ static void flush_tlb_func(void *info)
  		return;
  	}
  
@@ -1285,7 +1282,7 @@ index a58d10ddd0da..b7a52bd97514 100644
  	if (unlikely(f->new_tlb_gen != TLB_GENERATION_INVALID &&
  		     f->new_tlb_gen <= local_tlb_gen)) {
  		/*
-@@ -1091,7 +1156,7 @@ STATIC_NOPV void native_flush_tlb_multi(const struct cpumask *cpumask,
+@@ -1093,7 +1156,7 @@ STATIC_NOPV void native_flush_tlb_multi(const struct cpumask *cpumask,
  	 * up on the new contents of what used to be page tables, while
  	 * doing a speculative memory access.
  	 */
@@ -1298,10 +1295,10 @@ index a58d10ddd0da..b7a52bd97514 100644
 2.48.1
 
 
-From a2a19faf0a891658e2986b5f05b87bf1a052abf2 Mon Sep 17 00:00:00 2001
+From 9def01a1b1c808c6b278d71103aebdbff75a4c1c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:48:59 -0500
-Subject: [PATCH 11/16] x86/mm: global ASID process exit helpers
+Date: Tue, 25 Feb 2025 22:00:44 -0500
+Subject: [PATCH 11/15] x86/mm: global ASID process exit helpers
 
 A global ASID is allocated for the lifetime of a process.
 
@@ -1309,23 +1306,14 @@ Free the global ASID at process exit time.
 
 Signed-off-by: Rik van Riel <riel@surriel.com>
 ---
- arch/x86/include/asm/mmu_context.h | 14 ++++++++++++++
- 1 file changed, 14 insertions(+)
+ arch/x86/include/asm/mmu_context.h | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 795fdd53bd0a..d670699d32c2 100644
+index a2c70e495b1b..b47ac6d270e6 100644
 --- a/arch/x86/include/asm/mmu_context.h
 +++ b/arch/x86/include/asm/mmu_context.h
-@@ -139,6 +139,8 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
- #define enter_lazy_tlb enter_lazy_tlb
- extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
- 
-+extern void destroy_context_free_global_asid(struct mm_struct *mm);
-+
- /*
-  * Init a new mm.  Used on mm copies, like at fork()
-  * and on mm's that are brand-new, like at execve().
-@@ -161,6 +163,14 @@ static inline int init_new_context(struct task_struct *tsk,
+@@ -163,6 +163,14 @@ static inline int init_new_context(struct task_struct *tsk,
  		mm->context.execute_only_pkey = -1;
  	}
  #endif
@@ -1340,13 +1328,13 @@ index 795fdd53bd0a..d670699d32c2 100644
  	mm_reset_untag_mask(mm);
  	init_new_context_ldt(mm);
  	return 0;
-@@ -170,6 +180,10 @@ static inline int init_new_context(struct task_struct *tsk,
+@@ -172,6 +180,10 @@ static inline int init_new_context(struct task_struct *tsk,
  static inline void destroy_context(struct mm_struct *mm)
  {
  	destroy_context_ldt(mm);
 +#ifdef CONFIG_X86_BROADCAST_TLB_FLUSH
 +	if (cpu_feature_enabled(X86_FEATURE_INVLPGB))
-+		destroy_context_free_global_asid(mm);
++		mm_free_global_asid(mm);
 +#endif
  }
  
@@ -1355,10 +1343,10 @@ index 795fdd53bd0a..d670699d32c2 100644
 2.48.1
 
 
-From 73da160bcafa24619906a7c0d596750874a364f9 Mon Sep 17 00:00:00 2001
+From 3e949960a8e56c662e671b927ddb665fdc0aa994 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:49:00 -0500
-Subject: [PATCH 12/16] x86/mm: enable broadcast TLB invalidation for
+Date: Tue, 25 Feb 2025 22:00:45 -0500
+Subject: [PATCH 12/15] x86/mm: enable broadcast TLB invalidation for
  multi-threaded processes
 
 Use broadcast TLB invalidation, using the INVPLGB instruction.
@@ -1370,6 +1358,10 @@ on 4 or more CPUs.
 
 This also allows single threaded process to continue using the
 cheaper, local TLB invalidation instructions like INVLPGB.
+
+Due to the structure of flush_tlb_mm_range, the INVLPGB
+flushing is done in a generically named broadcast_tlb_flush
+function, which can later also be used for Intel RAR.
 
 Combined with the removal of unnecessary lru_add_drain calls
 (see https://lkml.org/lkml/2024/12/19/1388) this results in a
@@ -1423,11 +1415,39 @@ Tested-by: Manali Shukla <Manali.Shukla@amd.com>
 Tested-by: Brendan Jackman <jackmanb@google.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 ---
- arch/x86/mm/tlb.c | 107 +++++++++++++++++++++++++++++++++++++++++++++-
- 1 file changed, 106 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/tlbflush.h |   9 +++
+ arch/x86/mm/tlb.c               | 107 +++++++++++++++++++++++++++++++-
+ 2 files changed, 115 insertions(+), 1 deletion(-)
 
+diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
+index 6cf618c97df6..b0f75758f10c 100644
+--- a/arch/x86/include/asm/tlbflush.h
++++ b/arch/x86/include/asm/tlbflush.h
+@@ -272,6 +272,11 @@ static inline void mm_assign_global_asid(struct mm_struct *mm, u16 asid)
+ 	smp_store_release(&mm->context.global_asid, asid);
+ }
+ 
++static inline void clear_asid_transition(struct mm_struct *mm)
++{
++	WRITE_ONCE(mm->context.asid_transition, false);
++}
++
+ static inline bool in_asid_transition(struct mm_struct *mm)
+ {
+ 	if (!cpu_feature_enabled(X86_FEATURE_INVLPGB))
+@@ -289,6 +294,10 @@ static inline void mm_assign_global_asid(struct mm_struct *mm, u16 asid)
+ {
+ }
+ 
++static inline void clear_asid_transition(struct mm_struct *mm)
++{
++}
++
+ static inline bool in_asid_transition(struct mm_struct *mm)
+ {
+ 	return false;
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index b7a52bd97514..459e5a9ac845 100644
+index 23b5a357c35e..739d3cd2c0ff 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -422,6 +422,108 @@ static bool needs_global_asid_reload(struct mm_struct *next, u16 prev_asid)
@@ -1466,7 +1486,7 @@ index b7a52bd97514..459e5a9ac845 100644
 +	int bc_asid = mm_global_asid(mm);
 +	int cpu;
 +
-+	if (!READ_ONCE(mm->context.asid_transition))
++	if (!in_asid_transition(mm))
 +		return;
 +
 +	for_each_cpu(cpu, mm_cpumask(mm)) {
@@ -1496,13 +1516,13 @@ index b7a52bd97514..459e5a9ac845 100644
 +	}
 +
 +	/* All the CPUs running this process are using the global ASID. */
-+	WRITE_ONCE(mm->context.asid_transition, false);
++	clear_asid_transition(mm);
 +}
 +
 +static void broadcast_tlb_flush(struct flush_tlb_info *info)
 +{
 +	bool pmd = info->stride_shift == PMD_SHIFT;
-+	unsigned long asid = info->mm->context.global_asid;
++	unsigned long asid = mm_global_asid(info->mm);
 +	unsigned long addr = info->start;
 +
 +	/*
@@ -1557,10 +1577,10 @@ index b7a52bd97514..459e5a9ac845 100644
 2.48.1
 
 
-From a0dcece19f4989aaf18812a2fe2800b0bb4b31bf Mon Sep 17 00:00:00 2001
+From d5c74cb98a854443eaf5aeb88401e666197704f5 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:49:01 -0500
-Subject: [PATCH 13/16] x86/mm: do targeted broadcast flushing from tlbbatch
+Date: Tue, 25 Feb 2025 22:00:46 -0500
+Subject: [PATCH 13/15] x86/mm: do targeted broadcast flushing from tlbbatch
  code
 
 Instead of doing a system-wide TLB flush from arch_tlbbatch_flush,
@@ -1576,15 +1596,15 @@ Tested-by: Brendan Jackman <jackmanb@google.com>
 Tested-by: Michael Kelley <mhklinux@outlook.com>
 ---
  arch/x86/include/asm/tlb.h      | 12 ++---
- arch/x86/include/asm/tlbflush.h | 20 +++++----
+ arch/x86/include/asm/tlbflush.h | 34 ++++++++++----
  arch/x86/mm/tlb.c               | 79 +++++++++++++++++++++++++++++++--
- 3 files changed, 93 insertions(+), 18 deletions(-)
+ 3 files changed, 107 insertions(+), 18 deletions(-)
 
 diff --git a/arch/x86/include/asm/tlb.h b/arch/x86/include/asm/tlb.h
-index b3cd521e5e2f..f69b243683e1 100644
+index 91c9a4da3ace..e645884a1877 100644
 --- a/arch/x86/include/asm/tlb.h
 +++ b/arch/x86/include/asm/tlb.h
-@@ -83,16 +83,16 @@ static inline void __tlbsync(void)
+@@ -89,16 +89,16 @@ static inline void __tlbsync(void)
  #define INVLPGB_FINAL_ONLY		BIT(4)
  #define INVLPGB_INCLUDE_NESTED		BIT(5)
  
@@ -1606,7 +1626,7 @@ index b3cd521e5e2f..f69b243683e1 100644
  {
  	__invlpgb(0, pcid, 0, 1, 0, INVLPGB_PCID);
  }
-@@ -105,7 +105,7 @@ static inline void invlpgb_flush_all(void)
+@@ -111,7 +111,7 @@ static inline void invlpgb_flush_all(void)
  }
  
  /* Flush addr, including globals, for all PCIDs. */
@@ -1616,7 +1636,7 @@ index b3cd521e5e2f..f69b243683e1 100644
  	__invlpgb(0, 0, addr, nr, 0, INVLPGB_INCLUDE_GLOBAL);
  }
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 2dadb9253afa..7094bc8d4ec5 100644
+index b0f75758f10c..4ee26c7c2643 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
 @@ -105,6 +105,9 @@ struct tlb_state {
@@ -1629,19 +1649,40 @@ index 2dadb9253afa..7094bc8d4ec5 100644
  
  #ifdef CONFIG_ADDRESS_MASKING
  	/*
-@@ -293,6 +296,11 @@ static inline bool in_asid_transition(struct mm_struct *mm)
+@@ -284,6 +287,16 @@ static inline bool in_asid_transition(struct mm_struct *mm)
+ 
+ 	return mm && READ_ONCE(mm->context.asid_transition);
+ }
++
++static inline bool cpu_need_tlbsync(void)
++{
++	return this_cpu_read(cpu_tlbstate.need_tlbsync);
++}
++
++static inline void cpu_write_tlbsync(bool state)
++{
++	this_cpu_write(cpu_tlbstate.need_tlbsync, state);
++}
+ #else
+ static inline u16 mm_global_asid(struct mm_struct *mm)
+ {
+@@ -302,6 +315,15 @@ static inline bool in_asid_transition(struct mm_struct *mm)
  {
  	return false;
  }
 +
-+static inline void tlbsync(void)
++static inline bool cpu_need_tlbsync(void)
 +{
++	return false;
++}
 +
++static inline void cpu_write_tlbsync(bool state)
++{
 +}
  #endif
  
  #ifdef CONFIG_PARAVIRT
-@@ -342,21 +350,15 @@ static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
+@@ -351,21 +373,15 @@ static inline u64 inc_mm_tlb_gen(struct mm_struct *mm)
  	return atomic64_inc_return(&mm->context.tlb_gen);
  }
  
@@ -1667,19 +1708,19 @@ index 2dadb9253afa..7094bc8d4ec5 100644
  static inline bool pte_flags_need_flush(unsigned long oldflags,
  					unsigned long newflags,
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 459e5a9ac845..889e50c4538c 100644
+index 739d3cd2c0ff..3309181bfc1f 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -487,6 +487,37 @@ static void finish_asid_transition(struct flush_tlb_info *info)
- 	WRITE_ONCE(mm->context.asid_transition, false);
+ 	clear_asid_transition(mm);
  }
  
 +static inline void tlbsync(void)
 +{
-+	if (!this_cpu_read(cpu_tlbstate.need_tlbsync))
++	if (!cpu_need_tlbsync())
 +		return;
 +	__tlbsync();
-+	this_cpu_write(cpu_tlbstate.need_tlbsync, false);
++	cpu_write_tlbsync(false);
 +}
 +
 +static inline void invlpgb_flush_user_nr_nosync(unsigned long pcid,
@@ -1687,22 +1728,22 @@ index 459e5a9ac845..889e50c4538c 100644
 +						u16 nr, bool pmd_stride)
 +{
 +	__invlpgb_flush_user_nr_nosync(pcid, addr, nr, pmd_stride);
-+	if (!this_cpu_read(cpu_tlbstate.need_tlbsync))
-+		this_cpu_write(cpu_tlbstate.need_tlbsync, true);
++	if (!cpu_need_tlbsync())
++		cpu_write_tlbsync(true);
 +}
 +
 +static inline void invlpgb_flush_single_pcid_nosync(unsigned long pcid)
 +{
 +	__invlpgb_flush_single_pcid_nosync(pcid);
-+	if (!this_cpu_read(cpu_tlbstate.need_tlbsync))
-+		this_cpu_write(cpu_tlbstate.need_tlbsync, true);
++	if (!cpu_need_tlbsync())
++		cpu_write_tlbsync(true);
 +}
 +
 +static inline void invlpgb_flush_addr_nosync(unsigned long addr, u16 nr)
 +{
 +	__invlpgb_flush_addr_nosync(addr, nr);
-+	if (!this_cpu_read(cpu_tlbstate.need_tlbsync))
-+		this_cpu_write(cpu_tlbstate.need_tlbsync, true);
++	if (!cpu_need_tlbsync())
++		cpu_write_tlbsync(true);
 +}
 +
  static void broadcast_tlb_flush(struct flush_tlb_info *info)
@@ -1726,7 +1767,7 @@ index 459e5a9ac845..889e50c4538c 100644
  	if (this_cpu_read(cpu_tlbstate.loaded_mm) == &init_mm)
  		return;
  
-@@ -1634,9 +1669,7 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
+@@ -1624,9 +1659,7 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  	 * a local TLB flush is needed. Optimize this use-case by calling
  	 * flush_tlb_func_local() directly in this case.
  	 */
@@ -1737,7 +1778,7 @@ index 459e5a9ac845..889e50c4538c 100644
  		flush_tlb_multi(&batch->cpumask, info);
  	} else if (cpumask_test_cpu(cpu, &batch->cpumask)) {
  		lockdep_assert_irqs_enabled();
-@@ -1645,12 +1678,52 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
+@@ -1635,12 +1668,52 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  		local_irq_enable();
  	}
  
@@ -1794,10 +1835,10 @@ index 459e5a9ac845..889e50c4538c 100644
 2.48.1
 
 
-From 73136cce4f8f7849ce5d6b35a497f2b36630675f Mon Sep 17 00:00:00 2001
+From 33b9e59ac73d3edf8957eb00a9450d7df1e19bb1 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:49:02 -0500
-Subject: [PATCH 14/16] x86/mm: enable AMD translation cache extensions
+Date: Tue, 25 Feb 2025 22:00:47 -0500
+Subject: [PATCH 14/15] x86/mm: enable AMD translation cache extensions
 
 With AMD TCE (translation cache extensions) only the intermediate mappings
 that cover the address range zapped by INVLPG / INVLPGB get invalidated,
@@ -1848,7 +1889,7 @@ index 72765b2fe0d8..1aacd6b68fab 100644
  
  /*
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 3e8180354303..38f454671c88 100644
+index 3c75c174a274..2bd512a1b4d0 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1075,6 +1075,10 @@ static void init_amd(struct cpuinfo_x86 *c)
@@ -1886,10 +1927,10 @@ index 3ae84c3b8e6d..dc1c1057f26e 100644
 2.48.1
 
 
-From 2dbc3431ba0326c8e5a37a2a35c5787291ccbf26 Mon Sep 17 00:00:00 2001
+From 61e098a3d8992e384545c71e40ebf7411210f015 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:49:03 -0500
-Subject: [PATCH 15/16] x86/mm: only invalidate final translations with INVLPGB
+Date: Tue, 25 Feb 2025 22:00:48 -0500
+Subject: [PATCH 15/15] x86/mm: only invalidate final translations with INVLPGB
 
 Use the INVLPGB_FINAL_ONLY flag when invalidating mappings with INVPLGB.
 This way only leaf mappings get removed from the TLB, leaving intermediate
@@ -1908,10 +1949,10 @@ Tested-by: Michael Kelley <mhklinux@outlook.com>
  2 files changed, 15 insertions(+), 8 deletions(-)
 
 diff --git a/arch/x86/include/asm/tlb.h b/arch/x86/include/asm/tlb.h
-index f69b243683e1..b1a18fe30d9b 100644
+index e645884a1877..8d78667a2d1b 100644
 --- a/arch/x86/include/asm/tlb.h
 +++ b/arch/x86/include/asm/tlb.h
-@@ -86,9 +86,15 @@ static inline void __tlbsync(void)
+@@ -92,9 +92,15 @@ static inline void __tlbsync(void)
  static inline void __invlpgb_flush_user_nr_nosync(unsigned long pcid,
  						  unsigned long addr,
  						  u16 nr,
@@ -1930,7 +1971,7 @@ index f69b243683e1..b1a18fe30d9b 100644
  
  /* Flush all mappings for a given PCID, not including globals. */
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 889e50c4538c..b78a5bb42241 100644
+index 3309181bfc1f..1953db058d92 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -497,9 +497,10 @@ static inline void tlbsync(void)
@@ -1943,8 +1984,8 @@ index 889e50c4538c..b78a5bb42241 100644
  {
 -	__invlpgb_flush_user_nr_nosync(pcid, addr, nr, pmd_stride);
 +	__invlpgb_flush_user_nr_nosync(pcid, addr, nr, pmd_stride, freed_tables);
- 	if (!this_cpu_read(cpu_tlbstate.need_tlbsync))
- 		this_cpu_write(cpu_tlbstate.need_tlbsync, true);
+ 	if (!cpu_need_tlbsync())
+ 		cpu_write_tlbsync(true);
  }
 @@ -542,9 +543,9 @@ static void broadcast_tlb_flush(struct flush_tlb_info *info)
  			nr = clamp_val(nr, 1, invlpgb_count_max);
@@ -1958,7 +1999,7 @@ index 889e50c4538c..b78a5bb42241 100644
  
  		addr += nr << info->stride_shift;
  	} while (addr < info->end);
-@@ -1698,10 +1699,10 @@ void arch_tlbbatch_add_pending(struct arch_tlbflush_unmap_batch *batch,
+@@ -1688,10 +1689,10 @@ void arch_tlbbatch_add_pending(struct arch_tlbflush_unmap_batch *batch,
  	u16 asid = mm_global_asid(mm);
  
  	if (asid) {
@@ -1971,95 +2012,5 @@ index 889e50c4538c..b78a5bb42241 100644
  
  		/*
  		 * Some CPUs might still be using a local ASID for this
--- 
-2.48.1
-
-
-From 82e7e8d42085d7425daccb240f257c6fb103f23b Mon Sep 17 00:00:00 2001
-From: Rik van Riel <riel@surriel.com>
-Date: Sun, 23 Feb 2025 14:49:04 -0500
-Subject: [PATCH 16/16] x86/mm: add noinvlpgb commandline option
-
-Add a "noinvlpgb" commandline option to disable AMD
-broadcast TLB flushing at boot time.
-
-Also fix up the "nopcid" boot option to automatically
-disable INVLPGB functionality, which relies on processes
-to run on globally allocated PCIDs.
-
-Signed-off-by: Rik van Riel <riel@surriel.com>
-Suggested-by: Brendan Jackman <jackmanb@google.com>
----
- .../admin-guide/kernel-parameters.txt         |  3 ++
- arch/x86/kernel/cpu/common.c                  | 28 +++++++++++++++++++
- 2 files changed, 31 insertions(+)
-
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index fb8752b42ec8..91260e1949fb 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -4182,6 +4182,8 @@
- 
- 	nomodule	Disable module load
- 
-+	noinvlpgb	[X86-64,EARLY] Disable the INVLPGB cpu feature.
-+
- 	nonmi_ipi	[X86] Disable using NMI IPIs during panic/reboot to
- 			shutdown the other cpus.  Instead use the REBOOT_VECTOR
- 			irq.
-@@ -4190,6 +4192,7 @@
- 			pagetables) support.
- 
- 	nopcid		[X86-64,EARLY] Disable the PCID cpu feature.
-+			This also disables INVLPGB, which relies on PCID.
- 
- 	nopku		[X86] Disable Memory Protection Keys CPU feature found
- 			in some Intel CPUs.
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index 7cce91b19fb2..b038c9b50b32 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -243,6 +243,33 @@ DEFINE_PER_CPU_PAGE_ALIGNED(struct gdt_page, gdt_page) = { .gdt = {
- } };
- EXPORT_PER_CPU_SYMBOL_GPL(gdt_page);
- 
-+#ifdef CONFIG_X86_BROADCAST_TLB_FLUSH
-+static void disable_invlpgb(void)
-+{
-+	/* do not emit a message if the feature is not present */
-+	if (!boot_cpu_has(X86_FEATURE_INVLPGB))
-+		return;
-+
-+	setup_clear_cpu_cap(X86_FEATURE_INVLPGB);
-+	pr_info("INVLPGB feature disabled\n");
-+}
-+
-+static int __init x86_noinvlpgb_setup(char *s)
-+{
-+	/* noinvlpgb doesn't accept parameters */
-+	if (s)
-+		return -EINVAL;
-+
-+	disable_invlpgb();
-+	return 0;
-+}
-+early_param("noinvlpgb", x86_noinvlpgb_setup);
-+#else
-+static void disable_invlpgb(void)
-+{
-+}
-+#endif
-+
- #ifdef CONFIG_X86_64
- static int __init x86_nopcid_setup(char *s)
- {
-@@ -256,6 +283,7 @@ static int __init x86_nopcid_setup(char *s)
- 
- 	setup_clear_cpu_cap(X86_FEATURE_PCID);
- 	pr_info("nopcid: PCID feature disabled\n");
-+	disable_invlpgb();
- 	return 0;
- }
- early_param("nopcid", x86_nopcid_setup);
 -- 
 2.48.1
