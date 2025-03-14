@@ -1,7 +1,7 @@
 From 30141359a75187423537163263c027b0b891ab74 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/6] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/7] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index 6682b2a53e34..fe54298ae05c 100644
 From 4f55dce00b87836087a82af0f0ec8ef87363fd4f Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/6] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/7] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -75,7 +75,7 @@ index dca706617adc..89d3aef160b7 100644
 From ec1af1d23de4459a8b07c5fc7d6381bdf1822d9e Mon Sep 17 00:00:00 2001
 From: Mateusz Guzik <mjguzik@gmail.com>
 Date: Tue, 19 Nov 2024 15:35:26 +0100
-Subject: [PATCH 3/6] get_task_exe_file: check PF_KTHREAD locklessly
+Subject: [PATCH 3/7] get_task_exe_file: check PF_KTHREAD locklessly
 
 Same thing as 8ac5dc66599c ("get_task_mm: check PF_KTHREAD lockless")
 
@@ -120,7 +120,7 @@ index 9da032802e34..926440c6cde3 100644
 From c733cf60701d9deb45a3cbdf785c2d538fce6878 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Thomas=20Wei=C3=9Fschuh?= <thomas.weissschuh@linutronix.de>
 Date: Thu, 21 Nov 2024 08:38:08 +0100
-Subject: [PATCH 4/6] kprobes: Reduce preempt disable scope in
+Subject: [PATCH 4/7] kprobes: Reduce preempt disable scope in
  check_kprobe_access_safe()
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -234,7 +234,7 @@ index b027a4030976..5cc750200f19 100644
 From 8f737c49615cdc94046af2ea45fe14712660d493 Mon Sep 17 00:00:00 2001
 From: David Rheinsberg <david@readahead.eu>
 Date: Tue, 24 Jan 2023 12:04:59 +0100
-Subject: [PATCH 5/6] x86/insn_decoder_test: allow longer symbol-names
+Subject: [PATCH 5/7] x86/insn_decoder_test: allow longer symbol-names
 
 Increase the allowed line-length of the insn-decoder-test to 4k to allow
 for symbol-names longer than 256 characters.
@@ -285,7 +285,7 @@ index 472540aeabc2..366e07546344 100644
 From ce801688e8f19fe5166b5c657bb8162636944a30 Mon Sep 17 00:00:00 2001
 From: Qiuxu Zhuo <qiuxu.zhuo@intel.com>
 Date: Mon, 10 Feb 2025 15:17:37 +0800
-Subject: [PATCH 6/6] EDAC/igen6: Fix the flood of invalid error reports
+Subject: [PATCH 6/7] EDAC/igen6: Fix the flood of invalid error reports
 
 The ECC_ERROR_LOG register of certain SoCs may contain the invalid value
 ~0, which results in a flood of invalid error reports in polling mode.
@@ -336,5 +336,188 @@ index fdf3a84fe698..595908af9e5c 100644
  }
  
  static void errsts_clear(struct igen6_imc *imc)
+-- 
+2.48.1
+
+
+From c84c2cc2153b1c5d06668f548bb6ca9e59cae877 Mon Sep 17 00:00:00 2001
+From: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Date: Fri, 14 Mar 2025 16:13:45 +0100
+Subject: [PATCH 7/7] Revert "sched/core: Reduce cost of sched_move_task when
+ config autogroup"
+
+This reverts commit eff6c8ce8d4d7faef75f66614dd20bb50595d261.
+
+Hazem reported a 30% drop in UnixBench spawn test with commit
+eff6c8ce8d4d ("sched/core: Reduce cost of sched_move_task when config
+autogroup") on a m6g.xlarge AWS EC2 instance with 4 vCPUs and 16 GiB RAM
+(aarch64) (single level MC sched domain) [1].
+
+There is an early bail from sched_move_task() if p->sched_task_group is
+equal to p's 'cpu cgroup' (sched_get_task_group()). E.g. both are
+pointing to taskgroup '/user.slice/user-1000.slice/session-1.scope'
+(Ubuntu '22.04.5 LTS').
+
+So in:
+
+  do_exit()
+
+    sched_autogroup_exit_task()
+
+      sched_move_task()
+
+        if sched_get_task_group(p) == p->sched_task_group
+          return
+
+        /* p is enqueued */
+        dequeue_task()              \
+        sched_change_group()        |
+          task_change_group_fair()  |
+            detach_task_cfs_rq()    |                              (1)
+            set_task_rq()           |
+            attach_task_cfs_rq()    |
+        enqueue_task()              /
+
+(1) isn't called for p anymore.
+
+Turns out that the regression is related to sgs->group_util in
+group_is_overloaded() and group_has_capacity(). If (1) isn't called for
+all the 'spawn' tasks then sgs->group_util is ~900 and
+sgs->group_capacity = 1024 (single CPU sched domain) and this leads to
+group_is_overloaded() returning true (2) and group_has_capacity() false
+(3) much more often compared to the case when (1) is called.
+
+I.e. there are much more cases of 'group_is_overloaded' and
+'group_fully_busy' in WF_FORK wakeup sched_balance_find_dst_cpu() which
+then returns much more often a CPU != smp_processor_id() (5).
+
+This isn't good for these extremely short running tasks (FORK + EXIT)
+and also involves calling sched_balance_find_dst_group_cpu() unnecessary
+(single CPU sched domain).
+
+Instead if (1) is called for 'p->flags & PF_EXITING' then the path
+(4),(6) is taken much more often.
+
+  select_task_rq_fair(..., wake_flags = WF_FORK)
+
+    cpu = smp_processor_id()
+
+    new_cpu = sched_balance_find_dst_cpu(..., cpu, ...)
+
+      group = sched_balance_find_dst_group(..., cpu)
+
+        do {
+
+          update_sg_wakeup_stats()
+
+            sgs->group_type = group_classify()
+
+              if group_is_overloaded()                             (2)
+                return group_overloaded
+
+              if !group_has_capacity()                             (3)
+                return group_fully_busy
+
+              return group_has_spare                               (4)
+
+        } while group
+
+        if local_sgs.group_type > idlest_sgs.group_type
+          return idlest                                            (5)
+
+        case group_has_spare:
+
+          if local_sgs.idle_cpus >= idlest_sgs.idle_cpus
+            return NULL                                            (6)
+
+Unixbench Tests './Run -c 4 spawn' on:
+
+(a) VM AWS instance (m7gd.16xlarge) with v6.13 ('maxcpus=4 nr_cpus=4')
+    and Ubuntu 22.04.5 LTS (aarch64).
+
+    Shell & test run in '/user.slice/user-1000.slice/session-1.scope'.
+
+    w/o patch	w/ patch
+    21005	27120
+
+(b) i7-13700K with tip/sched/core ('nosmt maxcpus=8 nr_cpus=8') and
+    Ubuntu 22.04.5 LTS (x86_64).
+
+    Shell & test run in '/A'.
+
+    w/o patch	w/ patch
+    67675	88806
+
+CONFIG_SCHED_AUTOGROUP=y & /sys/proc/kernel/sched_autogroup_enabled equal
+0 or 1.
+
+[1] https://lkml.kernel.org/r/20250205151026.13061-1-hagarhem@amazon.com
+
+Reported-by: Hazem Mohamed Abuelfotoh <abuehaze@amazon.com>
+Tested-by: Hagar Hemdan <hagarhem@amazon.com>
+Signed-off-by: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
+---
+ kernel/sched/core.c | 21 +++------------------
+ 1 file changed, 3 insertions(+), 18 deletions(-)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 86cb6db08168..cb530586f50d 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -9009,7 +9009,7 @@ void sched_release_group(struct task_group *tg)
+ 	spin_unlock_irqrestore(&task_group_lock, flags);
+ }
+ 
+-static struct task_group *sched_get_task_group(struct task_struct *tsk)
++static void sched_change_group(struct task_struct *tsk)
+ {
+ 	struct task_group *tg;
+ 
+@@ -9021,13 +9021,7 @@ static struct task_group *sched_get_task_group(struct task_struct *tsk)
+ 	tg = container_of(task_css_check(tsk, cpu_cgrp_id, true),
+ 			  struct task_group, css);
+ 	tg = autogroup_task_group(tsk, tg);
+-
+-	return tg;
+-}
+-
+-static void sched_change_group(struct task_struct *tsk, struct task_group *group)
+-{
+-	tsk->sched_task_group = group;
++	tsk->sched_task_group = tg;
+ 
+ #ifdef CONFIG_FAIR_GROUP_SCHED
+ 	if (tsk->sched_class->task_change_group)
+@@ -9048,20 +9042,11 @@ void sched_move_task(struct task_struct *tsk, bool for_autogroup)
+ {
+ 	int queued, running, queue_flags =
+ 		DEQUEUE_SAVE | DEQUEUE_MOVE | DEQUEUE_NOCLOCK;
+-	struct task_group *group;
+ 	struct rq *rq;
+ 
+ 	CLASS(task_rq_lock, rq_guard)(tsk);
+ 	rq = rq_guard.rq;
+ 
+-	/*
+-	 * Esp. with SCHED_AUTOGROUP enabled it is possible to get superfluous
+-	 * group changes.
+-	 */
+-	group = sched_get_task_group(tsk);
+-	if (group == tsk->sched_task_group)
+-		return;
+-
+ 	update_rq_clock(rq);
+ 
+ 	running = task_current_donor(rq, tsk);
+@@ -9072,7 +9057,7 @@ void sched_move_task(struct task_struct *tsk, bool for_autogroup)
+ 	if (running)
+ 		put_prev_task(rq, tsk);
+ 
+-	sched_change_group(tsk, group);
++	sched_change_group(tsk);
+ 	if (!for_autogroup)
+ 		scx_cgroup_move_task(tsk);
+ 
 -- 
 2.48.1
