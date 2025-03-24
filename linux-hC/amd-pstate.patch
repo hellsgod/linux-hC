@@ -1,1856 +1,148 @@
-From bb9b4bcdec251e76df45ef4607ca93ca2cea3856 Mon Sep 17 00:00:00 2001
-From: Dhananjay Ugwekar <Dhananjay.Ugwekar@amd.com>
-Date: Wed, 4 Dec 2024 14:48:38 +0000
-Subject: [PATCH 01/46] cpufreq/amd-pstate: Convert the
- amd_pstate_get/set_epp() to static calls
+From 640fd97bd35e4c960617fc695c9335916dce70b9 Mon Sep 17 00:00:00 2001
+From: K Prateek Nayak <kprateek.nayak@amd.com>
+Date: Mon, 23 Dec 2024 04:34:07 +0000
+Subject: [PATCH 01/30] sched/fair: Uncache asym_prefer_cpu and find it during
+ update_sd_lb_stats()
 
-MSR and shared memory based systems have different mechanisms to get and
-set the epp value. Split those mechanisms into different functions and
-assign them appropriately to the static calls at boot time. This eliminates
-the need for the "if(cpu_feature_enabled(X86_FEATURE_CPPC))" checks at
-runtime.
+On AMD processors supporting dynamic preferred core ranking, the
+asym_prefer_cpu cached in sched_group can change dynamically. Since
+asym_prefer_cpu is cached when the sched domain hierarchy is built,
+updating the cached value across the system would require rebuilding
+the sched domain which is prohibitively expensive.
 
-Also, propagate the error code from rdmsrl_on_cpu() and cppc_get_epp_perf()
-to *_get_epp()'s caller, instead of returning -EIO unconditionally.
+All the asym_prefer_cpu comparisons in the load balancing path are only
+carried out post the sched group stats have been updated after iterating
+all the CPUs in the group. Uncache the asym_prefer_cpu and compute it
+while sched group statistics are being updated as a part of sg_lb_stats.
 
-Signed-off-by: Dhananjay Ugwekar <Dhananjay.Ugwekar@amd.com>
-Reviewed-by: Mario Limonciello <mario.limonciello@amd.com>
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241204144842.164178-2-Dhananjay.Ugwekar@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
+Fixes: f3a052391822 ("cpufreq: amd-pstate: Enable amd-pstate preferred core support")
+Signed-off-by: K Prateek Nayak <kprateek.nayak@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 92 +++++++++++++++++++++++-------------
- 1 file changed, 60 insertions(+), 32 deletions(-)
+ kernel/sched/fair.c     | 21 +++++++++++++++++++--
+ kernel/sched/sched.h    |  1 -
+ kernel/sched/topology.c | 15 +--------------
+ 3 files changed, 20 insertions(+), 17 deletions(-)
 
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index f71057c2cf90..bca290eb131c 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -180,26 +180,40 @@ static inline int get_mode_idx_from_str(const char *str, size_t size)
- static DEFINE_MUTEX(amd_pstate_limits_lock);
- static DEFINE_MUTEX(amd_pstate_driver_lock);
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 1c0ef435a7aa..abebb1185010 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -9906,6 +9906,8 @@ struct sg_lb_stats {
+ 	unsigned int group_weight;
+ 	enum group_type group_type;
+ 	unsigned int group_asym_packing;	/* Tasks should be moved to preferred CPU */
++	unsigned int asym_prefer_cpu;		/* Group CPU with highest asym priority */
++	int highest_asym_prio;			/* Asym priority of asym_prefer_cpu */
+ 	unsigned int group_smt_balance;		/* Task on busy SMT be moved */
+ 	unsigned long group_misfit_task_load;	/* A CPU has a task too big for its capacity */
+ #ifdef CONFIG_NUMA_BALANCING
+@@ -10235,7 +10237,7 @@ sched_group_asym(struct lb_env *env, struct sg_lb_stats *sgs, struct sched_group
+ 	    (sgs->group_weight - sgs->idle_cpus != 1))
+ 		return false;
  
--static s16 amd_pstate_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
-+static s16 msr_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
- {
- 	u64 epp;
- 	int ret;
+-	return sched_asym(env->sd, env->dst_cpu, group->asym_prefer_cpu);
++	return sched_asym(env->sd, env->dst_cpu, sgs->asym_prefer_cpu);
+ }
  
--	if (cpu_feature_enabled(X86_FEATURE_CPPC)) {
--		if (!cppc_req_cached) {
--			epp = rdmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ,
--					&cppc_req_cached);
--			if (epp)
--				return epp;
--		}
--		epp = (cppc_req_cached >> 24) & 0xFF;
--	} else {
--		ret = cppc_get_epp_perf(cpudata->cpu, &epp);
-+	if (!cppc_req_cached) {
-+		ret = rdmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, &cppc_req_cached);
- 		if (ret < 0) {
- 			pr_debug("Could not retrieve energy perf value (%d)\n", ret);
--			return -EIO;
-+			return ret;
+ /* One group has more than one SMT CPU while the other group does not */
+@@ -10316,6 +10318,17 @@ sched_reduced_capacity(struct rq *rq, struct sched_domain *sd)
+ 	return check_cpu_capacity(rq, sd);
+ }
+ 
++static inline void
++update_sg_pick_asym_prefer(struct sg_lb_stats *sgs, int cpu)
++{
++	int asym_prio = arch_asym_cpu_priority(cpu);
++
++	if (asym_prio > sgs->highest_asym_prio) {
++		sgs->asym_prefer_cpu = cpu;
++		sgs->highest_asym_prio = asym_prio;
++	}
++}
++
+ /**
+  * update_sg_lb_stats - Update sched_group's statistics for load balancing.
+  * @env: The load balancing environment.
+@@ -10338,6 +10351,7 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+ 	memset(sgs, 0, sizeof(*sgs));
+ 
+ 	local_group = group == sds->local;
++	sgs->highest_asym_prio = INT_MIN;
+ 
+ 	for_each_cpu_and(i, sched_group_span(group), env->cpus) {
+ 		struct rq *rq = cpu_rq(i);
+@@ -10351,6 +10365,9 @@ static inline void update_sg_lb_stats(struct lb_env *env,
+ 		nr_running = rq->nr_running;
+ 		sgs->sum_nr_running += nr_running;
+ 
++		if (sd_flags & SD_ASYM_PACKING)
++			update_sg_pick_asym_prefer(sgs, i);
++
+ 		if (cpu_overutilized(i))
+ 			*sg_overutilized = 1;
+ 
+@@ -10472,7 +10489,7 @@ static bool update_sd_pick_busiest(struct lb_env *env,
+ 
+ 	case group_asym_packing:
+ 		/* Prefer to move from lowest priority CPU's work */
+-		return sched_asym_prefer(sds->busiest->asym_prefer_cpu, sg->asym_prefer_cpu);
++		return sched_asym_prefer(busiest->asym_prefer_cpu, sgs->asym_prefer_cpu);
+ 
+ 	case group_misfit_task:
+ 		/*
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index c8512a9fb022..d83d98d5e26c 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -2086,7 +2086,6 @@ struct sched_group {
+ 	unsigned int		group_weight;
+ 	unsigned int		cores;
+ 	struct sched_group_capacity *sgc;
+-	int			asym_prefer_cpu;	/* CPU of highest priority in group */
+ 	int			flags;
+ 
+ 	/*
+diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
+index c49aea8c1025..b61a261ee45b 100644
+--- a/kernel/sched/topology.c
++++ b/kernel/sched/topology.c
+@@ -1302,7 +1302,7 @@ static void init_sched_groups_capacity(int cpu, struct sched_domain *sd)
+ 	WARN_ON(!sg);
+ 
+ 	do {
+-		int cpu, cores = 0, max_cpu = -1;
++		int cpu, cores = 0;
+ 
+ 		sg->group_weight = cpumask_weight(sched_group_span(sg));
+ 
+@@ -1314,19 +1314,6 @@ static void init_sched_groups_capacity(int cpu, struct sched_domain *sd)
+ #endif
  		}
- 	}
-+	epp = (cppc_req_cached >> 24) & 0xFF;
-+
-+	return (s16)epp;
-+}
-+
-+DEFINE_STATIC_CALL(amd_pstate_get_epp, msr_get_epp);
-+
-+static inline s16 amd_pstate_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
-+{
-+	return static_call(amd_pstate_get_epp)(cpudata, cppc_req_cached);
-+}
-+
-+static s16 shmem_get_epp(struct amd_cpudata *cpudata, u64 dummy)
-+{
-+	u64 epp;
-+	int ret;
-+
-+	ret = cppc_get_epp_perf(cpudata->cpu, &epp);
-+	if (ret < 0) {
-+		pr_debug("Could not retrieve energy perf value (%d)\n", ret);
-+		return ret;
-+	}
- 
- 	return (s16)(epp & 0xff);
- }
-@@ -253,33 +267,45 @@ static inline void amd_pstate_update_perf(struct amd_cpudata *cpudata,
- 					    max_perf, fast_switch);
- }
- 
--static int amd_pstate_set_epp(struct amd_cpudata *cpudata, u32 epp)
-+static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
- {
- 	int ret;
--	struct cppc_perf_ctrls perf_ctrls;
+ 		sg->cores = cores;
 -
--	if (cpu_feature_enabled(X86_FEATURE_CPPC)) {
--		u64 value = READ_ONCE(cpudata->cppc_req_cached);
- 
--		value &= ~GENMASK_ULL(31, 24);
--		value |= (u64)epp << 24;
--		WRITE_ONCE(cpudata->cppc_req_cached, value);
-+	u64 value = READ_ONCE(cpudata->cppc_req_cached);
- 
--		ret = wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, value);
--		if (!ret)
--			cpudata->epp_cached = epp;
--	} else {
--		amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
--					     cpudata->max_limit_perf, false);
-+	value &= ~GENMASK_ULL(31, 24);
-+	value |= (u64)epp << 24;
-+	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
--		perf_ctrls.energy_perf = epp;
--		ret = cppc_set_epp_perf(cpudata->cpu, &perf_ctrls, 1);
--		if (ret) {
--			pr_debug("failed to set energy perf value (%d)\n", ret);
--			return ret;
+-		if (!(sd->flags & SD_ASYM_PACKING))
+-			goto next;
+-
+-		for_each_cpu(cpu, sched_group_span(sg)) {
+-			if (max_cpu < 0)
+-				max_cpu = cpu;
+-			else if (sched_asym_prefer(cpu, max_cpu))
+-				max_cpu = cpu;
 -		}
-+	ret = wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, value);
-+	if (!ret)
- 		cpudata->epp_cached = epp;
-+
-+	return ret;
-+}
-+
-+DEFINE_STATIC_CALL(amd_pstate_set_epp, msr_set_epp);
-+
-+static inline int amd_pstate_set_epp(struct amd_cpudata *cpudata, u32 epp)
-+{
-+	return static_call(amd_pstate_set_epp)(cpudata, epp);
-+}
-+
-+static int shmem_set_epp(struct amd_cpudata *cpudata, u32 epp)
-+{
-+	int ret;
-+	struct cppc_perf_ctrls perf_ctrls;
-+
-+	amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
-+				     cpudata->max_limit_perf, false);
-+
-+	perf_ctrls.energy_perf = epp;
-+	ret = cppc_set_epp_perf(cpudata->cpu, &perf_ctrls, 1);
-+	if (ret) {
-+		pr_debug("failed to set energy perf value (%d)\n", ret);
-+		return ret;
- 	}
-+	cpudata->epp_cached = epp;
- 
- 	return ret;
- }
-@@ -1826,6 +1852,8 @@ static int __init amd_pstate_init(void)
- 		static_call_update(amd_pstate_cppc_enable, shmem_cppc_enable);
- 		static_call_update(amd_pstate_init_perf, shmem_init_perf);
- 		static_call_update(amd_pstate_update_perf, shmem_update_perf);
-+		static_call_update(amd_pstate_get_epp, shmem_get_epp);
-+		static_call_update(amd_pstate_set_epp, shmem_set_epp);
- 	}
- 
- 	if (amd_pstate_prefcore) {
--- 
-2.48.1
-
-
-From 8c89becd37b89554838ea9b374ef4515b1323ac3 Mon Sep 17 00:00:00 2001
-From: Dhananjay Ugwekar <Dhananjay.Ugwekar@amd.com>
-Date: Wed, 4 Dec 2024 14:48:39 +0000
-Subject: [PATCH 02/46] cpufreq/amd-pstate: Move the invocation of
- amd_pstate_update_perf()
-
-amd_pstate_update_perf() should not be a part of shmem_set_epp() function,
-so move it to the amd_pstate_epp_update_limit() function, where it is needed.
-
-Signed-off-by: Dhananjay Ugwekar <Dhananjay.Ugwekar@amd.com>
-Reviewed-by: Mario Limonciello <mario.limonciello@amd.com>
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241204144842.164178-3-Dhananjay.Ugwekar@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index bca290eb131c..6678e7e4cfc3 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -296,9 +296,6 @@ static int shmem_set_epp(struct amd_cpudata *cpudata, u32 epp)
- 	int ret;
- 	struct cppc_perf_ctrls perf_ctrls;
- 
--	amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
--				     cpudata->max_limit_perf, false);
+-		sg->asym_prefer_cpu = max_cpu;
 -
- 	perf_ctrls.energy_perf = epp;
- 	ret = cppc_set_epp_perf(cpudata->cpu, &perf_ctrls, 1);
- 	if (ret) {
-@@ -1597,6 +1594,10 @@ static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- 		epp = 0;
- 
- 	WRITE_ONCE(cpudata->cppc_req_cached, value);
-+
-+	amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
-+			       cpudata->max_limit_perf, false);
-+
- 	return amd_pstate_set_epp(cpudata, epp);
- }
+-next:
+ 		sg = sg->next;
+ 	} while (sg != sd->groups);
  
 -- 
 2.48.1
 
 
-From 0e4b82a53495f683ac68cf943998e8a50fe9b775 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:36 -0600
-Subject: [PATCH 03/46] cpufreq/amd-pstate: Add trace event for EPP perf
- updates
-
-In "active" mode the most important thing for debugging whether
-an issue is hardware or software based is to look at what was the
-last thing written to the CPPC request MSR or shared memory region.
-
-The 'amd_pstate_epp_perf' trace event shows the values being written
-for all CPUs.
-
-Reviewed-by: Perry Yuan <perry.yuan@amd.com>
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-4-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate-trace.h | 45 ++++++++++++++++++++++++++++++
- drivers/cpufreq/amd-pstate.c       | 28 +++++++++++++++++++
- 2 files changed, 73 insertions(+)
-
-diff --git a/drivers/cpufreq/amd-pstate-trace.h b/drivers/cpufreq/amd-pstate-trace.h
-index 35f38ae67fb1..e2221a4b6901 100644
---- a/drivers/cpufreq/amd-pstate-trace.h
-+++ b/drivers/cpufreq/amd-pstate-trace.h
-@@ -88,6 +88,51 @@ TRACE_EVENT(amd_pstate_perf,
- 		 )
- );
- 
-+TRACE_EVENT(amd_pstate_epp_perf,
-+
-+	TP_PROTO(unsigned int cpu_id,
-+		 unsigned int highest_perf,
-+		 unsigned int epp,
-+		 unsigned int min_perf,
-+		 unsigned int max_perf,
-+		 bool boost
-+		 ),
-+
-+	TP_ARGS(cpu_id,
-+		highest_perf,
-+		epp,
-+		min_perf,
-+		max_perf,
-+		boost),
-+
-+	TP_STRUCT__entry(
-+		__field(unsigned int, cpu_id)
-+		__field(unsigned int, highest_perf)
-+		__field(unsigned int, epp)
-+		__field(unsigned int, min_perf)
-+		__field(unsigned int, max_perf)
-+		__field(bool, boost)
-+		),
-+
-+	TP_fast_assign(
-+		__entry->cpu_id = cpu_id;
-+		__entry->highest_perf = highest_perf;
-+		__entry->epp = epp;
-+		__entry->min_perf = min_perf;
-+		__entry->max_perf = max_perf;
-+		__entry->boost = boost;
-+		),
-+
-+	TP_printk("cpu%u: [%u<->%u]/%u, epp=%u, boost=%u",
-+		  (unsigned int)__entry->cpu_id,
-+		  (unsigned int)__entry->min_perf,
-+		  (unsigned int)__entry->max_perf,
-+		  (unsigned int)__entry->highest_perf,
-+		  (unsigned int)__entry->epp,
-+		  (bool)__entry->boost
-+		 )
-+);
-+
- #endif /* _AMD_PSTATE_TRACE_H */
- 
- /* This part must be outside protection */
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 6678e7e4cfc3..5144d90bb347 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -324,6 +324,14 @@ static int amd_pstate_set_energy_pref_index(struct amd_cpudata *cpudata,
- 		return -EBUSY;
- 	}
- 
-+	if (trace_amd_pstate_epp_perf_enabled()) {
-+		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
-+					  epp,
-+					  AMD_CPPC_MIN_PERF(cpudata->cppc_req_cached),
-+					  AMD_CPPC_MAX_PERF(cpudata->cppc_req_cached),
-+					  cpudata->boost_state);
-+	}
-+
- 	ret = amd_pstate_set_epp(cpudata, epp);
- 
- 	return ret;
-@@ -1595,6 +1603,13 @@ static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- 
- 	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
-+	if (trace_amd_pstate_epp_perf_enabled()) {
-+		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf, epp,
-+					  cpudata->min_limit_perf,
-+					  cpudata->max_limit_perf,
-+					  policy->boost_enabled);
-+	}
-+
- 	amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
- 			       cpudata->max_limit_perf, false);
- 
-@@ -1638,6 +1653,13 @@ static void amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
- 
- 	max_perf = READ_ONCE(cpudata->highest_perf);
- 
-+	if (trace_amd_pstate_epp_perf_enabled()) {
-+		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
-+					  cpudata->epp_cached,
-+					  AMD_CPPC_MIN_PERF(cpudata->cppc_req_cached),
-+					  max_perf, cpudata->boost_state);
-+	}
-+
- 	amd_pstate_update_perf(cpudata, 0, 0, max_perf, false);
- 	amd_pstate_set_epp(cpudata, cpudata->epp_cached);
- }
-@@ -1666,6 +1688,12 @@ static int amd_pstate_epp_cpu_offline(struct cpufreq_policy *policy)
- 
- 	guard(mutex)(&amd_pstate_limits_lock);
- 
-+	if (trace_amd_pstate_epp_perf_enabled()) {
-+		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
-+					  AMD_CPPC_EPP_BALANCE_POWERSAVE,
-+					  min_perf, min_perf, policy->boost_enabled);
-+	}
-+
- 	amd_pstate_update_perf(cpudata, min_perf, 0, min_perf, false);
- 	amd_pstate_set_epp(cpudata, AMD_CPPC_EPP_BALANCE_POWERSAVE);
- 
--- 
-2.48.1
-
-
-From 1f74cd6c12f96c2db14b51acec5ce64dc484bc88 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:38 -0600
-Subject: [PATCH 04/46] cpufreq/amd-pstate: Drop cached epp_policy variable
-
-epp_policy is not used by any of the current code and there
-is no need to cache it.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-6-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 3 ---
- drivers/cpufreq/amd-pstate.h | 2 --
- 2 files changed, 5 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 5144d90bb347..55e2da54c9fc 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -1479,7 +1479,6 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
- 		return -ENOMEM;
- 
- 	cpudata->cpu = policy->cpu;
--	cpudata->epp_policy = 0;
- 
- 	ret = amd_pstate_init_perf(cpudata);
- 	if (ret)
-@@ -1586,8 +1585,6 @@ static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- 	value &= ~AMD_CPPC_DES_PERF(~0L);
- 	value |= AMD_CPPC_DES_PERF(0);
- 
--	cpudata->epp_policy = cpudata->policy;
--
- 	/* Get BIOS pre-defined epp value */
- 	epp = amd_pstate_get_epp(cpudata, value);
- 	if (epp < 0) {
-diff --git a/drivers/cpufreq/amd-pstate.h b/drivers/cpufreq/amd-pstate.h
-index cd573bc6b6db..7765c82f975c 100644
---- a/drivers/cpufreq/amd-pstate.h
-+++ b/drivers/cpufreq/amd-pstate.h
-@@ -57,7 +57,6 @@ struct amd_aperf_mperf {
-  * @hw_prefcore: check whether HW supports preferred core featue.
-  * 		  Only when hw_prefcore and early prefcore param are true,
-  * 		  AMD P-State driver supports preferred core featue.
-- * @epp_policy: Last saved policy used to set energy-performance preference
-  * @epp_cached: Cached CPPC energy-performance preference value
-  * @policy: Cpufreq policy value
-  * @cppc_cap1_cached Cached MSR_AMD_CPPC_CAP1 register value
-@@ -94,7 +93,6 @@ struct amd_cpudata {
- 	bool	hw_prefcore;
- 
- 	/* EPP feature related attributes*/
--	s16	epp_policy;
- 	s16	epp_cached;
- 	u32	policy;
- 	u64	cppc_cap1_cached;
--- 
-2.48.1
-
-
-From 1b13194273dc8846410be90f9494a5e2fd98a224 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:39 -0600
-Subject: [PATCH 05/46] cpufreq/amd-pstate: Use FIELD_PREP and FIELD_GET macros
-
-The FIELD_PREP and FIELD_GET macros improve readability and help
-to avoid shifting bugs.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-7-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 51 ++++++++++++++++--------------------
- 1 file changed, 23 insertions(+), 28 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 55e2da54c9fc..1edbccf0986e 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -22,6 +22,7 @@
- 
- #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
- 
-+#include <linux/bitfield.h>
- #include <linux/kernel.h>
- #include <linux/module.h>
- #include <linux/init.h>
-@@ -88,6 +89,11 @@ static bool cppc_enabled;
- static bool amd_pstate_prefcore = true;
- static struct quirk_entry *quirks;
- 
-+#define AMD_CPPC_MAX_PERF_MASK		GENMASK(7, 0)
-+#define AMD_CPPC_MIN_PERF_MASK		GENMASK(15, 8)
-+#define AMD_CPPC_DES_PERF_MASK		GENMASK(23, 16)
-+#define AMD_CPPC_EPP_PERF_MASK		GENMASK(31, 24)
-+
- /*
-  * AMD Energy Preference Performance (EPP)
-  * The EPP is used in the CCLK DPM controller to drive
-@@ -182,7 +188,6 @@ static DEFINE_MUTEX(amd_pstate_driver_lock);
- 
- static s16 msr_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
- {
--	u64 epp;
- 	int ret;
- 
- 	if (!cppc_req_cached) {
-@@ -192,9 +197,8 @@ static s16 msr_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
- 			return ret;
- 		}
- 	}
--	epp = (cppc_req_cached >> 24) & 0xFF;
- 
--	return (s16)epp;
-+	return FIELD_GET(AMD_CPPC_EPP_PERF_MASK, cppc_req_cached);
- }
- 
- DEFINE_STATIC_CALL(amd_pstate_get_epp, msr_get_epp);
-@@ -269,12 +273,11 @@ static inline void amd_pstate_update_perf(struct amd_cpudata *cpudata,
- 
- static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
- {
--	int ret;
--
- 	u64 value = READ_ONCE(cpudata->cppc_req_cached);
-+	int ret;
- 
--	value &= ~GENMASK_ULL(31, 24);
--	value |= (u64)epp << 24;
-+	value &= ~AMD_CPPC_EPP_PERF_MASK;
-+	value |= FIELD_PREP(AMD_CPPC_EPP_PERF_MASK, epp);
- 	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
- 	ret = wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, value);
-@@ -327,8 +330,8 @@ static int amd_pstate_set_energy_pref_index(struct amd_cpudata *cpudata,
- 	if (trace_amd_pstate_epp_perf_enabled()) {
- 		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
- 					  epp,
--					  AMD_CPPC_MIN_PERF(cpudata->cppc_req_cached),
--					  AMD_CPPC_MAX_PERF(cpudata->cppc_req_cached),
-+					  FIELD_GET(AMD_CPPC_MIN_PERF_MASK, cpudata->cppc_req_cached),
-+					  FIELD_GET(AMD_CPPC_MAX_PERF_MASK, cpudata->cppc_req_cached),
- 					  cpudata->boost_state);
- 	}
- 
-@@ -542,18 +545,15 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
- 		des_perf = 0;
- 	}
- 
--	value &= ~AMD_CPPC_MIN_PERF(~0L);
--	value |= AMD_CPPC_MIN_PERF(min_perf);
--
--	value &= ~AMD_CPPC_DES_PERF(~0L);
--	value |= AMD_CPPC_DES_PERF(des_perf);
--
- 	/* limit the max perf when core performance boost feature is disabled */
- 	if (!cpudata->boost_supported)
- 		max_perf = min_t(unsigned long, nominal_perf, max_perf);
- 
--	value &= ~AMD_CPPC_MAX_PERF(~0L);
--	value |= AMD_CPPC_MAX_PERF(max_perf);
-+	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
-+		   AMD_CPPC_DES_PERF_MASK);
-+	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, max_perf);
-+	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, des_perf);
-+	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, min_perf);
- 
- 	if (trace_amd_pstate_perf_enabled() && amd_pstate_sample(cpudata)) {
- 		trace_amd_pstate_perf(min_perf, des_perf, max_perf, cpudata->freq,
-@@ -1574,16 +1574,11 @@ static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- 	if (cpudata->policy == CPUFREQ_POLICY_PERFORMANCE)
- 		min_perf = min(cpudata->nominal_perf, max_perf);
- 
--	/* Initial min/max values for CPPC Performance Controls Register */
--	value &= ~AMD_CPPC_MIN_PERF(~0L);
--	value |= AMD_CPPC_MIN_PERF(min_perf);
--
--	value &= ~AMD_CPPC_MAX_PERF(~0L);
--	value |= AMD_CPPC_MAX_PERF(max_perf);
--
--	/* CPPC EPP feature require to set zero to the desire perf bit */
--	value &= ~AMD_CPPC_DES_PERF(~0L);
--	value |= AMD_CPPC_DES_PERF(0);
-+	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
-+		   AMD_CPPC_DES_PERF_MASK);
-+	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, max_perf);
-+	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, 0);
-+	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, min_perf);
- 
- 	/* Get BIOS pre-defined epp value */
- 	epp = amd_pstate_get_epp(cpudata, value);
-@@ -1653,7 +1648,7 @@ static void amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
- 	if (trace_amd_pstate_epp_perf_enabled()) {
- 		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
- 					  cpudata->epp_cached,
--					  AMD_CPPC_MIN_PERF(cpudata->cppc_req_cached),
-+					  FIELD_GET(AMD_CPPC_MIN_PERF_MASK, cpudata->cppc_req_cached),
- 					  max_perf, cpudata->boost_state);
- 	}
- 
--- 
-2.48.1
-
-
-From 7ac4b14edf0c2f28113de2ec45b5b662556ead16 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:40 -0600
-Subject: [PATCH 06/46] cpufreq/amd-pstate: Only update the cached value in
- msr_set_epp() on success
-
-If writing the MSR MSR_AMD_CPPC_REQ fails then the cached value in the
-amd_cpudata structure should not be updated.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-8-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 10 +++++++---
- 1 file changed, 7 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 1edbccf0986e..5efb8527becc 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -278,11 +278,15 @@ static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
- 
- 	value &= ~AMD_CPPC_EPP_PERF_MASK;
- 	value |= FIELD_PREP(AMD_CPPC_EPP_PERF_MASK, epp);
--	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
- 	ret = wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, value);
--	if (!ret)
--		cpudata->epp_cached = epp;
-+	if (ret) {
-+		pr_err("failed to set energy perf value (%d)\n", ret);
-+		return ret;
-+	}
-+
-+	cpudata->epp_cached = epp;
-+	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
- 	return ret;
- }
--- 
-2.48.1
-
-
-From b828bff21bdadea254c93f7d522b758766b4d35b Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:41 -0600
-Subject: [PATCH 07/46] cpufreq/amd-pstate: store all values in cpudata struct
- in khz
-
-Storing values in the cpudata structure in different units leads
-to confusion and hardcoded conversions elsewhere.  After ratios are
-calculated store everything in khz for any future use. Adjust all
-relevant consumers for this change as well.
-
-Suggested-by: Dhananjay Ugwekar <Dhananjay.Ugwekar@amd.com>
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-9-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate-ut.c | 12 +++++-------
- drivers/cpufreq/amd-pstate.c    | 28 ++++++++++++++--------------
- 2 files changed, 19 insertions(+), 21 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate-ut.c b/drivers/cpufreq/amd-pstate-ut.c
-index a261d7300951..3a0a380c3590 100644
---- a/drivers/cpufreq/amd-pstate-ut.c
-+++ b/drivers/cpufreq/amd-pstate-ut.c
-@@ -207,7 +207,6 @@ static void amd_pstate_ut_check_freq(u32 index)
- 	int cpu = 0;
- 	struct cpufreq_policy *policy = NULL;
- 	struct amd_cpudata *cpudata = NULL;
--	u32 nominal_freq_khz;
- 
- 	for_each_possible_cpu(cpu) {
- 		policy = cpufreq_cpu_get(cpu);
-@@ -215,14 +214,13 @@ static void amd_pstate_ut_check_freq(u32 index)
- 			break;
- 		cpudata = policy->driver_data;
- 
--		nominal_freq_khz = cpudata->nominal_freq*1000;
--		if (!((cpudata->max_freq >= nominal_freq_khz) &&
--			(nominal_freq_khz > cpudata->lowest_nonlinear_freq) &&
-+		if (!((cpudata->max_freq >= cpudata->nominal_freq) &&
-+			(cpudata->nominal_freq > cpudata->lowest_nonlinear_freq) &&
- 			(cpudata->lowest_nonlinear_freq > cpudata->min_freq) &&
- 			(cpudata->min_freq > 0))) {
- 			amd_pstate_ut_cases[index].result = AMD_PSTATE_UT_RESULT_FAIL;
- 			pr_err("%s cpu%d max=%d >= nominal=%d > lowest_nonlinear=%d > min=%d > 0, the formula is incorrect!\n",
--				__func__, cpu, cpudata->max_freq, nominal_freq_khz,
-+				__func__, cpu, cpudata->max_freq, cpudata->nominal_freq,
- 				cpudata->lowest_nonlinear_freq, cpudata->min_freq);
- 			goto skip_test;
- 		}
-@@ -236,13 +234,13 @@ static void amd_pstate_ut_check_freq(u32 index)
- 
- 		if (cpudata->boost_supported) {
- 			if ((policy->max == cpudata->max_freq) ||
--					(policy->max == nominal_freq_khz))
-+					(policy->max == cpudata->nominal_freq))
- 				amd_pstate_ut_cases[index].result = AMD_PSTATE_UT_RESULT_PASS;
- 			else {
- 				amd_pstate_ut_cases[index].result = AMD_PSTATE_UT_RESULT_FAIL;
- 				pr_err("%s cpu%d policy_max=%d should be equal cpu_max=%d or cpu_nominal=%d !\n",
- 					__func__, cpu, policy->max, cpudata->max_freq,
--					nominal_freq_khz);
-+					cpudata->nominal_freq);
- 				goto skip_test;
- 			}
- 		} else {
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 5efb8527becc..1338d07e918a 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -739,8 +739,8 @@ static int amd_pstate_cpu_boost_update(struct cpufreq_policy *policy, bool on)
- 
- 	if (on)
- 		policy->cpuinfo.max_freq = max_freq;
--	else if (policy->cpuinfo.max_freq > nominal_freq * 1000)
--		policy->cpuinfo.max_freq = nominal_freq * 1000;
-+	else if (policy->cpuinfo.max_freq > nominal_freq)
-+		policy->cpuinfo.max_freq = nominal_freq;
- 
- 	policy->max = policy->cpuinfo.max_freq;
- 
-@@ -941,29 +941,29 @@ static int amd_pstate_init_freq(struct amd_cpudata *cpudata)
- 		return ret;
- 
- 	if (quirks && quirks->lowest_freq)
--		min_freq = quirks->lowest_freq * 1000;
-+		min_freq = quirks->lowest_freq;
- 	else
--		min_freq = cppc_perf.lowest_freq * 1000;
-+		min_freq = cppc_perf.lowest_freq;
- 
- 	if (quirks && quirks->nominal_freq)
--		nominal_freq = quirks->nominal_freq ;
-+		nominal_freq = quirks->nominal_freq;
- 	else
- 		nominal_freq = cppc_perf.nominal_freq;
- 
- 	nominal_perf = READ_ONCE(cpudata->nominal_perf);
- 
- 	boost_ratio = div_u64(cpudata->highest_perf << SCHED_CAPACITY_SHIFT, nominal_perf);
--	max_freq = (nominal_freq * boost_ratio >> SCHED_CAPACITY_SHIFT) * 1000;
-+	max_freq = (nominal_freq * boost_ratio >> SCHED_CAPACITY_SHIFT);
- 
- 	lowest_nonlinear_perf = READ_ONCE(cpudata->lowest_nonlinear_perf);
- 	lowest_nonlinear_ratio = div_u64(lowest_nonlinear_perf << SCHED_CAPACITY_SHIFT,
- 					 nominal_perf);
--	lowest_nonlinear_freq = (nominal_freq * lowest_nonlinear_ratio >> SCHED_CAPACITY_SHIFT) * 1000;
-+	lowest_nonlinear_freq = (nominal_freq * lowest_nonlinear_ratio >> SCHED_CAPACITY_SHIFT);
- 
--	WRITE_ONCE(cpudata->min_freq, min_freq);
--	WRITE_ONCE(cpudata->lowest_nonlinear_freq, lowest_nonlinear_freq);
--	WRITE_ONCE(cpudata->nominal_freq, nominal_freq);
--	WRITE_ONCE(cpudata->max_freq, max_freq);
-+	WRITE_ONCE(cpudata->min_freq, min_freq * 1000);
-+	WRITE_ONCE(cpudata->lowest_nonlinear_freq, lowest_nonlinear_freq * 1000);
-+	WRITE_ONCE(cpudata->nominal_freq, nominal_freq * 1000);
-+	WRITE_ONCE(cpudata->max_freq, max_freq * 1000);
- 
- 	/**
- 	 * Below values need to be initialized correctly, otherwise driver will fail to load
-@@ -973,13 +973,13 @@ static int amd_pstate_init_freq(struct amd_cpudata *cpudata)
- 	 */
- 	if (min_freq <= 0 || max_freq <= 0 || nominal_freq <= 0 || min_freq > max_freq) {
- 		pr_err("min_freq(%d) or max_freq(%d) or nominal_freq(%d) value is incorrect\n",
--			min_freq, max_freq, nominal_freq * 1000);
-+			min_freq, max_freq, nominal_freq);
- 		return -EINVAL;
- 	}
- 
--	if (lowest_nonlinear_freq <= min_freq || lowest_nonlinear_freq > nominal_freq * 1000) {
-+	if (lowest_nonlinear_freq <= min_freq || lowest_nonlinear_freq > nominal_freq) {
- 		pr_err("lowest_nonlinear_freq(%d) value is out of range [min_freq(%d), nominal_freq(%d)]\n",
--			lowest_nonlinear_freq, min_freq, nominal_freq * 1000);
-+			lowest_nonlinear_freq, min_freq, nominal_freq);
- 		return -EINVAL;
- 	}
- 
--- 
-2.48.1
-
-
-From 4fc35ab3ecbbc8a4bce1d359ef22a9f7dda8058a Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:42 -0600
-Subject: [PATCH 08/46] cpufreq/amd-pstate: Change amd_pstate_update_perf() to
- return an int
-
-As msr_update_perf() calls an MSR it's possible that it fails. Pass
-this return code up to the caller.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-10-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 22 ++++++++++++----------
- 1 file changed, 12 insertions(+), 10 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 1338d07e918a..b3d5717ed955 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -251,24 +251,26 @@ static int amd_pstate_get_energy_pref_index(struct amd_cpudata *cpudata)
- 	return index;
- }
- 
--static void msr_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
-+static int msr_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
- 			       u32 des_perf, u32 max_perf, bool fast_switch)
- {
--	if (fast_switch)
-+	if (fast_switch) {
- 		wrmsrl(MSR_AMD_CPPC_REQ, READ_ONCE(cpudata->cppc_req_cached));
--	else
--		wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ,
--			      READ_ONCE(cpudata->cppc_req_cached));
-+		return 0;
-+	}
-+
-+	return wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ,
-+			     READ_ONCE(cpudata->cppc_req_cached));
- }
- 
- DEFINE_STATIC_CALL(amd_pstate_update_perf, msr_update_perf);
- 
--static inline void amd_pstate_update_perf(struct amd_cpudata *cpudata,
-+static inline int amd_pstate_update_perf(struct amd_cpudata *cpudata,
- 					  u32 min_perf, u32 des_perf,
- 					  u32 max_perf, bool fast_switch)
- {
--	static_call(amd_pstate_update_perf)(cpudata, min_perf, des_perf,
--					    max_perf, fast_switch);
-+	return static_call(amd_pstate_update_perf)(cpudata, min_perf, des_perf,
-+						   max_perf, fast_switch);
- }
- 
- static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
-@@ -480,7 +482,7 @@ static inline int amd_pstate_init_perf(struct amd_cpudata *cpudata)
- 	return static_call(amd_pstate_init_perf)(cpudata);
- }
- 
--static void shmem_update_perf(struct amd_cpudata *cpudata,
-+static int shmem_update_perf(struct amd_cpudata *cpudata,
- 			     u32 min_perf, u32 des_perf,
- 			     u32 max_perf, bool fast_switch)
- {
-@@ -490,7 +492,7 @@ static void shmem_update_perf(struct amd_cpudata *cpudata,
- 	perf_ctrls.min_perf = min_perf;
- 	perf_ctrls.desired_perf = des_perf;
- 
--	cppc_set_perf(cpudata->cpu, &perf_ctrls);
-+	return cppc_set_perf(cpudata->cpu, &perf_ctrls);
- }
- 
- static inline bool amd_pstate_sample(struct amd_cpudata *cpudata)
--- 
-2.48.1
-
-
-From 74c7cfb07215b54b5fb1443bcf531633fdde46b5 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:43 -0600
-Subject: [PATCH 09/46] cpufreq/amd-pstate: Move limit updating code
-
-The limit updating code in amd_pstate_epp_update_limit() should not
-only apply to EPP updates.  Move it to amd_pstate_update_min_max_limit()
-so other callers can benefit as well.
-
-With this move it's not necessary to have clamp_t calls anymore because
-the verify callback is called when setting limits.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-11-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 28 +++++-----------------------
- 1 file changed, 5 insertions(+), 23 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index b3d5717ed955..ab74cce910de 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -537,10 +537,6 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
- 	u32 nominal_perf = READ_ONCE(cpudata->nominal_perf);
- 	u64 value = prev;
- 
--	min_perf = clamp_t(unsigned long, min_perf, cpudata->min_limit_perf,
--			cpudata->max_limit_perf);
--	max_perf = clamp_t(unsigned long, max_perf, cpudata->min_limit_perf,
--			cpudata->max_limit_perf);
- 	des_perf = clamp_t(unsigned long, des_perf, min_perf, max_perf);
- 
- 	max_freq = READ_ONCE(cpudata->max_limit_freq);
-@@ -607,7 +603,7 @@ static int amd_pstate_verify(struct cpufreq_policy_data *policy_data)
- 
- static int amd_pstate_update_min_max_limit(struct cpufreq_policy *policy)
- {
--	u32 max_limit_perf, min_limit_perf, lowest_perf, max_perf, max_freq;
-+	u32 max_limit_perf, min_limit_perf, max_perf, max_freq;
- 	struct amd_cpudata *cpudata = policy->driver_data;
- 
- 	max_perf = READ_ONCE(cpudata->highest_perf);
-@@ -615,12 +611,8 @@ static int amd_pstate_update_min_max_limit(struct cpufreq_policy *policy)
- 	max_limit_perf = div_u64(policy->max * max_perf, max_freq);
- 	min_limit_perf = div_u64(policy->min * max_perf, max_freq);
- 
--	lowest_perf = READ_ONCE(cpudata->lowest_perf);
--	if (min_limit_perf < lowest_perf)
--		min_limit_perf = lowest_perf;
--
--	if (max_limit_perf < min_limit_perf)
--		max_limit_perf = min_limit_perf;
-+	if (cpudata->policy == CPUFREQ_POLICY_PERFORMANCE)
-+		min_limit_perf = min(cpudata->nominal_perf, max_limit_perf);
- 
- 	WRITE_ONCE(cpudata->max_limit_perf, max_limit_perf);
- 	WRITE_ONCE(cpudata->min_limit_perf, min_limit_perf);
-@@ -1563,28 +1555,18 @@ static void amd_pstate_epp_cpu_exit(struct cpufreq_policy *policy)
- static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- {
- 	struct amd_cpudata *cpudata = policy->driver_data;
--	u32 max_perf, min_perf;
- 	u64 value;
- 	s16 epp;
- 
--	max_perf = READ_ONCE(cpudata->highest_perf);
--	min_perf = READ_ONCE(cpudata->lowest_perf);
- 	amd_pstate_update_min_max_limit(policy);
- 
--	max_perf = clamp_t(unsigned long, max_perf, cpudata->min_limit_perf,
--			cpudata->max_limit_perf);
--	min_perf = clamp_t(unsigned long, min_perf, cpudata->min_limit_perf,
--			cpudata->max_limit_perf);
- 	value = READ_ONCE(cpudata->cppc_req_cached);
- 
--	if (cpudata->policy == CPUFREQ_POLICY_PERFORMANCE)
--		min_perf = min(cpudata->nominal_perf, max_perf);
--
- 	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
- 		   AMD_CPPC_DES_PERF_MASK);
--	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, max_perf);
-+	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, cpudata->max_limit_perf);
- 	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, 0);
--	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, min_perf);
-+	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, cpudata->min_limit_perf);
- 
- 	/* Get BIOS pre-defined epp value */
- 	epp = amd_pstate_get_epp(cpudata, value);
--- 
-2.48.1
-
-
-From 7d4e1ea90328194a94e68eb9142c42904c31c213 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:44 -0600
-Subject: [PATCH 10/46] cpufreq/amd-pstate: Cache EPP value and use that
- everywhere
-
-Cache the value in cpudata->epp_cached, and use that for all callers.
-As all callers use cached value merge amd_pstate_get_energy_pref_index()
-into show_energy_performance_preference().
-
-Check if the EPP value is changed before writing it to MSR or
-shared memory region.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-12-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 105 ++++++++++++++---------------------
- 1 file changed, 43 insertions(+), 62 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index ab74cce910de..b59fbb1a7d26 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -186,29 +186,28 @@ static inline int get_mode_idx_from_str(const char *str, size_t size)
- static DEFINE_MUTEX(amd_pstate_limits_lock);
- static DEFINE_MUTEX(amd_pstate_driver_lock);
- 
--static s16 msr_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
-+static s16 msr_get_epp(struct amd_cpudata *cpudata)
- {
-+	u64 value;
- 	int ret;
- 
--	if (!cppc_req_cached) {
--		ret = rdmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, &cppc_req_cached);
--		if (ret < 0) {
--			pr_debug("Could not retrieve energy perf value (%d)\n", ret);
--			return ret;
--		}
-+	ret = rdmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, &value);
-+	if (ret < 0) {
-+		pr_debug("Could not retrieve energy perf value (%d)\n", ret);
-+		return ret;
- 	}
- 
--	return FIELD_GET(AMD_CPPC_EPP_PERF_MASK, cppc_req_cached);
-+	return FIELD_GET(AMD_CPPC_EPP_PERF_MASK, value);
- }
- 
- DEFINE_STATIC_CALL(amd_pstate_get_epp, msr_get_epp);
- 
--static inline s16 amd_pstate_get_epp(struct amd_cpudata *cpudata, u64 cppc_req_cached)
-+static inline s16 amd_pstate_get_epp(struct amd_cpudata *cpudata)
- {
--	return static_call(amd_pstate_get_epp)(cpudata, cppc_req_cached);
-+	return static_call(amd_pstate_get_epp)(cpudata);
- }
- 
--static s16 shmem_get_epp(struct amd_cpudata *cpudata, u64 dummy)
-+static s16 shmem_get_epp(struct amd_cpudata *cpudata)
- {
- 	u64 epp;
- 	int ret;
-@@ -222,35 +221,6 @@ static s16 shmem_get_epp(struct amd_cpudata *cpudata, u64 dummy)
- 	return (s16)(epp & 0xff);
- }
- 
--static int amd_pstate_get_energy_pref_index(struct amd_cpudata *cpudata)
--{
--	s16 epp;
--	int index = -EINVAL;
--
--	epp = amd_pstate_get_epp(cpudata, 0);
--	if (epp < 0)
--		return epp;
--
--	switch (epp) {
--	case AMD_CPPC_EPP_PERFORMANCE:
--		index = EPP_INDEX_PERFORMANCE;
--		break;
--	case AMD_CPPC_EPP_BALANCE_PERFORMANCE:
--		index = EPP_INDEX_BALANCE_PERFORMANCE;
--		break;
--	case AMD_CPPC_EPP_BALANCE_POWERSAVE:
--		index = EPP_INDEX_BALANCE_POWERSAVE;
--		break;
--	case AMD_CPPC_EPP_POWERSAVE:
--		index = EPP_INDEX_POWERSAVE;
--		break;
--	default:
--		break;
--	}
--
--	return index;
--}
--
- static int msr_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
- 			       u32 des_perf, u32 max_perf, bool fast_switch)
- {
-@@ -275,19 +245,23 @@ static inline int amd_pstate_update_perf(struct amd_cpudata *cpudata,
- 
- static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
- {
--	u64 value = READ_ONCE(cpudata->cppc_req_cached);
-+	u64 value, prev;
- 	int ret;
- 
-+	value = prev = READ_ONCE(cpudata->cppc_req_cached);
- 	value &= ~AMD_CPPC_EPP_PERF_MASK;
- 	value |= FIELD_PREP(AMD_CPPC_EPP_PERF_MASK, epp);
- 
-+	if (value == prev)
-+		return 0;
-+
- 	ret = wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, value);
- 	if (ret) {
- 		pr_err("failed to set energy perf value (%d)\n", ret);
- 		return ret;
- 	}
- 
--	cpudata->epp_cached = epp;
-+	WRITE_ONCE(cpudata->epp_cached, epp);
- 	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
- 	return ret;
-@@ -305,13 +279,16 @@ static int shmem_set_epp(struct amd_cpudata *cpudata, u32 epp)
- 	int ret;
- 	struct cppc_perf_ctrls perf_ctrls;
- 
-+	if (epp == cpudata->epp_cached)
-+		return 0;
-+
- 	perf_ctrls.energy_perf = epp;
- 	ret = cppc_set_epp_perf(cpudata->cpu, &perf_ctrls, 1);
- 	if (ret) {
- 		pr_debug("failed to set energy perf value (%d)\n", ret);
- 		return ret;
- 	}
--	cpudata->epp_cached = epp;
-+	WRITE_ONCE(cpudata->epp_cached, epp);
- 
- 	return ret;
- }
-@@ -1215,9 +1192,22 @@ static ssize_t show_energy_performance_preference(
- 	struct amd_cpudata *cpudata = policy->driver_data;
- 	int preference;
- 
--	preference = amd_pstate_get_energy_pref_index(cpudata);
--	if (preference < 0)
--		return preference;
-+	switch (cpudata->epp_cached) {
-+	case AMD_CPPC_EPP_PERFORMANCE:
-+		preference = EPP_INDEX_PERFORMANCE;
-+		break;
-+	case AMD_CPPC_EPP_BALANCE_PERFORMANCE:
-+		preference = EPP_INDEX_BALANCE_PERFORMANCE;
-+		break;
-+	case AMD_CPPC_EPP_BALANCE_POWERSAVE:
-+		preference = EPP_INDEX_BALANCE_POWERSAVE;
-+		break;
-+	case AMD_CPPC_EPP_POWERSAVE:
-+		preference = EPP_INDEX_POWERSAVE;
-+		break;
-+	default:
-+		return -EINVAL;
-+	}
- 
- 	return sysfs_emit(buf, "%s\n", energy_perf_strings[preference]);
- }
-@@ -1502,7 +1492,7 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
- 
- 	policy->driver_data = cpudata;
- 
--	cpudata->epp_cached = cpudata->epp_default = amd_pstate_get_epp(cpudata, 0);
-+	cpudata->epp_cached = cpudata->epp_default = amd_pstate_get_epp(cpudata);
- 
- 	policy->min = policy->cpuinfo.min_freq;
- 	policy->max = policy->cpuinfo.max_freq;
-@@ -1556,35 +1546,26 @@ static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- {
- 	struct amd_cpudata *cpudata = policy->driver_data;
- 	u64 value;
--	s16 epp;
- 
- 	amd_pstate_update_min_max_limit(policy);
- 
- 	value = READ_ONCE(cpudata->cppc_req_cached);
- 
- 	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
--		   AMD_CPPC_DES_PERF_MASK);
-+		   AMD_CPPC_DES_PERF_MASK | AMD_CPPC_EPP_PERF_MASK);
- 	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, cpudata->max_limit_perf);
- 	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, 0);
- 	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, cpudata->min_limit_perf);
- 
--	/* Get BIOS pre-defined epp value */
--	epp = amd_pstate_get_epp(cpudata, value);
--	if (epp < 0) {
--		/**
--		 * This return value can only be negative for shared_memory
--		 * systems where EPP register read/write not supported.
--		 */
--		return epp;
--	}
--
- 	if (cpudata->policy == CPUFREQ_POLICY_PERFORMANCE)
--		epp = 0;
-+		WRITE_ONCE(cpudata->epp_cached, 0);
-+	value |= FIELD_PREP(AMD_CPPC_EPP_PERF_MASK, cpudata->epp_cached);
- 
- 	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
- 	if (trace_amd_pstate_epp_perf_enabled()) {
--		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf, epp,
-+		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
-+					  cpudata->epp_cached,
- 					  cpudata->min_limit_perf,
- 					  cpudata->max_limit_perf,
- 					  policy->boost_enabled);
-@@ -1593,7 +1574,7 @@ static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- 	amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
- 			       cpudata->max_limit_perf, false);
- 
--	return amd_pstate_set_epp(cpudata, epp);
-+	return amd_pstate_set_epp(cpudata, READ_ONCE(cpudata->epp_cached));
- }
- 
- static int amd_pstate_epp_set_policy(struct cpufreq_policy *policy)
--- 
-2.48.1
-
-
-From 9577867900e86f67ccf70b8b650f5af9915de196 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:45 -0600
-Subject: [PATCH 11/46] cpufreq/amd-pstate: Always write EPP value when
- updating perf
-
-For MSR systems the EPP value is in the same register as perf targets
-and so divding them into two separate MSR writes is wasteful.
-
-In msr_update_perf(), update both EPP and perf values in one write to
-MSR_AMD_CPPC_REQ, and cache them if successful.
-
-To accomplish this plumb the EPP value into the update_perf call and
-modify all its callers to check the return value.
-
-As this unifies calls, ensure that the MSR write is necessary before
-flushing a write out. Also drop the comparison from the passive flow
-tracing.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-13-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate-trace.h |   7 +-
- drivers/cpufreq/amd-pstate.c       | 108 +++++++++++++++--------------
- 2 files changed, 56 insertions(+), 59 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate-trace.h b/drivers/cpufreq/amd-pstate-trace.h
-index e2221a4b6901..8d692415d905 100644
---- a/drivers/cpufreq/amd-pstate-trace.h
-+++ b/drivers/cpufreq/amd-pstate-trace.h
-@@ -32,7 +32,6 @@ TRACE_EVENT(amd_pstate_perf,
- 		 u64 aperf,
- 		 u64 tsc,
- 		 unsigned int cpu_id,
--		 bool changed,
- 		 bool fast_switch
- 		 ),
- 
-@@ -44,7 +43,6 @@ TRACE_EVENT(amd_pstate_perf,
- 		aperf,
- 		tsc,
- 		cpu_id,
--		changed,
- 		fast_switch
- 		),
- 
-@@ -57,7 +55,6 @@ TRACE_EVENT(amd_pstate_perf,
- 		__field(unsigned long long, aperf)
- 		__field(unsigned long long, tsc)
- 		__field(unsigned int, cpu_id)
--		__field(bool, changed)
- 		__field(bool, fast_switch)
- 		),
- 
-@@ -70,11 +67,10 @@ TRACE_EVENT(amd_pstate_perf,
- 		__entry->aperf = aperf;
- 		__entry->tsc = tsc;
- 		__entry->cpu_id = cpu_id;
--		__entry->changed = changed;
- 		__entry->fast_switch = fast_switch;
- 		),
- 
--	TP_printk("amd_min_perf=%lu amd_des_perf=%lu amd_max_perf=%lu freq=%llu mperf=%llu aperf=%llu tsc=%llu cpu_id=%u changed=%s fast_switch=%s",
-+	TP_printk("amd_min_perf=%lu amd_des_perf=%lu amd_max_perf=%lu freq=%llu mperf=%llu aperf=%llu tsc=%llu cpu_id=%u fast_switch=%s",
- 		  (unsigned long)__entry->min_perf,
- 		  (unsigned long)__entry->target_perf,
- 		  (unsigned long)__entry->capacity,
-@@ -83,7 +79,6 @@ TRACE_EVENT(amd_pstate_perf,
- 		  (unsigned long long)__entry->aperf,
- 		  (unsigned long long)__entry->tsc,
- 		  (unsigned int)__entry->cpu_id,
--		  (__entry->changed) ? "true" : "false",
- 		  (__entry->fast_switch) ? "true" : "false"
- 		 )
- );
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index b59fbb1a7d26..d1588fe69b8b 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -222,25 +222,47 @@ static s16 shmem_get_epp(struct amd_cpudata *cpudata)
- }
- 
- static int msr_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
--			       u32 des_perf, u32 max_perf, bool fast_switch)
-+			   u32 des_perf, u32 max_perf, u32 epp, bool fast_switch)
- {
-+	u64 value, prev;
-+
-+	value = prev = READ_ONCE(cpudata->cppc_req_cached);
-+
-+	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
-+		   AMD_CPPC_DES_PERF_MASK | AMD_CPPC_EPP_PERF_MASK);
-+	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, max_perf);
-+	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, des_perf);
-+	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, min_perf);
-+	value |= FIELD_PREP(AMD_CPPC_EPP_PERF_MASK, epp);
-+
-+	if (value == prev)
-+		return 0;
-+
- 	if (fast_switch) {
--		wrmsrl(MSR_AMD_CPPC_REQ, READ_ONCE(cpudata->cppc_req_cached));
-+		wrmsrl(MSR_AMD_CPPC_REQ, value);
- 		return 0;
-+	} else {
-+		int ret = wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, value);
-+
-+		if (ret)
-+			return ret;
- 	}
- 
--	return wrmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ,
--			     READ_ONCE(cpudata->cppc_req_cached));
-+	WRITE_ONCE(cpudata->cppc_req_cached, value);
-+	WRITE_ONCE(cpudata->epp_cached, epp);
-+
-+	return 0;
- }
- 
- DEFINE_STATIC_CALL(amd_pstate_update_perf, msr_update_perf);
- 
- static inline int amd_pstate_update_perf(struct amd_cpudata *cpudata,
- 					  u32 min_perf, u32 des_perf,
--					  u32 max_perf, bool fast_switch)
-+					  u32 max_perf, u32 epp,
-+					  bool fast_switch)
- {
- 	return static_call(amd_pstate_update_perf)(cpudata, min_perf, des_perf,
--						   max_perf, fast_switch);
-+						   max_perf, epp, fast_switch);
- }
- 
- static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
-@@ -261,6 +283,7 @@ static int msr_set_epp(struct amd_cpudata *cpudata, u32 epp)
- 		return ret;
- 	}
- 
-+	/* update both so that msr_update_perf() can effectively check */
- 	WRITE_ONCE(cpudata->epp_cached, epp);
- 	WRITE_ONCE(cpudata->cppc_req_cached, value);
- 
-@@ -459,12 +482,18 @@ static inline int amd_pstate_init_perf(struct amd_cpudata *cpudata)
- 	return static_call(amd_pstate_init_perf)(cpudata);
- }
- 
--static int shmem_update_perf(struct amd_cpudata *cpudata,
--			     u32 min_perf, u32 des_perf,
--			     u32 max_perf, bool fast_switch)
-+static int shmem_update_perf(struct amd_cpudata *cpudata, u32 min_perf,
-+			     u32 des_perf, u32 max_perf, u32 epp, bool fast_switch)
- {
- 	struct cppc_perf_ctrls perf_ctrls;
- 
-+	if (cppc_state == AMD_PSTATE_ACTIVE) {
-+		int ret = shmem_set_epp(cpudata, epp);
-+
-+		if (ret)
-+			return ret;
-+	}
-+
- 	perf_ctrls.max_perf = max_perf;
- 	perf_ctrls.min_perf = min_perf;
- 	perf_ctrls.desired_perf = des_perf;
-@@ -510,9 +539,7 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
- {
- 	unsigned long max_freq;
- 	struct cpufreq_policy *policy = cpufreq_cpu_get(cpudata->cpu);
--	u64 prev = READ_ONCE(cpudata->cppc_req_cached);
- 	u32 nominal_perf = READ_ONCE(cpudata->nominal_perf);
--	u64 value = prev;
- 
- 	des_perf = clamp_t(unsigned long, des_perf, min_perf, max_perf);
- 
-@@ -528,27 +555,14 @@ static void amd_pstate_update(struct amd_cpudata *cpudata, u32 min_perf,
- 	if (!cpudata->boost_supported)
- 		max_perf = min_t(unsigned long, nominal_perf, max_perf);
- 
--	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
--		   AMD_CPPC_DES_PERF_MASK);
--	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, max_perf);
--	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, des_perf);
--	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, min_perf);
--
- 	if (trace_amd_pstate_perf_enabled() && amd_pstate_sample(cpudata)) {
- 		trace_amd_pstate_perf(min_perf, des_perf, max_perf, cpudata->freq,
- 			cpudata->cur.mperf, cpudata->cur.aperf, cpudata->cur.tsc,
--				cpudata->cpu, (value != prev), fast_switch);
-+				cpudata->cpu, fast_switch);
- 	}
- 
--	if (value == prev)
--		goto cpufreq_policy_put;
-+	amd_pstate_update_perf(cpudata, min_perf, des_perf, max_perf, 0, fast_switch);
- 
--	WRITE_ONCE(cpudata->cppc_req_cached, value);
--
--	amd_pstate_update_perf(cpudata, min_perf, des_perf,
--			       max_perf, fast_switch);
--
--cpufreq_policy_put:
- 	cpufreq_cpu_put(policy);
- }
- 
-@@ -1545,36 +1559,24 @@ static void amd_pstate_epp_cpu_exit(struct cpufreq_policy *policy)
- static int amd_pstate_epp_update_limit(struct cpufreq_policy *policy)
- {
- 	struct amd_cpudata *cpudata = policy->driver_data;
--	u64 value;
-+	u32 epp;
- 
- 	amd_pstate_update_min_max_limit(policy);
- 
--	value = READ_ONCE(cpudata->cppc_req_cached);
--
--	value &= ~(AMD_CPPC_MAX_PERF_MASK | AMD_CPPC_MIN_PERF_MASK |
--		   AMD_CPPC_DES_PERF_MASK | AMD_CPPC_EPP_PERF_MASK);
--	value |= FIELD_PREP(AMD_CPPC_MAX_PERF_MASK, cpudata->max_limit_perf);
--	value |= FIELD_PREP(AMD_CPPC_DES_PERF_MASK, 0);
--	value |= FIELD_PREP(AMD_CPPC_MIN_PERF_MASK, cpudata->min_limit_perf);
--
- 	if (cpudata->policy == CPUFREQ_POLICY_PERFORMANCE)
--		WRITE_ONCE(cpudata->epp_cached, 0);
--	value |= FIELD_PREP(AMD_CPPC_EPP_PERF_MASK, cpudata->epp_cached);
--
--	WRITE_ONCE(cpudata->cppc_req_cached, value);
-+		epp = 0;
-+	else
-+		epp = READ_ONCE(cpudata->epp_cached);
- 
- 	if (trace_amd_pstate_epp_perf_enabled()) {
--		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
--					  cpudata->epp_cached,
-+		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf, epp,
- 					  cpudata->min_limit_perf,
- 					  cpudata->max_limit_perf,
- 					  policy->boost_enabled);
- 	}
- 
--	amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
--			       cpudata->max_limit_perf, false);
--
--	return amd_pstate_set_epp(cpudata, READ_ONCE(cpudata->epp_cached));
-+	return amd_pstate_update_perf(cpudata, cpudata->min_limit_perf, 0U,
-+				      cpudata->max_limit_perf, epp, false);
- }
- 
- static int amd_pstate_epp_set_policy(struct cpufreq_policy *policy)
-@@ -1603,7 +1605,7 @@ static int amd_pstate_epp_set_policy(struct cpufreq_policy *policy)
- 	return 0;
- }
- 
--static void amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
-+static int amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
- {
- 	u64 max_perf;
- 	int ret;
-@@ -1621,17 +1623,19 @@ static void amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
- 					  max_perf, cpudata->boost_state);
- 	}
- 
--	amd_pstate_update_perf(cpudata, 0, 0, max_perf, false);
--	amd_pstate_set_epp(cpudata, cpudata->epp_cached);
-+	return amd_pstate_update_perf(cpudata, 0, 0, max_perf, cpudata->epp_cached, false);
- }
- 
- static int amd_pstate_epp_cpu_online(struct cpufreq_policy *policy)
- {
- 	struct amd_cpudata *cpudata = policy->driver_data;
-+	int ret;
- 
- 	pr_debug("AMD CPU Core %d going online\n", cpudata->cpu);
- 
--	amd_pstate_epp_reenable(cpudata);
-+	ret = amd_pstate_epp_reenable(cpudata);
-+	if (ret)
-+		return ret;
- 	cpudata->suspended = false;
- 
- 	return 0;
-@@ -1655,10 +1659,8 @@ static int amd_pstate_epp_cpu_offline(struct cpufreq_policy *policy)
- 					  min_perf, min_perf, policy->boost_enabled);
- 	}
- 
--	amd_pstate_update_perf(cpudata, min_perf, 0, min_perf, false);
--	amd_pstate_set_epp(cpudata, AMD_CPPC_EPP_BALANCE_POWERSAVE);
--
--	return 0;
-+	return amd_pstate_update_perf(cpudata, min_perf, 0, min_perf,
-+				      AMD_CPPC_EPP_BALANCE_POWERSAVE, false);
- }
- 
- static int amd_pstate_epp_suspend(struct cpufreq_policy *policy)
--- 
-2.48.1
-
-
-From fb3702fa8b268efd860cbb22ae362ed8ec5976f5 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:46 -0600
-Subject: [PATCH 12/46] cpufreq/amd-pstate: Drop ret variable from
- amd_pstate_set_energy_pref_index()
-
-The ret variable is not necessary.
-
-Reviewed-and-tested-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-14-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 10 +++-------
- 1 file changed, 3 insertions(+), 7 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index d1588fe69b8b..a212bdb65905 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -319,13 +319,11 @@ static int shmem_set_epp(struct amd_cpudata *cpudata, u32 epp)
- static int amd_pstate_set_energy_pref_index(struct amd_cpudata *cpudata,
- 		int pref_index)
- {
--	int epp = -EINVAL;
--	int ret;
-+	int epp;
- 
- 	if (!pref_index)
- 		epp = cpudata->epp_default;
--
--	if (epp == -EINVAL)
-+	else
- 		epp = epp_values[pref_index];
- 
- 	if (epp > 0 && cpudata->policy == CPUFREQ_POLICY_PERFORMANCE) {
-@@ -341,9 +339,7 @@ static int amd_pstate_set_energy_pref_index(struct amd_cpudata *cpudata,
- 					  cpudata->boost_state);
- 	}
- 
--	ret = amd_pstate_set_epp(cpudata, epp);
--
--	return ret;
-+	return amd_pstate_set_epp(cpudata, epp);
- }
- 
- static inline int msr_cppc_enable(bool enable)
--- 
-2.48.1
-
-
-From dc69b96ea20b434e9de85f2d939ed826d090735a Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:47 -0600
-Subject: [PATCH 13/46] cpufreq/amd-pstate: Set different default EPP policy
- for Epyc and Ryzen
-
-For Ryzen systems the EPP policy set by the BIOS is generally configured
-to performance as this is the default register value for the CPPC request
-MSR.
-
-If a user doesn't use additional software to configure EPP then the system
-will default biased towards performance and consume extra battery. Instead
-configure the default to "balanced_performance" for this case.
-
-Suggested-by: Artem S. Tashkinov <aros@gmx.com>
-Reviewed-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Tested-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Closes: https://bugzilla.kernel.org/show_bug.cgi?id=219526
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-15-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 12 ++++++++----
- 1 file changed, 8 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index a212bdb65905..cdcd289b234c 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -1502,8 +1502,6 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
- 
- 	policy->driver_data = cpudata;
- 
--	cpudata->epp_cached = cpudata->epp_default = amd_pstate_get_epp(cpudata);
--
- 	policy->min = policy->cpuinfo.min_freq;
- 	policy->max = policy->cpuinfo.max_freq;
- 
-@@ -1514,10 +1512,13 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
- 	 * the default cpufreq governor is neither powersave nor performance.
- 	 */
- 	if (amd_pstate_acpi_pm_profile_server() ||
--	    amd_pstate_acpi_pm_profile_undefined())
-+	    amd_pstate_acpi_pm_profile_undefined()) {
- 		policy->policy = CPUFREQ_POLICY_PERFORMANCE;
--	else
-+		cpudata->epp_default = amd_pstate_get_epp(cpudata);
-+	} else {
- 		policy->policy = CPUFREQ_POLICY_POWERSAVE;
-+		cpudata->epp_default = AMD_CPPC_EPP_BALANCE_PERFORMANCE;
-+	}
- 
- 	if (cpu_feature_enabled(X86_FEATURE_CPPC)) {
- 		ret = rdmsrl_on_cpu(cpudata->cpu, MSR_AMD_CPPC_REQ, &value);
-@@ -1530,6 +1531,9 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
- 			return ret;
- 		WRITE_ONCE(cpudata->cppc_cap1_cached, value);
- 	}
-+	ret = amd_pstate_set_epp(cpudata, cpudata->epp_default);
-+	if (ret)
-+		return ret;
- 
- 	current_pstate_driver->adjust_perf = NULL;
- 
--- 
-2.48.1
-
-
-From d9f85a0ea500dde53200590098678dce86034290 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 9 Dec 2024 12:52:48 -0600
-Subject: [PATCH 14/46] cpufreq/amd-pstate: Drop boost_state variable
-
-Currently boost_state is cached for every processor in cpudata structure
-and driver boost state is set for every processor.
-
-Both of these aren't necessary as the driver only needs to set once and
-the policy stores whether boost is enabled.
-
-Move the driver boost setting to registration and adjust all references
-to cached value to pull from the policy instead.
-
-Reviewed-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Link: https://lore.kernel.org/r/20241209185248.16301-16-mario.limonciello@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 26 +++++++++++++-------------
- drivers/cpufreq/amd-pstate.h |  1 -
- 2 files changed, 13 insertions(+), 14 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index cdcd289b234c..2732a334feed 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -316,9 +316,10 @@ static int shmem_set_epp(struct amd_cpudata *cpudata, u32 epp)
- 	return ret;
- }
- 
--static int amd_pstate_set_energy_pref_index(struct amd_cpudata *cpudata,
--		int pref_index)
-+static int amd_pstate_set_energy_pref_index(struct cpufreq_policy *policy,
-+					    int pref_index)
- {
-+	struct amd_cpudata *cpudata = policy->driver_data;
- 	int epp;
- 
- 	if (!pref_index)
-@@ -336,7 +337,7 @@ static int amd_pstate_set_energy_pref_index(struct amd_cpudata *cpudata,
- 					  epp,
- 					  FIELD_GET(AMD_CPPC_MIN_PERF_MASK, cpudata->cppc_req_cached),
- 					  FIELD_GET(AMD_CPPC_MAX_PERF_MASK, cpudata->cppc_req_cached),
--					  cpudata->boost_state);
-+					  policy->boost_enabled);
- 	}
- 
- 	return amd_pstate_set_epp(cpudata, epp);
-@@ -746,7 +747,6 @@ static int amd_pstate_set_boost(struct cpufreq_policy *policy, int state)
- 	guard(mutex)(&amd_pstate_driver_lock);
- 
- 	ret = amd_pstate_cpu_boost_update(policy, state);
--	WRITE_ONCE(cpudata->boost_state, !ret ? state : false);
- 	policy->boost_enabled = !ret ? state : false;
- 	refresh_frequency_limits(policy);
- 
-@@ -768,9 +768,6 @@ static int amd_pstate_init_boost_support(struct amd_cpudata *cpudata)
- 		goto exit_err;
- 	}
- 
--	/* at least one CPU supports CPB, even if others fail later on to set up */
--	current_pstate_driver->boost_enabled = true;
--
- 	ret = rdmsrl_on_cpu(cpudata->cpu, MSR_K7_HWCR, &boost_val);
- 	if (ret) {
- 		pr_err_once("failed to read initial CPU boost state!\n");
-@@ -1177,7 +1174,6 @@ static ssize_t show_energy_performance_available_preferences(
- static ssize_t store_energy_performance_preference(
- 		struct cpufreq_policy *policy, const char *buf, size_t count)
- {
--	struct amd_cpudata *cpudata = policy->driver_data;
- 	char str_preference[21];
- 	ssize_t ret;
- 
-@@ -1191,7 +1187,7 @@ static ssize_t store_energy_performance_preference(
- 
- 	guard(mutex)(&amd_pstate_limits_lock);
- 
--	ret = amd_pstate_set_energy_pref_index(cpudata, ret);
-+	ret = amd_pstate_set_energy_pref_index(policy, ret);
- 
- 	return ret ? ret : count;
- }
-@@ -1266,6 +1262,9 @@ static int amd_pstate_register_driver(int mode)
- 		return ret;
- 	}
- 
-+	/* at least one CPU supports CPB */
-+	current_pstate_driver->boost_enabled = cpu_feature_enabled(X86_FEATURE_CPB);
-+
- 	ret = cpufreq_register_driver(current_pstate_driver);
- 	if (ret) {
- 		amd_pstate_driver_cleanup();
-@@ -1605,8 +1604,9 @@ static int amd_pstate_epp_set_policy(struct cpufreq_policy *policy)
- 	return 0;
- }
- 
--static int amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
-+static int amd_pstate_epp_reenable(struct cpufreq_policy *policy)
- {
-+	struct amd_cpudata *cpudata = policy->driver_data;
- 	u64 max_perf;
- 	int ret;
- 
-@@ -1620,7 +1620,7 @@ static int amd_pstate_epp_reenable(struct amd_cpudata *cpudata)
- 		trace_amd_pstate_epp_perf(cpudata->cpu, cpudata->highest_perf,
- 					  cpudata->epp_cached,
- 					  FIELD_GET(AMD_CPPC_MIN_PERF_MASK, cpudata->cppc_req_cached),
--					  max_perf, cpudata->boost_state);
-+					  max_perf, policy->boost_enabled);
- 	}
- 
- 	return amd_pstate_update_perf(cpudata, 0, 0, max_perf, cpudata->epp_cached, false);
-@@ -1633,7 +1633,7 @@ static int amd_pstate_epp_cpu_online(struct cpufreq_policy *policy)
- 
- 	pr_debug("AMD CPU Core %d going online\n", cpudata->cpu);
- 
--	ret = amd_pstate_epp_reenable(cpudata);
-+	ret = amd_pstate_epp_reenable(policy);
- 	if (ret)
- 		return ret;
- 	cpudata->suspended = false;
-@@ -1691,7 +1691,7 @@ static int amd_pstate_epp_resume(struct cpufreq_policy *policy)
- 		guard(mutex)(&amd_pstate_limits_lock);
- 
- 		/* enable amd pstate from suspend state*/
--		amd_pstate_epp_reenable(cpudata);
-+		amd_pstate_epp_reenable(policy);
- 
- 		cpudata->suspended = false;
- 	}
-diff --git a/drivers/cpufreq/amd-pstate.h b/drivers/cpufreq/amd-pstate.h
-index 7765c82f975c..9747e3be6cee 100644
---- a/drivers/cpufreq/amd-pstate.h
-+++ b/drivers/cpufreq/amd-pstate.h
-@@ -98,7 +98,6 @@ struct amd_cpudata {
- 	u64	cppc_cap1_cached;
- 	bool	suspended;
- 	s16	epp_default;
--	bool	boost_state;
- };
- 
- /*
--- 
-2.48.1
-
-
-From dbcd9d629426066c50c2c9afbcfe16d1a6e81a8a Mon Sep 17 00:00:00 2001
-From: Naresh Solanki <naresh.solanki@9elements.com>
-Date: Fri, 20 Dec 2024 01:48:32 +0530
-Subject: [PATCH 15/46] cpufreq/amd-pstate: Refactor max frequency calculation
-
-The previous approach introduced roundoff errors during division when
-calculating the boost ratio. This, in turn, affected the maximum
-frequency calculation, often resulting in reporting lower frequency
-values.
-
-For example, on the Glinda SoC based board with the following
-parameters:
-
-max_perf = 208
-nominal_perf = 100
-nominal_freq = 2600 MHz
-
-The Linux kernel previously calculated the frequency as:
-freq = ((max_perf * 1024 / nominal_perf) * nominal_freq) / 1024
-freq = 5405 MHz  // Integer arithmetic.
-
-With the updated formula:
-freq = (max_perf * nominal_freq) / nominal_perf
-freq = 5408 MHz
-
-This change ensures more accurate frequency calculations by eliminating
-unnecessary shifts and divisions, thereby improving precision.
-
-Signed-off-by: Naresh Solanki <naresh.solanki@9elements.com>
-[ML: trim the changelog from commit message]
-Reviewed-by: Mario Limonciello <mario.limonciello@amd.com>
-Link: https://lore.kernel.org/r/20241219201833.2750998-1-naresh.solanki@9elements.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 13 ++++---------
- 1 file changed, 4 insertions(+), 9 deletions(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 2732a334feed..e49eb1b762d6 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -909,9 +909,8 @@ static int amd_pstate_init_freq(struct amd_cpudata *cpudata)
- {
- 	int ret;
- 	u32 min_freq, max_freq;
--	u32 nominal_perf, nominal_freq;
-+	u32 highest_perf, nominal_perf, nominal_freq;
- 	u32 lowest_nonlinear_perf, lowest_nonlinear_freq;
--	u32 boost_ratio, lowest_nonlinear_ratio;
- 	struct cppc_perf_caps cppc_perf;
- 
- 	ret = cppc_get_perf_caps(cpudata->cpu, &cppc_perf);
-@@ -928,16 +927,12 @@ static int amd_pstate_init_freq(struct amd_cpudata *cpudata)
- 	else
- 		nominal_freq = cppc_perf.nominal_freq;
- 
-+	highest_perf = READ_ONCE(cpudata->highest_perf);
- 	nominal_perf = READ_ONCE(cpudata->nominal_perf);
--
--	boost_ratio = div_u64(cpudata->highest_perf << SCHED_CAPACITY_SHIFT, nominal_perf);
--	max_freq = (nominal_freq * boost_ratio >> SCHED_CAPACITY_SHIFT);
-+	max_freq = div_u64((u64)highest_perf * nominal_freq, nominal_perf);
- 
- 	lowest_nonlinear_perf = READ_ONCE(cpudata->lowest_nonlinear_perf);
--	lowest_nonlinear_ratio = div_u64(lowest_nonlinear_perf << SCHED_CAPACITY_SHIFT,
--					 nominal_perf);
--	lowest_nonlinear_freq = (nominal_freq * lowest_nonlinear_ratio >> SCHED_CAPACITY_SHIFT);
--
-+	lowest_nonlinear_freq = div_u64((u64)nominal_freq * lowest_nonlinear_perf, nominal_perf);
- 	WRITE_ONCE(cpudata->min_freq, min_freq * 1000);
- 	WRITE_ONCE(cpudata->lowest_nonlinear_freq, lowest_nonlinear_freq * 1000);
- 	WRITE_ONCE(cpudata->nominal_freq, nominal_freq * 1000);
--- 
-2.48.1
-
-
-From 7d4fa457a79e139e3111f2509e68c60cdc48b3b1 Mon Sep 17 00:00:00 2001
-From: Lifeng Zheng <zhenglifeng1@huawei.com>
-Date: Fri, 10 Jan 2025 17:19:49 +0800
-Subject: [PATCH 16/46] cpufreq/amd-pstate: Fix per-policy boost flag incorrect
- when fail
-
-Commit c8c68c38b56f ("cpufreq: amd-pstate: initialize core precision
-boost state") sets per-policy boost flag to false when boost fail.
-However, this boost flag will be set to reverse value in
-store_local_boost() and cpufreq_boost_trigger_state() in cpufreq.c. This
-will cause the per-policy boost flag set to true when fail to set boost.
-Remove the extra assignment in amd_pstate_set_boost() and keep all
-operations on per-policy boost flag outside of set_boost() to fix this
-problem.
-
-Fixes: c8c68c38b56f ("cpufreq: amd-pstate: initialize core precision boost state")
-Signed-off-by: Lifeng Zheng <zhenglifeng1@huawei.com>
----
- drivers/cpufreq/amd-pstate.c | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index e49eb1b762d6..ea832d0bb8bf 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -747,7 +747,6 @@ static int amd_pstate_set_boost(struct cpufreq_policy *policy, int state)
- 	guard(mutex)(&amd_pstate_driver_lock);
- 
- 	ret = amd_pstate_cpu_boost_update(policy, state);
--	policy->boost_enabled = !ret ? state : false;
- 	refresh_frequency_limits(policy);
- 
- 	return ret;
--- 
-2.48.1
-
-
-From 2ac3922f61ac0f65b13d51413ef523a5a102e2e4 Mon Sep 17 00:00:00 2001
-From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Date: Wed, 5 Feb 2025 11:25:13 +0000
-Subject: [PATCH 17/46] cpufreq/amd-pstate: Fix max_perf updation with
- schedutil
-
-In adjust_perf() callback, we are setting the max_perf to highest_perf,
-as opposed to the correct limit value i.e. max_limit_perf. Fix that.
-
-Fixes: 3f7b835fa4d0 ("cpufreq/amd-pstate: Move limit updating code")
-Signed-off-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
----
- drivers/cpufreq/amd-pstate.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index ea832d0bb8bf..313550fa62d4 100644
---- a/drivers/cpufreq/amd-pstate.c
-+++ b/drivers/cpufreq/amd-pstate.c
-@@ -699,7 +699,7 @@ static void amd_pstate_adjust_perf(unsigned int cpu,
- 	if (min_perf < lowest_nonlinear_perf)
- 		min_perf = lowest_nonlinear_perf;
- 
--	max_perf = cap_perf;
-+	max_perf = cpudata->max_limit_perf;
- 	if (max_perf < min_perf)
- 		max_perf = min_perf;
- 
--- 
-2.48.1
-
-
-From 5590eab8038e701c86f94bd0b99a7f805096f955 Mon Sep 17 00:00:00 2001
+From b3d3e6285847728d09e1bcab2851a798e5799acc Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:14 +0000
-Subject: [PATCH 18/46] cpufreq/amd-pstate: Modify the min_perf calculation in
+Subject: [PATCH 02/30] cpufreq/amd-pstate: Modify the min_perf calculation in
  adjust_perf callback
 
 Instead of setting a fixed floor at lowest_nonlinear_perf, use the
@@ -1911,10 +203,10 @@ index 313550fa62d4..17595a2454e1 100644
 2.48.1
 
 
-From 91dd09759f152875aef26109bf025f1dfeb64884 Mon Sep 17 00:00:00 2001
+From f450eca11a1a4d702f751b84462299202c6fbc4b Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:15 +0000
-Subject: [PATCH 19/46] cpufreq/amd-pstate: Remove the redundant des_perf
+Subject: [PATCH 03/30] cpufreq/amd-pstate: Remove the redundant des_perf
  clamping in adjust_perf
 
 des_perf is later on clamped between min_perf and max_perf in
@@ -1943,10 +235,10 @@ index 17595a2454e1..0cf24dff55e9 100644
 2.48.1
 
 
-From 3c8ce8b7199273b5879ec8ac543b211093b28910 Mon Sep 17 00:00:00 2001
+From 18ceeb0ac9c7e2b7a6e1a23a34d93bb5231b55c7 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:16 +0000
-Subject: [PATCH 20/46] cpufreq/amd-pstate: Pass min/max_limit_perf as
+Subject: [PATCH 04/30] cpufreq/amd-pstate: Pass min/max_limit_perf as
  min/max_perf to amd_pstate_update
 
 Currently, amd_pstate_update_freq passes the hardware perf limits as
@@ -1999,10 +291,10 @@ index 0cf24dff55e9..3cb81b826bcb 100644
 2.48.1
 
 
-From 1b25c6bc74aa502ecfc732b5f0ce01c655fd451f Mon Sep 17 00:00:00 2001
+From 766c31381e63f3b389438712e945c7124bde8aca Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:17 +0000
-Subject: [PATCH 21/46] cpufreq/amd-pstate: Convert all perf values to u8
+Subject: [PATCH 05/30] cpufreq/amd-pstate: Convert all perf values to u8
 
 All perf values are always within 0-255 range, hence convert their
 datatype to u8 everywhere.
@@ -2363,10 +655,10 @@ index 9747e3be6cee..19d405c6d805 100644
 2.48.1
 
 
-From 1d3024422947564b119cc98dbafbecac466c79a2 Mon Sep 17 00:00:00 2001
+From 29dda55fc312ae3bb0efff2d01f3ddb84fb52478 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:18 +0000
-Subject: [PATCH 22/46] cpufreq/amd-pstate: Modularize perf<->freq conversion
+Subject: [PATCH 06/30] cpufreq/amd-pstate: Modularize perf<->freq conversion
 
 Delegate the perf<->frequency conversion to helper functions to reduce
 code duplication, and improve readability.
@@ -2498,10 +790,10 @@ index 69409d43eae8..9ab95ec1f828 100644
 2.48.1
 
 
-From 7f7e41ab3497a0158b38564a4dd965f21e92427e Mon Sep 17 00:00:00 2001
+From e048399445dab37e881dbf9ebe58c71b5bd1c281 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:19 +0000
-Subject: [PATCH 23/46] cpufreq/amd-pstate: Remove the unnecessary
+Subject: [PATCH 07/30] cpufreq/amd-pstate: Remove the unnecessary
  cpufreq_update_policy call
 
 The update_limits callback is only called in two conditions.
@@ -2541,10 +833,10 @@ index 9ab95ec1f828..9c939be59042 100644
 2.48.1
 
 
-From 828637d405f2da5c7a212c1ffebfd0d01590da0a Mon Sep 17 00:00:00 2001
+From 7011b19883a1e174ec6938230148d561b4beff0a Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:21 +0000
-Subject: [PATCH 24/46] cpufreq/amd-pstate: Add missing NULL ptr check in
+Subject: [PATCH 08/30] cpufreq/amd-pstate: Add missing NULL ptr check in
  amd_pstate_update
 
 Check if policy is NULL before dereferencing it in amd_pstate_update.
@@ -2573,10 +865,10 @@ index 9c939be59042..6a604f0797d9 100644
 2.48.1
 
 
-From a9ac89cce44913e59d267b0eb96a731b594bc9eb Mon Sep 17 00:00:00 2001
+From 2bb1bbb29b6a7deafe7c2dde658babe1f21d13c6 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:22 +0000
-Subject: [PATCH 25/46] cpufreq/amd-pstate: Use scope based cleanup for
+Subject: [PATCH 09/30] cpufreq/amd-pstate: Use scope based cleanup for
  cpufreq_policy refs
 
 There have been instances in past where refcount decrementing is missed
@@ -2705,10 +997,10 @@ index 7fe0981a7e46..dde5212d256c 100644
 2.48.1
 
 
-From 432d76f0c6191dcd96565a97ab204ded631da7fa Mon Sep 17 00:00:00 2001
+From dd34a11f20d86b93efa5904f27795a819e1b11e1 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:23 +0000
-Subject: [PATCH 26/46] cpufreq/amd-pstate: Remove the unncecessary driver_lock
+Subject: [PATCH 10/30] cpufreq/amd-pstate: Remove the unncecessary driver_lock
  in amd_pstate_update_limits
 
 There is no need to take a driver wide lock while updating the
@@ -2736,10 +1028,10 @@ index ee7e3f0a4c0a..08ae48076812 100644
 2.48.1
 
 
-From dd7d663b045dd276d3cb500f8c212c6eb1263a41 Mon Sep 17 00:00:00 2001
+From 1a319e5a3d1b37678e87d54a2c72c2762404d520 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Sat, 22 Feb 2025 03:32:22 +0000
-Subject: [PATCH 27/46] cpufreq/amd-pstate: Fix the clamping of perf values
+Subject: [PATCH 11/30] cpufreq/amd-pstate: Fix the clamping of perf values
 
 The clamping in freq_to_perf() is broken right now, as we first typecast
 (read wraparound) the overflowing value into a u8 and then clamp it down.
@@ -2780,10 +1072,10 @@ index 08ae48076812..56930424c9fa 100644
 2.48.1
 
 
-From fc0ef4bc4a5ed20b8fee7b192ac60e1797eb0745 Mon Sep 17 00:00:00 2001
+From 28d4372f955ea1dd3c594c728a19220dad3472f7 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:16 -0600
-Subject: [PATCH 28/46] cpufreq/amd-pstate: Invalidate cppc_req_cached during
+Subject: [PATCH 12/30] cpufreq/amd-pstate: Invalidate cppc_req_cached during
  suspend
 
 During resume it's possible the firmware didn't restore the CPPC request
@@ -2829,10 +1121,10 @@ index 56930424c9fa..44318eb33463 100644
 2.48.1
 
 
-From 1a80dbeca3b6803a9a9afa49691d3ea2f1edb435 Mon Sep 17 00:00:00 2001
+From a488bcffc12bdd9359911525157358f8574d3130 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:17 -0600
-Subject: [PATCH 29/46] cpufreq/amd-pstate: Show a warning when a CPU fails to
+Subject: [PATCH 13/30] cpufreq/amd-pstate: Show a warning when a CPU fails to
  setup
 
 I came across a system that MSR_AMD_CPPC_CAP1 for some CPUs isn't
@@ -2871,10 +1163,10 @@ index 44318eb33463..29250638a2ac 100644
 2.48.1
 
 
-From a47f3f242070678507562b50dd2e9b910dc82d56 Mon Sep 17 00:00:00 2001
+From 947fcf3859f9bb601f66a27a4f37770abcf367ef Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:18 -0600
-Subject: [PATCH 30/46] cpufreq/amd-pstate: Drop min and max cached frequencies
+Subject: [PATCH 14/30] cpufreq/amd-pstate: Drop min and max cached frequencies
 
 Use the perf_to_freq helpers to calculate this on the fly.
 As the members are no longer cached add an extra check into
@@ -3090,10 +1382,10 @@ index 19d405c6d805..014993369245 100644
 2.48.1
 
 
-From 27d0aa4b390f145e419eac782147f9064786f0a9 Mon Sep 17 00:00:00 2001
+From ca9231292df2672632b2a5f5be1c0c3fbcb85c8a Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:19 -0600
-Subject: [PATCH 31/46] cpufreq/amd-pstate: Move perf values into a union
+Subject: [PATCH 15/30] cpufreq/amd-pstate: Move perf values into a union
 
 By storing perf values in a union all the writes and reads can
 be done atomically, removing the need for some concurrency protections.
@@ -3711,10 +2003,10 @@ index 014993369245..83532a0079a8 100644
 2.48.1
 
 
-From b468c4cd6ba36c0c6ca3bb08dc7facdea8b0e182 Mon Sep 17 00:00:00 2001
+From 3c9db56bf38422fe3d1261e76e2cde8833294577 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:20 -0600
-Subject: [PATCH 32/46] cpufreq/amd-pstate: Overhaul locking
+Subject: [PATCH 16/30] cpufreq/amd-pstate: Overhaul locking
 
 amd_pstate_cpu_boost_update() and refresh_frequency_limits() both
 update the policy state and have nothing to do with the amd-pstate
@@ -3806,10 +2098,10 @@ index c072f89fe323..4e5ede0b8eb5 100644
 2.48.1
 
 
-From 61a6b126ffc3b283b08de4b00a6174d25d7dd888 Mon Sep 17 00:00:00 2001
+From 7ac83aa1c9d345e8cea2e7f84ba39b4a16c00bbb Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:21 -0600
-Subject: [PATCH 33/46] cpufreq/amd-pstate: Drop `cppc_cap1_cached`
+Subject: [PATCH 17/30] cpufreq/amd-pstate: Drop `cppc_cap1_cached`
 
 The `cppc_cap1_cached` variable isn't used at all, there is no
 need to read it at initialization for each CPU.
@@ -3862,10 +2154,10 @@ index 83532a0079a8..1557e1afea79 100644
 2.48.1
 
 
-From 1b0103770ae1be243e34afb944e7be8907b5a55d Mon Sep 17 00:00:00 2001
+From 7a32f5a89547db8fd819ac603edc70d6e2bcd3e8 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:22 -0600
-Subject: [PATCH 34/46] cpufreq/amd-pstate-ut: Use _free macro to free put
+Subject: [PATCH 18/30] cpufreq/amd-pstate-ut: Use _free macro to free put
  policy
 
 Using a scoped cleanup macro simplifies cleanup code.
@@ -4013,10 +2305,10 @@ index 5f6a92a816e6..e02672e67380 100644
 2.48.1
 
 
-From c30b55ac30f09db7479a6faa87ea3253b87239d8 Mon Sep 17 00:00:00 2001
+From 34b68e13c7e90de7adf34ea9123663946d16098f Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:23 -0600
-Subject: [PATCH 35/46] cpufreq/amd-pstate-ut: Allow lowest nonlinear and
+Subject: [PATCH 19/30] cpufreq/amd-pstate-ut: Allow lowest nonlinear and
  lowest to be the same
 
 Several Ryzen AI processors support the exact same value for lowest
@@ -4056,10 +2348,10 @@ index e02672e67380..b3693a4c28d2 100644
 2.48.1
 
 
-From 78a275f4acd636cfab5dafc3fa05625e04c4b2e8 Mon Sep 17 00:00:00 2001
+From c30c84e556903985f71853082e8cf2fddcd14db3 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:24 -0600
-Subject: [PATCH 36/46] cpufreq/amd-pstate-ut: Drop SUCCESS and FAIL enums
+Subject: [PATCH 20/30] cpufreq/amd-pstate-ut: Drop SUCCESS and FAIL enums
 
 Enums are effectively used as a boolean and don't show
 the return value of the failing call.
@@ -4371,10 +2663,10 @@ index b3693a4c28d2..cd9a472e8dc3 100644
 2.48.1
 
 
-From 2458c1035bae949e2a828ac8f2e0c7c2b8ba349f Mon Sep 17 00:00:00 2001
+From 1c4dda4c6809f9295b0424b394bc87bce1bf4eff Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:25 -0600
-Subject: [PATCH 37/46] cpufreq/amd-pstate-ut: Run on all of the correct CPUs
+Subject: [PATCH 21/30] cpufreq/amd-pstate-ut: Run on all of the correct CPUs
 
 If a CPU is missing a policy or one has been offlined then the unit test
 is skipped for the rest of the CPUs on the system.
@@ -4427,10 +2719,10 @@ index cd9a472e8dc3..2ab3017d7a0b 100644
 2.48.1
 
 
-From 9b9f5b67f5b8ca310f1632cb4766ea485b0fe0f5 Mon Sep 17 00:00:00 2001
+From f644c2848851c63bec203a717db2e6e31051bbe2 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:26 -0600
-Subject: [PATCH 38/46] cpufreq/amd-pstate-ut: Adjust variable scope
+Subject: [PATCH 22/30] cpufreq/amd-pstate-ut: Adjust variable scope
 
 In amd_pstate_ut_check_freq() and amd_pstate_ut_check_perf() the cpudata
 variable is only needed in the scope of the for loop. Move it there.
@@ -4475,10 +2767,10 @@ index 2ab3017d7a0b..edc1475989e3 100644
 2.48.1
 
 
-From b860832c718c8e733e77bfb852ccbc6f27b619d9 Mon Sep 17 00:00:00 2001
+From 60323da569d78de9b0b58df854050a9b6cd68340 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:27 -0600
-Subject: [PATCH 39/46] cpufreq/amd-pstate: Replace all AMD_CPPC_* macros with
+Subject: [PATCH 23/30] cpufreq/amd-pstate: Replace all AMD_CPPC_* macros with
  masks
 
 Bitfield masks are easier to follow and less error prone.
@@ -4494,10 +2786,10 @@ Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
  4 files changed, 25 insertions(+), 24 deletions(-)
 
 diff --git a/arch/x86/include/asm/msr-index.h b/arch/x86/include/asm/msr-index.h
-index 61e991507353..064ee9d646c9 100644
+index 72765b2fe0d8..fc2634cc48fd 100644
 --- a/arch/x86/include/asm/msr-index.h
 +++ b/arch/x86/include/asm/msr-index.h
-@@ -698,15 +698,17 @@
+@@ -701,15 +701,17 @@
  #define MSR_AMD_CPPC_REQ		0xc00102b3
  #define MSR_AMD_CPPC_STATUS		0xc00102b4
  
@@ -4612,10 +2904,10 @@ index f13c69fe1407..bcc9e846e6af 100644
 2.48.1
 
 
-From b4213d86b0d7a1e502f69298f12e7e8b8c744c8f Mon Sep 17 00:00:00 2001
+From bee183ec170f18c7d89cbde996b4a780462a8f06 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:28 -0600
-Subject: [PATCH 40/46] cpufreq/amd-pstate: Cache CPPC request in shared mem
+Subject: [PATCH 24/30] cpufreq/amd-pstate: Cache CPPC request in shared mem
  case too
 
 In order to prevent a potential write for shmem_update_perf()
@@ -4679,10 +2971,10 @@ index bcc9e846e6af..eea2d730e48e 100644
 2.48.1
 
 
-From 5e3c342485ea56b8bf3517ef2f3ab6c6f66b039d Mon Sep 17 00:00:00 2001
+From ae6df47c00b2363a43a7acd2c247b60c54f2ef70 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:29 -0600
-Subject: [PATCH 41/46] cpufreq/amd-pstate: Move all EPP tracing into
+Subject: [PATCH 25/30] cpufreq/amd-pstate: Move all EPP tracing into
  *_update_perf and *_set_epp functions
 
 The EPP tracing is done by the caller today, but this precludes the
@@ -5005,10 +3297,10 @@ index eea2d730e48e..8ee71f884d34 100644
 2.48.1
 
 
-From e5a787cb4e753d23de09a2bc9be9119cdbb7a143 Mon Sep 17 00:00:00 2001
+From 97b65106dc8b880eb4030d8c852d58a8be0088e2 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:30 -0600
-Subject: [PATCH 42/46] cpufreq/amd-pstate: Update cppc_req_cached for shared
+Subject: [PATCH 26/30] cpufreq/amd-pstate: Update cppc_req_cached for shared
  mem EPP writes
 
 On EPP only writes update the cached variable so that the min/max
@@ -5049,10 +3341,10 @@ index 8ee71f884d34..c44f2a8999b4 100644
 2.48.1
 
 
-From 6a5f7457314df3a153535f5a055cd009aafaf652 Mon Sep 17 00:00:00 2001
+From 3e21c429acb2e5ac301339d357d0aab5950d872e Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:31 -0600
-Subject: [PATCH 43/46] cpufreq/amd-pstate: Drop debug statements for policy
+Subject: [PATCH 27/30] cpufreq/amd-pstate: Drop debug statements for policy
  setting
 
 There are trace events that exist now for all amd-pstate modes that
@@ -5094,10 +3386,10 @@ index c44f2a8999b4..4b2bdc9f7965 100644
 2.48.1
 
 
-From 3cf4df59f78cdd5f8404db93f363077cb15c1096 Mon Sep 17 00:00:00 2001
+From e5595cb892fad80b460dcf05d76c3cab693c28fc Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:32 -0600
-Subject: [PATCH 44/46] cpufreq/amd-pstate: Rework CPPC enabling
+Subject: [PATCH 28/30] cpufreq/amd-pstate: Rework CPPC enabling
 
 The CPPC enable register is configured as "write once".  That is
 any future writes don't actually do anything.
@@ -5427,10 +3719,10 @@ index 4b2bdc9f7965..c71ee79e7d59 100644
 2.48.1
 
 
-From 08d64078f05668512e766163f2e857590edfaa1a Mon Sep 17 00:00:00 2001
+From 580e5baa118ce689d7e9c139c0164a54b7598a18 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:33 -0600
-Subject: [PATCH 45/46] cpufreq/amd-pstate: Stop caching EPP
+Subject: [PATCH 29/30] cpufreq/amd-pstate: Stop caching EPP
 
 EPP values are cached in the cpudata structure per CPU. This is needless
 though because they are also cached in the CPPC request variable.
@@ -5540,10 +3832,10 @@ index 1557e1afea79..fbe1c08d3f06 100644
 2.48.1
 
 
-From 03dfe906b2559b38a0cdd9ae4ab329c610a822f1 Mon Sep 17 00:00:00 2001
+From 241fe927611a108deb9b5b4a7078e3410b48e2eb Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:34 -0600
-Subject: [PATCH 46/46] cpufreq/amd-pstate: Drop actions in
+Subject: [PATCH 30/30] cpufreq/amd-pstate: Drop actions in
  amd_pstate_epp_cpu_offline()
 
 When the CPU goes offline there is no need to change the CPPC request

@@ -1,0 +1,133 @@
+From a42e4a54b6c9018788dde8409b8cf992872f9e56 Mon Sep 17 00:00:00 2001
+From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
+Date: Sat, 13 Jan 2024 15:29:25 +0100
+Subject: [PATCH 1/3] arch/Kconfig: Default to maximum amount of ASLR bits
+
+To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
+avoid having to enable `CONFIG_EXPERT`.
+
+Signed-off-by: Eric Naim <dnaim@cachyos.org>
+---
+ arch/Kconfig | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/Kconfig b/arch/Kconfig
+index b8a4ff365582..9b087f9bb413 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
+ 	int "Number of bits to use for ASLR of mmap base address" if EXPERT
+ 	range ARCH_MMAP_RND_BITS_MIN ARCH_MMAP_RND_BITS_MAX
+ 	default ARCH_MMAP_RND_BITS_DEFAULT if ARCH_MMAP_RND_BITS_DEFAULT
+-	default ARCH_MMAP_RND_BITS_MIN
++	default ARCH_MMAP_RND_BITS_MAX
+ 	depends on HAVE_ARCH_MMAP_RND_BITS
+ 	help
+ 	  This value can be used to select the number of bits to use to
+@@ -1171,7 +1171,7 @@ config ARCH_MMAP_RND_COMPAT_BITS
+ 	int "Number of bits to use for ASLR of mmap base address for compatible applications" if EXPERT
+ 	range ARCH_MMAP_RND_COMPAT_BITS_MIN ARCH_MMAP_RND_COMPAT_BITS_MAX
+ 	default ARCH_MMAP_RND_COMPAT_BITS_DEFAULT if ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
+-	default ARCH_MMAP_RND_COMPAT_BITS_MIN
++	default ARCH_MMAP_RND_COMPAT_BITS_MAX
+ 	depends on HAVE_ARCH_MMAP_RND_COMPAT_BITS
+ 	help
+ 	  This value can be used to select the number of bits to use to
+-- 
+2.49.0
+
+
+From 9f459d64ee87364b4b5de95211d504b68f87ec9a Mon Sep 17 00:00:00 2001
+From: Peter Jung <admin@ptr1337.dev>
+Date: Sat, 2 Nov 2024 11:04:43 +0100
+Subject: [PATCH 2/3] kbuild: add resolve_btfids to pacman PKGBUILD
+
+If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
+Compiling dkms modules will fail otherwise.
+
+Add a check, if resolve_btfids is present and then package if required.
+
+Signed-off-by: Peter Jung <admin@ptr1337.dev>
+---
+ scripts/package/PKGBUILD | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
+index 0cf3a55b05e1..a27d4344a4e8 100644
+--- a/scripts/package/PKGBUILD
++++ b/scripts/package/PKGBUILD
+@@ -90,6 +90,11 @@ _package-headers() {
+ 		"${srctree}/scripts/package/install-extmod-build" "${builddir}"
+ 	fi
+ 
++	# required when DEBUG_INFO_BTF_MODULES is enabled
++	if [ -f tools/bpf/resolve_btfids/resolve_btfids ]; then
++		install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
++	fi
++
+ 	echo "Installing System.map and config..."
+ 	mkdir -p "${builddir}"
+ 	cp System.map "${builddir}/System.map"
+-- 
+2.49.0
+
+
+From 1806f4a34c7922d12c32cce3d236d9829e761b10 Mon Sep 17 00:00:00 2001
+From: I Hsin Cheng <richard120310@gmail.com>
+Date: Mon, 10 Feb 2025 18:30:18 +0800
+Subject: [PATCH 3/3] sched/fair: Refactor can_migrate_task() to elimate
+ looping
+
+The function "can_migrate_task()" utilize "for_each_cpu_and" with a
+"if" statement inside to find the destination cpu. It's the same logic
+to find the first set bit of the result of the bitwise-AND of
+"env->dst_grpmask", "env->cpus" and "p->cpus_ptr".
+
+Refactor it by using "cpumask_first_and_and()" to perform bitwise-AND
+for "env->dst_grpmask", "env->cpus" and "p->cpus_ptr" and pick the
+first cpu within the intersection as the destination cpu, so we can
+elimate the need of looping and multiple times of branch.
+
+After the refactoring this part of the code can speed up from ~115ns
+to ~54ns, according to the test below.
+
+Ran the test for 5 times and the result is showned in the following
+table, and the test script is paste in next section.
+
+  -------------------------------------------------------
+  |Old method|  130|  118|  115|  109|  106|  avg ~115ns|
+  -------------------------------------------------------
+  |New method|   58|   55|   54|   48|   55|  avg  ~54ns|
+  -------------------------------------------------------
+
+Signed-off-by: I Hsin Cheng <richard120310@gmail.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Link: https://lkml.kernel.org/r/20250210103019.283824-1-richard120310@gmail.com
+---
+ kernel/sched/fair.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index c798d2795243..fcdf181972e5 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -9417,12 +9417,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
+ 			return 0;
+ 
+ 		/* Prevent to re-select dst_cpu via env's CPUs: */
+-		for_each_cpu_and(cpu, env->dst_grpmask, env->cpus) {
+-			if (cpumask_test_cpu(cpu, p->cpus_ptr)) {
+-				env->flags |= LBF_DST_PINNED;
+-				env->new_dst_cpu = cpu;
+-				break;
+-			}
++		cpu = cpumask_first_and_and(env->dst_grpmask, env->cpus, p->cpus_ptr);
++
++		if (cpu < nr_cpu_ids) {
++			env->flags |= LBF_DST_PINNED;
++			env->new_dst_cpu = cpu;
+ 		}
+ 
+ 		return 0;
+-- 
+2.49.0

@@ -1,4 +1,4 @@
-From f76a05115036de593b0476468033bad55e1bb295 Mon Sep 17 00:00:00 2001
+From 2176f294e0ac3404c5b8ad98c97c4db0f713dab5 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 19:40:31 +0100
 Subject: [PATCH] Makefile: Compiler-opt V2
@@ -9,7 +9,7 @@ Subject: [PATCH] Makefile: Compiler-opt V2
  2 files changed, 9 insertions(+), 9 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index b9464c88ac72..6c3f1f0e78d9 100644
+index 9e0d63d9d94b..17d1017f3fa9 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -462,9 +462,9 @@ HOSTRUSTC = rustc
@@ -33,7 +33,7 @@ index b9464c88ac72..6c3f1f0e78d9 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -552,7 +552,7 @@ LDFLAGS_MODULE  =
+@@ -553,7 +553,7 @@ LDFLAGS_MODULE  =
  CFLAGS_KERNEL	=
  RUSTFLAGS_KERNEL =
  AFLAGS_KERNEL	=
@@ -42,7 +42,7 @@ index b9464c88ac72..6c3f1f0e78d9 100644
  
  # Use USERINCLUDE when you must reference the UAPI directories only.
  USERINCLUDE    := \
-@@ -574,7 +574,7 @@ LINUXINCLUDE    := \
+@@ -575,7 +575,7 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -51,7 +51,7 @@ index b9464c88ac72..6c3f1f0e78d9 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -858,8 +858,8 @@ endif # need-config
+@@ -859,8 +859,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -63,10 +63,10 @@ index b9464c88ac72..6c3f1f0e78d9 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index a20e6efd3f0f..a3c3450b18f6 100644
+index d0d021b3fa3b..daf0b0be124a 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1446,10 +1446,10 @@ choice
+@@ -1459,10 +1459,10 @@ choice
  	default CC_OPTIMIZE_FOR_PERFORMANCE
  
  config CC_OPTIMIZE_FOR_PERFORMANCE

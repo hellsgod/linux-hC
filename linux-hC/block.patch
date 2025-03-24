@@ -1,4 +1,4 @@
-From 9e1128e75a703f51e908e80a978727aabaabc200 Mon Sep 17 00:00:00 2001
+From 312e63e8e7618e1a1844a9dafcad9ebb744e2699 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Fri, 19 Jan 2024 08:04:42 -0700
 Subject: [PATCH 1/8] block/mq-deadline: pass in queue directly to
@@ -15,7 +15,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/block/mq-deadline.c b/block/mq-deadline.c
-index 91b3789f710e..a64d0e17a0fb 100644
+index 754f6b7415cd..225e950e2117 100644
 --- a/block/mq-deadline.c
 +++ b/block/mq-deadline.c
 @@ -670,10 +670,9 @@ static bool dd_bio_merge(struct request_queue *q, struct bio *bio,
@@ -30,7 +30,7 @@ index 91b3789f710e..a64d0e17a0fb 100644
  	struct deadline_data *dd = q->elevator->elevator_data;
  	const enum dd_data_dir data_dir = rq_data_dir(rq);
  	u16 ioprio = req_get_ioprio(rq);
-@@ -734,7 +733,7 @@ static void dd_insert_requests(struct blk_mq_hw_ctx *hctx,
+@@ -731,7 +730,7 @@ static void dd_insert_requests(struct blk_mq_hw_ctx *hctx,
  
  		rq = list_first_entry(list, struct request, queuelist);
  		list_del_init(&rq->queuelist);
@@ -40,10 +40,10 @@ index 91b3789f710e..a64d0e17a0fb 100644
  	spin_unlock(&dd->lock);
  
 -- 
-2.48.0
+2.48.1
 
 
-From 1dcaae8cb2845557c138b78196008cadb5f9ee21 Mon Sep 17 00:00:00 2001
+From 2aa32766f0fb525839ed60f7f0c1dd643d6dd364 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Thu, 18 Jan 2024 10:46:52 -0700
 Subject: [PATCH 2/8] block/mq-deadline: serialize request dispatching
@@ -65,7 +65,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 24 insertions(+), 3 deletions(-)
 
 diff --git a/block/mq-deadline.c b/block/mq-deadline.c
-index a64d0e17a0fb..a4958982aca4 100644
+index 225e950e2117..c93121475b66 100644
 --- a/block/mq-deadline.c
 +++ b/block/mq-deadline.c
 @@ -79,10 +79,19 @@ struct dd_per_prio {
@@ -142,10 +142,10 @@ index a64d0e17a0fb..a4958982aca4 100644
  	/* We dispatch from request queue wide instead of hw queue */
  	blk_queue_flag_set(QUEUE_FLAG_SQ_SCHED, q);
 -- 
-2.48.0
+2.48.1
 
 
-From 92df99cd0bea2994a53cd6f1ec26c732cb876585 Mon Sep 17 00:00:00 2001
+From ec9ad5df642e4c0f821a732f6c6bcaab4f9468f9 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Fri, 19 Jan 2024 08:16:36 -0700
 Subject: [PATCH 3/8] block/mq-deadline: skip expensive merge lookups if
@@ -176,7 +176,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/block/mq-deadline.c b/block/mq-deadline.c
-index a4958982aca4..b4ab83367140 100644
+index c93121475b66..f7dfeadb0e30 100644
 --- a/block/mq-deadline.c
 +++ b/block/mq-deadline.c
 @@ -678,7 +678,19 @@ static bool dd_bio_merge(struct request_queue *q, struct bio *bio,
@@ -201,10 +201,10 @@ index a4958982aca4..b4ab83367140 100644
  	spin_unlock(&dd->lock);
  
 -- 
-2.48.0
+2.48.1
 
 
-From ef64bf42d986069b70c9ab23bff596b09408f0f9 Mon Sep 17 00:00:00 2001
+From dfb2e35897d38c75362f92081cdef42f629dbf29 Mon Sep 17 00:00:00 2001
 From: Bart Van Assche <bvanassche@acm.org>
 Date: Thu, 18 Jan 2024 10:53:34 -0700
 Subject: [PATCH 4/8] block/mq-deadline: use separate insertion lists
@@ -245,7 +245,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 53 insertions(+), 13 deletions(-)
 
 diff --git a/block/mq-deadline.c b/block/mq-deadline.c
-index b4ab83367140..66b3c6c3ccb2 100644
+index f7dfeadb0e30..3903785f7673 100644
 --- a/block/mq-deadline.c
 +++ b/block/mq-deadline.c
 @@ -89,10 +89,14 @@ struct deadline_data {
@@ -348,7 +348,7 @@ index b4ab83367140..66b3c6c3ccb2 100644
  
  	for (prio = 0; prio <= DD_PRIO_MAX; prio++) {
  		struct dd_per_prio *per_prio = &dd->per_prio[prio];
-@@ -758,19 +800,13 @@ static void dd_insert_requests(struct blk_mq_hw_ctx *hctx,
+@@ -755,19 +797,13 @@ static void dd_insert_requests(struct blk_mq_hw_ctx *hctx,
  {
  	struct request_queue *q = hctx->queue;
  	struct deadline_data *dd = q->elevator->elevator_data;
@@ -374,7 +374,7 @@ index b4ab83367140..66b3c6c3ccb2 100644
  }
  
  /* Callback from inside blk_mq_rq_ctx_init(). */
-@@ -807,6 +843,10 @@ static bool dd_has_work(struct blk_mq_hw_ctx *hctx)
+@@ -804,6 +840,10 @@ static bool dd_has_work(struct blk_mq_hw_ctx *hctx)
  	struct deadline_data *dd = hctx->queue->elevator->elevator_data;
  	enum dd_prio prio;
  
@@ -386,10 +386,10 @@ index b4ab83367140..66b3c6c3ccb2 100644
  		if (dd_has_work_for_prio(&dd->per_prio[prio]))
  			return true;
 -- 
-2.48.0
+2.48.1
 
 
-From 9c6bb465e43aa02224bb2e0158b255987c9d3aed Mon Sep 17 00:00:00 2001
+From 333220d8dcd6e3f645ad74830f38966e160a0e5d Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Sat, 20 Jan 2024 14:50:58 -0700
 Subject: [PATCH 5/8] block/bfq: pass in queue directly to dd_insert_request()
@@ -404,7 +404,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 2 insertions(+), 3 deletions(-)
 
 diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
-index 95dd7b795935..8792a605c8c5 100644
+index 167542201603..f1c3744bb5ad 100644
 --- a/block/bfq-iosched.c
 +++ b/block/bfq-iosched.c
 @@ -6250,10 +6250,9 @@ static inline void bfq_update_insert_stats(struct request_queue *q,
@@ -429,10 +429,10 @@ index 95dd7b795935..8792a605c8c5 100644
  }
  
 -- 
-2.48.0
+2.48.1
 
 
-From e3201cc96c0158917a8edbcddfe3070660004787 Mon Sep 17 00:00:00 2001
+From e9e4082b694730d4a5689672aff6caf2c98e4d09 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Sat, 20 Jan 2024 14:54:37 -0700
 Subject: [PATCH 6/8] block/bfq: serialize request dispatching
@@ -455,7 +455,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  2 files changed, 25 insertions(+), 4 deletions(-)
 
 diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
-index 8792a605c8c5..b7b402fae0fd 100644
+index f1c3744bb5ad..94c824d6fc5d 100644
 --- a/block/bfq-iosched.c
 +++ b/block/bfq-iosched.c
 @@ -5317,6 +5317,18 @@ static struct request *bfq_dispatch_request(struct blk_mq_hw_ctx *hctx)
@@ -485,7 +485,7 @@ index 8792a605c8c5..b7b402fae0fd 100644
  	spin_unlock_irq(&bfqd->lock);
  	bfq_update_dispatch_stats(hctx->queue, rq,
  			idle_timer_disabled ? in_serv_queue : NULL,
-@@ -7245,6 +7258,8 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_type *e)
+@@ -7253,6 +7266,8 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_type *e)
  	q->elevator = eq;
  	spin_unlock_irq(&q->queue_lock);
  
@@ -494,7 +494,7 @@ index 8792a605c8c5..b7b402fae0fd 100644
  	/*
  	 * Our fallback bfqq if bfq_find_alloc_queue() runs into OOM issues.
  	 * Grab a permanent reference to it, so that the normal code flow
-@@ -7363,8 +7378,6 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_type *e)
+@@ -7371,8 +7386,6 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_type *e)
  	/* see comments on the definition of next field inside bfq_data */
  	bfqd->actuator_load_threshold = 4;
  
@@ -540,10 +540,10 @@ index 687a3a7ba784..8589b58af79f 100644
  	 * bic associated with the task issuing current bio for
  	 * merging. This and the next field are used as a support to
 -- 
-2.48.0
+2.48.1
 
 
-From c60d722f6084ef4a43f5ca224a351fcbe3ed4cc3 Mon Sep 17 00:00:00 2001
+From 936abcc2661139130e074ec087fb2c41e0928179 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Sat, 20 Jan 2024 14:58:37 -0700
 Subject: [PATCH 7/8] block/bfq: skip expensive merge lookups if contended
@@ -574,7 +574,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 28 insertions(+), 2 deletions(-)
 
 diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
-index b7b402fae0fd..a771621e52d6 100644
+index 94c824d6fc5d..c05dc920a581 100644
 --- a/block/bfq-iosched.c
 +++ b/block/bfq-iosched.c
 @@ -467,6 +467,21 @@ static struct bfq_io_cq *bfq_bic_lookup(struct request_queue *q)
@@ -624,10 +624,10 @@ index b7b402fae0fd..a771621e52d6 100644
  	if (bic) {
  		/*
 -- 
-2.48.0
+2.48.1
 
 
-From e16d62509cbaf338503e8347954a3ceaf8823f1d Mon Sep 17 00:00:00 2001
+From 8d1aee7197b73cb526837ac3bb7d9dba4dc6aa46 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Sat, 20 Jan 2024 15:04:51 -0700
 Subject: [PATCH 8/8] block/bfq: use separate insertion lists
@@ -680,7 +680,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  2 files changed, 58 insertions(+), 16 deletions(-)
 
 diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
-index a771621e52d6..247a55e6a284 100644
+index c05dc920a581..3bd9fa7f0c79 100644
 --- a/block/bfq-iosched.c
 +++ b/block/bfq-iosched.c
 @@ -5187,6 +5187,10 @@ static bool bfq_has_work(struct blk_mq_hw_ctx *hctx)
@@ -816,7 +816,7 @@ index a771621e52d6..247a55e6a284 100644
  }
  
  static void bfq_update_hw_tag(struct bfq_data *bfqd)
-@@ -7285,6 +7319,10 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_type *e)
+@@ -7293,6 +7327,10 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_type *e)
  	spin_unlock_irq(&q->queue_lock);
  
  	spin_lock_init(&bfqd->lock);
@@ -847,4 +847,5 @@ index 8589b58af79f..d4df8a7173b1 100644
  	struct request_queue *queue;
  	/* dispatch queue */
 -- 
-2.48.0
+2.48.1
+

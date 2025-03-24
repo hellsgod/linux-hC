@@ -1,0 +1,1110 @@
+From 79a4e4b6c9192d87b3509b45b7f8054d62e3d598 Mon Sep 17 00:00:00 2001
+From: Mateusz Guzik <mjguzik@gmail.com>
+Date: Thu, 6 Feb 2025 17:44:10 +0100
+Subject: [PATCH 01/11] exit: perform add_device_randomness() without
+ tasklist_lock
+
+Parallel calls to add_device_randomness() contend on their own.
+
+The clone side aleady runs outside of tasklist_lock, which in turn means
+any caller on the exit side extends the tasklist_lock hold time while
+contending on the random-private lock.
+
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Mateusz Guzik <mjguzik@gmail.com>
+Acked-by: Liam R. Howlett <Liam.Howlett@Oracle.com>
+---
+ kernel/exit.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 3485e5fc499e..9d7acd7b0040 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -174,9 +174,6 @@ static void __exit_signal(struct task_struct *tsk)
+ 			sig->curr_target = next_thread(tsk);
+ 	}
+ 
+-	add_device_randomness((const void*) &tsk->se.sum_exec_runtime,
+-			      sizeof(unsigned long long));
+-
+ 	/*
+ 	 * Accumulate here the counters for all threads as they die. We could
+ 	 * skip the group leader because it is the last user of signal_struct,
+@@ -278,6 +275,8 @@ void release_task(struct task_struct *p)
+ 	write_unlock_irq(&tasklist_lock);
+ 	proc_flush_pid(thread_pid);
+ 	put_pid(thread_pid);
++	add_device_randomness(&p->se.sum_exec_runtime,
++			      sizeof(p->se.sum_exec_runtime));
+ 	release_thread(p);
+ 	put_task_struct_rcu_user(p);
+ 
+-- 
+2.48.1
+
+
+From ebb196c8d4a609b268be363be269534090220d75 Mon Sep 17 00:00:00 2001
+From: Mateusz Guzik <mjguzik@gmail.com>
+Date: Thu, 6 Feb 2025 17:44:11 +0100
+Subject: [PATCH 02/11] exit: hoist get_pid() in release_task() outside of
+ tasklist_lock
+
+Reduces hold time as get_pid() contains an atomic.
+
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Mateusz Guzik <mjguzik@gmail.com>
+Acked-by: Liam R. Howlett <Liam.Howlett@Oracle.com>
+---
+ kernel/exit.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 9d7acd7b0040..8c39c84582b7 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -248,9 +248,10 @@ void release_task(struct task_struct *p)
+ 
+ 	cgroup_release(p);
+ 
++	thread_pid = get_pid(p->thread_pid);
++
+ 	write_lock_irq(&tasklist_lock);
+ 	ptrace_release_task(p);
+-	thread_pid = get_pid(p->thread_pid);
+ 	__exit_signal(p);
+ 
+ 	/*
+-- 
+2.48.1
+
+
+From f4725424911c915d7f5df7d8b0919aab0efcfdfa Mon Sep 17 00:00:00 2001
+From: Mateusz Guzik <mjguzik@gmail.com>
+Date: Thu, 6 Feb 2025 17:44:12 +0100
+Subject: [PATCH 03/11] pid: sprinkle tasklist_lock asserts
+
+They cost nothing on production kernels and document the requirement of
+holding the tasklist_lock lock in respective routines.
+
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Mateusz Guzik <mjguzik@gmail.com>
+Acked-by: Liam R. Howlett <Liam.Howlett@Oracle.com>
+---
+ kernel/pid.c | 15 ++++++++++++---
+ 1 file changed, 12 insertions(+), 3 deletions(-)
+
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 924084713be8..2ae872f689a7 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -339,17 +339,23 @@ static struct pid **task_pid_ptr(struct task_struct *task, enum pid_type type)
+  */
+ void attach_pid(struct task_struct *task, enum pid_type type)
+ {
+-	struct pid *pid = *task_pid_ptr(task, type);
++	struct pid *pid;
++
++	lockdep_assert_held_write(&tasklist_lock);
++
++	pid = *task_pid_ptr(task, type);
+ 	hlist_add_head_rcu(&task->pid_links[type], &pid->tasks[type]);
+ }
+ 
+ static void __change_pid(struct task_struct *task, enum pid_type type,
+ 			struct pid *new)
+ {
+-	struct pid **pid_ptr = task_pid_ptr(task, type);
+-	struct pid *pid;
++	struct pid **pid_ptr, *pid;
+ 	int tmp;
+ 
++	lockdep_assert_held_write(&tasklist_lock);
++
++	pid_ptr = task_pid_ptr(task, type);
+ 	pid = *pid_ptr;
+ 
+ 	hlist_del_rcu(&task->pid_links[type]);
+@@ -386,6 +392,8 @@ void exchange_tids(struct task_struct *left, struct task_struct *right)
+ 	struct hlist_head *head1 = &pid1->tasks[PIDTYPE_PID];
+ 	struct hlist_head *head2 = &pid2->tasks[PIDTYPE_PID];
+ 
++	lockdep_assert_held_write(&tasklist_lock);
++
+ 	/* Swap the single entry tid lists */
+ 	hlists_swap_heads_rcu(head1, head2);
+ 
+@@ -403,6 +411,7 @@ void transfer_pid(struct task_struct *old, struct task_struct *new,
+ 			   enum pid_type type)
+ {
+ 	WARN_ON_ONCE(type == PIDTYPE_PID);
++	lockdep_assert_held_write(&tasklist_lock);
+ 	hlist_replace_rcu(&old->pid_links[type], &new->pid_links[type]);
+ }
+ 
+-- 
+2.48.1
+
+
+From caab3b7cdee8b3f735dd1997562ce8046a601cf0 Mon Sep 17 00:00:00 2001
+From: Mateusz Guzik <mjguzik@gmail.com>
+Date: Thu, 6 Feb 2025 17:44:13 +0100
+Subject: [PATCH 04/11] pid: perform free_pid() calls outside of tasklist_lock
+
+As the clone side already executes pid allocation with only pidmap_lock
+held, issuing free_pid() while still holding tasklist_lock exacerbates
+total hold time of the latter.
+
+More things may show up later which require initial clean up with the
+lock held and allow finishing without it. For that reason a struct to
+collect such work is added instead of merely passing the pid array.
+
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Mateusz Guzik <mjguzik@gmail.com>
+Acked-by: Liam R. Howlett <Liam.Howlett@Oracle.com>
+---
+ include/linux/pid.h |  7 ++++---
+ kernel/exit.c       | 28 ++++++++++++++++++++--------
+ kernel/pid.c        | 44 ++++++++++++++++++++++----------------------
+ kernel/sys.c        | 14 +++++++++-----
+ 4 files changed, 55 insertions(+), 38 deletions(-)
+
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index 98837a1ff0f3..311ecebd7d56 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -101,9 +101,9 @@ extern struct pid *get_task_pid(struct task_struct *task, enum pid_type type);
+  * these helpers must be called with the tasklist_lock write-held.
+  */
+ extern void attach_pid(struct task_struct *task, enum pid_type);
+-extern void detach_pid(struct task_struct *task, enum pid_type);
+-extern void change_pid(struct task_struct *task, enum pid_type,
+-			struct pid *pid);
++void detach_pid(struct pid **pids, struct task_struct *task, enum pid_type);
++void change_pid(struct pid **pids, struct task_struct *task, enum pid_type,
++		struct pid *pid);
+ extern void exchange_tids(struct task_struct *task, struct task_struct *old);
+ extern void transfer_pid(struct task_struct *old, struct task_struct *new,
+ 			 enum pid_type);
+@@ -129,6 +129,7 @@ extern struct pid *find_ge_pid(int nr, struct pid_namespace *);
+ extern struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 			     size_t set_tid_size);
+ extern void free_pid(struct pid *pid);
++void free_pids(struct pid **pids);
+ extern void disable_pid_allocation(struct pid_namespace *ns);
+ 
+ /*
+diff --git a/kernel/exit.c b/kernel/exit.c
+index 8c39c84582b7..0d6df671c8a8 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -122,14 +122,22 @@ static __init int kernel_exit_sysfs_init(void)
+ late_initcall(kernel_exit_sysfs_init);
+ #endif
+ 
+-static void __unhash_process(struct task_struct *p, bool group_dead)
++/*
++ * For things release_task() would like to do *after* tasklist_lock is released.
++ */
++struct release_task_post {
++	struct pid *pids[PIDTYPE_MAX];
++};
++
++static void __unhash_process(struct release_task_post *post, struct task_struct *p,
++			     bool group_dead)
+ {
+ 	nr_threads--;
+-	detach_pid(p, PIDTYPE_PID);
++	detach_pid(post->pids, p, PIDTYPE_PID);
+ 	if (group_dead) {
+-		detach_pid(p, PIDTYPE_TGID);
+-		detach_pid(p, PIDTYPE_PGID);
+-		detach_pid(p, PIDTYPE_SID);
++		detach_pid(post->pids, p, PIDTYPE_TGID);
++		detach_pid(post->pids, p, PIDTYPE_PGID);
++		detach_pid(post->pids, p, PIDTYPE_SID);
+ 
+ 		list_del_rcu(&p->tasks);
+ 		list_del_init(&p->sibling);
+@@ -141,7 +149,7 @@ static void __unhash_process(struct task_struct *p, bool group_dead)
+ /*
+  * This function expects the tasklist_lock write-locked.
+  */
+-static void __exit_signal(struct task_struct *tsk)
++static void __exit_signal(struct release_task_post *post, struct task_struct *tsk)
+ {
+ 	struct signal_struct *sig = tsk->signal;
+ 	bool group_dead = thread_group_leader(tsk);
+@@ -194,7 +202,7 @@ static void __exit_signal(struct task_struct *tsk)
+ 	task_io_accounting_add(&sig->ioac, &tsk->ioac);
+ 	sig->sum_sched_runtime += tsk->se.sum_exec_runtime;
+ 	sig->nr_threads--;
+-	__unhash_process(tsk, group_dead);
++	__unhash_process(post, tsk, group_dead);
+ 	write_sequnlock(&sig->stats_lock);
+ 
+ 	/*
+@@ -236,10 +244,13 @@ void __weak release_thread(struct task_struct *dead_task)
+ 
+ void release_task(struct task_struct *p)
+ {
++	struct release_task_post post;
+ 	struct task_struct *leader;
+ 	struct pid *thread_pid;
+ 	int zap_leader;
+ repeat:
++	memset(&post, 0, sizeof(post));
++
+ 	/* don't need to get the RCU readlock here - the process is dead and
+ 	 * can't be modifying its own credentials. But shut RCU-lockdep up */
+ 	rcu_read_lock();
+@@ -252,7 +263,7 @@ void release_task(struct task_struct *p)
+ 
+ 	write_lock_irq(&tasklist_lock);
+ 	ptrace_release_task(p);
+-	__exit_signal(p);
++	__exit_signal(&post, p);
+ 
+ 	/*
+ 	 * If we are the last non-leader member of the thread
+@@ -278,6 +289,7 @@ void release_task(struct task_struct *p)
+ 	put_pid(thread_pid);
+ 	add_device_randomness(&p->se.sum_exec_runtime,
+ 			      sizeof(p->se.sum_exec_runtime));
++	free_pids(post.pids);
+ 	release_thread(p);
+ 	put_task_struct_rcu_user(p);
+ 
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 2ae872f689a7..73625f28c166 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -88,20 +88,6 @@ struct pid_namespace init_pid_ns = {
+ };
+ EXPORT_SYMBOL_GPL(init_pid_ns);
+ 
+-/*
+- * Note: disable interrupts while the pidmap_lock is held as an
+- * interrupt might come in and do read_lock(&tasklist_lock).
+- *
+- * If we don't disable interrupts there is a nasty deadlock between
+- * detach_pid()->free_pid() and another cpu that does
+- * spin_lock(&pidmap_lock) followed by an interrupt routine that does
+- * read_lock(&tasklist_lock);
+- *
+- * After we clean up the tasklist_lock and know there are no
+- * irq handlers that take it we can leave the interrupts enabled.
+- * For now it is easier to be safe than to prove it can't happen.
+- */
+-
+ static  __cacheline_aligned_in_smp DEFINE_SPINLOCK(pidmap_lock);
+ seqcount_spinlock_t pidmap_lock_seq = SEQCNT_SPINLOCK_ZERO(pidmap_lock_seq, &pidmap_lock);
+ 
+@@ -128,10 +114,11 @@ static void delayed_put_pid(struct rcu_head *rhp)
+ 
+ void free_pid(struct pid *pid)
+ {
+-	/* We can be called with write_lock_irq(&tasklist_lock) held */
+ 	int i;
+ 	unsigned long flags;
+ 
++	lockdep_assert_not_held(&tasklist_lock);
++
+ 	spin_lock_irqsave(&pidmap_lock, flags);
+ 	for (i = 0; i <= pid->level; i++) {
+ 		struct upid *upid = pid->numbers + i;
+@@ -160,6 +147,18 @@ void free_pid(struct pid *pid)
+ 	call_rcu(&pid->rcu, delayed_put_pid);
+ }
+ 
++void free_pids(struct pid **pids)
++{
++	int tmp;
++
++	/*
++	 * This can batch pidmap_lock.
++	 */
++	for (tmp = PIDTYPE_MAX; --tmp >= 0; )
++		if (pids[tmp])
++			free_pid(pids[tmp]);
++}
++
+ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 		      size_t set_tid_size)
+ {
+@@ -347,8 +346,8 @@ void attach_pid(struct task_struct *task, enum pid_type type)
+ 	hlist_add_head_rcu(&task->pid_links[type], &pid->tasks[type]);
+ }
+ 
+-static void __change_pid(struct task_struct *task, enum pid_type type,
+-			struct pid *new)
++static void __change_pid(struct pid **pids, struct task_struct *task,
++			 enum pid_type type, struct pid *new)
+ {
+ 	struct pid **pid_ptr, *pid;
+ 	int tmp;
+@@ -370,18 +369,19 @@ static void __change_pid(struct task_struct *task, enum pid_type type,
+ 		if (pid_has_task(pid, tmp))
+ 			return;
+ 
+-	free_pid(pid);
++	WARN_ON(pids[type]);
++	pids[type] = pid;
+ }
+ 
+-void detach_pid(struct task_struct *task, enum pid_type type)
++void detach_pid(struct pid **pids, struct task_struct *task, enum pid_type type)
+ {
+-	__change_pid(task, type, NULL);
++	__change_pid(pids, task, type, NULL);
+ }
+ 
+-void change_pid(struct task_struct *task, enum pid_type type,
++void change_pid(struct pid **pids, struct task_struct *task, enum pid_type type,
+ 		struct pid *pid)
+ {
+-	__change_pid(task, type, pid);
++	__change_pid(pids, task, type, pid);
+ 	attach_pid(task, type);
+ }
+ 
+diff --git a/kernel/sys.c b/kernel/sys.c
+index cb366ff8703a..4efca8a97d62 100644
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1085,6 +1085,7 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
+ {
+ 	struct task_struct *p;
+ 	struct task_struct *group_leader = current->group_leader;
++	struct pid *pids[PIDTYPE_MAX] = { 0 };
+ 	struct pid *pgrp;
+ 	int err;
+ 
+@@ -1142,13 +1143,14 @@ SYSCALL_DEFINE2(setpgid, pid_t, pid, pid_t, pgid)
+ 		goto out;
+ 
+ 	if (task_pgrp(p) != pgrp)
+-		change_pid(p, PIDTYPE_PGID, pgrp);
++		change_pid(pids, p, PIDTYPE_PGID, pgrp);
+ 
+ 	err = 0;
+ out:
+ 	/* All paths lead to here, thus we are safe. -DaveM */
+ 	write_unlock_irq(&tasklist_lock);
+ 	rcu_read_unlock();
++	free_pids(pids);
+ 	return err;
+ }
+ 
+@@ -1222,21 +1224,22 @@ SYSCALL_DEFINE1(getsid, pid_t, pid)
+ 	return retval;
+ }
+ 
+-static void set_special_pids(struct pid *pid)
++static void set_special_pids(struct pid **pids, struct pid *pid)
+ {
+ 	struct task_struct *curr = current->group_leader;
+ 
+ 	if (task_session(curr) != pid)
+-		change_pid(curr, PIDTYPE_SID, pid);
++		change_pid(pids, curr, PIDTYPE_SID, pid);
+ 
+ 	if (task_pgrp(curr) != pid)
+-		change_pid(curr, PIDTYPE_PGID, pid);
++		change_pid(pids, curr, PIDTYPE_PGID, pid);
+ }
+ 
+ int ksys_setsid(void)
+ {
+ 	struct task_struct *group_leader = current->group_leader;
+ 	struct pid *sid = task_pid(group_leader);
++	struct pid *pids[PIDTYPE_MAX] = { 0 };
+ 	pid_t session = pid_vnr(sid);
+ 	int err = -EPERM;
+ 
+@@ -1252,13 +1255,14 @@ int ksys_setsid(void)
+ 		goto out;
+ 
+ 	group_leader->signal->leader = 1;
+-	set_special_pids(sid);
++	set_special_pids(pids, sid);
+ 
+ 	proc_clear_tty(group_leader);
+ 
+ 	err = session;
+ out:
+ 	write_unlock_irq(&tasklist_lock);
++	free_pids(pids);
+ 	if (err > 0) {
+ 		proc_sid_connector(group_leader);
+ 		sched_autogroup_create_attach(group_leader);
+-- 
+2.48.1
+
+
+From e7d2f758282100aeb90414fc976629b112c30896 Mon Sep 17 00:00:00 2001
+From: Mateusz Guzik <mjguzik@gmail.com>
+Date: Thu, 6 Feb 2025 17:44:14 +0100
+Subject: [PATCH 05/11] pid: drop irq disablement around pidmap_lock
+
+It no longer serves any purpose now that the tasklist_lock ->
+pidmap_lock ordering got eliminated.
+
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Mateusz Guzik <mjguzik@gmail.com>
+Acked-by: Liam R. Howlett <Liam.Howlett@Oracle.com>
+---
+ kernel/pid.c | 23 +++++++++++------------
+ 1 file changed, 11 insertions(+), 12 deletions(-)
+
+diff --git a/kernel/pid.c b/kernel/pid.c
+index 73625f28c166..900193de4232 100644
+--- a/kernel/pid.c
++++ b/kernel/pid.c
+@@ -115,11 +115,10 @@ static void delayed_put_pid(struct rcu_head *rhp)
+ void free_pid(struct pid *pid)
+ {
+ 	int i;
+-	unsigned long flags;
+ 
+ 	lockdep_assert_not_held(&tasklist_lock);
+ 
+-	spin_lock_irqsave(&pidmap_lock, flags);
++	spin_lock(&pidmap_lock);
+ 	for (i = 0; i <= pid->level; i++) {
+ 		struct upid *upid = pid->numbers + i;
+ 		struct pid_namespace *ns = upid->ns;
+@@ -142,7 +141,7 @@ void free_pid(struct pid *pid)
+ 		idr_remove(&ns->idr, upid->nr);
+ 	}
+ 	pidfs_remove_pid(pid);
+-	spin_unlock_irqrestore(&pidmap_lock, flags);
++	spin_unlock(&pidmap_lock);
+ 
+ 	call_rcu(&pid->rcu, delayed_put_pid);
+ }
+@@ -210,7 +209,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 		}
+ 
+ 		idr_preload(GFP_KERNEL);
+-		spin_lock_irq(&pidmap_lock);
++		spin_lock(&pidmap_lock);
+ 
+ 		if (tid) {
+ 			nr = idr_alloc(&tmp->idr, NULL, tid,
+@@ -237,7 +236,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 			nr = idr_alloc_cyclic(&tmp->idr, NULL, pid_min,
+ 					      pid_max, GFP_ATOMIC);
+ 		}
+-		spin_unlock_irq(&pidmap_lock);
++		spin_unlock(&pidmap_lock);
+ 		idr_preload_end();
+ 
+ 		if (nr < 0) {
+@@ -271,7 +270,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 
+ 	upid = pid->numbers + ns->level;
+ 	idr_preload(GFP_KERNEL);
+-	spin_lock_irq(&pidmap_lock);
++	spin_lock(&pidmap_lock);
+ 	if (!(ns->pid_allocated & PIDNS_ADDING))
+ 		goto out_unlock;
+ 	pidfs_add_pid(pid);
+@@ -280,18 +279,18 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 		idr_replace(&upid->ns->idr, pid, upid->nr);
+ 		upid->ns->pid_allocated++;
+ 	}
+-	spin_unlock_irq(&pidmap_lock);
++	spin_unlock(&pidmap_lock);
+ 	idr_preload_end();
+ 
+ 	return pid;
+ 
+ out_unlock:
+-	spin_unlock_irq(&pidmap_lock);
++	spin_unlock(&pidmap_lock);
+ 	idr_preload_end();
+ 	put_pid_ns(ns);
+ 
+ out_free:
+-	spin_lock_irq(&pidmap_lock);
++	spin_lock(&pidmap_lock);
+ 	while (++i <= ns->level) {
+ 		upid = pid->numbers + i;
+ 		idr_remove(&upid->ns->idr, upid->nr);
+@@ -301,7 +300,7 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 	if (ns->pid_allocated == PIDNS_ADDING)
+ 		idr_set_cursor(&ns->idr, 0);
+ 
+-	spin_unlock_irq(&pidmap_lock);
++	spin_unlock(&pidmap_lock);
+ 
+ 	kmem_cache_free(ns->pid_cachep, pid);
+ 	return ERR_PTR(retval);
+@@ -309,9 +308,9 @@ struct pid *alloc_pid(struct pid_namespace *ns, pid_t *set_tid,
+ 
+ void disable_pid_allocation(struct pid_namespace *ns)
+ {
+-	spin_lock_irq(&pidmap_lock);
++	spin_lock(&pidmap_lock);
+ 	ns->pid_allocated &= ~PIDNS_ADDING;
+-	spin_unlock_irq(&pidmap_lock);
++	spin_unlock(&pidmap_lock);
+ }
+ 
+ struct pid *find_pid_ns(int nr, struct pid_namespace *ns)
+-- 
+2.48.1
+
+
+From f09917d17362dad4662ee9e98a90a9492b828fe8 Mon Sep 17 00:00:00 2001
+From: SeongJae Park <sj@kernel.org>
+Date: Wed, 5 Feb 2025 22:15:14 -0800
+Subject: [PATCH 06/11] mm/madvise: split out mmap locking operations for
+ madvise()
+
+Patch series "mm/madvise: remove redundant mmap_lock operations from
+process_madvise()".
+
+process_madvise() calls do_madvise() for each address range.  Then, each
+do_madvise() invocation holds and releases same mmap_lock.  Optimize the
+redundant lock operations by splitting do_madvise() internal logic
+including the mmap_lock operations, and calling the small logic directly
+from process_madvise() in a sequence that removes the redundant locking.
+As a result of this change, process_madvise() becomes more efficient and
+less racy in terms of its results and latency.
+
+Note that the potential downside of this series is that other mmap_lock
+holders may take more time due to the increased length of mmap_lock
+critical section for process_madvise() calls.  But there is maximum limit
+in the kernel space (IOV_MAX), and userspace can control the critical
+section length by setting the request size.  Hence, the downside would be
+limited and controllable.
+
+Evaluation
+==========
+
+I measured the time to apply MADV_DONTNEED advice to 256 MiB memory using
+multiple madvise() calls, 4 KiB per each call.  I also do the same with
+process_madvise(), but with varying batch size (vlen) from 1 to 1024.  The
+source code for the measurement is available at GitHub[1].  Because the
+microbenchmark result is not that stable, I ran each configuration five
+times and use the average.
+
+The measurement results are as below.  'sz_batches' column shows the batch
+size of process_madvise() calls.  '0' batch size is for madvise() calls
+case.  'before' and 'after' columns are the measured time to apply
+MADV_DONTNEED to the 256 MiB memory buffer in nanoseconds, on kernels that
+built without and with the last patch of this series, respectively.  So
+lower value means better efficiency.  'after/before' column is the ratio
+of 'after' to 'before'.
+
+    sz_batches  before       after        after/before
+    0           146294215.2  121280536.2  0.829017989769427
+    1           165851018.8  136305598.2  0.821855658085351
+    2           129469321.2  103740383.6  0.801273866569094
+    4           110369232.4  87835896.2   0.795836795182785
+    8           102906232.4  77420920.2   0.752344327397609
+    16          97551017.4   74959714.4   0.768415506038587
+    32          94809848.2   71200848.4   0.750985786305689
+    64          96087575.6   72593180     0.755489765942227
+    128         96154163.8   68517055.4   0.712575022154163
+    256         92901257.6   69054216.6   0.743307662177439
+    512         93646170.8   67053296.2   0.716028168874151
+    1024        92663219.2   70168196.8   0.75723892830177
+
+Despite the unstable nature of the test program, the trend is as we
+expect.  The measurement shows this patchset reduces the process_madvise()
+latency, proportional to the batching size.  The latency gain was about
+20% with the batch size 2, and it has increased to about 28% with the
+batch size 512, since more number of mmap locking is reduced with larger
+batch size.
+
+Note that the standard devitation of the measurements for each sz_batches
+configuration ranged from 1.9% to 7.2%.  That is, this result is not very
+stable.  The average of the standard deviations for different batch sizes
+were 4.62% and 4.70% for the 'before' and 'after' kernel measurements.
+
+Also note that this patch has somehow decreased latencies of madvise() and
+single batch size process_madvise().  Seems this code path is small enough
+to significantly be affected by compiler optimizations including inlining
+of split-out functions.  Please focus on only the improvement amount that
+changed by the batch size.
+
+[1] https://github.com/sjp38/eval_proc_madvise
+
+This patch (of 4):
+
+Split out the madvise behavior-dependent mmap_lock operations from
+do_madvise(), for easier reuse of the logic in an upcoming change.
+
+Link: https://lkml.kernel.org/r/20250206061517.2958-1-sj@kernel.org
+Link: https://lkml.kernel.org/r/20250206061517.2958-2-sj@kernel.org
+Signed-off-by: SeongJae Park <sj@kernel.org>
+Reviewed-by: Shakeel Butt <shakeel.butt@linux.dev>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: Davidlohr Bueso <dave@stgolabs.net>
+Reviewed-by: Liam R. Howlett <howlett@gmail.com>
+Cc: David Hildenbrand <david@redhat.com>
+Cc: SeongJae Park <sj@kernel.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/madvise.c | 45 ++++++++++++++++++++++++++++++++-------------
+ 1 file changed, 32 insertions(+), 13 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 49f3a75046f6..ae0964bc4d88 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1565,6 +1565,33 @@ int madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
+ 				 madvise_vma_anon_name);
+ }
+ #endif /* CONFIG_ANON_VMA_NAME */
++
++static int madvise_lock(struct mm_struct *mm, int behavior)
++{
++
++#ifdef CONFIG_MEMORY_FAILURE
++	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
++		return 0;
++#endif
++
++	if (madvise_need_mmap_write(behavior)) {
++		if (mmap_write_lock_killable(mm))
++			return -EINTR;
++	} else {
++		mmap_read_lock(mm);
++	}
++	return 0;
++
++}
++
++static void madvise_unlock(struct mm_struct *mm, int behavior)
++{
++	if (madvise_need_mmap_write(behavior))
++		mmap_write_unlock(mm);
++	else
++		mmap_read_unlock(mm);
++}
++
+ /*
+  * The madvise(2) system call.
+  *
+@@ -1641,7 +1668,6 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ {
+ 	unsigned long end;
+ 	int error;
+-	int write;
+ 	size_t len;
+ 	struct blk_plug plug;
+ 
+@@ -1663,19 +1689,15 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ 	if (end == start)
+ 		return 0;
+ 
++	error = madvise_lock(mm, behavior);
++	if (error)
++		return error;
++
+ #ifdef CONFIG_MEMORY_FAILURE
+ 	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
+ 		return madvise_inject_error(behavior, start, start + len_in);
+ #endif
+ 
+-	write = madvise_need_mmap_write(behavior);
+-	if (write) {
+-		if (mmap_write_lock_killable(mm))
+-			return -EINTR;
+-	} else {
+-		mmap_read_lock(mm);
+-	}
+-
+ 	start = untagged_addr_remote(mm, start);
+ 	end = start + len;
+ 
+@@ -1692,10 +1714,7 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ 	}
+ 	blk_finish_plug(&plug);
+ 
+-	if (write)
+-		mmap_write_unlock(mm);
+-	else
+-		mmap_read_unlock(mm);
++	madvise_unlock(mm, behavior);
+ 
+ 	return error;
+ }
+-- 
+2.48.1
+
+
+From 4c25d6d516ce32f6d2fc6fc8de2bdf624387ec71 Mon Sep 17 00:00:00 2001
+From: SeongJae Park <sj@kernel.org>
+Date: Wed, 5 Feb 2025 22:15:15 -0800
+Subject: [PATCH 07/11] mm/madvise: split out madvise input validity check
+
+Split out the madvise parameters validation logic from do_madvise(), for
+easy reuse of the logic from a future change.
+
+Link: https://lkml.kernel.org/r/20250206061517.2958-3-sj@kernel.org
+Signed-off-by: SeongJae Park <sj@kernel.org>
+Reviewed-by: Shakeel Butt <shakeel.butt@linux.dev>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: Davidlohr Bueso <dave@stgolabs.net>
+Reviewed-by: Liam R. Howlett <howlett@gmail.com>
+Cc: David Hildenbrand <david@redhat.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/madvise.c | 32 ++++++++++++++++++++++----------
+ 1 file changed, 22 insertions(+), 10 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index ae0964bc4d88..9cc31efe875a 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1592,6 +1592,27 @@ static void madvise_unlock(struct mm_struct *mm, int behavior)
+ 		mmap_read_unlock(mm);
+ }
+ 
++static bool is_valid_madvise(unsigned long start, size_t len_in, int behavior)
++{
++	size_t len;
++
++	if (!madvise_behavior_valid(behavior))
++		return false;
++
++	if (!PAGE_ALIGNED(start))
++		return false;
++	len = PAGE_ALIGN(len_in);
++
++	/* Check to see whether len was rounded up from small -ve to zero */
++	if (len_in && !len)
++		return false;
++
++	if (start + len < start)
++		return false;
++
++	return true;
++}
++
+ /*
+  * The madvise(2) system call.
+  *
+@@ -1671,20 +1692,11 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ 	size_t len;
+ 	struct blk_plug plug;
+ 
+-	if (!madvise_behavior_valid(behavior))
++	if (!is_valid_madvise(start, len_in, behavior))
+ 		return -EINVAL;
+ 
+-	if (!PAGE_ALIGNED(start))
+-		return -EINVAL;
+ 	len = PAGE_ALIGN(len_in);
+-
+-	/* Check to see whether len was rounded up from small -ve to zero */
+-	if (len_in && !len)
+-		return -EINVAL;
+-
+ 	end = start + len;
+-	if (end < start)
+-		return -EINVAL;
+ 
+ 	if (end == start)
+ 		return 0;
+-- 
+2.48.1
+
+
+From 2ccd17afd2aaa5ebb0bd710c8251c143f08655ea Mon Sep 17 00:00:00 2001
+From: SeongJae Park <sj@kernel.org>
+Date: Wed, 5 Feb 2025 22:15:16 -0800
+Subject: [PATCH 08/11] mm/madvise: split out madvise() behavior execution
+
+Split out the madvise behavior applying logic from do_madvise() to make
+it easier to reuse from the following change.
+
+Link: https://lkml.kernel.org/r/20250206061517.2958-4-sj@kernel.org
+Signed-off-by: SeongJae Park <sj@kernel.org>
+Reviewed-by: Shakeel Butt <shakeel.butt@linux.dev>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: Liam R. Howlett <howlett@gmail.com>
+Cc: David Hildenbrand <david@redhat.com>
+Cc: Davidlohr Bueso <dave@stgolabs.net>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/madvise.c | 53 +++++++++++++++++++++++++++++-----------------------
+ 1 file changed, 30 insertions(+), 23 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 9cc31efe875a..913936a5c353 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1613,6 +1613,35 @@ static bool is_valid_madvise(unsigned long start, size_t len_in, int behavior)
+ 	return true;
+ }
+ 
++static int madvise_do_behavior(struct mm_struct *mm,
++		unsigned long start, size_t len_in, size_t len, int behavior)
++{
++	struct blk_plug plug;
++	unsigned long end;
++	int error;
++
++#ifdef CONFIG_MEMORY_FAILURE
++	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
++		return madvise_inject_error(behavior, start, start + len_in);
++#endif
++	start = untagged_addr_remote(mm, start);
++	end = start + len;
++
++	blk_start_plug(&plug);
++	switch (behavior) {
++	case MADV_POPULATE_READ:
++	case MADV_POPULATE_WRITE:
++		error = madvise_populate(mm, start, end, behavior);
++		break;
++	default:
++		error = madvise_walk_vmas(mm, start, end, behavior,
++					  madvise_vma_behavior);
++		break;
++	}
++	blk_finish_plug(&plug);
++	return error;
++}
++
+ /*
+  * The madvise(2) system call.
+  *
+@@ -1690,7 +1719,6 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ 	unsigned long end;
+ 	int error;
+ 	size_t len;
+-	struct blk_plug plug;
+ 
+ 	if (!is_valid_madvise(start, len_in, behavior))
+ 		return -EINVAL;
+@@ -1704,28 +1732,7 @@ int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int beh
+ 	error = madvise_lock(mm, behavior);
+ 	if (error)
+ 		return error;
+-
+-#ifdef CONFIG_MEMORY_FAILURE
+-	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
+-		return madvise_inject_error(behavior, start, start + len_in);
+-#endif
+-
+-	start = untagged_addr_remote(mm, start);
+-	end = start + len;
+-
+-	blk_start_plug(&plug);
+-	switch (behavior) {
+-	case MADV_POPULATE_READ:
+-	case MADV_POPULATE_WRITE:
+-		error = madvise_populate(mm, start, end, behavior);
+-		break;
+-	default:
+-		error = madvise_walk_vmas(mm, start, end, behavior,
+-					  madvise_vma_behavior);
+-		break;
+-	}
+-	blk_finish_plug(&plug);
+-
++	error = madvise_do_behavior(mm, start, len_in, len, behavior);
+ 	madvise_unlock(mm, behavior);
+ 
+ 	return error;
+-- 
+2.48.1
+
+
+From a10a53795180b8f968778ec3fa09f6d501206e7e Mon Sep 17 00:00:00 2001
+From: SeongJae Park <sj@kernel.org>
+Date: Wed, 5 Feb 2025 22:15:17 -0800
+Subject: [PATCH 09/11] mm/madvise: remove redundant mmap_lock operations from
+ process_madvise()
+
+Optimize redundant mmap lock operations from process_madvise() by directly
+doing the mmap locking first, and then the remaining works for all ranges
+in the loop.
+
+Link: https://lkml.kernel.org/r/20250206061517.2958-5-sj@kernel.org
+Signed-off-by: SeongJae Park <sj@kernel.org>
+Reviewed-by: Shakeel Butt <shakeel.butt@linux.dev>
+Reviewed-by: Liam R. Howlett <howlett@gmail.com>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Cc: David Hildenbrand <david@redhat.com>
+Cc: Davidlohr Bueso <dave@stgolabs.net>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/madvise.c | 26 ++++++++++++++++++++++++--
+ 1 file changed, 24 insertions(+), 2 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 913936a5c353..6eb7cf1cccce 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1752,9 +1752,26 @@ static ssize_t vector_madvise(struct mm_struct *mm, struct iov_iter *iter,
+ 
+ 	total_len = iov_iter_count(iter);
+ 
++	ret = madvise_lock(mm, behavior);
++	if (ret)
++		return ret;
++
+ 	while (iov_iter_count(iter)) {
+-		ret = do_madvise(mm, (unsigned long)iter_iov_addr(iter),
+-				 iter_iov_len(iter), behavior);
++		unsigned long start = (unsigned long)iter_iov_addr(iter);
++		size_t len_in = iter_iov_len(iter);
++		size_t len;
++
++		if (!is_valid_madvise(start, len_in, behavior)) {
++			ret = -EINVAL;
++			break;
++		}
++
++		len = PAGE_ALIGN(len_in);
++		if (start + len == start)
++			ret = 0;
++		else
++			ret = madvise_do_behavior(mm, start, len_in, len,
++					behavior);
+ 		/*
+ 		 * An madvise operation is attempting to restart the syscall,
+ 		 * but we cannot proceed as it would not be correct to repeat
+@@ -1770,12 +1787,17 @@ static ssize_t vector_madvise(struct mm_struct *mm, struct iov_iter *iter,
+ 				ret = -EINTR;
+ 				break;
+ 			}
++
++			/* Drop and reacquire lock to unwind race. */
++			madvise_unlock(mm, behavior);
++			madvise_lock(mm, behavior);
+ 			continue;
+ 		}
+ 		if (ret < 0)
+ 			break;
+ 		iov_iter_advance(iter, iter_iov_len(iter));
+ 	}
++	madvise_unlock(mm, behavior);
+ 
+ 	ret = (total_len - iov_iter_count(iter)) ? : ret;
+ 
+-- 
+2.48.1
+
+
+From 2940ee86cf34b5df3c5b9db5c5d5a5caddf26a96 Mon Sep 17 00:00:00 2001
+From: Andrew Morton <akpm@linux-foundation.org>
+Date: Thu, 6 Feb 2025 16:34:29 -0800
+Subject: [PATCH 10/11] 
+ mm-madvise-remove-redundant-mmap_lock-operations-from-process_madvise-fix
+
+update comment, per Lorenzo
+
+Cc: David Hildenbrand <david@redhat.com>
+Cc: Davidlohr Bueso <dave@stgolabs.net>
+Cc: Liam R. Howlett <howlett@gmail.com>
+Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Cc: SeongJae Park <sj@kernel.org>
+Cc: Shakeel Butt <shakeel.butt@linux.dev>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/madvise.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index 6eb7cf1cccce..cf741a29247a 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1778,7 +1778,7 @@ static ssize_t vector_madvise(struct mm_struct *mm, struct iov_iter *iter,
+ 		 * the operation in aggregate, and would be surprising to the
+ 		 * user.
+ 		 *
+-		 * As we have already dropped locks, it is safe to just loop and
++		 * We drop and reacquire locks so it is safe to just loop and
+ 		 * try again. We check for fatal signals in case we need exit
+ 		 * early anyway.
+ 		 */
+-- 
+2.48.1
+
+
+From 29cabd8bb13913ae34f4068810f5540bcc01d2ce Mon Sep 17 00:00:00 2001
+From: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Date: Tue, 11 Feb 2025 10:44:26 +0000
+Subject: [PATCH 11/11] mm/madvise: fix madvise_[un]lock() issue
+
+We are asymmetric in our locking/unlocking in the case of memory failure
+madvise() behaviour options, correct this and abstract the memory failure
+check.
+
+Signed-off-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: SeongJae Park <sj@kernel.org>
+Tested-by: SeongJae Park <sj@kernel.org>
+---
+ mm/madvise.c | 29 +++++++++++++++++++++++------
+ 1 file changed, 23 insertions(+), 6 deletions(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index cf741a29247a..e310569aa176 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1566,14 +1566,29 @@ int madvise_set_anon_name(struct mm_struct *mm, unsigned long start,
+ }
+ #endif /* CONFIG_ANON_VMA_NAME */
+ 
+-static int madvise_lock(struct mm_struct *mm, int behavior)
+-{
+-
+ #ifdef CONFIG_MEMORY_FAILURE
+-	if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)
+-		return 0;
++static bool is_memory_failure(int behavior)
++{
++	switch (behavior) {
++	case MADV_HWPOISON:
++	case MADV_SOFT_OFFLINE:
++		return true;
++	default:
++		return false;
++	}
++}
++#else
++static bool is_memory_failure(int behavior)
++{
++	return false;
++}
+ #endif
+ 
++static int madvise_lock(struct mm_struct *mm, int behavior)
++{
++	if (is_memory_failure(behavior))
++	    return 0;
++
+ 	if (madvise_need_mmap_write(behavior)) {
+ 		if (mmap_write_lock_killable(mm))
+ 			return -EINTR;
+@@ -1581,11 +1596,13 @@ static int madvise_lock(struct mm_struct *mm, int behavior)
+ 		mmap_read_lock(mm);
+ 	}
+ 	return 0;
+-
+ }
+ 
+ static void madvise_unlock(struct mm_struct *mm, int behavior)
+ {
++	if (is_memory_failure(behavior))
++	    return;
++
+ 	if (madvise_need_mmap_write(behavior))
+ 		mmap_write_unlock(mm);
+ 	else
+-- 
+2.48.1
