@@ -6,7 +6,7 @@ I modified it slightly for my personal use and I use patches from ZEN/Cachy/Clea
 
 ### INFORMATION
 - I don't support LTS. I don't support kernel versions until EOL. 
-- I probably will support 6.13 until 6.14 is officially out, then it will be dropped. Most of the time I'm on the RC variant and most development will be done there.
+- I probably will support 6.14 until 6.15 is officially out, then it will be dropped. Most of the time I'm on the RC variant and most development will be done there.
 - I don't add features I don't need.
 - It's not my intention to make a kernel for everyone.
 
@@ -20,7 +20,7 @@ I modified it slightly for my personal use and I use patches from ZEN/Cachy/Clea
 - Default built with a custom set of Compiler Optimization Flags
 - AMD P-State Preferred Core / amd-pstate Enhancements and Fixes
 - Patches to improve performance of CRC32 and AES128 crypto
-- Latest & improved ZSTD 1.5.6 patch-set
+- Latest & improved ZSTD 1.5.7 patch-set
 - Memory management tweaks from zen-kernel (compaction, watermark)
 - Cherry-picked fixes and patches from Clear-linux, ZEN, CachyOS and pf-kernel
 - le9uo working set protection: [Repository](https://github.com/firelzrd/le9uo)
