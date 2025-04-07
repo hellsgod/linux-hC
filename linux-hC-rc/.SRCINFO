@@ -34,6 +34,15 @@ pkgbase = linux-hC-rc
 	source = rcu-Change-sched_setscheduler_nocheck-calls-t.patch
 	source = tweaks.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/dkms-clang.patch
+	source = nvidia-open-570.133.07.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/570.133.07.tar.gz
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0002-Add-IBT-support.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0007-nvidia-uvm-Use-page_pgmap.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/sched/0001-bore.patch
 	b2sums = bc77c9df75f0e0bce0040056f14e0c15e82ed65fd3bce1525b132cd97619137f74e42915fc42146c0727eab29db446db6c59d81f56dcf14d7a6c92e3e3fd986f
 	b2sums = 642eeb88ccf67f3c3c2ca6c1d081f1e865f522140d5d9bc7dbb2b63fe250e3eea4593f7d4b9b2ac7462e41c876ab850efce981620558db5461aff5e7069b3822
@@ -48,6 +57,15 @@ pkgbase = linux-hC-rc
 	b2sums = 980446f2b8f7d6cb1d0e31baeb1e96d94d77498e0e03e0979e3f2a25e2b38ba4f0c97a0e5f1188a2eafd063426960ba6745fd91ed796d2109b0efa393c834908
 	b2sums = fbce850f98bf8720bf13179a8737f7160681244e571b54124ed4be829ae8d7b08092fb38bfba625fa97e5d154857a226bd9371a8a22d45e16d9fa17a39bf5be3
 	b2sums = c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452
+	b2sums = 33bb546e355980513f8a8fc1ddeae71a14a2823d07d023bee577cfe95055c3afe82a5f2cf3497fe7c0c58ad8da2902e3f142d188b10c9097c2d19f5c2f0233a2
+	b2sums = 141b6718ca78cfb7e892aadb0212dfe4bff91555d9e42bd2aee69e258810d6e303fbcc653beb88e28219a0009d9a6e915a5ab9ae85c754655c5ef838797f0854
+	b2sums = 98f634886c254ddf4e5e0975351833f51bce7019d6ea83bbf160e32000cd3815a54abac5fbc524918203b05ec5f187be5a3219d6b126616f7d32f0d169468e64
+	b2sums = eb5155942a4c9f7a926b00f2ff4d5bad17eeb3557961b055a624c441c7743fc645c0af41e3ac128c17fbc894ee29777ba0ba48d91a74979898d779649374d5bf
+	b2sums = 5162ac5beaafc188bace9fa72acfaed56556074804ff27664773451e0d71496d5f89d6737dbcc75d7476db7d6a8fd5d92e9e0daa0ad60f307720cdd2dc2cd07a
+	b2sums = 2b71533df076c290f5dbc02785f9fd84cbcb11641eea24442d6b73d23a8e2196191fa9337c7c5084324d9abfff954990a6f2d345047cec44ffb1f083b0bc2213
+	b2sums = ebbb94284a7fd4ebb56ebdd3b564cb232a81ae54e18d8d1efd0e3e5fa9ac0dd9446cb3c83dc02d8d3a2eda2a497379a6501e6c13678492f72eac24369b408f28
+	b2sums = dc40182d5ccfc29d8fa2291ad922a2fe7401bd9d4499d32985b2ebf36a4565692e4e4c8fc71bfb09cbd779e11f1c42659b98998bb34bcc73512a6e54e128686e
+	b2sums = 444679f84bb4e44cb6119d4183b0d034454e83cddbd8a7907f2bc61233b6a9d81b6f40848d76a9577ee19c2f5064baaedb7c0a72a83444cf116dc9b11cb44c5a
 	b2sums = c2abf138377ec4737663b1010c9c0e0cdccf2478a3fc38125faf3dfff9fb5c889e68735dd8b7a178f2ac951c8b126567d6ab0bc63734a2175f96fc5ae5dd8398
 
 pkgname = linux-hC-rc
@@ -71,3 +89,12 @@ pkgname = linux-hC-rc-headers
 	depends = clang
 	depends = llvm
 	depends = lld
+
+pkgname = linux-hC-rc-nvidia-open
+	pkgdesc = nvidia open modules of 570.133.07 driver for the linux-hC-rc kernel
+	license = MIT AND GPL-2.0-only
+	depends = linux-hC-rc=6.15.rc1-1
+	depends = nvidia-utils=570.133.07
+	depends = libglvnd
+	provides = NVIDIA-MODULE
+	conflicts = linux-hC-rc-nvidia
