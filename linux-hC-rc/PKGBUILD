@@ -263,9 +263,7 @@ if [ "$_build_nvidia_open" = "yes" ]; then
              "${_patchsource}/misc/nvidia/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch"
              "${_patchsource}/misc/nvidia/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch"
              "${_patchsource}/misc/nvidia/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch"
-             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch"
-             "${_patchsource}/misc/nvidia/0007-nvidia-uvm-Use-page_pgmap.patch"
-             "${_patchsource}/misc/nvidia/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch")
+             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -550,9 +548,6 @@ prepare() {
         patch -Np1 -i "${srcdir}/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch" \
              -d "${srcdir}/${_nv_open_pkg}"
         patch -Np1 -i "${srcdir}/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch" \
-             -d "${srcdir}/${_nv_open_pkg}"
-        patch -Np1 -i "${srcdir}/0007-nvidia-uvm-Use-page_pgmap.patch" -d "${srcdir}/${_nv_open_pkg}"
-        patch -Np1 -i "${srcdir}/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch" \
              -d "${srcdir}/${_nv_open_pkg}"
     fi
 }
