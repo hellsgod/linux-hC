@@ -1,4 +1,4 @@
-From 5400955eb4ef05b8e6c39632c2b4b25e5bb7d6a9 Mon Sep 17 00:00:00 2001
+From 52db720a43e16560e33a12c319edc13dade0b87f Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 16 Sep 2019 04:53:20 +0200
 Subject: [PATCH 01/29] ZEN: Add sysctl and CONFIG to disallow unprivileged
@@ -14,10 +14,10 @@ Our default behavior continues to match the vanilla kernel.
  5 files changed, 53 insertions(+)
 
 diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index 7183e5aca282..56573371a2f8 100644
+index a0bb6d012137..93129fea552e 100644
 --- a/include/linux/user_namespace.h
 +++ b/include/linux/user_namespace.h
-@@ -159,6 +159,8 @@ static inline void set_userns_rlimit_max(struct user_namespace *ns,
+@@ -168,6 +168,8 @@ static inline void set_userns_rlimit_max(struct user_namespace *ns,
  
  #ifdef CONFIG_USER_NS
  
@@ -26,7 +26,7 @@ index 7183e5aca282..56573371a2f8 100644
  static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
  {
  	if (ns)
-@@ -192,6 +194,8 @@ extern bool current_in_userns(const struct user_namespace *target_ns);
+@@ -201,6 +203,8 @@ extern bool current_in_userns(const struct user_namespace *target_ns);
  struct ns_common *ns_get_owner(struct ns_common *ns);
  #else
  
@@ -36,10 +36,10 @@ index 7183e5aca282..56573371a2f8 100644
  {
  	return &init_user_ns;
 diff --git a/init/Kconfig b/init/Kconfig
-index d0d021b3fa3b..f851b6c83a93 100644
+index dd2ea3b9a799..3db78fa21315 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1323,6 +1323,22 @@ config USER_NS
+@@ -1332,6 +1332,22 @@ config USER_NS
  
  	  If unsure, say N.
  
@@ -63,7 +63,7 @@ index d0d021b3fa3b..f851b6c83a93 100644
  	bool "PID Namespaces"
  	default y
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 735405a9c5f3..d9658b516bcb 100644
+index c4b26cd8998b..3a5ee62fc15c 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -106,6 +106,10 @@
@@ -77,7 +77,7 @@ index 735405a9c5f3..d9658b516bcb 100644
  #include <asm/pgalloc.h>
  #include <linux/uaccess.h>
  #include <asm/mmu_context.h>
-@@ -2167,6 +2171,10 @@ __latent_entropy struct task_struct *copy_process(
+@@ -2193,6 +2197,10 @@ __latent_entropy struct task_struct *copy_process(
  	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
  		return ERR_PTR(-EINVAL);
  
@@ -88,7 +88,7 @@ index 735405a9c5f3..d9658b516bcb 100644
  	/*
  	 * Thread groups must share signals as well, and detached threads
  	 * can only be started up within the thread group.
-@@ -3320,6 +3328,12 @@ int ksys_unshare(unsigned long unshare_flags)
+@@ -3353,6 +3361,12 @@ int ksys_unshare(unsigned long unshare_flags)
  	if (unshare_flags & CLONE_NEWNS)
  		unshare_flags |= CLONE_FS;
  
@@ -102,10 +102,10 @@ index 735405a9c5f3..d9658b516bcb 100644
  	if (err)
  		goto bad_unshare_out;
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index cb57da499ebb..f7f1c25b30fe 100644
+index 3b7a7308e35b..fe7bec454345 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
-@@ -80,6 +80,9 @@
+@@ -70,6 +70,9 @@
  #ifdef CONFIG_RT_MUTEXES
  #include <linux/rtmutex.h>
  #endif
@@ -115,7 +115,7 @@ index cb57da499ebb..f7f1c25b30fe 100644
  
  /* shared constants to be used in various sysctls */
  const int sysctl_vals[] = { 0, 1, 2, 3, 4, 100, 200, 1000, 3000, INT_MAX, 65535, -1 };
-@@ -1617,6 +1620,15 @@ static const struct ctl_table kern_table[] = {
+@@ -1595,6 +1598,15 @@ static const struct ctl_table kern_table[] = {
  		.mode		= 0644,
  		.proc_handler	= proc_dointvec,
  	},
@@ -132,7 +132,7 @@ index cb57da499ebb..f7f1c25b30fe 100644
  	{
  		.procname	= "tainted",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index aa0b2e47f2f2..d74d857b1696 100644
+index 682f40d5632d..434a25f7b2ed 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
 @@ -22,6 +22,13 @@
@@ -150,10 +150,10 @@ index aa0b2e47f2f2..d74d857b1696 100644
  static DEFINE_MUTEX(userns_state_mutex);
  
 -- 
-2.48.1
+2.49.0
 
 
-From 87255071cdd4a59f1a2bea8046abbd4c64a48b74 Mon Sep 17 00:00:00 2001
+From 6800045a88ee1ec5661f23daaf82e002d8d19d00 Mon Sep 17 00:00:00 2001
 From: Javier Martinez Canillas <javierm@redhat.com>
 Date: Thu, 19 May 2022 14:40:07 +0200
 Subject: [PATCH 02/29] drivers/firmware: skip simpledrm if
@@ -240,10 +240,10 @@ index 7c5c03f274b9..a60b0a4faf29 100644
  		if (!IS_ERR(pd))
  			goto put_device;
 -- 
-2.48.1
+2.49.0
 
 
-From ede3afefd791f886a5557aedb278335c6ad2b593 Mon Sep 17 00:00:00 2001
+From 628041a5ae0f4609f2a2ab7c1d349f19b9367b12 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
 Subject: [PATCH 03/29] ZEN: Initialize ata before graphics
@@ -256,7 +256,7 @@ in parallel
  1 file changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/Makefile b/drivers/Makefile
-index 45d1c3e630f7..4f5ab2429a7f 100644
+index b5749cf67044..5beba9f57254 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -64,14 +64,8 @@ obj-y				+= char/
@@ -289,10 +289,10 @@ index 45d1c3e630f7..4f5ab2429a7f 100644
  obj-$(CONFIG_MTD)		+= mtd/
  obj-$(CONFIG_SPI)		+= spi/
 -- 
-2.48.1
+2.49.0
 
 
-From eba597ef1270f61f66e59ff4a465434936407762 Mon Sep 17 00:00:00 2001
+From 16ad6822dc26d642d5a4ef3e41745fde6f19bba4 Mon Sep 17 00:00:00 2001
 From: Kenny Levinsen <kl@kl.wtf>
 Date: Sun, 27 Dec 2020 14:43:13 +0000
 Subject: [PATCH 04/29] ZEN: Input: evdev - use call_rcu when detaching client
@@ -400,10 +400,10 @@ index b5cbb57ee5f6..a0f7fa1518c6 100644
  }
  
 -- 
-2.48.1
+2.49.0
 
 
-From 30f5fab774945c83ef9bbce0c564d3b894d09266 Mon Sep 17 00:00:00 2001
+From d9e5d4984fda770bc4529e879259ce2daf92709f Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 13 Dec 2018 01:00:49 +0000
 Subject: [PATCH 05/29] sched/wait: Do accept() in LIFO order for cache
@@ -417,7 +417,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  3 files changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 6d90ad974408..d04768b01364 100644
+index 965a19809c7e..3d442267a256 100644
 --- a/include/linux/wait.h
 +++ b/include/linux/wait.h
 @@ -163,6 +163,7 @@ static inline bool wq_has_sleeper(struct wait_queue_head *wq_head)
@@ -428,7 +428,7 @@ index 6d90ad974408..d04768b01364 100644
  extern void add_wait_queue_priority(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
  extern void remove_wait_queue(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
  
-@@ -1192,6 +1193,7 @@ do {										\
+@@ -1195,6 +1196,7 @@ do {										\
   */
  void prepare_to_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry, int state);
  bool prepare_to_wait_exclusive(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry, int state);
@@ -479,10 +479,10 @@ index 51e38f5f4701..c5cc616484ba 100644
  {
  	wq_entry->flags = flags;
 diff --git a/net/ipv4/inet_connection_sock.c b/net/ipv4/inet_connection_sock.c
-index e4decfb270fa..38bff2d8a740 100644
+index dd5cf8914a28..b216088a6abd 100644
 --- a/net/ipv4/inet_connection_sock.c
 +++ b/net/ipv4/inet_connection_sock.c
-@@ -634,7 +634,7 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
+@@ -632,7 +632,7 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
  	 * having to remove and re-insert us on the wait queue.
  	 */
  	for (;;) {
@@ -492,10 +492,10 @@ index e4decfb270fa..38bff2d8a740 100644
  		release_sock(sk);
  		if (reqsk_queue_empty(&icsk->icsk_accept_queue))
 -- 
-2.48.1
+2.49.0
 
 
-From 88c271eed5be8e5c935c6edaf0c44de1acb0f578 Mon Sep 17 00:00:00 2001
+From 3f7a1e0610da7abc15966b124b71dcf705921a3a Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
 Subject: [PATCH 06/29] XANMOD: dcache: cache_pressure = 50 decreases the rate
@@ -507,23 +507,23 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 9cc0d47da321..be6c51189bc1 100644
+index bd5aa136153a..7e9ce8835d77 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -73,7 +73,7 @@
   * If no ancestor relationship:
   * arbitrary, since it's serialized on rename_lock
   */
--int sysctl_vfs_cache_pressure __read_mostly = 100;
-+int sysctl_vfs_cache_pressure __read_mostly = 50;
- EXPORT_SYMBOL_GPL(sysctl_vfs_cache_pressure);
+-static int sysctl_vfs_cache_pressure __read_mostly = 100;
++static int sysctl_vfs_cache_pressure __read_mostly = 50;
  
- __cacheline_aligned_in_smp DEFINE_SEQLOCK(rename_lock);
+ unsigned long vfs_pressure_ratio(unsigned long val)
+ {
 -- 
-2.48.1
+2.49.0
 
 
-From c6de8bcb942bcb5c158982605fdd35f3ac42a934 Mon Sep 17 00:00:00 2001
+From 6ffde3f281d783d684e0a88117762d8efb91ab80 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Sat, 21 May 2022 15:15:09 -0500
 Subject: [PATCH 07/29] ZEN: dm-crypt: Disable workqueues for crypto ops
@@ -542,10 +542,10 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 02a2919f4e5a..a6bdafcb4fbd 100644
+index 9dfdb63220d7..1ef66e377c46 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -3305,6 +3305,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+@@ -3284,6 +3284,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  			goto bad;
  	}
  
@@ -556,10 +556,10 @@ index 02a2919f4e5a..a6bdafcb4fbd 100644
  	if (ret < 0)
  		goto bad;
 -- 
-2.48.1
+2.49.0
 
 
-From a9725a412cdce0e11b7f84980871cf6aaf1c8c6b Mon Sep 17 00:00:00 2001
+From e236f28a05ef984241fb3494c4d96da701ab6b94 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 5 May 2024 10:49:42 +0200
 Subject: [PATCH 08/29] Cachy: intel-pstate: Implement "enable" parameter
@@ -592,10 +592,10 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  2 files changed, 5 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index fb8752b42ec8..ce43ca0f9a84 100644
+index 76e538c77e31..a8b63730888a 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -2277,6 +2277,9 @@
+@@ -2304,6 +2304,9 @@
  			disable
  			  Do not enable intel_pstate as the default
  			  scaling driver for the supported processors
@@ -606,10 +606,10 @@ index fb8752b42ec8..ce43ca0f9a84 100644
                            Use intel_pstate driver to bypass the scaling
                            governors layer of cpufreq and provides it own
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index 9c4cc01fd51a..06a3c53e116e 100644
+index 4aad79d26c64..8c01b83fa443 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
-@@ -3827,6 +3827,8 @@ static int __init intel_pstate_setup(char *str)
+@@ -3825,6 +3825,8 @@ static int __init intel_pstate_setup(char *str)
  
  	if (!strcmp(str, "disable"))
  		no_load = 1;
@@ -619,10 +619,10 @@ index 9c4cc01fd51a..06a3c53e116e 100644
  		default_driver = &intel_pstate;
  	else if (!strcmp(str, "passive"))
 -- 
-2.48.1
+2.49.0
 
 
-From 92e0f1da73cc418196e7ce76f300a106840097aa Mon Sep 17 00:00:00 2001
+From ce8486a74d05d148623c5e7536948b835b690ce3 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:13:21 +0100
 Subject: [PATCH 09/29] Add hells option for a few tweaks
@@ -632,10 +632,10 @@ Subject: [PATCH 09/29] Add hells option for a few tweaks
  1 file changed, 6 insertions(+)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index f851b6c83a93..cd3e9f447a6a 100644
+index 3db78fa21315..06a76cac9cbb 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -157,6 +157,12 @@ config THREAD_INFO_IN_TASK
+@@ -165,6 +165,12 @@ config THREAD_INFO_IN_TASK
  
  menu "General setup"
  
@@ -649,10 +649,10 @@ index f851b6c83a93..cd3e9f447a6a 100644
  	bool
  
 -- 
-2.48.1
+2.49.0
 
 
-From 1b4f6ebc1dacc0eda4925a3cbbf07771dcc95364 Mon Sep 17 00:00:00 2001
+From dc6f6dd4fd4149f229381c7c6177224dbb8bf11b Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 27 Jan 2020 18:21:09 +0100
 Subject: [PATCH 10/29] hells: Enable background reclaim of hugepages
@@ -684,7 +684,7 @@ Reasoning and details in the original patch: https://lwn.net/Articles/711248/
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 3d3ebdc002d5..e9a9d4605c44 100644
+index 2a47682d1ab7..351519f49f3d 100644
 --- a/mm/huge_memory.c
 +++ b/mm/huge_memory.c
 @@ -64,7 +64,11 @@ unsigned long transparent_hugepage_flags __read_mostly =
@@ -700,10 +700,10 @@ index 3d3ebdc002d5..e9a9d4605c44 100644
  	(1<<TRANSPARENT_HUGEPAGE_USE_ZERO_PAGE_FLAG);
  
 -- 
-2.48.1
+2.49.0
 
 
-From 5687caf49ebf118aac61008e888552a73f76d81a Mon Sep 17 00:00:00 2001
+From e2ba415799177a9e55cc0e54171377edc97b797f Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 28 Mar 2020 13:06:28 -0700
 Subject: [PATCH 11/29] hells: Disable watermark boosting by default
@@ -736,10 +736,10 @@ Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 579789600a3c..85df6452f01e 100644
+index fd6b865cb1ab..79525e434fcb 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -271,7 +271,11 @@ const char * const migratetype_names[MIGRATE_TYPES] = {
+@@ -274,7 +274,11 @@ const char * const migratetype_names[MIGRATE_TYPES] = {
  
  int min_free_kbytes = 1024;
  int user_min_free_kbytes = -1;
@@ -749,13 +749,13 @@ index 579789600a3c..85df6452f01e 100644
  static int watermark_boost_factor __read_mostly = 15000;
 +#endif
  static int watermark_scale_factor = 10;
+ int defrag_mode;
  
- /* movable_zone is the "real" zone pages in ZONE_MOVABLE are taken from */
 -- 
-2.48.1
+2.49.0
 
 
-From 945bbc40b098835984715214e58a65ccf5ec91f4 Mon Sep 17 00:00:00 2001
+From 0490d32f28bba8067e48931ad47f4c02718f3092 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 24 Oct 2020 22:17:49 -0700
 Subject: [PATCH 12/29] hells: Disable proactive compaction by default
@@ -769,7 +769,7 @@ Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/compaction.c b/mm/compaction.c
-index 12ed8425fa17..fdb0250f61ba 100644
+index 139f00c0308a..e37acc1c91bd 100644
 --- a/mm/compaction.c
 +++ b/mm/compaction.c
 @@ -1923,7 +1923,11 @@ static int sysctl_compact_unevictable_allowed __read_mostly = CONFIG_COMPACT_UNE
@@ -785,10 +785,10 @@ index 12ed8425fa17..fdb0250f61ba 100644
  static int __read_mostly sysctl_compact_memory;
  
 -- 
-2.48.1
+2.49.0
 
 
-From a92da798f3e18796657c9bad29205265fd8453b2 Mon Sep 17 00:00:00 2001
+From cf67ebd8ddd2872caf4e87831efcf7cd7467673d Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:21:54 +0100
 Subject: [PATCH 13/29] hells: VM_READAHEAD_PAGES 8M
@@ -798,10 +798,10 @@ Subject: [PATCH 13/29] hells: VM_READAHEAD_PAGES 8M
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 47bfc6b1b632..435901dbc742 100644
+index 26baa78f1ca7..8fa2ff2682bc 100644
 --- a/include/linux/pagemap.h
 +++ b/include/linux/pagemap.h
-@@ -1373,7 +1373,7 @@ struct readahead_control {
+@@ -1341,7 +1341,7 @@ struct readahead_control {
  		._index = i,						\
  	}
  
@@ -811,10 +811,10 @@ index 47bfc6b1b632..435901dbc742 100644
  void page_cache_ra_unbounded(struct readahead_control *,
  		unsigned long nr_to_read, unsigned long lookahead_count);
 -- 
-2.48.1
+2.49.0
 
 
-From ae96d0ad7d6a7cedbe7ec3c6f1efc23bb2624a37 Mon Sep 17 00:00:00 2001
+From 428d78be479ebbd7a300ccd5bb5e2c06594fa1e6 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Sun, 18 Feb 2018 23:35:41 +0000
 Subject: [PATCH 14/29] locking: rwsem: spin faster
@@ -849,10 +849,10 @@ index 2ddb827e3bea..464049c4af3f 100644
  
  	return state;
 -- 
-2.48.1
+2.49.0
 
 
-From e9676e85ee78d07d75c18e617a65b58eaedbb874 Mon Sep 17 00:00:00 2001
+From 4f48fa3584e3939c3d5d3bbe19321ee9f14c21c1 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sun, 19 Apr 2020 19:59:18 -0700
 Subject: [PATCH 15/29] ZEN: mm: Stop kswapd early when nothing's waiting for
@@ -896,10 +896,10 @@ Contains:
  3 files changed, 28 insertions(+), 9 deletions(-)
 
 diff --git a/mm/internal.h b/mm/internal.h
-index 109ef30fee11..b01ecdfe92c3 100644
+index 50c2f590b2d0..ad142855a939 100644
 --- a/mm/internal.h
 +++ b/mm/internal.h
-@@ -741,6 +741,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
+@@ -793,6 +793,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
  extern bool free_pages_prepare(struct page *page, unsigned int order);
  
  extern int user_min_free_kbytes;
@@ -908,19 +908,19 @@ index 109ef30fee11..b01ecdfe92c3 100644
  struct page *__alloc_frozen_pages_noprof(gfp_t, unsigned int order, int nid,
  		nodemask_t *);
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 85df6452f01e..023130466736 100644
+index 79525e434fcb..48a428fb1add 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -88,6 +88,8 @@ typedef int __bitwise fpi_t;
-  */
- #define FPI_TO_TAIL		((__force fpi_t)BIT(1))
+@@ -91,6 +91,8 @@ typedef int __bitwise fpi_t;
+ /* Free the page without taking locks. Rely on trylock only. */
+ #define FPI_TRYLOCK		((__force fpi_t)BIT(2))
  
 +atomic_long_t kswapd_waiters = ATOMIC_LONG_INIT(0);
 +
  /* prevent >1 _updater_ of zone percpu pageset ->high and ->batch fields */
  static DEFINE_MUTEX(pcp_batch_high_lock);
  #define MIN_PERCPU_PAGELIST_HIGH_FRACTION (8)
-@@ -4224,6 +4226,7 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+@@ -4408,6 +4410,7 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
  	unsigned int cpuset_mems_cookie;
  	unsigned int zonelist_iter_cookie;
  	int reserve_flags;
@@ -928,7 +928,7 @@ index 85df6452f01e..023130466736 100644
  
  	if (unlikely(nofail)) {
  		/*
-@@ -4282,8 +4285,13 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+@@ -4467,8 +4470,13 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
  			goto nopage;
  	}
  
@@ -943,7 +943,7 @@ index 85df6452f01e..023130466736 100644
  
  	/*
  	 * The adjusted alloc_flags might result in immediate success, so try
-@@ -4485,9 +4493,12 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+@@ -4675,9 +4683,12 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
  		goto retry;
  	}
  fail:
@@ -959,10 +959,10 @@ index 85df6452f01e..023130466736 100644
  }
  
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index c767d71c43d7..d481288280f9 100644
+index b620d74b0f66..c5a5444b284a 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -6382,7 +6382,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
+@@ -6419,7 +6419,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
  	return 0;
  }
  
@@ -971,7 +971,7 @@ index c767d71c43d7..d481288280f9 100644
  {
  	struct zone *zone;
  	unsigned long pfmemalloc_reserve = 0;
-@@ -6411,6 +6411,10 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
+@@ -6444,6 +6444,10 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
  
  	wmark_ok = free_pages > pfmemalloc_reserve / 2;
  
@@ -982,7 +982,7 @@ index c767d71c43d7..d481288280f9 100644
  	/* kswapd must be awake if processes are being throttled */
  	if (!wmark_ok && waitqueue_active(&pgdat->kswapd_wait)) {
  		if (READ_ONCE(pgdat->kswapd_highest_zoneidx) > ZONE_NORMAL)
-@@ -6476,7 +6480,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+@@ -6509,7 +6513,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
  
  		/* Throttle based on the first usable node */
  		pgdat = zone->zone_pgdat;
@@ -991,7 +991,7 @@ index c767d71c43d7..d481288280f9 100644
  			goto out;
  		break;
  	}
-@@ -6498,11 +6502,14 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+@@ -6531,11 +6535,14 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
  	 */
  	if (!(gfp_mask & __GFP_FS))
  		wait_event_interruptible_timeout(pgdat->pfmemalloc_wait,
@@ -1008,7 +1008,7 @@ index c767d71c43d7..d481288280f9 100644
  
  	if (fatal_signal_pending(current))
  		return true;
-@@ -7005,14 +7012,14 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
+@@ -7033,14 +7040,14 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
  		 * able to safely make forward progress. Wake them
  		 */
  		if (waitqueue_active(&pgdat->pfmemalloc_wait) &&
@@ -1026,10 +1026,10 @@ index c767d71c43d7..d481288280f9 100644
  
  		/*
 -- 
-2.48.1
+2.49.0
 
 
-From ece9ac4c62c8a210aefece6e406a77b2ce9d3194 Mon Sep 17 00:00:00 2001
+From f1af0ff304b91b0cb600ce4cc3f736c104ceea47 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Fri, 20 Jan 2023 11:16:42 +0000
 Subject: [PATCH 16/29] initcall: only print non-zero initcall debug to speed
@@ -1052,7 +1052,7 @@ Signed-off-by: Simão Gomes Viana <devel@superboring.dev>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/init/main.c b/init/main.c
-index 2a1757826397..334146c65fc7 100644
+index 7f0a2a3dbd29..d628df2f8e23 100644
 --- a/init/main.c
 +++ b/init/main.c
 @@ -1208,10 +1208,13 @@ static __init_or_module void
@@ -1072,10 +1072,10 @@ index 2a1757826397..334146c65fc7 100644
  
  static ktime_t initcall_calltime;
 -- 
-2.48.1
+2.49.0
 
 
-From 2607d22d3e1bd3e9beadc75f6b6acdb35c00547e Mon Sep 17 00:00:00 2001
+From 86c9b750407fbb7981b9ba4a2fed78e9c47a8f83 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Wed, 11 Feb 2015 17:28:14 -0600
 Subject: [PATCH 17/29] smpboot: reuse timer calibration
@@ -1087,7 +1087,7 @@ saves 200ms+ of boot time.
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index 34dec0b72ea8..76a0d1c8e25f 100644
+index 88e5a4ed9db3..07f17d5ae6e5 100644
 --- a/arch/x86/kernel/tsc.c
 +++ b/arch/x86/kernel/tsc.c
 @@ -1596,6 +1596,9 @@ unsigned long calibrate_delay_is_known(void)
@@ -1101,10 +1101,10 @@ index 34dec0b72ea8..76a0d1c8e25f 100644
  	if (sibling < nr_cpu_ids)
  		return cpu_data(sibling).loops_per_jiffy;
 -- 
-2.48.1
+2.49.0
 
 
-From 6f68ee059ba2eeaea12d34158a9624a506d1ff6e Mon Sep 17 00:00:00 2001
+From 973939964e35ec1499ba7e663cfeaf9275bb33a8 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 16 Nov 2021 17:39:25 +0000
 Subject: [PATCH 18/29] itmt_epb: use epb to scale itmt
@@ -1116,7 +1116,7 @@ Subject: [PATCH 18/29] itmt_epb: use epb to scale itmt
  3 files changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/include/asm/topology.h b/arch/x86/include/asm/topology.h
-index ec134b719144..fe7d74c3c915 100644
+index 6c79ee7c0957..ecd2a7d80fbe 100644
 --- a/arch/x86/include/asm/topology.h
 +++ b/arch/x86/include/asm/topology.h
 @@ -255,6 +255,7 @@ extern bool __read_mostly sysctl_sched_itmt_enabled;
@@ -1194,10 +1194,10 @@ index 9cea1fc36c18..81932842e1d2 100644
 +	}
 +}
 -- 
-2.48.1
+2.49.0
 
 
-From a1db0b3d52dfc4ec2df081b17d8e4c9c5918d26e Mon Sep 17 00:00:00 2001
+From 9a7da6d244a4f2537f4db7ca6f23d4d56c2ebe98 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Thu, 18 Nov 2021 16:09:47 +0000
 Subject: [PATCH 19/29] itmt2 ADL fixes
@@ -1220,7 +1220,7 @@ Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index 06a3c53e116e..d015342e97b1 100644
+index 8c01b83fa443..b76679b7ce66 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
 @@ -377,6 +377,13 @@ static void intel_pstate_set_itmt_prio(int cpu)
@@ -1238,10 +1238,10 @@ index 06a3c53e116e..d015342e97b1 100644
  	if (max_highest_perf <= min_highest_perf) {
  		if (cppc_perf.highest_perf > max_highest_perf)
 -- 
-2.48.1
+2.49.0
 
 
-From 599f30309ff9a153248a3ce33115507741dec34e Mon Sep 17 00:00:00 2001
+From a6b32a48994393a35ed38ed6942d6df3dd3d767f Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 23 Nov 2021 17:38:50 +0000
 Subject: [PATCH 20/29] add a per cpu minimum high watermark an tune batch size
@@ -1253,10 +1253,10 @@ amount for todays system
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 023130466736..b33238cd5638 100644
+index 48a428fb1add..c2f3f26fa042 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -5399,11 +5399,11 @@ static int zone_batchsize(struct zone *zone)
+@@ -5609,11 +5609,11 @@ static int zone_batchsize(struct zone *zone)
  
  	/*
  	 * The number of pages to batch allocate is either ~0.1%
@@ -1271,10 +1271,10 @@ index 023130466736..b33238cd5638 100644
  	if (batch < 1)
  		batch = 1;
 -- 
-2.48.1
+2.49.0
 
 
-From 39b0123330977fb8de9d911c3d87a3b196a3a8f4 Mon Sep 17 00:00:00 2001
+From 84986b99066cca8f70925ada5eb61f1d121f73b4 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Wed, 3 May 2023 17:31:05 +0100
 Subject: [PATCH 21/29] clocksource: only perform extended clocksource checks
@@ -1309,10 +1309,10 @@ index b4330a01a566..e41cd5c68855 100644
  		value1 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
  		for (i = 0; i < ACPI_PM_READ_CHECKS; i++) {
 -- 
-2.48.1
+2.49.0
 
 
-From 019980acf6883088b1917def24118b159aa7b765 Mon Sep 17 00:00:00 2001
+From f0fa644249f97482344f38837dc68f31f20b4a8c Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Tue, 27 Jun 2023 14:12:27 +0100
 Subject: [PATCH 22/29] ACPI: align slab for improved memory performance
@@ -1345,10 +1345,10 @@ index 5ff343096ece..229c2c6e51ab 100644
  		return AE_ERROR;
  	else
 -- 
-2.48.1
+2.49.0
 
 
-From fa73077430387382e4e08298184eb34d83eefc03 Mon Sep 17 00:00:00 2001
+From cef168393c6550d134e63eafe209de10bd98060a Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:11:19 +0800
 Subject: [PATCH 23/29] clear: sched/fair: Tweak idle balance calculation
@@ -1359,10 +1359,10 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index ce2e94ccad0c..2f9846151477 100644
+index e43993a4e580..67a0bf94ebbc 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12801,7 +12801,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12843,7 +12843,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  		update_next_balance(sd, &next_balance);
  
@@ -1372,10 +1372,10 @@ index ce2e94ccad0c..2f9846151477 100644
  
  		if (sd->flags & SD_BALANCE_NEWIDLE) {
 -- 
-2.48.1
+2.49.0
 
 
-From 58b59ab87ef15934ba270f131c44facfd87a850c Mon Sep 17 00:00:00 2001
+From 69de9f6b26c1bd52d4295a95d08791543e21a36b Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:15:25 +0800
 Subject: [PATCH 24/29] clear: fs/binfmt_elf: Properly handle memory mapping
@@ -1390,10 +1390,10 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 8054f44d39cf..f7016bfb3e27 100644
+index 584fa89bc877..3506730265e2 100644
 --- a/fs/binfmt_elf.c
 +++ b/fs/binfmt_elf.c
-@@ -1288,6 +1288,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
+@@ -1287,6 +1287,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
  	mm = current->mm;
  	mm->end_code = end_code;
  	mm->start_code = start_code;
@@ -1403,10 +1403,10 @@ index 8054f44d39cf..f7016bfb3e27 100644
  	mm->end_data = end_data;
  	mm->start_stack = bprm->p;
 -- 
-2.48.1
+2.49.0
 
 
-From 79a6a8fa48c8eb7b7908b1f8a4055ab7eb8f398f Mon Sep 17 00:00:00 2001
+From 2c4a2e48b33978dafdb6f08c4df1331f59175d14 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@intel.com>
 Date: Wed, 24 Apr 2024 16:45:47 +0100
 Subject: [PATCH 25/29] net: sock: increase default number of _SK_MEM_PACKETS
@@ -1420,10 +1420,10 @@ Signed-off-by: Colin Ian King <colin.i.king@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/net/sock.h b/include/net/sock.h
-index 8036b3b79cd8..81bc795c5eed 100644
+index 8daf1b3b12c6..4c7b413981f9 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
-@@ -2849,7 +2849,7 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
+@@ -2844,7 +2844,7 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
   * platforms.  This makes socket queueing behavior and performance
   * not depend upon such differences.
   */
@@ -1433,10 +1433,10 @@ index 8036b3b79cd8..81bc795c5eed 100644
  #define SK_WMEM_MAX		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
  #define SK_RMEM_MAX		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
 -- 
-2.48.1
+2.49.0
 
 
-From 18ae8e02269c2a2d65f760200de0b11b08f44012 Mon Sep 17 00:00:00 2001
+From e08f1369e9b07d2e1fc66b0e3dd611e7bcdb6928 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:21:24 +0800
 Subject: [PATCH 26/29] clear: net/sock: Introduce 64KB reclaim threshold
@@ -1450,10 +1450,10 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/include/net/sock.h b/include/net/sock.h
-index 81bc795c5eed..009f341291d1 100644
+index 4c7b413981f9..9da51338b2ac 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
-@@ -1586,10 +1586,17 @@ static inline void sk_mem_charge(struct sock *sk, int size)
+@@ -1577,10 +1577,17 @@ static inline void sk_mem_charge(struct sock *sk, int size)
  
  static inline void sk_mem_uncharge(struct sock *sk, int size)
  {
@@ -1473,10 +1473,10 @@ index 81bc795c5eed..009f341291d1 100644
  
  /*
 -- 
-2.48.1
+2.49.0
 
 
-From cf6b894d0aff88b7f246ecec17bfff895ae0a5e8 Mon Sep 17 00:00:00 2001
+From a971a9322efd632926501b347398615bd372f75c Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:25:10 +0800
 Subject: [PATCH 27/29] clear: init/init_task: Tweak timer_slack value
@@ -1500,10 +1500,10 @@ index e557f622bd90..ca1ef66774b3 100644
  	.thread_node	= LIST_HEAD_INIT(init_signals.thread_head),
  #ifdef CONFIG_AUDIT
 -- 
-2.48.1
+2.49.0
 
 
-From 237a9c10ce5e03161997ac3a761435e20f7041a9 Mon Sep 17 00:00:00 2001
+From b550084122643eb4f20eb79fc7893d36653ad320 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 28 Jul 2024 18:55:38 +0200
 Subject: [PATCH 28/29] cachy: move AMD_PRIVATE_COLOR to Kconfig
@@ -1534,10 +1534,10 @@ index abd3b6564373..46937e6fa78d 100644
 +
  endmenu
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-index ac3fd81fecef..f0aa1640d72e 100644
+index d0d8ad5368c3..5954b212b263 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-@@ -4582,7 +4582,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
+@@ -4722,7 +4722,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
  		return r;
  	}
  
@@ -1591,10 +1591,10 @@ index 36a830a7440f..a8fc8bd52d51 100644
  #endif
  	return 0;
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
-index 774cc3f4f3fd..d5066e407ad5 100644
+index 3e0f45f1711c..f645cb7831a0 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
-@@ -1595,7 +1595,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
+@@ -1601,7 +1601,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
  	drm_atomic_helper_plane_destroy_state(plane, state);
  }
  
@@ -1603,7 +1603,7 @@ index 774cc3f4f3fd..d5066e407ad5 100644
  static void
  dm_atomic_plane_attach_color_mgmt_properties(struct amdgpu_display_manager *dm,
  					     struct drm_plane *plane)
-@@ -1786,7 +1786,7 @@ static const struct drm_plane_funcs dm_plane_funcs = {
+@@ -1792,7 +1792,7 @@ static const struct drm_plane_funcs dm_plane_funcs = {
  	.atomic_duplicate_state = amdgpu_dm_plane_drm_plane_duplicate_state,
  	.atomic_destroy_state = amdgpu_dm_plane_drm_plane_destroy_state,
  	.format_mod_supported = amdgpu_dm_plane_format_mod_supported,
@@ -1612,7 +1612,7 @@ index 774cc3f4f3fd..d5066e407ad5 100644
  	.atomic_set_property = dm_atomic_plane_set_property,
  	.atomic_get_property = dm_atomic_plane_get_property,
  #endif
-@@ -1882,7 +1882,7 @@ int amdgpu_dm_plane_init(struct amdgpu_display_manager *dm,
+@@ -1888,7 +1888,7 @@ int amdgpu_dm_plane_init(struct amdgpu_display_manager *dm,
  	else
  		drm_plane_helper_add(plane, &dm_plane_helper_funcs);
  
@@ -1622,10 +1622,10 @@ index 774cc3f4f3fd..d5066e407ad5 100644
  #endif
  	/* Create (reset) the plane state */
 -- 
-2.48.1
+2.49.0
 
 
-From 58e27a2d653099406ce2f1f6c3193aeededd7d96 Mon Sep 17 00:00:00 2001
+From e85c65ec1525d4141aad7e6a338cfce9855ec846 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Fri, 15 Mar 2024 12:36:51 -0500
 Subject: [PATCH 29/29] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
@@ -1639,10 +1639,10 @@ Subject: [PATCH 29/29] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
  4 files changed, 26 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu.h b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
-index 69895fccb474..5884de0f23bb 100644
+index 6d83ccfa42ee..662b0d2f084d 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
-@@ -160,6 +160,7 @@ struct amdgpu_watchdog_timer {
+@@ -161,6 +161,7 @@ struct amdgpu_watchdog_timer {
   */
  extern int amdgpu_modeset;
  extern unsigned int amdgpu_vram_limit;
@@ -1651,10 +1651,10 @@ index 69895fccb474..5884de0f23bb 100644
  extern int amdgpu_gart_size;
  extern int amdgpu_gtt_size;
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-index 817116e53d44..2b4a4eed2ae4 100644
+index 26bf896f1444..8cbf1d6e7ce0 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-@@ -137,6 +137,7 @@ enum AMDGPU_DEBUG_MASK {
+@@ -143,6 +143,7 @@ enum AMDGPU_DEBUG_MASK {
  };
  
  unsigned int amdgpu_vram_limit = UINT_MAX;
@@ -1662,7 +1662,7 @@ index 817116e53d44..2b4a4eed2ae4 100644
  int amdgpu_vis_vram_limit;
  int amdgpu_gart_size = -1; /* auto */
  int amdgpu_gtt_size = -1; /* auto */
-@@ -255,6 +256,15 @@ struct amdgpu_watchdog_timer amdgpu_watchdog_timer = {
+@@ -262,6 +263,15 @@ struct amdgpu_watchdog_timer amdgpu_watchdog_timer = {
  	.period = 0x0, /* default to 0x0 (timeout disable) */
  };
  
@@ -1679,10 +1679,10 @@ index 817116e53d44..2b4a4eed2ae4 100644
   * DOC: vramlimit (int)
   * Restrict the total amount of VRAM in MiB for testing.  The default is 0 (Use full VRAM).
 diff --git a/drivers/gpu/drm/amd/pm/amdgpu_pm.c b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-index e8ae7681bf0a..8a0d873983f3 100644
+index 922def51685b..da76611edb10 100644
 --- a/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 +++ b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-@@ -3178,6 +3178,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
+@@ -3055,6 +3055,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
  					 struct device_attribute *attr,
  					 char *buf)
  {
@@ -1693,10 +1693,10 @@ index e8ae7681bf0a..8a0d873983f3 100644
  }
  
 diff --git a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-index 8ca793c222ff..8a06a6c35a4b 100644
+index 033c3229b555..bc3497349db4 100644
 --- a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 +++ b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-@@ -2822,7 +2822,10 @@ int smu_get_power_limit(void *handle,
+@@ -2821,7 +2821,10 @@ int smu_get_power_limit(void *handle,
  			*limit = smu->max_power_limit;
  			break;
  		case SMU_PPT_LIMIT_MIN:
@@ -1708,7 +1708,7 @@ index 8ca793c222ff..8a06a6c35a4b 100644
  			break;
  		default:
  			return -EINVAL;
-@@ -2846,7 +2849,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
+@@ -2845,7 +2848,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
  		if (smu->ppt_funcs->set_power_limit)
  			return smu->ppt_funcs->set_power_limit(smu, limit_type, limit);
  
@@ -1725,4 +1725,5 @@ index 8ca793c222ff..8a06a6c35a4b 100644
  			"New power limit (%d) is out of range [%d,%d]\n",
  			limit, smu->min_power_limit, smu->max_power_limit);
 -- 
-2.48.1
+2.49.0
+

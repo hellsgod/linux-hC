@@ -1,7 +1,7 @@
-From 7875df3caf9dfc0c8223922e97bff0bbfc61e330 Mon Sep 17 00:00:00 2001
+From e088963bc941f5474cae1779695f86388f38591b Mon Sep 17 00:00:00 2001
 From: Christian Loehle <christian.loehle@arm.com>
 Date: Thu, 5 Sep 2024 10:26:39 +0100
-Subject: [PATCH] cpuidle: Prefer teo over menu governor
+Subject: [PATCH 1/3] cpuidle: Prefer teo over menu governor
 
 Since menu no longer has the interactivity boost teo works better
 overall, so make it the default.
@@ -37,10 +37,10 @@ index cac5997dca50..ae67a464025a 100644
  	bool "Haltpoll governor (for virtualized systems)"
  	depends on KVM_GUEST
 diff --git a/drivers/cpuidle/governors/menu.c b/drivers/cpuidle/governors/menu.c
-index 28363bfa3e4c..c0ae5e98d6f1 100644
+index 39aa0aea61c6..9e40c5f64c5e 100644
 --- a/drivers/cpuidle/governors/menu.c
 +++ b/drivers/cpuidle/governors/menu.c
-@@ -508,7 +508,7 @@ static int menu_enable_device(struct cpuidle_driver *drv,
+@@ -513,7 +513,7 @@ static int menu_enable_device(struct cpuidle_driver *drv,
  
  static struct cpuidle_governor menu_governor = {
  	.name =		"menu",
@@ -63,5 +63,333 @@ index 8fe5e1b47ef9..a871e004efa5 100644
  	.select =	teo_select,
  	.reflect =	teo_reflect,
 -- 
-2.48.1
+2.49.0
+
+
+From 4c15565fb123c5f63c1b3e474ff83e1da3a8e415 Mon Sep 17 00:00:00 2001
+From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
+Date: Thu, 3 Apr 2025 21:16:47 +0200
+Subject: [PATCH 2/3] cpuidle: teo: Move candidate state lookup to separate
+ function
+
+Move the code looking up a new candidate idle state in teo, after
+deciding that the initial candidate (the deepest enabled idle state) is
+likely too deep, into a separate function in preparation for subsequent
+changes.
+
+No intentional functional impact.
+
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/cpuidle/governors/teo.c | 120 +++++++++++++++++---------------
+ 1 file changed, 63 insertions(+), 57 deletions(-)
+
+diff --git a/drivers/cpuidle/governors/teo.c b/drivers/cpuidle/governors/teo.c
+index a871e004efa5..6c9fdd73835f 100644
+--- a/drivers/cpuidle/governors/teo.c
++++ b/drivers/cpuidle/governors/teo.c
+@@ -259,6 +259,67 @@ static int teo_find_shallower_state(struct cpuidle_driver *drv,
+ 	return state_idx;
+ }
+ 
++static int teo_get_candidate(struct cpuidle_driver *drv,
++			     struct cpuidle_device *dev,
++			     struct teo_cpu *cpu_data,
++			     int idx, unsigned int idx_intercepts)
++{
++	int first_suitable_idx = idx;
++	unsigned int intercepts = 0;
++	int i;
++
++	/*
++	 * Look for the deepest idle state whose target residency had
++	 * not exceeded the idle duration in over a half of the relevant
++	 * cases in the past.
++	 *
++	 * Take the possible duration limitation present if the tick
++	 * has been stopped already into account.
++	 */
++	for (i = idx - 1; i >= 0; i--) {
++		intercepts += cpu_data->state_bins[i].intercepts;
++		if (2 * intercepts > idx_intercepts) {
++			/*
++			 * Use the current state unless it is too
++			 * shallow or disabled, in which case take the
++			 * first enabled state that is deep enough.
++			 */
++			if (teo_state_ok(i, drv) && !dev->states_usage[i].disable) {
++				idx = i;
++				break;
++			}
++
++			idx = first_suitable_idx;
++			break;
++		}
++
++		if (dev->states_usage[i].disable)
++			continue;
++
++		if (teo_state_ok(i, drv)) {
++			/*
++			 * The current state is deep enough, but still
++			 * there may be a better one.
++			 */
++			first_suitable_idx = i;
++			continue;
++		}
++
++		/*
++		 * The current state is too shallow, so if no suitable
++		 * states other than the initial candidate have been
++		 * found, give up (the remaining states to check are
++		 * shallower still), but otherwise the first suitable
++		 * state other than the initial candidate may turn out
++		 * to be preferable.
++		 */
++		if (first_suitable_idx == idx)
++			break;
++	}
++
++	return idx;
++}
++
+ /**
+  * teo_select - Selects the next idle state to enter.
+  * @drv: cpuidle driver containing state data.
+@@ -355,63 +416,8 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
+ 	 * all of the deeper states, a shallower idle state is likely to be a
+ 	 * better choice.
+ 	 */
+-	if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum) {
+-		int first_suitable_idx = idx;
+-
+-		/*
+-		 * Look for the deepest idle state whose target residency had
+-		 * not exceeded the idle duration in over a half of the relevant
+-		 * cases in the past.
+-		 *
+-		 * Take the possible duration limitation present if the tick
+-		 * has been stopped already into account.
+-		 */
+-		intercept_sum = 0;
+-
+-		for (i = idx - 1; i >= 0; i--) {
+-			struct teo_bin *bin = &cpu_data->state_bins[i];
+-
+-			intercept_sum += bin->intercepts;
+-
+-			if (2 * intercept_sum > idx_intercept_sum) {
+-				/*
+-				 * Use the current state unless it is too
+-				 * shallow or disabled, in which case take the
+-				 * first enabled state that is deep enough.
+-				 */
+-				if (teo_state_ok(i, drv) &&
+-				    !dev->states_usage[i].disable) {
+-					idx = i;
+-					break;
+-				}
+-				idx = first_suitable_idx;
+-				break;
+-			}
+-
+-			if (dev->states_usage[i].disable)
+-				continue;
+-
+-			if (teo_state_ok(i, drv)) {
+-				/*
+-				 * The current state is deep enough, but still
+-				 * there may be a better one.
+-				 */
+-				first_suitable_idx = i;
+-				continue;
+-			}
+-
+-			/*
+-			 * The current state is too shallow, so if no suitable
+-			 * states other than the initial candidate have been
+-			 * found, give up (the remaining states to check are
+-			 * shallower still), but otherwise the first suitable
+-			 * state other than the initial candidate may turn out
+-			 * to be preferable.
+-			 */
+-			if (first_suitable_idx == idx)
+-				break;
+-		}
+-	}
++	if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum)
++		idx = teo_get_candidate(drv, dev, cpu_data, idx, idx_intercept_sum);
+ 
+ 	/*
+ 	 * If there is a latency constraint, it may be necessary to select an
+-- 
+2.49.0
+
+
+From df6239ca9dd1a5479d03f8aa4804945686ddc06a Mon Sep 17 00:00:00 2001
+From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
+Date: Thu, 3 Apr 2025 21:18:38 +0200
+Subject: [PATCH 3/3] cpuidle: teo: Refine handling of short idle intervals
+
+Make teo take all recent wakeups (both timer and non-timer) into
+account when looking for a new candidate idle state in the cases
+when the majority of recent idle intervals are within the
+LATENCY_THRESHOLD_NS range or the latency limit is within the
+LATENCY_THRESHOLD_NS range.
+
+Since the tick_nohz_get_sleep_length() invocation is likely to be
+skipped in those cases, timer wakeups should arguably be taken into
+account somehow in case they are significant while the current code
+mostly looks at non-timer wakeups under the assumption that frequent
+timer wakeups are unlikely in the given idle duration range which
+may or may not be accurate.
+
+The most natural way to do that is to add the "hits" metric to the
+sums used during the new candidate idle state lookup which effectively
+means the above.
+
+Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
+---
+ drivers/cpuidle/governors/teo.c | 99 ++++++++++++++++++---------------
+ 1 file changed, 55 insertions(+), 44 deletions(-)
+
+diff --git a/drivers/cpuidle/governors/teo.c b/drivers/cpuidle/governors/teo.c
+index 6c9fdd73835f..e45ec2820305 100644
+--- a/drivers/cpuidle/governors/teo.c
++++ b/drivers/cpuidle/governors/teo.c
+@@ -261,11 +261,12 @@ static int teo_find_shallower_state(struct cpuidle_driver *drv,
+ 
+ static int teo_get_candidate(struct cpuidle_driver *drv,
+ 			     struct cpuidle_device *dev,
+-			     struct teo_cpu *cpu_data,
+-			     int idx, unsigned int idx_intercepts)
++			     struct teo_cpu *cpu_data, int constraint_idx,
++			     int idx, unsigned int idx_events,
++			     bool count_all_events)
+ {
+ 	int first_suitable_idx = idx;
+-	unsigned int intercepts = 0;
++	unsigned int events = 0;
+ 	int i;
+ 
+ 	/*
+@@ -277,8 +278,11 @@ static int teo_get_candidate(struct cpuidle_driver *drv,
+ 	 * has been stopped already into account.
+ 	 */
+ 	for (i = idx - 1; i >= 0; i--) {
+-		intercepts += cpu_data->state_bins[i].intercepts;
+-		if (2 * intercepts > idx_intercepts) {
++		events += cpu_data->state_bins[i].intercepts;
++		if (count_all_events)
++			events += cpu_data->state_bins[i].hits;
++
++		if (2 * events > idx_events) {
+ 			/*
+ 			 * Use the current state unless it is too
+ 			 * shallow or disabled, in which case take the
+@@ -316,6 +320,12 @@ static int teo_get_candidate(struct cpuidle_driver *drv,
+ 		if (first_suitable_idx == idx)
+ 			break;
+ 	}
++	/*
++	 * If there is a latency constraint, it may be necessary to select an
++	 * idle state shallower than the current candidate one.
++	 */
++	if (idx > constraint_idx)
++		return constraint_idx;
+ 
+ 	return idx;
+ }
+@@ -410,49 +420,50 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
+ 	}
+ 
+ 	/*
+-	 * If the sum of the intercepts metric for all of the idle states
+-	 * shallower than the current candidate one (idx) is greater than the
+-	 * sum of the intercepts and hits metrics for the candidate state and
+-	 * all of the deeper states, a shallower idle state is likely to be a
+-	 * better choice.
+-	 */
+-	if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum)
+-		idx = teo_get_candidate(drv, dev, cpu_data, idx, idx_intercept_sum);
+-
+-	/*
+-	 * If there is a latency constraint, it may be necessary to select an
+-	 * idle state shallower than the current candidate one.
+-	 */
+-	if (idx > constraint_idx)
+-		idx = constraint_idx;
+-
+-	/*
+-	 * If either the candidate state is state 0 or its target residency is
+-	 * low enough, there is basically nothing more to do, but if the sleep
+-	 * length is not updated, the subsequent wakeup will be counted as an
+-	 * "intercept" which may be problematic in the cases when timer wakeups
+-	 * are dominant.  Namely, it may effectively prevent deeper idle states
+-	 * from being selected at one point even if no imminent timers are
+-	 * scheduled.
+-	 *
+-	 * However, frequent timers in the RESIDENCY_THRESHOLD_NS range on one
+-	 * CPU are unlikely (user space has a default 50 us slack value for
+-	 * hrtimers and there are relatively few timers with a lower deadline
+-	 * value in the kernel), and even if they did happen, the potential
+-	 * benefit from using a deep idle state in that case would be
+-	 * questionable anyway for latency reasons.  Thus if the measured idle
+-	 * duration falls into that range in the majority of cases, assume
+-	 * non-timer wakeups to be dominant and skip updating the sleep length
+-	 * to reduce latency.
++	 * If the measured idle duration has fallen into the
++	 * RESIDENCY_THRESHOLD_NS range in the majority of recent cases, it is
++	 * likely to fall into that range next time, so it is better to avoid
++	 * adding latency to the idle state selection path.  Accordingly, aim
++	 * for skipping the sleep length update in that case.
+ 	 *
+ 	 * Also, if the latency constraint is sufficiently low, it will force
+ 	 * shallow idle states regardless of the wakeup type, so the sleep
+-	 * length need not be known in that case.
++	 * length need not be known in that case either.
+ 	 */
+-	if ((!idx || drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS) &&
+-	    (2 * cpu_data->short_idles >= cpu_data->total ||
+-	     latency_req < LATENCY_THRESHOLD_NS))
+-		goto out_tick;
++	if (2 * cpu_data->short_idles >= cpu_data->total ||
++	    latency_req < LATENCY_THRESHOLD_NS) {
++		/*
++		 * Look for a new candidate idle state and use all events (both
++		 * "intercepts" and "hits") because the sleep length update is
++		 * likely to be skipped and timer wakeups need to be taken into
++		 * account in a different way in case they are significant.
++		 */
++		idx = teo_get_candidate(drv, dev, cpu_data, idx, constraint_idx,
++					idx_intercept_sum + idx_hit_sum, true);
++		/*
++		 * If the new candidate state is state 0 or its target residency
++		 * is low enough, return it right away without stopping the
++		 * scheduler tick.
++		 */
++		if (!idx || drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS)
++			goto out_tick;
++	} else if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum) {
++		/*
++		 * Look for a new candidate state because the current one is
++		 * likely too deep, but use the "intercepts" metric only because
++		 * the sleep length is going to be determined later and for now
++		 * it is only necessary to find a state that will be suitable
++		 * in case the CPU is "intercepted".
++		 */
++		idx = teo_get_candidate(drv, dev, cpu_data, idx, constraint_idx,
++					idx_intercept_sum, false);
++	} else if (idx > constraint_idx) {
++		/*
++		 * The current candidate state is too deep for the latency
++		 * constraint at hand, so change it to a suitable one.
++		 */
++		idx = constraint_idx;
++	}
+ 
+ 	duration_ns = tick_nohz_get_sleep_length(&delta_tick);
+ 	cpu_data->sleep_length_ns = duration_ns;
+-- 
+2.49.0
 
