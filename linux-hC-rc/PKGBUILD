@@ -251,9 +251,7 @@ if [ "$_build_nvidia" = "yes" ]; then
              "${_patchsource}/misc/nvidia/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch"
              "${_patchsource}/misc/nvidia/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch"
              "${_patchsource}/misc/nvidia/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch"
-             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch"
-             "${_patchsource}/misc/nvidia/0007-nvidia-uvm-Use-page_pgmap.patch"
-             "${_patchsource}/misc/nvidia/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch")
+             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch")
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
@@ -263,7 +261,9 @@ if [ "$_build_nvidia_open" = "yes" ]; then
              "${_patchsource}/misc/nvidia/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch"
              "${_patchsource}/misc/nvidia/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch"
              "${_patchsource}/misc/nvidia/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch"
-             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch")
+             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch"
+             "${_patchsource}/misc/nvidia/0007-nvidia-uvm-Use-page_pgmap.patch"
+             "${_patchsource}/misc/nvidia/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -521,34 +521,34 @@ prepare() {
 
         # Use fbdev and modeset as default
         patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
+            -d "${srcdir}/${_nv_pkg}/kernel"
         patch -Np1 -i "${srcdir}/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
+            -d "${srcdir}/${_nv_pkg}/kernel"
         patch -Np2 -i "${srcdir}/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
+            -d "${srcdir}/${_nv_pkg}/kernel"
         patch -Np2 -i "${srcdir}/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
+            -d "${srcdir}/${_nv_pkg}/kernel"
         patch -Np2 -i "${srcdir}/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
-        patch -Np2 -i "${srcdir}/0007-nvidia-uvm-Use-page_pgmap.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
-        patch -Np2 -i "${srcdir}/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch" \
-             -d "${srcdir}/${_nv_pkg}/kernel"
+            -d "${srcdir}/${_nv_pkg}/kernel"
     fi
 
     if [ "$_build_nvidia_open" = "yes" ]; then
         # Use fbdev and modeset as default
-        patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" -d "${srcdir}/${_nv_open_pkg}/kernel-open"
+        patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" \
+            -d "${srcdir}/${_nv_open_pkg}/kernel-open"
         # Fix for https://bugs.archlinux.org/task/74886
         patch -Np1 -i "${srcdir}/0002-Add-IBT-support.patch" -d "${srcdir}/${_nv_open_pkg}"
         patch -Np1 -i "${srcdir}/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch" \
-             -d "${srcdir}/${_nv_open_pkg}/kernel-open"
+            -d "${srcdir}/${_nv_open_pkg}/kernel-open"
         patch -Np1 -i "${srcdir}/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch" \
-             -d "${srcdir}/${_nv_open_pkg}"
+            -d "${srcdir}/${_nv_open_pkg}"
         patch -Np1 -i "${srcdir}/0005-nvidia-drm-nv_drm_connector_mode_valid-Accept-const-.patch" \
-             -d "${srcdir}/${_nv_open_pkg}"
+            -d "${srcdir}/${_nv_open_pkg}"
         patch -Np1 -i "${srcdir}/0006-nvidia-uvm-Use-__iowrite64_hi_lo.patch" \
-             -d "${srcdir}/${_nv_open_pkg}"
+            -d "${srcdir}/${_nv_open_pkg}"
+        patch -Np1 -i "${srcdir}/0007-nvidia-uvm-Use-page_pgmap.patch" -d "${srcdir}/${_nv_open_pkg}"
+        patch -Np1 -i "${srcdir}/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch" \
+            -d "${srcdir}/${_nv_open_pkg}"
     fi
 }
 
@@ -791,7 +791,7 @@ b2sums=('bc77c9df75f0e0bce0040056f14e0c15e82ed65fd3bce1525b132cd97619137f74e4291
         '94148d4f200d0e69bfdb050a7ce997a29c888d925e4bdf7ae2e1a781b44e7dd9fa5f220ccc336e9370e39e4aac163698567a0eeea713763293cde48f319310be'
         'f15b194854abb1783a45b5a6f106e16ac7cb1fb5e620f9e63ac91ca3d3f1ddd9c5f09025b1066e65f992f6d67b91a9416482f757a45fe6b8eb13f5e5f4d08521'
         '5f6fdbe1a8aebffd51f8c3dd793c9309a2046e4f80c5ed1aacfef1bb122983f1104365e42865bb4b327df5c945b2d24cb4461a59587cebf9895d37145cf519fa'
-        '25a8e5f0e2ac9e6779f38be7efccba003c3049ae0509a3132efbffdef5b69ba83eaec05e120065c8fc3b3e7db718c71f0054c37902c89c5c38bc6bc16b780e01'
+        '260523d88a1e761fc4e320a1d476df0d06b7148afcc5d3444113945593bd8c7bd04d4795d37811f3571da1524a2a4a03b9bd3fec2b04954e0ec94f3ef9bb2fc4'
         '1bbc3693b2c0455c379c09e5f5a7a8223c9275c5ee8eb0b2da1258ea9f7263502a41c217180deb79415c8d41fd3040c6d8b933e930e8e61c5f38a68c6ce2799e'
         '1e02b3e9413f6899ab0a2c8ef3d3013e82cc4c229e871a2ab9a6975e6d23862d57f1a975aa972df764cda5ee37c1ec8225c68db9cade9b505e70b9b97df77ff5'
         '980446f2b8f7d6cb1d0e31baeb1e96d94d77498e0e03e0979e3f2a25e2b38ba4f0c97a0e5f1188a2eafd063426960ba6745fd91ed796d2109b0efa393c834908'
