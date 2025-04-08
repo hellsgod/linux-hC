@@ -1,7 +1,7 @@
 From 242902c3578ed3a015ff332e9d2b98e84391215e Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/2] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/4] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index b0adb665041f..eea830cc90a7 100644
 From 5c3103d0ce9306c6af9d4c36219193abf6580c09 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/2] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/4] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -68,6 +68,179 @@ index 452374d63c24..08f80d7c5df0 100644
  	echo "Installing System.map and config..."
  	mkdir -p "${builddir}"
  	cp System.map "${builddir}/System.map"
+-- 
+2.49.0
+
+
+From 2d8f9500cc3eac7b9a740e041a2a59c6035ad0e1 Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <nathan@kernel.org>
+Date: Fri, 28 Mar 2025 12:26:31 -0700
+Subject: [PATCH 3/4] include: Move typedefs in nls.h to their own header
+
+In order to allow commonly included headers such as string.h to access
+typedefs such as wchar_t without running into issues with the rest of
+the NLS library, refactor the typedefs out into their own header that
+can be included in a much safer manner.
+
+Cc: stable@vger.kernel.org
+Reviewed-by: Andy Shevchenko <andy@kernel.org>
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+---
+ include/linux/nls.h       | 19 +------------------
+ include/linux/nls_types.h | 26 ++++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+), 18 deletions(-)
+ create mode 100644 include/linux/nls_types.h
+
+diff --git a/include/linux/nls.h b/include/linux/nls.h
+index e0bf8367b274..3d416d1f60b6 100644
+--- a/include/linux/nls.h
++++ b/include/linux/nls.h
+@@ -3,24 +3,7 @@
+ #define _LINUX_NLS_H
+ 
+ #include <linux/init.h>
+-
+-/* Unicode has changed over the years.  Unicode code points no longer
+- * fit into 16 bits; as of Unicode 5 valid code points range from 0
+- * to 0x10ffff (17 planes, where each plane holds 65536 code points).
+- *
+- * The original decision to represent Unicode characters as 16-bit
+- * wchar_t values is now outdated.  But plane 0 still includes the
+- * most commonly used characters, so we will retain it.  The newer
+- * 32-bit unicode_t type can be used when it is necessary to
+- * represent the full Unicode character set.
+- */
+-
+-/* Plane-0 Unicode character */
+-typedef u16 wchar_t;
+-#define MAX_WCHAR_T	0xffff
+-
+-/* Arbitrary Unicode character */
+-typedef u32 unicode_t;
++#include <linux/nls_types.h>
+ 
+ struct nls_table {
+ 	const char *charset;
+diff --git a/include/linux/nls_types.h b/include/linux/nls_types.h
+new file mode 100644
+index 000000000000..9479df1016da
+--- /dev/null
++++ b/include/linux/nls_types.h
+@@ -0,0 +1,26 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _LINUX_NLS_TYPES_H
++#define _LINUX_NLS_TYPES_H
++
++#include <linux/types.h>
++
++/*
++ * Unicode has changed over the years.  Unicode code points no longer
++ * fit into 16 bits; as of Unicode 5 valid code points range from 0
++ * to 0x10ffff (17 planes, where each plane holds 65536 code points).
++ *
++ * The original decision to represent Unicode characters as 16-bit
++ * wchar_t values is now outdated.  But plane 0 still includes the
++ * most commonly used characters, so we will retain it.  The newer
++ * 32-bit unicode_t type can be used when it is necessary to
++ * represent the full Unicode character set.
++ */
++
++/* Plane-0 Unicode character */
++typedef u16 wchar_t;
++#define MAX_WCHAR_T	0xffff
++
++/* Arbitrary Unicode character */
++typedef u32 unicode_t;
++
++#endif /* _LINUX_NLS_TYPES_H */
+-- 
+2.49.0
+
+
+From 4721b5b2451b3009a6668d2dc8482aabc2f1d434 Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <nathan@kernel.org>
+Date: Fri, 28 Mar 2025 12:26:32 -0700
+Subject: [PATCH 4/4] lib/string.c: Add wcslen()
+
+A recent optimization change in LLVM [1] aims to transform certain loop
+idioms into calls to strlen() or wcslen(). This change transforms the
+first while loop in UniStrcat() into a call to wcslen(), breaking the
+build when UniStrcat() gets inlined into alloc_path_with_tree_prefix():
+
+  ld.lld: error: undefined symbol: wcslen
+  >>> referenced by nls_ucs2_utils.h:54 (fs/smb/client/../../nls/nls_ucs2_utils.h:54)
+  >>>               vmlinux.o:(alloc_path_with_tree_prefix)
+  >>> referenced by nls_ucs2_utils.h:54 (fs/smb/client/../../nls/nls_ucs2_utils.h:54)
+  >>>               vmlinux.o:(alloc_path_with_tree_prefix)
+
+The kernel does not build with '-ffreestanding' (which would avoid this
+transformation) because it does want libcall optimizations in general
+and turning on '-ffreestanding' disables the majority of them. While
+'-fno-builtin-wcslen' would be more targeted at the problem, it does not
+work with LTO.
+
+Add a basic wcslen() to avoid this linkage failure. While no
+architecture or FORTIFY_SOURCE overrides this, add it to string.c
+instead of string_helpers.c so that it is built with '-ffreestanding',
+otherwise the compiler might transform it into a call to itself.
+
+Cc: stable@vger.kernel.org
+Link: https://github.com/llvm/llvm-project/commit/9694844d7e36fd5e01011ab56b64f27b867aa72d [1]
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+---
+ include/linux/string.h |  2 ++
+ lib/string.c           | 11 +++++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/include/linux/string.h b/include/linux/string.h
+index 01621ad0f598..0802dfd3f950 100644
+--- a/include/linux/string.h
++++ b/include/linux/string.h
+@@ -10,6 +10,7 @@
+ #include <linux/stddef.h>	/* for NULL */
+ #include <linux/err.h>		/* for ERR_PTR() */
+ #include <linux/errno.h>	/* for E2BIG */
++#include <linux/nls_types.h>	/* for wchar_t */
+ #include <linux/overflow.h>	/* for check_mul_overflow() */
+ #include <linux/stdarg.h>
+ #include <uapi/linux/string.h>
+@@ -203,6 +204,7 @@ extern __kernel_size_t strlen(const char *);
+ #ifndef __HAVE_ARCH_STRNLEN
+ extern __kernel_size_t strnlen(const char *,__kernel_size_t);
+ #endif
++__kernel_size_t wcslen(const wchar_t *s);
+ #ifndef __HAVE_ARCH_STRPBRK
+ extern char * strpbrk(const char *,const char *);
+ #endif
+diff --git a/lib/string.c b/lib/string.c
+index eb4486ed40d2..2c6f8c8f4159 100644
+--- a/lib/string.c
++++ b/lib/string.c
+@@ -21,6 +21,7 @@
+ #include <linux/errno.h>
+ #include <linux/limits.h>
+ #include <linux/linkage.h>
++#include <linux/nls_types.h>
+ #include <linux/stddef.h>
+ #include <linux/string.h>
+ #include <linux/types.h>
+@@ -429,6 +430,16 @@ size_t strnlen(const char *s, size_t count)
+ EXPORT_SYMBOL(strnlen);
+ #endif
+ 
++size_t wcslen(const wchar_t *s)
++{
++	const wchar_t *sc;
++
++	for (sc = s; *sc != '\0'; ++sc)
++		/* nothing */;
++	return sc - s;
++}
++EXPORT_SYMBOL(wcslen);
++
+ #ifndef __HAVE_ARCH_STRSPN
+ /**
+  * strspn - Calculate the length of the initial substring of @s which only contain letters in @accept
 -- 
 2.49.0
 
