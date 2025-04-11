@@ -1,4 +1,4 @@
-From a42e4a54b6c9018788dde8409b8cf992872f9e56 Mon Sep 17 00:00:00 2001
+From da505364465cc245345959fe8456a470507151b4 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
 Subject: [PATCH 1/8] arch/Kconfig: Default to maximum amount of ASLR bits
@@ -12,7 +12,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index b8a4ff365582..9b087f9bb413 100644
+index b8a4ff3655822..9b087f9bb4133 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
@@ -37,7 +37,7 @@ index b8a4ff365582..9b087f9bb413 100644
 2.49.0
 
 
-From 9f459d64ee87364b4b5de95211d504b68f87ec9a Mon Sep 17 00:00:00 2001
+From f6b237133e75eb571979d004594d9547e8325489 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
 Subject: [PATCH 2/8] kbuild: add resolve_btfids to pacman PKGBUILD
@@ -53,7 +53,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 0cf3a55b05e1..a27d4344a4e8 100644
+index 0cf3a55b05e14..a27d4344a4e8f 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -72,7 +72,7 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 2.49.0
 
 
-From 1806f4a34c7922d12c32cce3d236d9829e761b10 Mon Sep 17 00:00:00 2001
+From 96ab06893e87d655a1be140557a499300e32bb55 Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
 Subject: [PATCH 3/8] sched/fair: Refactor can_migrate_task() to elimate
@@ -108,10 +108,10 @@ Link: https://lkml.kernel.org/r/20250210103019.283824-1-richard120310@gmail.com
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index c798d2795243..fcdf181972e5 100644
+index 89c7260103e18..cf20f1fa4ddc5 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -9417,12 +9417,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
+@@ -9441,12 +9441,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
  			return 0;
  
  		/* Prevent to re-select dst_cpu via env's CPUs: */
@@ -133,69 +133,11 @@ index c798d2795243..fcdf181972e5 100644
 2.49.0
 
 
-From 8e6ba8292325bc9445ef1f1b85946481e665e23b Mon Sep 17 00:00:00 2001
-From: Qiuxu Zhuo <qiuxu.zhuo@intel.com>
-Date: Mon, 10 Feb 2025 15:17:37 +0800
-Subject: [PATCH 4/8] EDAC/igen6: Fix the flood of invalid error reports
-
-The ECC_ERROR_LOG register of certain SoCs may contain the invalid value
-~0, which results in a flood of invalid error reports in polling mode.
-
-Fix the flood of invalid error reports by skipping the invalid ECC error
-log value ~0.
-
-Fixes: e14232afa944 ("EDAC/igen6: Add polling support")
-Reported-by: Ramses <ramses@well-founded.dev>
-Closes: https://lore.kernel.org/all/OISL8Rv--F-9@well-founded.dev/
-Reported-by: John <therealgraysky@proton.me>
-Closes: https://lore.kernel.org/all/p5YcxOE6M3Ncxpn2-Ia_wCt61EM4LwIiN3LroQvT_-G2jMrFDSOW5k2A9D8UUzD2toGpQBN1eI0sL5dSKnkO8iteZegLoQEj-DwQaMhGx4A=@proton.me/
-Signed-off-by: Qiuxu Zhuo <qiuxu.zhuo@intel.com>
----
- drivers/edac/igen6_edac.c | 21 +++++++++++++++------
- 1 file changed, 15 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/edac/igen6_edac.c b/drivers/edac/igen6_edac.c
-index fdf3a84fe698..595908af9e5c 100644
---- a/drivers/edac/igen6_edac.c
-+++ b/drivers/edac/igen6_edac.c
-@@ -785,13 +785,22 @@ static u64 ecclog_read_and_clear(struct igen6_imc *imc)
- {
- 	u64 ecclog = readq(imc->window + ECC_ERROR_LOG_OFFSET);
- 
--	if (ecclog & (ECC_ERROR_LOG_CE | ECC_ERROR_LOG_UE)) {
--		/* Clear CE/UE bits by writing 1s */
--		writeq(ecclog, imc->window + ECC_ERROR_LOG_OFFSET);
--		return ecclog;
--	}
-+	/*
-+	 * Quirk: The ECC_ERROR_LOG register of certain SoCs may contain
-+	 *        the invalid value ~0. This will result in a flood of invalid
-+	 *        error reports in polling mode. Skip it.
-+	 */
-+	if (ecclog == ~0)
-+		return 0;
- 
--	return 0;
-+	/* Neither a CE nor a UE. Skip it.*/
-+	if (!(ecclog & (ECC_ERROR_LOG_CE | ECC_ERROR_LOG_UE)))
-+		return 0;
-+
-+	/* Clear CE/UE bits by writing 1s */
-+	writeq(ecclog, imc->window + ECC_ERROR_LOG_OFFSET);
-+
-+	return ecclog;
- }
- 
- static void errsts_clear(struct igen6_imc *imc)
--- 
-2.49.0
-
-
-From a6d9fe8bb06b98bda2c403826301dcb25756eda3 Mon Sep 17 00:00:00 2001
+From 80b936f7d608ffc7aee51fdd20f4ed4ac742693e Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 5/8] Kunit to check the longest symbol length
+Subject: [PATCH 4/8] Kunit to check the longest symbol length
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -235,7 +177,7 @@ Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/lin
  create mode 100644 lib/longest_symbol_kunit.c
 
 diff --git a/arch/x86/tools/insn_decoder_test.c b/arch/x86/tools/insn_decoder_test.c
-index 472540aeabc2..6c2986d2ad11 100644
+index 472540aeabc23..6c2986d2ad117 100644
 --- a/arch/x86/tools/insn_decoder_test.c
 +++ b/arch/x86/tools/insn_decoder_test.c
 @@ -10,6 +10,7 @@
@@ -256,7 +198,7 @@ index 472540aeabc2..6c2986d2ad11 100644
  int main(int argc, char **argv)
  {
 diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-index 35796c290ca3..a6da7f4411f4 100644
+index 35796c290ca35..a6da7f4411f46 100644
 --- a/lib/Kconfig.debug
 +++ b/lib/Kconfig.debug
 @@ -2838,6 +2838,15 @@ config FORTIFY_KUNIT_TEST
@@ -276,7 +218,7 @@ index 35796c290ca3..a6da7f4411f4 100644
  	bool "Test hw_breakpoint constraints accounting" if !KUNIT_ALL_TESTS
  	depends on HAVE_HW_BREAKPOINT
 diff --git a/lib/Makefile b/lib/Makefile
-index d5cfc7afbbb8..e8fec9defec2 100644
+index d5cfc7afbbb82..e8fec9defec2c 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
 @@ -393,6 +393,8 @@ obj-$(CONFIG_FORTIFY_KUNIT_TEST) += fortify_kunit.o
@@ -290,7 +232,7 @@ index d5cfc7afbbb8..e8fec9defec2 100644
  
 diff --git a/lib/longest_symbol_kunit.c b/lib/longest_symbol_kunit.c
 new file mode 100644
-index 000000000000..e3c28ff1807f
+index 0000000000000..e3c28ff1807f0
 --- /dev/null
 +++ b/lib/longest_symbol_kunit.c
 @@ -0,0 +1,82 @@
@@ -380,67 +322,10 @@ index 000000000000..e3c28ff1807f
 2.49.0
 
 
-From 93f2f8e6a4f8a81532ee63445290f8286f5a4356 Mon Sep 17 00:00:00 2001
-From: Jann Horn <jannh@google.com>
-Date: Fri, 3 Jan 2025 19:39:38 +0100
-Subject: [PATCH 6/8] x86/mm: Fix flush_tlb_range() when used for zapping
- normal PMDs
-
-On the following path, flush_tlb_range() can be used for zapping normal
-PMD entries (PMD entries that point to page tables) together with the PTE
-entries in the pointed-to page table:
-
-    collapse_pte_mapped_thp
-      pmdp_collapse_flush
-        flush_tlb_range
-
-The arm64 version of flush_tlb_range() has a comment describing that it can
-be used for page table removal, and does not use any last-level
-invalidation optimizations. Fix the X86 version by making it behave the
-same way.
-
-Currently, X86 only uses this information for the following two purposes,
-which I think means the issue doesn't have much impact:
-
- - In native_flush_tlb_multi() for checking if lazy TLB CPUs need to be
-   IPI'd to avoid issues with speculative page table walks.
- - In Hyper-V TLB paravirtualization, again for lazy TLB stuff.
-
-The patch "x86/mm: only invalidate final translations with INVLPGB" which
-is currently under review (see
-<https://lore.kernel.org/all/20241230175550.4046587-13-riel@surriel.com/>)
-would probably be making the impact of this a lot worse.
-
-Fixes: 016c4d92cd16 ("x86/mm/tlb: Add freed_tables argument to flush_tlb_mm_range")
-Signed-off-by: Jann Horn <jannh@google.com>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: stable@vger.kernel.org
-Link: https://lkml.kernel.org/r/20250103-x86-collapse-flush-fix-v1-1-3c521856cfa6@google.com
----
- arch/x86/include/asm/tlbflush.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 02fc2aa06e9e..3da645139748 100644
---- a/arch/x86/include/asm/tlbflush.h
-+++ b/arch/x86/include/asm/tlbflush.h
-@@ -242,7 +242,7 @@ void flush_tlb_multi(const struct cpumask *cpumask,
- 	flush_tlb_mm_range((vma)->vm_mm, start, end,			\
- 			   ((vma)->vm_flags & VM_HUGETLB)		\
- 				? huge_page_shift(hstate_vma(vma))	\
--				: PAGE_SHIFT, false)
-+				: PAGE_SHIFT, true)
- 
- extern void flush_tlb_all(void);
- extern void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
--- 
-2.49.0
-
-
-From 29259928cf76c94d7fae111072ee809a1e5490cc Mon Sep 17 00:00:00 2001
+From b5a20c45cd79b98eacf134473782b0010de45bf7 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Mon, 10 Mar 2025 19:54:53 +0800
-Subject: [PATCH 7/8] block: make sure ->nr_integrity_segments is cloned in
+Subject: [PATCH 5/8] block: make sure ->nr_integrity_segments is cloned in
  blk_rq_prep_clone
 
 Make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone(),
@@ -460,7 +345,7 @@ Signed-off-by: Jens Axboe <axboe@kernel.dk>
  1 file changed, 1 insertion(+)
 
 diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 40490ac88045..005c520d3498 100644
+index 40490ac880457..005c520d3498a 100644
 --- a/block/blk-mq.c
 +++ b/block/blk-mq.c
 @@ -3314,6 +3314,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
@@ -475,10 +360,10 @@ index 40490ac88045..005c520d3498 100644
 2.49.0
 
 
-From 296d2ba29ae2b3312e13be43c8fda9e0ae0675ba Mon Sep 17 00:00:00 2001
+From 44bc44b4bb0999032815189fb04832394d5ca9d1 Mon Sep 17 00:00:00 2001
 From: Bernd Schubert <bschubert@ddn.com>
 Date: Tue, 25 Mar 2025 18:29:31 +0100
-Subject: [PATCH 8/8] fuse: {io-uring} Fix a possible req cancellation race
+Subject: [PATCH 6/8] fuse: {io-uring} Fix a possible req cancellation race
 
 task-A (application) might be in request_wait_answer and
 try to remove the request when it has FR_PENDING set.
@@ -515,7 +400,7 @@ Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
  5 files changed, 46 insertions(+), 13 deletions(-)
 
 diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
-index 51e31df4c546..d9bfdd774c92 100644
+index 51e31df4c5461..d9bfdd774c92d 100644
 --- a/fs/fuse/dev.c
 +++ b/fs/fuse/dev.c
 @@ -407,6 +407,24 @@ static int queue_interrupt(struct fuse_req *req)
@@ -574,7 +459,7 @@ index 51e31df4c546..d9bfdd774c92 100644
  
  	/*
 diff --git a/fs/fuse/dev_uring.c b/fs/fuse/dev_uring.c
-index 82bf458fa9db..5f1566c69ddc 100644
+index 82bf458fa9db5..5f1566c69ddcc 100644
 --- a/fs/fuse/dev_uring.c
 +++ b/fs/fuse/dev_uring.c
 @@ -726,8 +726,6 @@ static void fuse_uring_add_req_to_ring_ent(struct fuse_ring_ent *ent,
@@ -629,7 +514,7 @@ index 82bf458fa9db..5f1566c69ddc 100644
  	/* should be send over io-uring as enhancement */
  	.send_forget = fuse_dev_queue_forget,
 diff --git a/fs/fuse/dev_uring_i.h b/fs/fuse/dev_uring_i.h
-index 2102b3d0c1ae..e5b39a92b7ca 100644
+index 2102b3d0c1aed..e5b39a92b7ca0 100644
 --- a/fs/fuse/dev_uring_i.h
 +++ b/fs/fuse/dev_uring_i.h
 @@ -142,6 +142,7 @@ void fuse_uring_abort_end_requests(struct fuse_ring *ring);
@@ -653,7 +538,7 @@ index 2102b3d0c1ae..e5b39a92b7ca 100644
  
  #endif /* _FS_FUSE_DEV_URING_I_H */
 diff --git a/fs/fuse/fuse_dev_i.h b/fs/fuse/fuse_dev_i.h
-index 3b2bfe1248d3..2481da3388c5 100644
+index 3b2bfe1248d35..2481da3388c5f 100644
 --- a/fs/fuse/fuse_dev_i.h
 +++ b/fs/fuse/fuse_dev_i.h
 @@ -61,6 +61,7 @@ int fuse_copy_out_args(struct fuse_copy_state *cs, struct fuse_args *args,
@@ -665,7 +550,7 @@ index 3b2bfe1248d3..2481da3388c5 100644
  #endif
  
 diff --git a/fs/fuse/fuse_i.h b/fs/fuse/fuse_i.h
-index fee96fe7887b..2086dac7243b 100644
+index fee96fe7887b3..2086dac7243ba 100644
 --- a/fs/fuse/fuse_i.h
 +++ b/fs/fuse/fuse_i.h
 @@ -378,6 +378,7 @@ struct fuse_io_priv {
@@ -692,6 +577,179 @@ index fee96fe7887b..2086dac7243b 100644
  #endif
  };
  
+-- 
+2.49.0
+
+
+From 2cb0ca2973d651dfd8dc0b2b1be48cd2c9205536 Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <nathan@kernel.org>
+Date: Fri, 28 Mar 2025 12:26:31 -0700
+Subject: [PATCH 7/8] include: Move typedefs in nls.h to their own header
+
+In order to allow commonly included headers such as string.h to access
+typedefs such as wchar_t without running into issues with the rest of
+the NLS library, refactor the typedefs out into their own header that
+can be included in a much safer manner.
+
+Cc: stable@vger.kernel.org
+Reviewed-by: Andy Shevchenko <andy@kernel.org>
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+---
+ include/linux/nls.h       | 19 +------------------
+ include/linux/nls_types.h | 26 ++++++++++++++++++++++++++
+ 2 files changed, 27 insertions(+), 18 deletions(-)
+ create mode 100644 include/linux/nls_types.h
+
+diff --git a/include/linux/nls.h b/include/linux/nls.h
+index e0bf8367b274a..3d416d1f60b66 100644
+--- a/include/linux/nls.h
++++ b/include/linux/nls.h
+@@ -3,24 +3,7 @@
+ #define _LINUX_NLS_H
+ 
+ #include <linux/init.h>
+-
+-/* Unicode has changed over the years.  Unicode code points no longer
+- * fit into 16 bits; as of Unicode 5 valid code points range from 0
+- * to 0x10ffff (17 planes, where each plane holds 65536 code points).
+- *
+- * The original decision to represent Unicode characters as 16-bit
+- * wchar_t values is now outdated.  But plane 0 still includes the
+- * most commonly used characters, so we will retain it.  The newer
+- * 32-bit unicode_t type can be used when it is necessary to
+- * represent the full Unicode character set.
+- */
+-
+-/* Plane-0 Unicode character */
+-typedef u16 wchar_t;
+-#define MAX_WCHAR_T	0xffff
+-
+-/* Arbitrary Unicode character */
+-typedef u32 unicode_t;
++#include <linux/nls_types.h>
+ 
+ struct nls_table {
+ 	const char *charset;
+diff --git a/include/linux/nls_types.h b/include/linux/nls_types.h
+new file mode 100644
+index 0000000000000..9479df1016da6
+--- /dev/null
++++ b/include/linux/nls_types.h
+@@ -0,0 +1,26 @@
++/* SPDX-License-Identifier: GPL-2.0 */
++#ifndef _LINUX_NLS_TYPES_H
++#define _LINUX_NLS_TYPES_H
++
++#include <linux/types.h>
++
++/*
++ * Unicode has changed over the years.  Unicode code points no longer
++ * fit into 16 bits; as of Unicode 5 valid code points range from 0
++ * to 0x10ffff (17 planes, where each plane holds 65536 code points).
++ *
++ * The original decision to represent Unicode characters as 16-bit
++ * wchar_t values is now outdated.  But plane 0 still includes the
++ * most commonly used characters, so we will retain it.  The newer
++ * 32-bit unicode_t type can be used when it is necessary to
++ * represent the full Unicode character set.
++ */
++
++/* Plane-0 Unicode character */
++typedef u16 wchar_t;
++#define MAX_WCHAR_T	0xffff
++
++/* Arbitrary Unicode character */
++typedef u32 unicode_t;
++
++#endif /* _LINUX_NLS_TYPES_H */
+-- 
+2.49.0
+
+
+From 0c8ccf7b62737ea8286e1512903cf563a763f591 Mon Sep 17 00:00:00 2001
+From: Nathan Chancellor <nathan@kernel.org>
+Date: Fri, 28 Mar 2025 12:26:32 -0700
+Subject: [PATCH 8/8] lib/string.c: Add wcslen()
+
+A recent optimization change in LLVM [1] aims to transform certain loop
+idioms into calls to strlen() or wcslen(). This change transforms the
+first while loop in UniStrcat() into a call to wcslen(), breaking the
+build when UniStrcat() gets inlined into alloc_path_with_tree_prefix():
+
+  ld.lld: error: undefined symbol: wcslen
+  >>> referenced by nls_ucs2_utils.h:54 (fs/smb/client/../../nls/nls_ucs2_utils.h:54)
+  >>>               vmlinux.o:(alloc_path_with_tree_prefix)
+  >>> referenced by nls_ucs2_utils.h:54 (fs/smb/client/../../nls/nls_ucs2_utils.h:54)
+  >>>               vmlinux.o:(alloc_path_with_tree_prefix)
+
+The kernel does not build with '-ffreestanding' (which would avoid this
+transformation) because it does want libcall optimizations in general
+and turning on '-ffreestanding' disables the majority of them. While
+'-fno-builtin-wcslen' would be more targeted at the problem, it does not
+work with LTO.
+
+Add a basic wcslen() to avoid this linkage failure. While no
+architecture or FORTIFY_SOURCE overrides this, add it to string.c
+instead of string_helpers.c so that it is built with '-ffreestanding',
+otherwise the compiler might transform it into a call to itself.
+
+Cc: stable@vger.kernel.org
+Link: https://github.com/llvm/llvm-project/commit/9694844d7e36fd5e01011ab56b64f27b867aa72d [1]
+Signed-off-by: Nathan Chancellor <nathan@kernel.org>
+---
+ include/linux/string.h |  2 ++
+ lib/string.c           | 11 +++++++++++
+ 2 files changed, 13 insertions(+)
+
+diff --git a/include/linux/string.h b/include/linux/string.h
+index f8e21e80942f1..c8803067f283e 100644
+--- a/include/linux/string.h
++++ b/include/linux/string.h
+@@ -10,6 +10,7 @@
+ #include <linux/stddef.h>	/* for NULL */
+ #include <linux/err.h>		/* for ERR_PTR() */
+ #include <linux/errno.h>	/* for E2BIG */
++#include <linux/nls_types.h>	/* for wchar_t */
+ #include <linux/overflow.h>	/* for check_mul_overflow() */
+ #include <linux/stdarg.h>
+ #include <uapi/linux/string.h>
+@@ -203,6 +204,7 @@ extern __kernel_size_t strlen(const char *);
+ #ifndef __HAVE_ARCH_STRNLEN
+ extern __kernel_size_t strnlen(const char *,__kernel_size_t);
+ #endif
++__kernel_size_t wcslen(const wchar_t *s);
+ #ifndef __HAVE_ARCH_STRPBRK
+ extern char * strpbrk(const char *,const char *);
+ #endif
+diff --git a/lib/string.c b/lib/string.c
+index eb4486ed40d25..2c6f8c8f41591 100644
+--- a/lib/string.c
++++ b/lib/string.c
+@@ -21,6 +21,7 @@
+ #include <linux/errno.h>
+ #include <linux/limits.h>
+ #include <linux/linkage.h>
++#include <linux/nls_types.h>
+ #include <linux/stddef.h>
+ #include <linux/string.h>
+ #include <linux/types.h>
+@@ -429,6 +430,16 @@ size_t strnlen(const char *s, size_t count)
+ EXPORT_SYMBOL(strnlen);
+ #endif
+ 
++size_t wcslen(const wchar_t *s)
++{
++	const wchar_t *sc;
++
++	for (sc = s; *sc != '\0'; ++sc)
++		/* nothing */;
++	return sc - s;
++}
++EXPORT_SYMBOL(wcslen);
++
+ #ifndef __HAVE_ARCH_STRSPN
+ /**
+  * strspn - Calculate the length of the initial substring of @s which only contain letters in @accept
 -- 
 2.49.0
 
