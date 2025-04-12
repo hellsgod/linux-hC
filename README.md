@@ -25,7 +25,7 @@ I modified it slightly for my personal use and I use patches from ZEN/Cachy/Clea
 - Cherry-picked fixes and patches from Clear-linux, ZEN, CachyOS and pf-kernel
 - le9uo working set protection: [Repository](https://github.com/firelzrd/le9uo)
 - cpuidle TEO instead of menu
-- Various patches from upstream
+- Various fixes and patches from upstream
 
 ### If you want to build this kernel, you have to do following steps:
 
@@ -47,7 +47,7 @@ READELF=/home/hellsgod/clang21/bin/llvm-readelf
 AS=/home/hellsgod/clang21/bin/llvm-as
 ```
 #### Step 3:
-Install clang 20 or clang 21, because some of my compiler flags only work with clang 20 and up. If you use a clang compiler in your home directory, modify Step 2 to your compiler path. If you don't want to install clang 20/21 and you want to use your system wide clang, which is 19.1.7 on Arch Linux, head over to Step 4.
+Install clang 21, because some of my compiler flags only work with clang 20 and up. If you use a clang compiler in your home directory, modify Step 2 to your compiler path. If you don't want to install clang 21 and you want to use your system wide clang, which is 19.1.7 on Arch Linux, head over to Step 4.
 
 #### Step 4 (instead of step 3):
 Remove following compiler flags from my compiler-opt.patch:
@@ -57,42 +57,18 @@ Remove following compiler flags from my compiler-opt.patch:
 -mllvm -enable-dse-initializes-attr-improvement
 -mllvm -enable-early-exit-vectorization
 ```
-And you should be able to compile the kernel with clang 19.1.7, which is the system wide version of Arch Linux.
+And you should be able to compile the kernel with clang 19.1.7, which is the system wide version of Arch Linux. If I missed some newer flags I added and you encounter errors, remove all the flags it mentions in the error. 
 
 #### Step 5:
-Run `makepkg -si` to install dependencies and build the kernel. You can also modify the PKGBUILD to change tickrate, etc to your liking.
+Run `makepkg -si` to install dependencies and build the kernel. You can also modify the PKGBUILD to change various options to your liking.
 
-### Clang 20:
+### Clang 21:
 I use a custom built Full LTO, PGO and BOLT optimized Clang 21, which you can find here: [CLANG](https://github.com/Mandi-Sa/clang/releases)
 
-### Nvidia module for clang 20 and up:
-Be aware the nvidia module won't compile for you, if you compile your kernel with clang 20 and up. But there's a workaround for that. If you don't use clang 20 and up as your system wide compiler, the nvidia module will try to compile with the system wide compiler, which is clang 19.1.7 on Arch an will therefore fail.
+### Nvidia module:
+linux-hC will compile the nvidia closed module, since my 3090 runs better with it. You can choose the open module if you want, or disable it in PKGBUILD, if you don't use a nvidia card.
+linux-hC-rc will currently build the open nvidia module, since the closed one doesn't wor for now. You can disable it in PKGBUILD.
 
-I'm using the nvidia-dkms closed module, since the open module produces stutters in UI animations for me and I can only give you a workaround for that one. You have to find a way for your used driver by yourself.
-
-I'm refering to the latest nvidia driver 570.86.16: 
-Navigate to: `/usr/src/nvidia-570.86.16/Makefile`
-
-In the Makefile you will find the following: 
-```
-CC ?= cc
-LD ?= ld
-OBJDUMP ?= objdump
-```
-It refers to the compiler it reads from the kernel, GCC or Clang. But even if it reads clang from the kernel, it will use your system wide compiler, which you don't want. So, replace it with:
-```
-ifeq ($(shell echo $(KERNEL_UNAME) | grep -o hC),hC)
-    CC := /home/hellsgod/clang21/bin/clang
-    LD := /home/hellsgod/clang21/bin/ld.lld
-    OBJDUMP=/home/hellsgod/clang21/bin/llvm-objdump
-else
-  CC ?= cc
-  LD ?= ld
-  OBJDUMP ?= objdump
-endif
-```
-Instead of just reading the kernel config for the compiler, it'll read the name of the kernel itself and if "hC" is in the name, it will use your custom compiler path. You have to modify it for your own compiler path of course.
-
-### Other modules:
-If you use other modules, they probably need a modification, too. You are on your own for them. Maybe you can use a similar way like I do for the nvidia module. Another way could be to ignore cc mismatch, but I don't recommend that.
+### DKMS Modules:
+If you need some dkms modules, they probably won't work. They fall back to the system wide compiler, which is probably clang 19.1.7. So you either use clang 21 system wide, or use a hack to tell dkms to compile the modules with clang 21.
 
