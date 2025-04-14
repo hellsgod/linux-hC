@@ -1,7 +1,7 @@
-From 242902c3578ed3a015ff332e9d2b98e84391215e Mon Sep 17 00:00:00 2001
+From fa26d835c6bdbf2896603b48b04725e3cd71b552 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/4] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/5] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -37,10 +37,10 @@ index b0adb665041f..eea830cc90a7 100644
 2.49.0
 
 
-From 5c3103d0ce9306c6af9d4c36219193abf6580c09 Mon Sep 17 00:00:00 2001
+From f430200b2b2c95a95673534d10bc31050cddc20c Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/4] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/5] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,10 +72,43 @@ index 452374d63c24..08f80d7c5df0 100644
 2.49.0
 
 
-From 2d8f9500cc3eac7b9a740e041a2a59c6035ad0e1 Mon Sep 17 00:00:00 2001
+From ffe2eab334b5e3d9e3a70f2e1757d9a9a4a20764 Mon Sep 17 00:00:00 2001
+From: Hannes Reinecke <hare@kernel.org>
+Date: Mon, 14 Apr 2025 14:05:09 +0200
+Subject: [PATCH 3/5] nvme: fixup boot failure on nvme-pci
+
+Commit 62baf70c3274 caused the ANA log page to be re-read, even on systems
+where the ANA is not supported.
+
+Fixes: 62baf70c3274 ("nvme: re-read ANA log page after ns scan completes")
+
+Signed-off-by: Hannes Reinecke <hare@kernel.org>
+Tested-by: Srikanth Aithal <sraithal@amd.com>
+---
+ drivers/nvme/host/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/nvme/host/core.c b/drivers/nvme/host/core.c
+index b502ac07483b..eb6ea8acb3cc 100644
+--- a/drivers/nvme/host/core.c
++++ b/drivers/nvme/host/core.c
+@@ -4300,7 +4300,7 @@ static void nvme_scan_work(struct work_struct *work)
+ 	if (test_bit(NVME_AER_NOTICE_NS_CHANGED, &ctrl->events))
+ 		nvme_queue_scan(ctrl);
+ #ifdef CONFIG_NVME_MULTIPATH
+-	else
++	else if (ctrl->ana_log_buf)
+ 		/* Re-read the ANA log page to not miss updates */
+ 		queue_work(nvme_wq, &ctrl->ana_work);
+ #endif
+-- 
+2.49.0
+
+
+From a6c5436584bb773967f4bad8c0ebf10500aeae86 Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Fri, 28 Mar 2025 12:26:31 -0700
-Subject: [PATCH 3/4] include: Move typedefs in nls.h to their own header
+Subject: [PATCH 4/5] include: Move typedefs in nls.h to their own header
 
 In order to allow commonly included headers such as string.h to access
 typedefs such as wchar_t without running into issues with the rest of
@@ -157,10 +190,10 @@ index 000000000000..9479df1016da
 2.49.0
 
 
-From 4721b5b2451b3009a6668d2dc8482aabc2f1d434 Mon Sep 17 00:00:00 2001
+From 20c40528092db14dc3dfbf77845e2be514250494 Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Fri, 28 Mar 2025 12:26:32 -0700
-Subject: [PATCH 4/4] lib/string.c: Add wcslen()
+Subject: [PATCH 5/5] lib/string.c: Add wcslen()
 
 A recent optimization change in LLVM [1] aims to transform certain loop
 idioms into calls to strlen() or wcslen(). This change transforms the
