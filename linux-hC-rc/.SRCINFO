@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 20 improved hC kernel - Release Candidate
-	pkgver = 6.15.rc1
+	pkgver = 6.15.rc2
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v6.15-rc1.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v6.15-rc2.tar.gz
 	source = config
 	source = auto-cpu-optimization.sh
 	source = amd-pstate.patch
@@ -45,7 +45,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0007-nvidia-uvm-Use-page_pgmap.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0008-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/sched/0001-bore.patch
-	b2sums = bc77c9df75f0e0bce0040056f14e0c15e82ed65fd3bce1525b132cd97619137f74e42915fc42146c0727eab29db446db6c59d81f56dcf14d7a6c92e3e3fd986f
+	b2sums = 36eed46ecf453b7c93f1eee56505492e2fbfb645b7578cb13013ec63c39bfa66a7190892dc43858708fc8252c57b911cd2e2a73ac7e3157bd9d4b8dee01926cf
 	b2sums = 4c98851560de13aca1b400b51425b334d1e9ef031514944afcecaf999f2a47ab48935dd7c88ad248c601086b3c44b6235673495715c5257ef4a758372642da6e
 	b2sums = 390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab
 	b2sums = 64eeff46302e142b6883b9157f16a6af5bc19da60143370a89232c32ad04aa9a0528c86c2b30d79f141194e6f4e042867f2beabbc0477fa404b32064a69a1a6c
@@ -95,7 +95,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 570.133.07 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.15.rc1-1
+	depends = linux-hC-rc=6.15.rc2-1
 	depends = nvidia-utils=570.133.07
 	depends = libglvnd
 	provides = NVIDIA-MODULE
