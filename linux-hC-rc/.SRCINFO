@@ -1,7 +1,7 @@
 pkgbase = linux-hC-rc
-	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 20 improved hC kernel - Release Candidate
+	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
 	pkgver = 6.15.rc2
-	pkgrel = 1
+	pkgrel = 2
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
 	license = GPL-2.0-only
@@ -71,7 +71,7 @@ pkgbase = linux-hC-rc
 	b2sums = c2abf138377ec4737663b1010c9c0e0cdccf2478a3fc38125faf3dfff9fb5c889e68735dd8b7a178f2ac951c8b126567d6ab0bc63734a2175f96fc5ae5dd8398
 
 pkgname = linux-hC-rc
-	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 20 improved hC kernel - Release Candidate kernel and modules
+	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel and modules
 	depends = coreutils
 	depends = kmod
 	depends = initramfs
@@ -85,7 +85,7 @@ pkgname = linux-hC-rc
 	provides = NTSYNC-MODULE
 
 pkgname = linux-hC-rc-headers
-	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 20 improved hC kernel - Release Candidate kernel
+	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel
 	depends = pahole
 	depends = linux-hC-rc
 	depends = clang
@@ -95,7 +95,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 570.133.07 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.15.rc2-1
+	depends = linux-hC-rc=6.15.rc2-2
 	depends = nvidia-utils=570.133.07
 	depends = libglvnd
 	provides = NVIDIA-MODULE
