@@ -1,18 +1,18 @@
-From 0c9726f4a37d9b8f4d12ea2373724f092e6b87a0 Mon Sep 17 00:00:00 2001
+From 3d7f8cd92a6091868d6fe07bac1c29aa8e7032a6 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Mon, 7 Apr 2025 15:03:49 +0200
-Subject: [PATCH] Makefile: Add compiler-optimizations
+Date: Sat, 19 Apr 2025 23:19:13 +0200
+Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 12 ++++++------
- init/Kconfig |  4 ++--
- 2 files changed, 8 insertions(+), 8 deletions(-)
+ Makefile     | 87 ++++++++++++++++++++++++++++++++++++++++++++++++----
+ init/Kconfig |  4 +--
+ 2 files changed, 83 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 38689a0c3605..34da2fff01a4 100644
+index 907a4565f06a..8158d1bce05c 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -459,9 +459,9 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,29 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -20,11 +20,31 @@ index 38689a0c3605..34da2fff01a4 100644
 +			 -O3 -fomit-frame-pointer -std=gnu11
  KBUILD_USERCFLAGS  := $(KBUILD_USERHOSTCFLAGS) $(USERCFLAGS)
 -KBUILD_USERLDFLAGS := $(USERLDFLAGS)
-+KBUILD_USERLDFLAGS := -lto-CGO3 -lto-O3 -Wl,-O3 -Wl,--gc-sections -Wl,--no-undefined -Wl,--as-needed -Wl,-z,common -Wl,--icf=safe -Wl,-z,now -Wl,--relax -Wl,--relro -Wl,--emit-relocs -Wl,--compress-debug-sections=zstd -Wl,--exclude-libs,ALL -Wl,--strip-debug $(USERLDFLAGS)
++KBUILD_USERLDFLAGS := \
++  -lto-CGO3 -lto-O3 -Wl,-O3 \
++  -Wl,--gc-sections -Wl,--no-undefined -Wl,--as-needed \
++  -Wl,-z,now -Wl,--relro -Wl,--relax \
++  -Wl,--icf=safe -Wl,--emit-relocs \
++  -Wl,--compress-debug-sections=zstd \
++  -Wl,--exclude-libs,ALL -Wl,--strip-debug \
++  -plugin-opt=inline-threshold=350 \
++  -plugin-opt=inlinehint-threshold=150 \
++  -plugin-opt=inlinecold-threshold=100 \
++  -plugin-opt=unroll-threshold=50 \
++  -plugin-opt=unroll-max-count=8 \
++  -plugin-opt=unroll-max-iteration-count-to-analyze=32 \
++  -plugin-opt=unroll-allow-partial \
++  -plugin-opt=unroll-partial-threshold=200 \
++  -plugin-opt=slp-threshold=8 \
++  -plugin-opt=slp-vectorize-hor-store \
++  -plugin-opt=thinlto-assume-merged \
++  -plugin-opt=codegen-data-thinlto-two-rounds \
++  -plugin-opt=enable-chr=true \
++  -plugin-opt=cost-kind=latency $(USERLDFLAGS)
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -488,7 +488,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +511,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -33,16 +53,71 @@ index 38689a0c3605..34da2fff01a4 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -572,7 +572,7 @@ LINUXINCLUDE    := \
+@@ -575,7 +595,62 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
 -KBUILD_CFLAGS :=
-+KBUILD_CFLAGS := -mllvm -enable-gvn-hoist -mllvm -inline-threshold=350 -mllvm -unroll-threshold=50 -mllvm -vectorize-slp -mllvm -vectorize-loops -mllvm -enable-loop-distribute -fdata-sections -ffunction-sections -mllvm -enable-memcpy-dag-opt -mllvm -enable-pre -mllvm -enable-load-pre -mllvm -allow-unroll-and-jam -mllvm -enable-misched -mllvm -enable-gvn-memdep -mllvm -enable-loop-flatten -mllvm -slp-vectorize-hor-store -mllvm -enable-aa-sched-mi -mllvm -enable-merge-functions -mllvm -simplifycfg-sink-common -mllvm -unswitch-threshold=50 -mllvm -enable-nontrivial-unswitch -mllvm -hot-cold-static-analysis -mllvm -max-speculation-depth=10 -mllvm -enable-partial-inlining -mllvm -inlinehint-threshold=150 -mllvm -inlinecold-threshold=100 -mllvm -memdep-block-scan-limit=32 -mllvm -attributor-max-iterations=3 -mllvm -thinlto-assume-merged -mllvm -simplifycfg-merge-cond-stores -mllvm -branch-hint-probability-threshold=75 -mllvm -x86-pad-for-align -mllvm -slp-threshold=8 -mllvm -slp-vectorize-hor -mllvm -simplifycfg-hoist-common -mllvm -unroll-max-count=8 -mllvm -mergefunc-preserve-debug-info -mllvm -adce-remove-loops -mllvm -mergefunc-use-aliases -mllvm -interleave-loops -mllvm -enable-interleaved-mem-accesses -mllvm -enable-masked-interleaved-mem-accesses -mllvm -prefetch-distance=16 -mllvm -enable-load-in-loop-pre -mllvm -enable-loop-simplifycfg-term-folding -mllvm -enable-split-backedge-in-load-pre -mllvm -instcombine-code-sinking -mllvm -lto-embed-bitcode=optimized -mllvm -cost-kind=latency -mllvm -enable-lto-internalization -mllvm -hoist-common-insts -mllvm -simplifycfg-merge-compatible-invokes -mllvm -branch-fold-placement -mllvm -unroll-and-jam-threshold=50 -mllvm -enable-chr -mllvm -early-live-intervals -mllvm -enable-andcmp-sinking -mllvm -hoist-const-loads -mllvm -hoist-const-stores -mllvm -enable-post-misched -mllvm -enable-early-exit-vectorization -mllvm -enable-dse-initializes-attr-improvement -mllvm -enable-gvn-memoryssa -mllvm -dse-optimize-memoryssa -mllvm -dfa-early-exit-heuristic -mllvm -codegen-data-thinlto-two-rounds -mllvm -enable-spill-copy-elim -mllvm -enable-constraint-elimination -mllvm -enable-dse-partial-overwrite-tracking -mllvm -enable-dse-partial-store-merging -mllvm -enable-dfa-jump-thread -mllvm -aggressive-ext-opt -mllvm -aggressive-instcombine-max-scan-instrs=200 -mllvm -aggressive-machine-cse -mllvm -enable-epilogue-vectorization -mllvm -sink-insts-to-avoid-spills -mllvm -sink-freq-percent-threshold=50 -mllvm -unroll-max-iteration-count-to-analyze=32 -mllvm -unroll-allow-partial -mllvm -unroll-partial-threshold=200
++KBUILD_CFLAGS := \
++  -mllvm -enable-gvn-hoist \
++  -mllvm -vectorize-slp \
++  -mllvm -vectorize-loops \
++  -mllvm -enable-loop-distribute \
++  -mllvm -enable-memcpy-dag-opt \
++  -mllvm -enable-pre \
++  -mllvm -enable-load-pre \
++  -mllvm -allow-unroll-and-jam \
++  -mllvm -enable-misched \
++  -mllvm -enable-gvn-memdep \
++  -mllvm -enable-loop-flatten \
++  -mllvm -enable-aa-sched-mi \
++  -mllvm -enable-merge-functions \
++  -mllvm -simplifycfg-sink-common \
++  -mllvm -enable-nontrivial-unswitch \
++  -mllvm -hot-cold-static-analysis \
++  -mllvm -memdep-block-scan-limit=32 \
++  -mllvm -attributor-max-iterations=3 \
++  -mllvm -simplifycfg-merge-cond-stores \
++  -mllvm -simplifycfg-hoist-common \
++  -mllvm -hoist-common-insts \
++  -mllvm -branch-fold-placement \
++  -mllvm -mergefunc-preserve-debug-info \
++  -mllvm -adce-remove-loops \
++  -mllvm -mergefunc-use-aliases \
++  -mllvm -interleave-loops \
++  -mllvm -enable-interleaved-mem-accesses \
++  -mllvm -enable-masked-interleaved-mem-accesses \
++  -mllvm -enable-load-in-loop-pre \
++  -mllvm -enable-loop-simplifycfg-term-folding \
++  -mllvm -enable-split-backedge-in-load-pre \
++  -mllvm -instcombine-code-sinking \
++  -mllvm -enable-lto-internalization \
++  -mllvm -enable-chr \
++  -mllvm -early-live-intervals \
++  -mllvm -enable-andcmp-sinking \
++  -mllvm -hoist-const-loads \
++  -mllvm -hoist-const-stores \
++  -mllvm -enable-post-misched \
++  -mllvm -enable-early-exit-vectorization \
++  -mllvm -enable-dse-initializes-attr-improvement \
++  -mllvm -enable-gvn-memoryssa \
++  -mllvm -dse-optimize-memoryssa \
++  -mllvm -dfa-early-exit-heuristic \
++  -mllvm -enable-spill-copy-elim \
++  -mllvm -enable-constraint-elimination \
++  -mllvm -enable-dse-partial-overwrite-tracking \
++  -mllvm -enable-dse-partial-store-merging \
++  -mllvm -enable-dfa-jump-thread \
++  -mllvm -aggressive-ext-opt \
++  -mllvm -aggressive-instcombine-max-scan-instrs=200 \
++  -mllvm -aggressive-machine-cse \
++  -mllvm -enable-epilogue-vectorization \
++  -mllvm -sink-insts-to-avoid-spills \
++  -mllvm -sink-freq-percent-threshold=50
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -856,8 +856,8 @@ endif # need-config
+@@ -859,8 +934,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -54,10 +129,10 @@ index 38689a0c3605..34da2fff01a4 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index dd2ea3b9a799..91428f88c7d3 100644
+index 5ab47c346ef9..288a0f7cc89f 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1475,10 +1475,10 @@ choice
+@@ -1464,10 +1464,10 @@ choice
  	default CC_OPTIMIZE_FOR_PERFORMANCE
  
  config CC_OPTIMIZE_FOR_PERFORMANCE
