@@ -1,7 +1,7 @@
-From da505364465cc245345959fe8456a470507151b4 Mon Sep 17 00:00:00 2001
+From bdf2e4d8f90f96bfee9e1124981a196ee277bf85 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/8] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/4] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -12,7 +12,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index b8a4ff3655822..9b087f9bb4133 100644
+index b8a4ff365582..9b087f9bb413 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
@@ -37,10 +37,10 @@ index b8a4ff3655822..9b087f9bb4133 100644
 2.49.0
 
 
-From f6b237133e75eb571979d004594d9547e8325489 Mon Sep 17 00:00:00 2001
+From eb640c5bc21a07351b8d5235ea7f8d4f3b882c7f Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/8] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/4] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -53,7 +53,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 0cf3a55b05e14..a27d4344a4e8f 100644
+index 0cf3a55b05e1..a27d4344a4e8 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -72,10 +72,10 @@ index 0cf3a55b05e14..a27d4344a4e8f 100644
 2.49.0
 
 
-From 96ab06893e87d655a1be140557a499300e32bb55 Mon Sep 17 00:00:00 2001
+From c0d6719cd7b9938ca9324fd50a94a78f1483ec9f Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 3/8] sched/fair: Refactor can_migrate_task() to elimate
+Subject: [PATCH 3/4] sched/fair: Refactor can_migrate_task() to elimate
  looping
 
 The function "can_migrate_task()" utilize "for_each_cpu_and" with a
@@ -108,7 +108,7 @@ Link: https://lkml.kernel.org/r/20250210103019.283824-1-richard120310@gmail.com
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 89c7260103e18..cf20f1fa4ddc5 100644
+index 89c7260103e1..cf20f1fa4ddc 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9441,12 +9441,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
@@ -133,11 +133,11 @@ index 89c7260103e18..cf20f1fa4ddc5 100644
 2.49.0
 
 
-From 80b936f7d608ffc7aee51fdd20f4ed4ac742693e Mon Sep 17 00:00:00 2001
+From 9bb2582a85846c0bc0ca8acb31ec75bc7ec9303d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 4/8] Kunit to check the longest symbol length
+Subject: [PATCH 4/4] Kunit to check the longest symbol length
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -177,7 +177,7 @@ Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/lin
  create mode 100644 lib/longest_symbol_kunit.c
 
 diff --git a/arch/x86/tools/insn_decoder_test.c b/arch/x86/tools/insn_decoder_test.c
-index 472540aeabc23..6c2986d2ad117 100644
+index 472540aeabc2..6c2986d2ad11 100644
 --- a/arch/x86/tools/insn_decoder_test.c
 +++ b/arch/x86/tools/insn_decoder_test.c
 @@ -10,6 +10,7 @@
@@ -198,7 +198,7 @@ index 472540aeabc23..6c2986d2ad117 100644
  int main(int argc, char **argv)
  {
 diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-index 35796c290ca35..a6da7f4411f46 100644
+index 35796c290ca3..a6da7f4411f4 100644
 --- a/lib/Kconfig.debug
 +++ b/lib/Kconfig.debug
 @@ -2838,6 +2838,15 @@ config FORTIFY_KUNIT_TEST
@@ -218,10 +218,10 @@ index 35796c290ca35..a6da7f4411f46 100644
  	bool "Test hw_breakpoint constraints accounting" if !KUNIT_ALL_TESTS
  	depends on HAVE_HW_BREAKPOINT
 diff --git a/lib/Makefile b/lib/Makefile
-index d5cfc7afbbb82..e8fec9defec2c 100644
+index 4f3d00a2fd65..9a54526008d0 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
-@@ -393,6 +393,8 @@ obj-$(CONFIG_FORTIFY_KUNIT_TEST) += fortify_kunit.o
+@@ -398,6 +398,8 @@ obj-$(CONFIG_FORTIFY_KUNIT_TEST) += fortify_kunit.o
  obj-$(CONFIG_CRC_KUNIT_TEST) += crc_kunit.o
  obj-$(CONFIG_SIPHASH_KUNIT_TEST) += siphash_kunit.o
  obj-$(CONFIG_USERCOPY_KUNIT_TEST) += usercopy_kunit.o
@@ -232,7 +232,7 @@ index d5cfc7afbbb82..e8fec9defec2c 100644
  
 diff --git a/lib/longest_symbol_kunit.c b/lib/longest_symbol_kunit.c
 new file mode 100644
-index 0000000000000..e3c28ff1807f0
+index 000000000000..e3c28ff1807f
 --- /dev/null
 +++ b/lib/longest_symbol_kunit.c
 @@ -0,0 +1,82 @@
@@ -318,438 +318,6 @@ index 0000000000000..e3c28ff1807f0
 +MODULE_LICENSE("GPL");
 +MODULE_DESCRIPTION("Test the longest symbol length");
 +MODULE_AUTHOR("Sergio González Collado");
--- 
-2.49.0
-
-
-From b5a20c45cd79b98eacf134473782b0010de45bf7 Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Mon, 10 Mar 2025 19:54:53 +0800
-Subject: [PATCH 5/8] block: make sure ->nr_integrity_segments is cloned in
- blk_rq_prep_clone
-
-Make sure ->nr_integrity_segments is cloned in blk_rq_prep_clone(),
-otherwise requests cloned by device-mapper multipath will not have the
-proper nr_integrity_segments values set, then BUG() is hit from
-sg_alloc_table_chained().
-
-Fixes: b0fd271d5fba ("block: add request clone interface (v2)")
-Cc: stable@vger.kernel.org
-Cc: Christoph Hellwig <hch@infradead.org>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Reviewed-by: Christoph Hellwig <hch@lst.de>
-Link: https://lore.kernel.org/r/20250310115453.2271109-1-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- block/blk-mq.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index 40490ac880457..005c520d3498a 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -3314,6 +3314,7 @@ int blk_rq_prep_clone(struct request *rq, struct request *rq_src,
- 		rq->special_vec = rq_src->special_vec;
- 	}
- 	rq->nr_phys_segments = rq_src->nr_phys_segments;
-+	rq->nr_integrity_segments = rq_src->nr_integrity_segments;
- 
- 	if (rq->bio && blk_crypto_rq_bio_prep(rq, rq->bio, gfp_mask) < 0)
- 		goto free_and_out;
--- 
-2.49.0
-
-
-From 44bc44b4bb0999032815189fb04832394d5ca9d1 Mon Sep 17 00:00:00 2001
-From: Bernd Schubert <bschubert@ddn.com>
-Date: Tue, 25 Mar 2025 18:29:31 +0100
-Subject: [PATCH 6/8] fuse: {io-uring} Fix a possible req cancellation race
-
-task-A (application) might be in request_wait_answer and
-try to remove the request when it has FR_PENDING set.
-
-task-B (a fuse-server io-uring task) might handle this
-request with FUSE_IO_URING_CMD_COMMIT_AND_FETCH, when
-fetching the next request and accessed the req from
-the pending list in fuse_uring_ent_assign_req().
-That code path was not protected by fiq->lock and so
-might race with task-A.
-
-For scaling reasons we better don't use fiq->lock, but
-add a handler to remove canceled requests from the queue.
-
-This also removes usage of fiq->lock from
-fuse_uring_add_req_to_ring_ent() altogether, as it was
-there just to protect against this race and incomplete.
-
-Also added is a comment why FR_PENDING is not cleared.
-
-Fixes: c090c8abae4b ("fuse: Add io-uring sqe commit and fetch support")
-Cc: <stable@vger.kernel.org> # v6.14
-Reported-by: Joanne Koong <joannelkoong@gmail.com>
-Closes: https://lore.kernel.org/all/CAJnrk1ZgHNb78dz-yfNTpxmW7wtT88A=m-zF0ZoLXKLUHRjNTw@mail.gmail.com/
-Signed-off-by: Bernd Schubert <bschubert@ddn.com>
-Reviewed-by: Joanne Koong <joannelkoong@gmail.com>
-Signed-off-by: Miklos Szeredi <mszeredi@redhat.com>
----
- fs/fuse/dev.c         | 34 +++++++++++++++++++++++++---------
- fs/fuse/dev_uring.c   | 15 +++++++++++----
- fs/fuse/dev_uring_i.h |  6 ++++++
- fs/fuse/fuse_dev_i.h  |  1 +
- fs/fuse/fuse_i.h      |  3 +++
- 5 files changed, 46 insertions(+), 13 deletions(-)
-
-diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
-index 51e31df4c5461..d9bfdd774c92d 100644
---- a/fs/fuse/dev.c
-+++ b/fs/fuse/dev.c
-@@ -407,6 +407,24 @@ static int queue_interrupt(struct fuse_req *req)
- 	return 0;
- }
- 
-+bool fuse_remove_pending_req(struct fuse_req *req, spinlock_t *lock)
-+{
-+	spin_lock(lock);
-+	if (test_bit(FR_PENDING, &req->flags)) {
-+		/*
-+		 * FR_PENDING does not get cleared as the request will end
-+		 * up in destruction anyway.
-+		 */
-+		list_del(&req->list);
-+		spin_unlock(lock);
-+		__fuse_put_request(req);
-+		req->out.h.error = -EINTR;
-+		return true;
-+	}
-+	spin_unlock(lock);
-+	return false;
-+}
-+
- static void request_wait_answer(struct fuse_req *req)
- {
- 	struct fuse_conn *fc = req->fm->fc;
-@@ -428,22 +446,20 @@ static void request_wait_answer(struct fuse_req *req)
- 	}
- 
- 	if (!test_bit(FR_FORCE, &req->flags)) {
-+		bool removed;
-+
- 		/* Only fatal signals may interrupt this */
- 		err = wait_event_killable(req->waitq,
- 					test_bit(FR_FINISHED, &req->flags));
- 		if (!err)
- 			return;
- 
--		spin_lock(&fiq->lock);
--		/* Request is not yet in userspace, bail out */
--		if (test_bit(FR_PENDING, &req->flags)) {
--			list_del(&req->list);
--			spin_unlock(&fiq->lock);
--			__fuse_put_request(req);
--			req->out.h.error = -EINTR;
-+		if (test_bit(FR_URING, &req->flags))
-+			removed = fuse_uring_remove_pending_req(req);
-+		else
-+			removed = fuse_remove_pending_req(req, &fiq->lock);
-+		if (removed)
- 			return;
--		}
--		spin_unlock(&fiq->lock);
- 	}
- 
- 	/*
-diff --git a/fs/fuse/dev_uring.c b/fs/fuse/dev_uring.c
-index 82bf458fa9db5..5f1566c69ddcc 100644
---- a/fs/fuse/dev_uring.c
-+++ b/fs/fuse/dev_uring.c
-@@ -726,8 +726,6 @@ static void fuse_uring_add_req_to_ring_ent(struct fuse_ring_ent *ent,
- 					   struct fuse_req *req)
- {
- 	struct fuse_ring_queue *queue = ent->queue;
--	struct fuse_conn *fc = req->fm->fc;
--	struct fuse_iqueue *fiq = &fc->iq;
- 
- 	lockdep_assert_held(&queue->lock);
- 
-@@ -737,9 +735,7 @@ static void fuse_uring_add_req_to_ring_ent(struct fuse_ring_ent *ent,
- 			ent->state);
- 	}
- 
--	spin_lock(&fiq->lock);
- 	clear_bit(FR_PENDING, &req->flags);
--	spin_unlock(&fiq->lock);
- 	ent->fuse_req = req;
- 	ent->state = FRRS_FUSE_REQ;
- 	list_move(&ent->list, &queue->ent_w_req_queue);
-@@ -1238,6 +1234,8 @@ void fuse_uring_queue_fuse_req(struct fuse_iqueue *fiq, struct fuse_req *req)
- 	if (unlikely(queue->stopped))
- 		goto err_unlock;
- 
-+	set_bit(FR_URING, &req->flags);
-+	req->ring_queue = queue;
- 	ent = list_first_entry_or_null(&queue->ent_avail_queue,
- 				       struct fuse_ring_ent, list);
- 	if (ent)
-@@ -1276,6 +1274,8 @@ bool fuse_uring_queue_bq_req(struct fuse_req *req)
- 		return false;
- 	}
- 
-+	set_bit(FR_URING, &req->flags);
-+	req->ring_queue = queue;
- 	list_add_tail(&req->list, &queue->fuse_req_bg_queue);
- 
- 	ent = list_first_entry_or_null(&queue->ent_avail_queue,
-@@ -1306,6 +1306,13 @@ bool fuse_uring_queue_bq_req(struct fuse_req *req)
- 	return true;
- }
- 
-+bool fuse_uring_remove_pending_req(struct fuse_req *req)
-+{
-+	struct fuse_ring_queue *queue = req->ring_queue;
-+
-+	return fuse_remove_pending_req(req, &queue->lock);
-+}
-+
- static const struct fuse_iqueue_ops fuse_io_uring_ops = {
- 	/* should be send over io-uring as enhancement */
- 	.send_forget = fuse_dev_queue_forget,
-diff --git a/fs/fuse/dev_uring_i.h b/fs/fuse/dev_uring_i.h
-index 2102b3d0c1aed..e5b39a92b7ca0 100644
---- a/fs/fuse/dev_uring_i.h
-+++ b/fs/fuse/dev_uring_i.h
-@@ -142,6 +142,7 @@ void fuse_uring_abort_end_requests(struct fuse_ring *ring);
- int fuse_uring_cmd(struct io_uring_cmd *cmd, unsigned int issue_flags);
- void fuse_uring_queue_fuse_req(struct fuse_iqueue *fiq, struct fuse_req *req);
- bool fuse_uring_queue_bq_req(struct fuse_req *req);
-+bool fuse_uring_remove_pending_req(struct fuse_req *req);
- 
- static inline void fuse_uring_abort(struct fuse_conn *fc)
- {
-@@ -200,6 +201,11 @@ static inline bool fuse_uring_ready(struct fuse_conn *fc)
- 	return false;
- }
- 
-+static inline bool fuse_uring_remove_pending_req(struct fuse_req *req)
-+{
-+	return false;
-+}
-+
- #endif /* CONFIG_FUSE_IO_URING */
- 
- #endif /* _FS_FUSE_DEV_URING_I_H */
-diff --git a/fs/fuse/fuse_dev_i.h b/fs/fuse/fuse_dev_i.h
-index 3b2bfe1248d35..2481da3388c5f 100644
---- a/fs/fuse/fuse_dev_i.h
-+++ b/fs/fuse/fuse_dev_i.h
-@@ -61,6 +61,7 @@ int fuse_copy_out_args(struct fuse_copy_state *cs, struct fuse_args *args,
- void fuse_dev_queue_forget(struct fuse_iqueue *fiq,
- 			   struct fuse_forget_link *forget);
- void fuse_dev_queue_interrupt(struct fuse_iqueue *fiq, struct fuse_req *req);
-+bool fuse_remove_pending_req(struct fuse_req *req, spinlock_t *lock);
- 
- #endif
- 
-diff --git a/fs/fuse/fuse_i.h b/fs/fuse/fuse_i.h
-index fee96fe7887b3..2086dac7243ba 100644
---- a/fs/fuse/fuse_i.h
-+++ b/fs/fuse/fuse_i.h
-@@ -378,6 +378,7 @@ struct fuse_io_priv {
-  * FR_FINISHED:		request is finished
-  * FR_PRIVATE:		request is on private list
-  * FR_ASYNC:		request is asynchronous
-+ * FR_URING:		request is handled through fuse-io-uring
-  */
- enum fuse_req_flag {
- 	FR_ISREPLY,
-@@ -392,6 +393,7 @@ enum fuse_req_flag {
- 	FR_FINISHED,
- 	FR_PRIVATE,
- 	FR_ASYNC,
-+	FR_URING,
- };
- 
- /**
-@@ -441,6 +443,7 @@ struct fuse_req {
- 
- #ifdef CONFIG_FUSE_IO_URING
- 	void *ring_entry;
-+	void *ring_queue;
- #endif
- };
- 
--- 
-2.49.0
-
-
-From 2cb0ca2973d651dfd8dc0b2b1be48cd2c9205536 Mon Sep 17 00:00:00 2001
-From: Nathan Chancellor <nathan@kernel.org>
-Date: Fri, 28 Mar 2025 12:26:31 -0700
-Subject: [PATCH 7/8] include: Move typedefs in nls.h to their own header
-
-In order to allow commonly included headers such as string.h to access
-typedefs such as wchar_t without running into issues with the rest of
-the NLS library, refactor the typedefs out into their own header that
-can be included in a much safer manner.
-
-Cc: stable@vger.kernel.org
-Reviewed-by: Andy Shevchenko <andy@kernel.org>
-Signed-off-by: Nathan Chancellor <nathan@kernel.org>
----
- include/linux/nls.h       | 19 +------------------
- include/linux/nls_types.h | 26 ++++++++++++++++++++++++++
- 2 files changed, 27 insertions(+), 18 deletions(-)
- create mode 100644 include/linux/nls_types.h
-
-diff --git a/include/linux/nls.h b/include/linux/nls.h
-index e0bf8367b274a..3d416d1f60b66 100644
---- a/include/linux/nls.h
-+++ b/include/linux/nls.h
-@@ -3,24 +3,7 @@
- #define _LINUX_NLS_H
- 
- #include <linux/init.h>
--
--/* Unicode has changed over the years.  Unicode code points no longer
-- * fit into 16 bits; as of Unicode 5 valid code points range from 0
-- * to 0x10ffff (17 planes, where each plane holds 65536 code points).
-- *
-- * The original decision to represent Unicode characters as 16-bit
-- * wchar_t values is now outdated.  But plane 0 still includes the
-- * most commonly used characters, so we will retain it.  The newer
-- * 32-bit unicode_t type can be used when it is necessary to
-- * represent the full Unicode character set.
-- */
--
--/* Plane-0 Unicode character */
--typedef u16 wchar_t;
--#define MAX_WCHAR_T	0xffff
--
--/* Arbitrary Unicode character */
--typedef u32 unicode_t;
-+#include <linux/nls_types.h>
- 
- struct nls_table {
- 	const char *charset;
-diff --git a/include/linux/nls_types.h b/include/linux/nls_types.h
-new file mode 100644
-index 0000000000000..9479df1016da6
---- /dev/null
-+++ b/include/linux/nls_types.h
-@@ -0,0 +1,26 @@
-+/* SPDX-License-Identifier: GPL-2.0 */
-+#ifndef _LINUX_NLS_TYPES_H
-+#define _LINUX_NLS_TYPES_H
-+
-+#include <linux/types.h>
-+
-+/*
-+ * Unicode has changed over the years.  Unicode code points no longer
-+ * fit into 16 bits; as of Unicode 5 valid code points range from 0
-+ * to 0x10ffff (17 planes, where each plane holds 65536 code points).
-+ *
-+ * The original decision to represent Unicode characters as 16-bit
-+ * wchar_t values is now outdated.  But plane 0 still includes the
-+ * most commonly used characters, so we will retain it.  The newer
-+ * 32-bit unicode_t type can be used when it is necessary to
-+ * represent the full Unicode character set.
-+ */
-+
-+/* Plane-0 Unicode character */
-+typedef u16 wchar_t;
-+#define MAX_WCHAR_T	0xffff
-+
-+/* Arbitrary Unicode character */
-+typedef u32 unicode_t;
-+
-+#endif /* _LINUX_NLS_TYPES_H */
--- 
-2.49.0
-
-
-From 0c8ccf7b62737ea8286e1512903cf563a763f591 Mon Sep 17 00:00:00 2001
-From: Nathan Chancellor <nathan@kernel.org>
-Date: Fri, 28 Mar 2025 12:26:32 -0700
-Subject: [PATCH 8/8] lib/string.c: Add wcslen()
-
-A recent optimization change in LLVM [1] aims to transform certain loop
-idioms into calls to strlen() or wcslen(). This change transforms the
-first while loop in UniStrcat() into a call to wcslen(), breaking the
-build when UniStrcat() gets inlined into alloc_path_with_tree_prefix():
-
-  ld.lld: error: undefined symbol: wcslen
-  >>> referenced by nls_ucs2_utils.h:54 (fs/smb/client/../../nls/nls_ucs2_utils.h:54)
-  >>>               vmlinux.o:(alloc_path_with_tree_prefix)
-  >>> referenced by nls_ucs2_utils.h:54 (fs/smb/client/../../nls/nls_ucs2_utils.h:54)
-  >>>               vmlinux.o:(alloc_path_with_tree_prefix)
-
-The kernel does not build with '-ffreestanding' (which would avoid this
-transformation) because it does want libcall optimizations in general
-and turning on '-ffreestanding' disables the majority of them. While
-'-fno-builtin-wcslen' would be more targeted at the problem, it does not
-work with LTO.
-
-Add a basic wcslen() to avoid this linkage failure. While no
-architecture or FORTIFY_SOURCE overrides this, add it to string.c
-instead of string_helpers.c so that it is built with '-ffreestanding',
-otherwise the compiler might transform it into a call to itself.
-
-Cc: stable@vger.kernel.org
-Link: https://github.com/llvm/llvm-project/commit/9694844d7e36fd5e01011ab56b64f27b867aa72d [1]
-Signed-off-by: Nathan Chancellor <nathan@kernel.org>
----
- include/linux/string.h |  2 ++
- lib/string.c           | 11 +++++++++++
- 2 files changed, 13 insertions(+)
-
-diff --git a/include/linux/string.h b/include/linux/string.h
-index f8e21e80942f1..c8803067f283e 100644
---- a/include/linux/string.h
-+++ b/include/linux/string.h
-@@ -10,6 +10,7 @@
- #include <linux/stddef.h>	/* for NULL */
- #include <linux/err.h>		/* for ERR_PTR() */
- #include <linux/errno.h>	/* for E2BIG */
-+#include <linux/nls_types.h>	/* for wchar_t */
- #include <linux/overflow.h>	/* for check_mul_overflow() */
- #include <linux/stdarg.h>
- #include <uapi/linux/string.h>
-@@ -203,6 +204,7 @@ extern __kernel_size_t strlen(const char *);
- #ifndef __HAVE_ARCH_STRNLEN
- extern __kernel_size_t strnlen(const char *,__kernel_size_t);
- #endif
-+__kernel_size_t wcslen(const wchar_t *s);
- #ifndef __HAVE_ARCH_STRPBRK
- extern char * strpbrk(const char *,const char *);
- #endif
-diff --git a/lib/string.c b/lib/string.c
-index eb4486ed40d25..2c6f8c8f41591 100644
---- a/lib/string.c
-+++ b/lib/string.c
-@@ -21,6 +21,7 @@
- #include <linux/errno.h>
- #include <linux/limits.h>
- #include <linux/linkage.h>
-+#include <linux/nls_types.h>
- #include <linux/stddef.h>
- #include <linux/string.h>
- #include <linux/types.h>
-@@ -429,6 +430,16 @@ size_t strnlen(const char *s, size_t count)
- EXPORT_SYMBOL(strnlen);
- #endif
- 
-+size_t wcslen(const wchar_t *s)
-+{
-+	const wchar_t *sc;
-+
-+	for (sc = s; *sc != '\0'; ++sc)
-+		/* nothing */;
-+	return sc - s;
-+}
-+EXPORT_SYMBOL(wcslen);
-+
- #ifndef __HAVE_ARCH_STRSPN
- /**
-  * strspn - Calculate the length of the initial substring of @s which only contain letters in @accept
 -- 
 2.49.0
 

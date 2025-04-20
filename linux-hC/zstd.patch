@@ -1,4 +1,4 @@
-From 7d942b74768085dd9f3ca24e2c5d9ac774975c63 Mon Sep 17 00:00:00 2001
+From 9028ef87e6b0046d576156f8f227eda86ec117a4 Mon Sep 17 00:00:00 2001
 From: Nick Terrell <terrelln@fb.com>
 Date: Thu, 13 Mar 2025 13:59:21 -0700
 Subject: [PATCH 1/2] zstd: Import upstream v1.5.7
@@ -4316,7 +4316,7 @@ index c22a2e69bf46..d9bd752fe17b 100644
  
  /*-**************************************************************
 diff --git a/lib/zstd/common/portability_macros.h b/lib/zstd/common/portability_macros.h
-index 0e3b2c0a527d..05286af72683 100644
+index 0dde8bf56595..e1890b32da88 100644
 --- a/lib/zstd/common/portability_macros.h
 +++ b/lib/zstd/common/portability_macros.h
 @@ -1,5 +1,6 @@
@@ -4356,7 +4356,7 @@ index 0e3b2c0a527d..05286af72683 100644
 -  #if ((defined(__clang__) && __has_attribute(__target__)) \
 +#  if ((defined(__clang__) && __has_attribute(__target__)) \
        || (defined(__GNUC__) \
-           && (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)))) \
+           && (__GNUC__ >= 11))) \
 -      && (defined(__x86_64__) || defined(_M_X64)) \
 +      && (defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)) \
        && !defined(__BMI2__)
@@ -23583,10 +23583,10 @@ index 469fc3059be0..0ae819f0c927 100644
  EXPORT_SYMBOL(zstd_reset_dstream);
  
 -- 
-2.48.1
+2.49.0
 
 
-From fae0b7e3a19ce49e879c020d2cb4047a12ac18be Mon Sep 17 00:00:00 2001
+From d1dfef09c43fda83ffdf1ed77b0b07c50b7b5bdc Mon Sep 17 00:00:00 2001
 From: Kees Cook <keescook@chromium.org>
 Date: Mon, 22 Jan 2024 16:27:56 -0800
 Subject: [PATCH 2/2] lib: zstd: Refactor intentional wrap-around test
@@ -23647,4 +23647,5 @@ index bb009554e3a6..da8b4cf116e3 100644
              totalDstSize += fcs;
          }
 -- 
-2.48.1
+2.49.0
+
