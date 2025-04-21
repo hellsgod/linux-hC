@@ -56,10 +56,10 @@
 
 ## Choose between perodic, idle or full
 ### Full tickless can give higher performances in various cases but, depending on hardware, lower consistency.
-: "${_tickrate:=full}"
+: "${_tickrate:=idle}"
 
 ## Choose between full(low-latency), lazy, voluntary or none
-: "${_preempt:=full}"
+: "${_preempt:=voluntary}"
 
 ### Transparent Hugepages
 # ATTENTION - one of two predefined values should be selected!
