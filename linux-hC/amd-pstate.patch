@@ -1,4 +1,4 @@
-From fa05cd63bcd5d6a292b33fb1999967be350452a3 Mon Sep 17 00:00:00 2001
+From f7850ea2a209803a5ed53fd10a5b83a2239315a8 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:15 +0000
 Subject: [PATCH 01/33] cpufreq/amd-pstate: Remove the redundant des_perf
@@ -30,7 +30,7 @@ index 1b26845703f6..6cb478a2d0be 100644
 2.49.0
 
 
-From 33af28a31754c3501ad2c5f4b6c79a1924e558f2 Mon Sep 17 00:00:00 2001
+From db9f63a3316fa4c5d748abcbb3206fcc59766ef9 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:18 +0000
 Subject: [PATCH 02/33] cpufreq/amd-pstate: Modularize perf<->freq conversion
@@ -167,7 +167,7 @@ index 6cb478a2d0be..0091d11d7f78 100644
 2.49.0
 
 
-From 4f91b81980cdbec78361899a61d7e2cbb6d6d930 Mon Sep 17 00:00:00 2001
+From 12b345a12fabbe7a341b03437c6e992c742e5999 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:19 +0000
 Subject: [PATCH 03/33] cpufreq/amd-pstate: Remove the unnecessary
@@ -210,7 +210,7 @@ index 0091d11d7f78..df094300e245 100644
 2.49.0
 
 
-From 5c8085912848112b903de8a4b23b047127eda2ba Mon Sep 17 00:00:00 2001
+From 3bfb48da9613654091b0ef76971e3187cdb274bf Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:22 +0000
 Subject: [PATCH 04/33] cpufreq/amd-pstate: Use scope based cleanup for
@@ -342,7 +342,7 @@ index 7fe0981a7e46..dde5212d256c 100644
 2.49.0
 
 
-From b67084bde8a0ceddee54bc98fb1d288d7c99afff Mon Sep 17 00:00:00 2001
+From 34bf0c375ed72d6f7b2aee4dc193dabce341a7d6 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Wed, 5 Feb 2025 11:25:23 +0000
 Subject: [PATCH 05/33] cpufreq/amd-pstate: Remove the unncecessary driver_lock
@@ -373,7 +373,7 @@ index d637f6829bef..0c9b212c6d2c 100644
 2.49.0
 
 
-From 47e6891b826682d5df4a4b844511723e09eeed93 Mon Sep 17 00:00:00 2001
+From b28e3394cab3f16ba2a369621ea265972b6e168d Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Sat, 22 Feb 2025 03:32:22 +0000
 Subject: [PATCH 06/33] cpufreq/amd-pstate: Fix the clamping of perf values
@@ -417,7 +417,7 @@ index 0c9b212c6d2c..44318eb33463 100644
 2.49.0
 
 
-From 1cd627c61131f77c14340ff26553f438ce1d24ff Mon Sep 17 00:00:00 2001
+From 4a61924ab65f3ea1c2dd7b3816d39c374ffdcd02 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:17 -0600
 Subject: [PATCH 07/33] cpufreq/amd-pstate: Show a warning when a CPU fails to
@@ -459,7 +459,7 @@ index 44318eb33463..29250638a2ac 100644
 2.49.0
 
 
-From 473f36de3ffcccb89ef8f062c94d479837ce0730 Mon Sep 17 00:00:00 2001
+From 3c6cc5b2eae23d4d46274021f766ae4ab0306535 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:18 -0600
 Subject: [PATCH 08/33] cpufreq/amd-pstate: Drop min and max cached frequencies
@@ -678,7 +678,7 @@ index 19d405c6d805..014993369245 100644
 2.49.0
 
 
-From 14a61cd521fe25356e095e2e237cdb8c604ec0b0 Mon Sep 17 00:00:00 2001
+From e3bf19c97ed5cfec385c695681c8c1e40b227767 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:19 -0600
 Subject: [PATCH 09/33] cpufreq/amd-pstate: Move perf values into a union
@@ -1299,7 +1299,7 @@ index 014993369245..83532a0079a8 100644
 2.49.0
 
 
-From bc9cf73a4cbd1e50fd7fe6eae03544d31756a184 Mon Sep 17 00:00:00 2001
+From 4bfdbe23f45bae3f5c901a5fac8547ec83639ad9 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:20 -0600
 Subject: [PATCH 10/33] cpufreq/amd-pstate: Overhaul locking
@@ -1394,7 +1394,7 @@ index c072f89fe323..4e5ede0b8eb5 100644
 2.49.0
 
 
-From 26e6335030cb1cfbbdd3b95f1035690c96535936 Mon Sep 17 00:00:00 2001
+From bd1d41d7c52af2192a946804aa277d72209002e2 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:21 -0600
 Subject: [PATCH 11/33] cpufreq/amd-pstate: Drop `cppc_cap1_cached`
@@ -1450,7 +1450,7 @@ index 83532a0079a8..1557e1afea79 100644
 2.49.0
 
 
-From b45b95e24c86d71819b3290855ff3fea8a4e2616 Mon Sep 17 00:00:00 2001
+From bae9433707b998b6487ef77bbd3f1a71a03242ff Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:22 -0600
 Subject: [PATCH 12/33] cpufreq/amd-pstate-ut: Use _free macro to free put
@@ -1601,7 +1601,7 @@ index 5f6a92a816e6..e02672e67380 100644
 2.49.0
 
 
-From c031c9fb8ff591478f201e4b0750bf16c20f6ce1 Mon Sep 17 00:00:00 2001
+From c902353eef5fc942cacc3358e8ffda8d1fff2455 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:23 -0600
 Subject: [PATCH 13/33] cpufreq/amd-pstate-ut: Allow lowest nonlinear and
@@ -1644,7 +1644,7 @@ index e02672e67380..b3693a4c28d2 100644
 2.49.0
 
 
-From acb10e10815b794a762c95f24a09ffbe59740207 Mon Sep 17 00:00:00 2001
+From d651b80485a844c8be3255a1bc56378ab6275ff9 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:24 -0600
 Subject: [PATCH 14/33] cpufreq/amd-pstate-ut: Drop SUCCESS and FAIL enums
@@ -1959,7 +1959,7 @@ index b3693a4c28d2..cd9a472e8dc3 100644
 2.49.0
 
 
-From 4fe7f411910fd8b387ffb8447c9905fd75bc963d Mon Sep 17 00:00:00 2001
+From 2a5fa3c4006fa28e8ea8e8ab24a5242cc3b9e21a Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:25 -0600
 Subject: [PATCH 15/33] cpufreq/amd-pstate-ut: Run on all of the correct CPUs
@@ -2015,7 +2015,7 @@ index cd9a472e8dc3..2ab3017d7a0b 100644
 2.49.0
 
 
-From f8b3f5b64b9c6e2bf4aa88a22ec19958e0448303 Mon Sep 17 00:00:00 2001
+From 6f8d3b55005bb383b87781fdffe3762af5c948dd Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:26 -0600
 Subject: [PATCH 16/33] cpufreq/amd-pstate-ut: Adjust variable scope
@@ -2063,7 +2063,7 @@ index 2ab3017d7a0b..edc1475989e3 100644
 2.49.0
 
 
-From 474da23d6d153304647d9acea5b784086c189708 Mon Sep 17 00:00:00 2001
+From db9e73bf8e0bfd8127ee1d8a2efb480a744b0fcc Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:27 -0600
 Subject: [PATCH 17/33] cpufreq/amd-pstate: Replace all AMD_CPPC_* macros with
@@ -2200,7 +2200,7 @@ index f13c69fe1407..bcc9e846e6af 100644
 2.49.0
 
 
-From ef24ab8e4943a368444ac5b13546494c7b9546c4 Mon Sep 17 00:00:00 2001
+From 6bac841545936d17a7468a5df523983691a55146 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:28 -0600
 Subject: [PATCH 18/33] cpufreq/amd-pstate: Cache CPPC request in shared mem
@@ -2267,7 +2267,7 @@ index bcc9e846e6af..eea2d730e48e 100644
 2.49.0
 
 
-From 00336a97d3f770c60722cb06c3cd6bb535d30a5a Mon Sep 17 00:00:00 2001
+From c2dc3b3ec71083072f5a43a186a6ef0cbd0b5784 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:29 -0600
 Subject: [PATCH 19/33] cpufreq/amd-pstate: Move all EPP tracing into
@@ -2593,7 +2593,7 @@ index eea2d730e48e..8ee71f884d34 100644
 2.49.0
 
 
-From 71a941e305531c092ed853603a6ad77db5a74553 Mon Sep 17 00:00:00 2001
+From d1c2900a765d83924a227e1bc25cc038d1e07d38 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:30 -0600
 Subject: [PATCH 20/33] cpufreq/amd-pstate: Update cppc_req_cached for shared
@@ -2637,7 +2637,7 @@ index 8ee71f884d34..c44f2a8999b4 100644
 2.49.0
 
 
-From da181f6610d7378b4ac99c727a8850b4ceac5c06 Mon Sep 17 00:00:00 2001
+From 0b0381bd2a20476dd7d952774085c43f14ec6e70 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:31 -0600
 Subject: [PATCH 21/33] cpufreq/amd-pstate: Drop debug statements for policy
@@ -2682,7 +2682,7 @@ index c44f2a8999b4..4b2bdc9f7965 100644
 2.49.0
 
 
-From 6fb85df818d8f01c94acda8392ae21d324be8ff4 Mon Sep 17 00:00:00 2001
+From a8c78c73b6e50f1b695927654db2310eca910e5c Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:32 -0600
 Subject: [PATCH 22/33] cpufreq/amd-pstate: Rework CPPC enabling
@@ -3015,7 +3015,7 @@ index 4b2bdc9f7965..c71ee79e7d59 100644
 2.49.0
 
 
-From e5d4e8d9661ade49c0a47e51c54c99470aa362db Mon Sep 17 00:00:00 2001
+From f73aa6fcd362741dce5c87d04fc41c997b7485c1 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:33 -0600
 Subject: [PATCH 23/33] cpufreq/amd-pstate: Stop caching EPP
@@ -3128,7 +3128,7 @@ index 1557e1afea79..fbe1c08d3f06 100644
 2.49.0
 
 
-From 37bb20f6bdae891b63082052793a855e302da544 Mon Sep 17 00:00:00 2001
+From bada3d66f3c531df10574a313656f27be791a62d Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Wed, 26 Feb 2025 01:49:34 -0600
 Subject: [PATCH 24/33] cpufreq/amd-pstate: Drop actions in
@@ -3174,7 +3174,7 @@ index 76fe08df584b..7984f4e1932a 100644
 2.49.0
 
 
-From ad04f079f864c8c965044e280e3a5e8b2dc177c0 Mon Sep 17 00:00:00 2001
+From 3f098cb1e3b19bf7d8601ee3ca9bce9a31ecfe34 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Mon, 7 Apr 2025 08:19:26 +0000
 Subject: [PATCH 25/33] cpufreq/amd-pstate: Fix min_limit perf and freq
@@ -3222,7 +3222,7 @@ index 7984f4e1932a..f1233c6a512e 100644
 2.49.0
 
 
-From 95bdf121698379925e94a63b9c36ebc2da382e84 Mon Sep 17 00:00:00 2001
+From 02d7bb786f0aabae031235e992b34f72e290dc4a Mon Sep 17 00:00:00 2001
 From: K Prateek Nayak <kprateek.nayak@amd.com>
 Date: Fri, 11 Apr 2025 08:14:39 +0000
 Subject: [PATCH 26/33] cpufreq/amd-pstate: Enable ITMT support after
@@ -3327,7 +3327,7 @@ index f1233c6a512e..467851d0fd7e 100644
 2.49.0
 
 
-From 149c8105fbaac35aba9ef2867f0d49c6fe7e3d2a Mon Sep 17 00:00:00 2001
+From 1c9a8a6bab106a31bd447b028c6e57ae0d9e5ce6 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Date: Tue, 15 Apr 2025 08:23:09 +0000
 Subject: [PATCH 27/33] cpufreq/amd-pstate: Move max_perf limiting in
@@ -3373,9 +3373,9 @@ index 467851d0fd7e..3f8724f00c22 100644
 2.49.0
 
 
-From 1fd3f1b192de53a24bdb04330a8c38a139ea6977 Mon Sep 17 00:00:00 2001
+From 15a9d74a1a509c9234202a8b00c5685ec912416a Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Date: Tue, 15 Apr 2025 10:21:19 +0000
+Date: Mon, 21 Apr 2025 08:04:45 +0000
 Subject: [PATCH 28/33] cpufreq/amd-pstate: Add offline, online and suspend
  callbacks for amd_pstate_driver
 
@@ -3385,10 +3385,8 @@ as well. Remove the debug print in online callback while at it.
 These callbacks will be needed to support the "Requested CPU Min Frequency"
 BIOS option.
 
-Signed-off-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 Reviewed-by: Mario Limonciello <mario.limonciello@amd.com>
-Link: https://lore.kernel.org/r/20250415102118.694999-2-dhananjay.ugwekar@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
+Signed-off-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
 ---
  drivers/cpufreq/amd-pstate.c | 17 +++++++++--------
  1 file changed, 9 insertions(+), 8 deletions(-)
@@ -3447,34 +3445,33 @@ index 3f8724f00c22..fbdbf028ff30 100644
 2.49.0
 
 
-From 6a690e48f5d66fc57c6dbb7158299b6a8c047307 Mon Sep 17 00:00:00 2001
+From 01166432e62f17327e8e814c423bf7220daa5015 Mon Sep 17 00:00:00 2001
 From: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Date: Tue, 15 Apr 2025 10:21:21 +0000
+Date: Mon, 21 Apr 2025 08:04:47 +0000
 Subject: [PATCH 29/33] cpufreq/amd-pstate: Add support for the "Requested CPU
  Min frequency" BIOS option
 
 Initialize lower frequency limit to the "Requested CPU Min frequency"
 BIOS option (if it is set) value as part of the driver->init()
 callback. The BIOS specified value is passed by the PMFW as min_perf in
-CPPC_REQ MSR. To ensure that we don't mistake a stale min_perf value in
-CPPC_REQ value as the "Requested CPU Min frequency" during a kexec wakeup,
-reset the CPPC_REQ.min_perf value back to the BIOS specified one in the
-offline, exit and suspend callbacks.
+CPPC_REQ MSR.
 
-amd_pstate_target() and amd_pstate_epp_update_limit() which are invoked
-as part of the resume() and online() callbacks will take care of restoring
-the CPPC_REQ back to the latest sane values.
+To ensure that we don't mistake a stale min_perf value in CPPC_REQ
+value as the "Requested CPU Min frequency" during a kexec wakeup, reset
+the CPPC_REQ.min_perf value back to the BIOS specified one in the offline,
+exit and suspend callbacks. amd_pstate_target() and
+amd_pstate_epp_update_limit() which are invoked as part of the resume()
+and online() callbacks will take care of restoring the CPPC_REQ back to
+the latest sane values.
 
 Signed-off-by: Dhananjay Ugwekar <dhananjay.ugwekar@amd.com>
-Link: https://lore.kernel.org/r/20250415102118.694999-3-dhananjay.ugwekar@amd.com
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
 ---
- drivers/cpufreq/amd-pstate.c | 62 ++++++++++++++++++++++++++++--------
+ drivers/cpufreq/amd-pstate.c | 67 +++++++++++++++++++++++++++++-------
  drivers/cpufreq/amd-pstate.h |  2 ++
- 2 files changed, 51 insertions(+), 13 deletions(-)
+ 2 files changed, 56 insertions(+), 13 deletions(-)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index fbdbf028ff30..546bce21d0e5 100644
+index fbdbf028ff30..bfec9b9474e6 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
 @@ -389,7 +389,8 @@ static inline int amd_pstate_cppc_enable(struct cpufreq_policy *policy)
@@ -3504,7 +3501,7 @@ index fbdbf028ff30..546bce21d0e5 100644
 +	 */
 +	cppc_req &= ~(AMD_CPPC_MIN_PERF_MASK);
 +
-+	if (!cppc_req && min_perf)
++	if (!cppc_req)
 +		perf.bios_min_perf = min_perf;
 +
  	perf.highest_perf = numerator;
@@ -3541,17 +3538,18 @@ index fbdbf028ff30..546bce21d0e5 100644
  	}
  
  	cpufreq_verify_within_cpu_limits(policy_data);
-@@ -1025,6 +1048,9 @@ static void amd_pstate_cpu_exit(struct cpufreq_policy *policy)
+@@ -1024,6 +1047,10 @@ static int amd_pstate_cpu_init(struct cpufreq_policy *policy)
+ static void amd_pstate_cpu_exit(struct cpufreq_policy *policy)
  {
  	struct amd_cpudata *cpudata = policy->driver_data;
- 
-+	/* Reset CPPC_REQ MSR to the BIOS value */
-+	amd_pstate_update_perf(policy, cpudata->perf.bios_min_perf, 0U, 0U, 0U, false);
++	union perf_cached perf = READ_ONCE(cpudata->perf);
 +
++	/* Reset CPPC_REQ MSR to the BIOS value */
++	amd_pstate_update_perf(policy, perf.bios_min_perf, 0U, 0U, 0U, false);
+ 
  	freq_qos_remove_request(&cpudata->req[1]);
  	freq_qos_remove_request(&cpudata->req[0]);
- 	policy->fast_switch_possible = false;
-@@ -1419,7 +1445,6 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
+@@ -1419,7 +1446,6 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
  	struct amd_cpudata *cpudata;
  	union perf_cached perf;
  	struct device *dev;
@@ -3559,7 +3557,7 @@ index fbdbf028ff30..546bce21d0e5 100644
  	int ret;
  
  	/*
-@@ -1484,12 +1509,6 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
+@@ -1484,12 +1510,6 @@ static int amd_pstate_epp_cpu_init(struct cpufreq_policy *policy)
  		cpudata->epp_default = AMD_CPPC_EPP_BALANCE_PERFORMANCE;
  	}
  
@@ -3572,45 +3570,48 @@ index fbdbf028ff30..546bce21d0e5 100644
  	ret = amd_pstate_set_epp(policy, cpudata->epp_default);
  	if (ret)
  		return ret;
-@@ -1509,6 +1528,9 @@ static void amd_pstate_epp_cpu_exit(struct cpufreq_policy *policy)
+@@ -1509,6 +1529,11 @@ static void amd_pstate_epp_cpu_exit(struct cpufreq_policy *policy)
  	struct amd_cpudata *cpudata = policy->driver_data;
  
  	if (cpudata) {
++		union perf_cached perf = READ_ONCE(cpudata->perf);
++
 +		/* Reset CPPC_REQ MSR to the BIOS value */
-+		amd_pstate_update_perf(policy, cpudata->perf.bios_min_perf, 0U, 0U, 0U, false);
++		amd_pstate_update_perf(policy, perf.bios_min_perf, 0U, 0U, 0U, false);
 +
  		kfree(cpudata);
  		policy->driver_data = NULL;
  	}
-@@ -1566,13 +1588,27 @@ static int amd_pstate_cpu_online(struct cpufreq_policy *policy)
+@@ -1566,12 +1591,28 @@ static int amd_pstate_cpu_online(struct cpufreq_policy *policy)
  
  static int amd_pstate_cpu_offline(struct cpufreq_policy *policy)
  {
 -	return 0;
 +	struct amd_cpudata *cpudata = policy->driver_data;
++	union perf_cached perf = READ_ONCE(cpudata->perf);
 +
 +	/*
 +	 * Reset CPPC_REQ MSR to the BIOS value, this will allow us to retain the BIOS specified
 +	 * min_perf value across kexec reboots. If this CPU is just onlined normally after this, the
 +	 * limits, epp and desired perf will get reset to the cached values in cpudata struct
 +	 */
-+	return amd_pstate_update_perf(policy, cpudata->perf.bios_min_perf, 0U, 0U, 0U, false);
++	return amd_pstate_update_perf(policy, perf.bios_min_perf, 0U, 0U, 0U, false);
  }
  
  static int amd_pstate_suspend(struct cpufreq_policy *policy)
  {
  	struct amd_cpudata *cpudata = policy->driver_data;
- 
++	union perf_cached perf = READ_ONCE(cpudata->perf);
++
 +	/*
 +	 * Reset CPPC_REQ MSR to the BIOS value, this will allow us to retain the BIOS specified
 +	 * min_perf value across kexec reboots. If this CPU is just resumed back without kexec,
 +	 * the limits, epp and desired perf will get reset to the cached values in cpudata struct
 +	 */
-+	amd_pstate_update_perf(policy, cpudata->perf.bios_min_perf, 0U, 0U, 0U, false);
-+
++	amd_pstate_update_perf(policy, perf.bios_min_perf, 0U, 0U, 0U, false);
+ 
  	/* invalidate to ensure it's rewritten during resume */
  	cpudata->cppc_req_cached = 0;
- 
 diff --git a/drivers/cpufreq/amd-pstate.h b/drivers/cpufreq/amd-pstate.h
 index fbe1c08d3f06..2f7ae364d331 100644
 --- a/drivers/cpufreq/amd-pstate.h
@@ -3635,7 +3636,7 @@ index fbe1c08d3f06..2f7ae364d331 100644
 2.49.0
 
 
-From bd3670e9989dbab48b3cf6243eb2a5655a20ed08 Mon Sep 17 00:00:00 2001
+From e975045551a4280a37733b9054fa212267ea4a73 Mon Sep 17 00:00:00 2001
 From: K Prateek Nayak <kprateek.nayak@amd.com>
 Date: Wed, 9 Apr 2025 05:34:43 +0000
 Subject: [PATCH 30/33] sched/fair: Use READ_ONCE() to read sg->asym_prefer_cpu
@@ -3677,7 +3678,7 @@ index 89c7260103e1..e197b0edcfb2 100644
 2.49.0
 
 
-From c5dae5f36ba4cfc045b60a665897b207fa10d4bf Mon Sep 17 00:00:00 2001
+From 093dc336ed1b377b251e1ff5dae0dd21f688764d Mon Sep 17 00:00:00 2001
 From: K Prateek Nayak <kprateek.nayak@amd.com>
 Date: Wed, 9 Apr 2025 05:34:44 +0000
 Subject: [PATCH 31/33] sched/topology: Introduce
@@ -3810,7 +3811,7 @@ index 363ad268a25b..879c1d6df5d8 100644
 2.49.0
 
 
-From 46b1f7f09f661a8d52e2b9686d684529dec3229c Mon Sep 17 00:00:00 2001
+From 122f579af5ef6fb3e739bf70d15ad9c358f5d8d6 Mon Sep 17 00:00:00 2001
 From: K Prateek Nayak <kprateek.nayak@amd.com>
 Date: Wed, 9 Apr 2025 05:34:45 +0000
 Subject: [PATCH 32/33] cpufreq/amd-pstate: Update asym_prefer_cpu when core
@@ -3827,7 +3828,7 @@ Signed-off-by: K Prateek Nayak <kprateek.nayak@amd.com>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index 546bce21d0e5..ba192b3fedbc 100644
+index bfec9b9474e6..431e7cb6f22d 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
 @@ -854,8 +854,10 @@ static void amd_pstate_update_limits(unsigned int cpu)
@@ -3846,7 +3847,7 @@ index 546bce21d0e5..ba192b3fedbc 100644
 2.49.0
 
 
-From aa48d980df8f1a5621cd23f3856464974de0c55d Mon Sep 17 00:00:00 2001
+From 9da10ca76cf8be8a50a9c76ab799c92eea8c6a7a Mon Sep 17 00:00:00 2001
 From: K Prateek Nayak <kprateek.nayak@amd.com>
 Date: Wed, 9 Apr 2025 05:34:46 +0000
 Subject: [PATCH 33/33] sched/debug: Print the local group's asym_prefer_cpu
