@@ -1,2 +1,3 @@
 /dkms-clang.patch
 *.tar.xz
+*.run
