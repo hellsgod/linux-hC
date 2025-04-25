@@ -1,6 +1,6 @@
-From c6f95264fb9e2f635cdfbde0c9cb56ae11a3ceee Mon Sep 17 00:00:00 2001
+From 6fbdc123f44e9966b8a3bffc8075d3651b669004 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Mon, 21 Apr 2025 12:31:22 +0200
+Date: Fri, 25 Apr 2025 14:42:58 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
@@ -9,10 +9,10 @@ Subject: [PATCH] Makefile: Rework my Optimizations
  2 files changed, 82 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..a2a36bca8567 100644
+index 907a4565f06ab..1793d938a8817 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,38 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,49 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -49,11 +49,22 @@ index 907a4565f06a..a2a36bca8567 100644
 +  -plugin-opt=dfa-early-exit-heuristic \
 +  -plugin-opt=enable-epilogue-vectorization \
 +  -plugin-opt=sink-insts-to-avoid-spills \
-+  -plugin-opt=sink-freq-percent-threshold=50 $(USERLDFLAGS)
++  -plugin-opt=sink-freq-percent-threshold=50 \
++  -plugin-opt=enable-spill-copy-elim \
++  -plugin-opt=interleave-loops \
++  -plugin-opt=enable-load-in-loop-pre \
++  -plugin-opt=enable-loop-simplifycfg-term-folding \
++  -plugin-opt=enable-split-backedge-in-load-pre \
++  -plugin-opt=enable-interleaved-mem-accesses \
++  -plugin-opt=enable-masked-interleaved-mem-accesses \
++  -plugin-opt=instcombine-code-sinking \
++  -plugin-opt=enable-early-exit-vectorization \
++  -plugin-opt=enable-dse-initializes-attr-improvement \
++  -plugin-opt=enable-post-misched $(USERLDFLAGS)
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +520,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +531,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -62,7 +73,7 @@ index 907a4565f06a..a2a36bca8567 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +604,52 @@ LINUXINCLUDE    := \
+@@ -575,7 +615,41 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -91,22 +102,11 @@ index 907a4565f06a..a2a36bca8567 100644
 +  -mllvm -branch-fold-placement \
 +  -mllvm -enable-dfa-jump-thread \
 +  -mllvm -mergefunc-use-aliases \
-+  -mllvm -interleave-loops \
-+  -mllvm -enable-interleaved-mem-accesses \
-+  -mllvm -enable-masked-interleaved-mem-accesses \
-+  -mllvm -enable-load-in-loop-pre \
-+  -mllvm -enable-loop-simplifycfg-term-folding \
-+  -mllvm -enable-split-backedge-in-load-pre \
-+  -mllvm -instcombine-code-sinking \
 +  -mllvm -enable-andcmp-sinking \
 +  -mllvm -hoist-const-loads \
 +  -mllvm -hoist-const-stores \
-+  -mllvm -enable-post-misched \
-+  -mllvm -enable-early-exit-vectorization \
-+  -mllvm -enable-dse-initializes-attr-improvement \
 +  -mllvm -enable-gvn-memoryssa \
 +  -mllvm -dse-optimize-memoryssa \
-+  -mllvm -enable-spill-copy-elim \
 +  -mllvm -enable-constraint-elimination \
 +  -mllvm -enable-dse-partial-overwrite-tracking \
 +  -mllvm -enable-dse-partial-store-merging \
@@ -128,7 +128,7 @@ index 907a4565f06a..a2a36bca8567 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index 5ab47c346ef9..288a0f7cc89f 100644
+index 5ab47c346ef93..288a0f7cc89ff 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -1464,10 +1464,10 @@ choice
