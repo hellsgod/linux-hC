@@ -1,18 +1,18 @@
-From 922865fdbb757d59ced86e6f803c83dc658495a6 Mon Sep 17 00:00:00 2001
+From 5237d9bd415966a9eb23b443a5a2e2b07c44eb15 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Sat, 26 Apr 2025 22:04:07 +0200
+Date: Sat, 26 Apr 2025 22:45:09 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 121 ++++++++++++++++++++++++++++++++++++++++++++++++---
+ Makefile     | 123 ++++++++++++++++++++++++++++++++++++++++++++++++---
  init/Kconfig |   4 +-
- 2 files changed, 117 insertions(+), 8 deletions(-)
+ 2 files changed, 119 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..f2d2071c7e91 100644
+index 907a4565f06a..cd46d3a0448b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,81 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,83 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -77,7 +77,9 @@ index 907a4565f06a..f2d2071c7e91 100644
 +  -plugin-opt=enable-branch-hint \
 +  -plugin-opt=hints-allow-reordering \
 +  -plugin-opt=ifcvt-branch-fold \
++  -plugin-opt=ifcvt-limit=0 \
 +  -plugin-opt=x86-cmov-converter \
++  -plugin-opt=x86-cmov-converter-threshold=1 \
 +  -plugin-opt=x86-early-ifcvt \
 +  -plugin-opt=enable-cold-section \
 +  -plugin-opt=hotcoldsplit-threshold=30 \
@@ -96,7 +98,7 @@ index 907a4565f06a..f2d2071c7e91 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +563,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +565,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -105,7 +107,7 @@ index 907a4565f06a..f2d2071c7e91 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +647,44 @@ LINUXINCLUDE    := \
+@@ -575,7 +649,44 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -151,7 +153,7 @@ index 907a4565f06a..f2d2071c7e91 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +968,8 @@ endif # need-config
+@@ -859,8 +970,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
