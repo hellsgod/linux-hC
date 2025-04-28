@@ -1,7 +1,7 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
 	pkgver = 6.14.4
-	pkgrel = 1
+	pkgrel = 2
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
 	license = GPL-2.0-only
@@ -51,7 +51,7 @@ pkgbase = linux-hC
 	b2sums = 52ce55887a14b77e708447223054ee22650c8c1672da7ae247143a417edf8e888ff7d525ece94b35c3f97a1ae8fdb3c9404dc2b41dc1aebf37091b6bc7022c14
 	b2sums = 8646f47f5e1fc94814b6d0c1b5b95c78134c7fd54c3491b4d67967c00aa88cea62ae01c51f897395197b9fad5f40105ada0fd0e22a372989e49071ec81a27980
 	b2sums = 94148d4f200d0e69bfdb050a7ce997a29c888d925e4bdf7ae2e1a781b44e7dd9fa5f220ccc336e9370e39e4aac163698567a0eeea713763293cde48f319310be
-	b2sums = 3a219cde62fcfda2ea0a96e49b31e9dfa237cc1641e0b38200cffe732bfcd696266566d71d42541065244fb5db124e7b5d2910bc62f4cb8d620e7d7f4957c0d9
+	b2sums = 85ef2a2262d94b7df8120b2a10e04f7051e6f3f232ab4ffeec6f660f23c1af8e7d7d3382ea348c669f42951f1c92cecf0f16372d2a4f06beff86989c1dd9c49a
 	b2sums = 2cdaceba297cea42a88cddc1a5aabe9f17ec51c697ae0a629438d21a2a694bb7470ffd342a6cfb0e4f0da0c0896089851454ca407fc761bca2f5aa6ff86b8c2e
 	b2sums = fe1a80c9072f42ab01eafb379e04a49ed9f469ff7dab5c6a07af3b586f6ee3a98ea2d9beed5bc8f02f6e3dce6a3972d107c9a8fcd6d8fb0f4fd10258ecbef949
 	b2sums = 5f3f024e22bf79e9789f9883b7e7233a12694106f715b80503bc5e54512182cfcc6a91205615699c37a605c8280218ef9b70eaf3cb4aab501605e39a28413975
@@ -89,7 +89,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia
 	pkgdesc = nvidia module of 570.144 driver for the linux-hC kernel
 	license = custom
-	depends = linux-hC=6.14.4-1
+	depends = linux-hC=6.14.4-2
 	depends = nvidia-utils=570.144
 	depends = libglvnd
 	provides = NVIDIA-MODULE
