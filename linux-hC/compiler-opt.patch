@@ -1,18 +1,18 @@
-From 428817526f3cbba2c10a8659009ba44a7c864e17 Mon Sep 17 00:00:00 2001
+From ea76466d3d3b759edd044c72ec2990134ef85fe2 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Tue, 29 Apr 2025 12:58:25 +0200
+Date: Tue, 29 Apr 2025 14:27:00 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 207 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 225 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 203 insertions(+), 8 deletions(-)
+ 2 files changed, 221 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..72b0edef8713 100644
+index 907a4565f06a..cc1891837e8d 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,144 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,158 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -84,14 +84,23 @@ index 907a4565f06a..72b0edef8713 100644
 +  -plugin-opt=inlinecold-threshold=100 \
 +  -plugin-opt=max-num-inline-blocks=12 \
 +  -plugin-opt=max-partial-inlining=6 \
++  -plugin-opt=inline-deferral \
++  -plugin-opt=inline-deferral-scale=4 \
++  -plugin-opt=inline-priority-mode=cost-benefit \
++  -plugin-opt=inline-savings-multiplier=2 \
++  -plugin-opt=inline-savings-profitable-multiplier=3 \
++  -plugin-opt=inline-size-allowance=24 \
 +  -plugin-opt=unroll-threshold=50 \
 +  -plugin-opt=unroll-max-count=8 \
 +  -plugin-opt=unroll-max-iteration-count-to-analyze=32 \
 +  -plugin-opt=unroll-allow-partial \
 +  -plugin-opt=unroll-partial-threshold=200 \
++  -plugin-opt=ddg-pi-blocks \
++  -plugin-opt=ddg-simplify \
 +  -plugin-opt=slp-threshold=8 \
 +  -plugin-opt=slp-schedule-budget=32 \
 +  -plugin-opt=slp-split-alternate-instructions \
++  -plugin-opt=slp-vectorize-hor \
 +  -plugin-opt=slp-vectorize-hor-store \
 +  -plugin-opt=extra-vectorizer-passes \
 +  -plugin-opt=x86-pad-for-align \
@@ -110,6 +119,7 @@ index 907a4565f06a..72b0edef8713 100644
 +  -plugin-opt=enable-ipra \
 +  -plugin-opt=enable-machine-outliner \
 +  -plugin-opt=regalloc=pbqp \
++  -plugin-opt=pre-RA-sched=list-hybrid \
 +  -plugin-opt=split-spill-mode=speed \
 +  -plugin-opt=split-threshold-for-reg-with-hint=32 \
 +  -plugin-opt=regalloc-csr-first-time-cost=20 \
@@ -138,6 +148,7 @@ index 907a4565f06a..72b0edef8713 100644
 +  -plugin-opt=x86-early-ifcvt \
 +  -plugin-opt=enable-cold-section \
 +  -plugin-opt=hotcoldsplit-threshold=30 \
++  -plugin-opt=loop-to-cold-block-ratio=8 \
 +  -plugin-opt=max-switch-cases-per-result=12 \
 +  -plugin-opt=cold-branch-ratio=2 \
 +  -plugin-opt=cold-operand-max-cost-multiplier=4 \
@@ -146,20 +157,23 @@ index 907a4565f06a..72b0edef8713 100644
 +  -plugin-opt=loop-prefetch-writes \
 +  -plugin-opt=max-prefetch-iters-ahead=8 \
 +  -plugin-opt=loop-to-cold-block-ratio=8 \
++  -plugin-opt=lower-allow-check-percentile-cutoff-hot=90 \
 +  -plugin-opt=unroll-and-jam-threshold=50 \
 +  -plugin-opt=x86-machine-combiner \
++  -plugin-opt=mul-constant-optimization \
 +  -plugin-opt=mergefunc-preserve-debug-info \
 +  -plugin-opt=pick-merged-source-locations \
 +  -plugin-opt=enable-merge-functions \
 +  -plugin-opt=enable-lto-internalization \
 +  -plugin-opt=cost-kind=latency \
++  -plugin-opt=costmodel-reduxcost \
 +  -plugin-opt=relocation-model=static \
 +  -plugin-opt=enable-chr=true \
 +  -plugin-opt=dfa-early-exit-heuristic $(USERLDFLAGS)
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +626,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +640,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -168,7 +182,7 @@ index 907a4565f06a..72b0edef8713 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +710,67 @@ LINUXINCLUDE    := \
+@@ -575,7 +724,71 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -178,8 +192,11 @@ index 907a4565f06a..72b0edef8713 100644
 +  -ffunction-sections \
 +  -mllvm -enable-gvn-hoist \
 +  -mllvm -vectorize-slp \
++  -mllvm -slp-revec \
 +  -mllvm -vectorize-loops \
 +  -mllvm -enable-loop-distribute \
++  -mllvm -loop-rotate-multi \
++  -mllvm -enable-loop-flatten \
 +  -mllvm -enable-pre \
 +  -mllvm -enable-load-pre \
 +  -mllvm -mandatory-inlining-first \
@@ -203,9 +220,9 @@ index 907a4565f06a..72b0edef8713 100644
 +  -mllvm -allow-unroll-and-jam \
 +  -mllvm -enable-misched \
 +  -mllvm -enable-gvn-memdep \
-+  -mllvm -enable-loop-flatten \
 +  -mllvm -enable-aa-sched-mi \
 +  -mllvm -simplifycfg-sink-common \
++  -mllvm -phi-elim-split-all-critical-edges \
 +  -mllvm -enable-nontrivial-unswitch \
 +  -mllvm -memdep-block-scan-limit=32 \
 +  -mllvm -attributor-max-iterations=3 \
@@ -217,6 +234,7 @@ index 907a4565f06a..72b0edef8713 100644
 +  -mllvm -simplifycfg-hoist-common-skip-limit=3 \
 +  -mllvm -simplifycfg-max-small-block-size=3 \
 +  -mllvm -branch-fold-placement \
++  -mllvm -forward-switch-cond \
 +  -mllvm -enable-dfa-jump-thread \
 +  -mllvm -mergefunc-use-aliases \
 +  -mllvm -enable-andcmp-sinking \
@@ -237,7 +255,7 @@ index 907a4565f06a..72b0edef8713 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1054,8 @@ endif # need-config
+@@ -859,8 +1072,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
