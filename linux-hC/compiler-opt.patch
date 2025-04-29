@@ -1,18 +1,18 @@
-From ba1d544cc3693c8199fc258b04c79e6be362a02d Mon Sep 17 00:00:00 2001
+From 428817526f3cbba2c10a8659009ba44a7c864e17 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Mon, 28 Apr 2025 17:55:59 +0200
+Date: Tue, 29 Apr 2025 12:58:25 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 206 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 207 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 202 insertions(+), 8 deletions(-)
+ 2 files changed, 203 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..57694bd976c7 100644
+index 907a4565f06a..72b0edef8713 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,143 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,144 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -102,6 +102,7 @@ index 907a4565f06a..57694bd976c7 100644
 +  -plugin-opt=unique-basic-block-section-names \
 +  -plugin-opt=hot-cold-split=true \
 +  -plugin-opt=use-mbpi \
++  -plugin-opt=optimize-existing-hot-cold-new \
 +  -plugin-opt=enable-ext-tsp-block-placement \
 +  -plugin-opt=ext-tsp-apply-without-profile \
 +  -plugin-opt=ext-tsp-block-placement-max-blocks=256 \
@@ -158,7 +159,7 @@ index 907a4565f06a..57694bd976c7 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +625,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +626,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -167,7 +168,7 @@ index 907a4565f06a..57694bd976c7 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +709,67 @@ LINUXINCLUDE    := \
+@@ -575,7 +710,67 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -236,7 +237,7 @@ index 907a4565f06a..57694bd976c7 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1053,8 @@ endif # need-config
+@@ -859,8 +1054,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
