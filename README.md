@@ -47,23 +47,10 @@ READELF=/home/hellsgod/clang21/bin/llvm-readelf
 AS=/home/hellsgod/clang21/bin/llvm-as
 ```
 #### Step 3:
-Install clang 21, because some of my compiler flags only work with clang 20 and up. If you use a clang compiler in your home directory, modify Step 2 to your compiler path. If you don't want to install clang 21 and you want to use your system wide clang, which is 19.1.7 on Arch Linux, head over to Step 4.
+Install clang 21, because some of my compiler flags only work with clang 21. I use a custom built Full LTO, PGO and BOLT optimized Clang 21, which you can find here: [CLANG](https://github.com/Mandi-Sa/clang/releases)
 
-#### Step 4 (instead of step 3):
-Remove following compiler flags from my compiler-opt.patch:
-```
--mllvm -codegen-data-thinlto-two-rounds
--mllvm -enable-gvn-memoryssa
--mllvm -enable-dse-initializes-attr-improvement
--mllvm -enable-early-exit-vectorization
-```
-And you should be able to compile the kernel with clang 19.1.7, which is the system wide version of Arch Linux. If I missed some newer flags I added and you encounter errors, remove all the flags it mentions in the error. 
-
-#### Step 5:
+#### Step 4:
 Run `makepkg -si` to install dependencies and build the kernel. You can also modify the PKGBUILD to change various options to your liking.
-
-### Clang 21:
-I use a custom built Full LTO, PGO and BOLT optimized Clang 21, which you can find here: [CLANG](https://github.com/Mandi-Sa/clang/releases)
 
 ### Nvidia module:
 linux-hC will compile the nvidia closed module, since my 3090 runs better with it. You can choose the open module if you want, or disable it in PKGBUILD, if you don't use a nvidia card.
