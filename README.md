@@ -54,7 +54,7 @@ Run `makepkg -si` to install dependencies and build the kernel. You can also mod
 
 ### Nvidia module:
 linux-hC will compile the nvidia closed module, since my 3090 runs better with it. You can choose the open module if you want, or disable it in PKGBUILD, if you don't use a nvidia card.
-linux-hC-rc will currently build the open nvidia module, since the closed one doesn't wor for now. You can disable it in PKGBUILD.
+linux-hC-rc will currently build the open nvidia module, since the closed one doesn't work for now. You can disable it in PKGBUILD.
 
 ### DKMS Modules:
 If you need some dkms modules, they probably won't work. They fall back to the system wide compiler, which is probably clang 19.1.7. So you either use clang 21 system wide, or use a hack to tell dkms to compile the modules with clang 21.
