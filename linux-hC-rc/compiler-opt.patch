@@ -1,6 +1,6 @@
-From 65fd2e796034f096672fa75b3076cc782909151a Mon Sep 17 00:00:00 2001
+From 900be696a930696b148384325c49fc97b218be2c Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Thu, 1 May 2025 17:30:41 +0200
+Date: Thu, 1 May 2025 18:03:50 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
@@ -9,7 +9,7 @@ Subject: [PATCH] Makefile: Rework my Optimizations
  2 files changed, 225 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..b74dea549b1c 100644
+index 907a4565f06a..c58bca130404 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -462,9 +462,156 @@ HOSTRUSTC = rustc
@@ -190,7 +190,7 @@ index 907a4565f06a..b74dea549b1c 100644
 +  -fdata-sections \
 +  -ffunction-sections \
 +  -ffine-grained-bitfield-accesses \
-+  -fmerge-functions \
++  -Xclang -fmerge-functions \
 +  -fmerge-all-constants \
 +  -mllvm -enable-gvn-hoist \
 +  -mllvm -vectorize-slp \
