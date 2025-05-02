@@ -166,7 +166,7 @@ fi
 
 pkgbase="linux-$_pkgsuffix"
 _major=6.14
-_minor=4
+_minor=5
 #_minorc=$((_minor+1))
 #_rcver=rc8
 pkgver=${_major}.${_minor}
@@ -176,7 +176,7 @@ _stable=${_major}.${_minor}
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
 pkgdesc='Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel'
-pkgrel=2
+pkgrel=1
 _kernver="$pkgver-$pkgrel"
 _kernuname="${pkgver}-${_pkgsuffix}"
 arch=('x86_64')
@@ -205,7 +205,7 @@ source=(
     "config"
     "auto-cpu-optimization.sh"
     "https://raw.githubusercontent.com/graysky2/kernel_compiler_patch/refs/heads/master/more-ISA-levels-and-uarches-for-kernel-6.1.79%2B.patch"
-    "0001-linux6.14.y-le9uo-1.10.patch"
+    "0001-linux6.14.y-le9uo-1.14.patch"
     "amd-pstate.patch"
     "amd-tlb-broadcast.patch"
     "block.patch"
@@ -761,16 +761,16 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('8f5f44fa6f7b2a964a3fb14afd10dc0c6cc5ec73eb3b6dba24d35664f7083546b70eff7a3d5a9b3ba3c8b84785518c6df91aff0ed948cd538ff0b3b0484fd613'
+b2sums=('872d0b8817c7e02b5e826238c3f548488d26c1d50bd334420ac2f4feb0cf5e1f11cac7f666982b2ccdc3c816aec428e4d57139080bb0510247e9631796bdab0a'
         '29d5dd7b73497cc4a95ed8f4fa513af99d7c8bd7f98037bef32ff5158a86ca57f0846d2ff989d08808705820f5aeb26123fcb585d2b8c5cd93ae1442cbaa4645'
         '390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab'
         '61f2477534ba03ef50a81a861057ff53ec5d9825014caaf9b48fe32df62b402729729debf6fff7c282b514b9942194feb12ab9c28434751351a6c54c6c8dbd57'
-        '1b97372883b81f549eb0b0905219697ab8bdb96a8add9dc5a168c643e7f29293cfa145565127b9ddb73dcc0fa3b1924770365f11b9b8543a444964a9219984fa'
+        '0240a81dece40028fed714711e8dafe1ccc76345fda8c659b87132a57a01d4a08bf12906ae4ed3f595ee59d1f898b72dfd9f470b0b88a30a88323fd5da40a651'
         '57f8e22f976465d6d789f4c8ca8bc14e216f13b46ce7e1fd89773f64290d8e6deb3edf3c33390bf5ab38e33cc2bbb530c99bc216250e2959fd4868d57cd751f5'
         '52ce55887a14b77e708447223054ee22650c8c1672da7ae247143a417edf8e888ff7d525ece94b35c3f97a1ae8fdb3c9404dc2b41dc1aebf37091b6bc7022c14'
         '8646f47f5e1fc94814b6d0c1b5b95c78134c7fd54c3491b4d67967c00aa88cea62ae01c51f897395197b9fad5f40105ada0fd0e22a372989e49071ec81a27980'
         '94148d4f200d0e69bfdb050a7ce997a29c888d925e4bdf7ae2e1a781b44e7dd9fa5f220ccc336e9370e39e4aac163698567a0eeea713763293cde48f319310be'
-        '85ef2a2262d94b7df8120b2a10e04f7051e6f3f232ab4ffeec6f660f23c1af8e7d7d3382ea348c669f42951f1c92cecf0f16372d2a4f06beff86989c1dd9c49a'
+        '42850a13906b669b7b91b8dd6512f5537e98e53246d7c1914148a7062b66e3e6777bbcfd4c9523a7328351abf1cac68cc4c8f75c0be08f3e1d7ed59793d4f814'
         '2cdaceba297cea42a88cddc1a5aabe9f17ec51c697ae0a629438d21a2a694bb7470ffd342a6cfb0e4f0da0c0896089851454ca407fc761bca2f5aa6ff86b8c2e'
         'fe1a80c9072f42ab01eafb379e04a49ed9f469ff7dab5c6a07af3b586f6ee3a98ea2d9beed5bc8f02f6e3dce6a3972d107c9a8fcd6d8fb0f4fd10258ecbef949'
         '5f3f024e22bf79e9789f9883b7e7233a12694106f715b80503bc5e54512182cfcc6a91205615699c37a605c8280218ef9b70eaf3cb4aab501605e39a28413975'
