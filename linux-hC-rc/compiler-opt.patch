@@ -1,18 +1,18 @@
-From 8004fb0083e5f09af6e37e4b5e823ef35a89da9e Mon Sep 17 00:00:00 2001
+From 955c3b968b947aa210e51a5f98ce5f6f7f08e2e1 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Fri, 2 May 2025 15:45:42 +0200
+Date: Sat, 3 May 2025 18:45:39 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 247 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 264 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 243 insertions(+), 8 deletions(-)
+ 2 files changed, 260 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06ab..455954f509784 100644
+index 907a4565f06ab..56796a7068138 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,173 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,190 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -60,6 +60,21 @@ index 907a4565f06ab..455954f509784 100644
 +  -plugin-opt=enable-shrink-wrap-region-split \
 +  -plugin-opt=enable-loadstore-runtime-interleave \
 +  -plugin-opt=enable-heap-to-stack-conversion \
++  -plugin-opt=enable-vtable-profile-use \
++  -plugin-opt=enable-unroll-and-jam \
++  -plugin-opt=enable-loop-header-duplication \
++  -plugin-opt=enable-split-loopiv-heuristic \
++  -plugin-opt=lsr-drop-solution \
++  -plugin-opt=enable-subreg-liveness \
++  -plugin-opt=enable-linkonceodr-outlining \
++  -plugin-opt=enable-phi-of-ops \
++  -plugin-opt=lsr-exp-narrow \
++  -plugin-opt=lsr-insns-cost \
++  -plugin-opt=use-noalias-intrinsic-during-inlining \
++  -plugin-opt=enable-unswitch-cost-multiplier \
++  -plugin-opt=enable-vplan-native-path \
++  -plugin-opt=enable-tail-merge \
++  -plugin-opt=enable-indvars-post-increment-ranges \
 +  -plugin-opt=do-counter-promotion \
 +  -plugin-opt=hoist-runtime-checks \
 +  -plugin-opt=enable-gvn-sink \
@@ -92,6 +107,8 @@ index 907a4565f06ab..455954f509784 100644
 +  -plugin-opt=schedmodel=1 \
 +  -plugin-opt=max-sched-reorder=48 \
 +  -plugin-opt=thinlto-assume-merged \
++  -plugin-opt=thinlto-split-lto-unit \
++  -plugin-opt=thinlto-invalidate-all-analyses \
 +  -plugin-opt=codegen-data-thinlto-two-rounds \
 +  -plugin-opt=enable-global-analyses \
 +  -plugin-opt=enable-vfe \
@@ -188,7 +205,7 @@ index 907a4565f06ab..455954f509784 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +655,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +672,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -197,7 +214,7 @@ index 907a4565f06ab..455954f509784 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +739,78 @@ LINUXINCLUDE    := \
+@@ -575,7 +756,78 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -277,7 +294,7 @@ index 907a4565f06ab..455954f509784 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1094,8 @@ endif # need-config
+@@ -859,8 +1111,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
