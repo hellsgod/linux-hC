@@ -1,7 +1,7 @@
 From a639f453c777cbe8256b18e0b4d9baa7a36265cd Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/22] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/26] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index b8a4ff3655822..9b087f9bb4133 100644
 From 924b0d6e92207867b6da8a4a98aa9992d2df2db1 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/22] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/26] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -75,7 +75,7 @@ index 0cf3a55b05e14..a27d4344a4e8f 100644
 From 0cd2ee846973106fe341c205ee4d0a9b9dff506c Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 03/22] sched/fair: Refactor can_migrate_task() to elimate
+Subject: [PATCH 03/26] sched/fair: Refactor can_migrate_task() to elimate
  looping
 
 The function "can_migrate_task()" utilize "for_each_cpu_and" with a
@@ -137,7 +137,7 @@ From ba1ec60df16d34fad8071305c23539d5b1b158a6 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 04/22] Kunit to check the longest symbol length
+Subject: [PATCH 04/26] Kunit to check the longest symbol length
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -325,7 +325,7 @@ index 0000000000000..e3c28ff1807f0
 From cc7116c712c41be24748cefc79307ca9c130b3a4 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 05/22] driver/base: Optimize memory block registration to
+Subject: [PATCH 05/26] driver/base: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -565,7 +565,7 @@ index 9a881c2208b3b..02c27adc21edf 100644
 From 400274de0d6263b244ecba5fdda93da6af35d843 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 06/22] driver/base: remove
+Subject: [PATCH 06/26] driver/base: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -672,7 +672,7 @@ index 907b16275296a..063915a9ff572 100644
 From a9817af5ea8f0447214ceee5f7a0ef25e5670ebb Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 07/22] drivers/base : Rename
+Subject: [PATCH 07/26] drivers/base : Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -755,7 +755,7 @@ index 75401866fb760..27672fe645a9c 100644
 From 93338dfea3153e288591cdd980f4ffa7bcf51004 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 08/22] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 08/26] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -799,7 +799,7 @@ index 7da531b1cf6be..0eaf3522abe9a 100644
 From ca4da0fb05b86c2080a96c2e428c409df33da969 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Thu, 27 Mar 2025 17:51:13 +0800
-Subject: [PATCH 09/22] ublk: add helper of ublk_need_map_io()
+Subject: [PATCH 09/26] ublk: add helper of ublk_need_map_io()
 
 ublk_need_map_io() is more readable.
 
@@ -870,7 +870,7 @@ index ab06a7a064fbf..4e81505179c6b 100644
 From b32db1a6d172cac9367a7aee6981f9157d687d57 Mon Sep 17 00:00:00 2001
 From: Uday Shankar <ushankar@purestorage.com>
 Date: Wed, 16 Apr 2025 11:54:35 +0800
-Subject: [PATCH 10/22] ublk: properly serialize all FETCH_REQs
+Subject: [PATCH 10/26] ublk: properly serialize all FETCH_REQs
 
 Most uring_cmds issued against ublk character devices are serialized
 because each command affects only one queue, and there is an early check
@@ -1010,7 +1010,7 @@ index 4e81505179c6b..9345a6d8dbd8e 100644
 From 6409c6d9ecc191f618646c0ec5f4c2601b2eae08 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 16 Apr 2025 11:54:38 +0800
-Subject: [PATCH 11/22] ublk: move device reset into ublk_ch_release()
+Subject: [PATCH 11/26] ublk: move device reset into ublk_ch_release()
 
 ublk_ch_release() is called after ublk char device is closed, when all
 uring_cmd are done, so it is perfect fine to move ublk device reset to
@@ -1256,7 +1256,7 @@ index 9345a6d8dbd8e..c619df880c72e 100644
 From 66e106b76b4099025264979af5850f93ca56d539 Mon Sep 17 00:00:00 2001
 From: Uday Shankar <ushankar@purestorage.com>
 Date: Wed, 16 Apr 2025 11:54:39 +0800
-Subject: [PATCH 12/22] ublk: improve detection and handling of ublk server
+Subject: [PATCH 12/26] ublk: improve detection and handling of ublk server
  exit
 
 There are currently two ways in which ublk server exit is detected by
@@ -1714,7 +1714,7 @@ index c619df880c72e..652742db03967 100644
 From 9425e68540a5b1b6863c9336c01ebf69d88df801 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 16 Apr 2025 11:54:40 +0800
-Subject: [PATCH 13/22] ublk: remove __ublk_quiesce_dev()
+Subject: [PATCH 13/26] ublk: remove __ublk_quiesce_dev()
 
 Remove __ublk_quiesce_dev() and open code for updating device state as
 QUIESCED.
@@ -1785,7 +1785,7 @@ index 652742db03967..c3f576a9dbf23 100644
 From 8c5006cf01cf07a69a1b63fec615d39b56d40680 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 16 Apr 2025 11:54:41 +0800
-Subject: [PATCH 14/22] ublk: simplify aborting ublk request
+Subject: [PATCH 14/26] ublk: simplify aborting ublk request
 
 Now ublk_abort_queue() is moved to ublk char device release handler,
 meantime our request queue is "quiesced" because either ->canceling was
@@ -1936,7 +1936,7 @@ index c3f576a9dbf23..6000147ac2a5f 100644
 From 97853a92d47a30849a1e49e31325e72e5b2a7f12 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Fri, 25 Apr 2025 09:37:40 +0800
-Subject: [PATCH 15/22] ublk: fix race between io_uring_cmd_complete_in_task
+Subject: [PATCH 15/26] ublk: fix race between io_uring_cmd_complete_in_task
  and ublk_cancel_cmd
 
 ublk_cancel_cmd() calls io_uring_cmd_done() to complete uring_cmd, but
@@ -2030,7 +2030,7 @@ index 6000147ac2a5f..348c4feb7a2df 100644
 From 176cbf0188c6be291d920a3b41e7dd840cb77f9d Mon Sep 17 00:00:00 2001
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Date: Wed, 26 Feb 2025 10:10:57 +0100
-Subject: [PATCH 16/22] futex: Use a hashmask instead of hashsize
+Subject: [PATCH 16/26] futex: Use a hashmask instead of hashsize
 
 The global hash uses futex_hashsize to save the amount of the hash
 buckets that have been allocated during system boot. On each
@@ -2118,7 +2118,7 @@ index 3db8567f5a44e..cca15859a50be 100644
 From 3bf15246701cc9672d946e8287615a5c96456340 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 27 Jan 2025 14:45:23 -0800
-Subject: [PATCH 17/22] x86/fpu: make WARN_ON_FPU get fully optimized out
+Subject: [PATCH 17/26] x86/fpu: make WARN_ON_FPU get fully optimized out
 
 Currently WARN_ON_FPU evaluates its argument even if
 CONFIG_X86_DEBUG_FPU is disabled, which adds unnecessary instructions to
@@ -2152,7 +2152,7 @@ index dbdb31f55fc7f..975de070c9c98 100644
 From 817c4333f5eeb87b4b28adfcf1a490fb74bcfa03 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 18/22] x86/mm: Simplify redundant overlap calculation
+Subject: [PATCH 18/26] x86/mm: Simplify redundant overlap calculation
 
 There have been a couple of reports that the two sides of the
 overlaps() calculation are redundant.  I spent way too much time
@@ -2197,7 +2197,7 @@ index b491d8190a6c5..1c6db6bba56f2 100644
 From 75e1c6cc2ed253486cb2ff87101f8b524b5f5dd0 Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Fri, 25 Apr 2025 12:57:55 -0700
-Subject: [PATCH 19/22] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 19/26] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -2282,7 +2282,7 @@ index 3c7c942c7c429..c413e12825d7d 100644
 From a509f13f4d5f6494a06372b78f0d42d39f44f5fb Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 26 Feb 2025 19:43:01 +0800
-Subject: [PATCH 20/22] sched/fair: Prevent from cpufreq not being updated when
+Subject: [PATCH 20/26] sched/fair: Prevent from cpufreq not being updated when
  delayed-task is iowait
 
 Because the sched-delayed task maybe in io-wait state,
@@ -2330,7 +2330,7 @@ index 96ba0c1e2e440..a9f47d5954275 100644
 From 67bb9804f4521735aebe498367148c8b95614395 Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Sun, 9 Mar 2025 18:09:36 +0100
-Subject: [PATCH 21/22] x86/locking/atomic: Use asm_inline for atomic locking
+Subject: [PATCH 21/26] x86/locking/atomic: Use asm_inline for atomic locking
  insns
 
 According to:
@@ -2920,7 +2920,7 @@ index 363266cbcadaf..3821ee3fae35d 100644
 From 089fb9a07748ce2ce55b535e1e22dfbe5ca207d7 Mon Sep 17 00:00:00 2001
 From: Yujun Dong <yujundong@pascal-lab.net>
 Date: Mon, 30 Dec 2024 22:16:24 +0800
-Subject: [PATCH 22/22] cpuidle, sched: Use smp_mb__after_atomic() in
+Subject: [PATCH 22/26] cpuidle, sched: Use smp_mb__after_atomic() in
  current_clr_polling()
 
 In architectures that use the polling bit, current_clr_polling() employs
@@ -2995,6 +2995,214 @@ index e670ac282333e..439f6029d3b94 100644
 +#endif
  
  #endif /* _LINUX_SCHED_IDLE_H */
+-- 
+2.49.0
+
+
+From a6005063deef66c05f4311aace6e356db8146fa4 Mon Sep 17 00:00:00 2001
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Date: Tue, 15 Apr 2025 00:17:16 -0400
+Subject: [PATCH 23/26] dm: always update the array size in realloc_argv on
+ success
+
+realloc_argv() was only updating the array size if it was called with
+old_argv already allocated. The first time it was called to create an
+argv array, it would allocate the array but return the array size as
+zero. dm_split_args() would think that it couldn't store any arguments
+in the array and would call realloc_argv() again, causing it to
+reallocate the initial slots (this time using GPF_KERNEL) and finally
+return a size. Aside from being wasteful, this could cause deadlocks on
+targets that need to process messages without starting new IO. Instead,
+realloc_argv should always update the allocated array size on success.
+
+Fixes: a0651926553c ("dm table: don't copy from a NULL pointer in realloc_argv()")
+Cc: stable@vger.kernel.org
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-table.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 0ef5203387b26..3e61c8ad24791 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -523,9 +523,10 @@ static char **realloc_argv(unsigned int *size, char **old_argv)
+ 		gfp = GFP_NOIO;
+ 	}
+ 	argv = kmalloc_array(new_size, sizeof(*argv), gfp);
+-	if (argv && old_argv) {
+-		memcpy(argv, old_argv, *size * sizeof(*argv));
++	if (argv) {
+ 		*size = new_size;
++		if (old_argv)
++			memcpy(argv, old_argv, *size * sizeof(*argv));
+ 	}
+ 
+ 	kfree(old_argv);
+-- 
+2.49.0
+
+
+From 75614496aa404181271bbacfa64eb6405fe49eb0 Mon Sep 17 00:00:00 2001
+From: Dan Carpenter <dan.carpenter@linaro.org>
+Date: Wed, 30 Apr 2025 11:05:54 +0300
+Subject: [PATCH 24/26] dm: add missing unlock on in dm_keyslot_evict()
+
+We need to call dm_put_live_table() even if dm_get_live_table() returns
+NULL.
+
+Fixes: 9355a9eb21a5 ("dm: support key eviction from keyslot managers of underlying devices")
+Cc: stable@vger.kernel.org	# v5.12+
+Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-table.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 3e61c8ad24791..b73a35944d3fe 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1178,7 +1178,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
+ 
+ 	t = dm_get_live_table(md, &srcu_idx);
+ 	if (!t)
+-		return 0;
++		goto put_live_table;
+ 
+ 	for (unsigned int i = 0; i < t->num_targets; i++) {
+ 		struct dm_target *ti = dm_table_get_target(t, i);
+@@ -1189,6 +1189,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
+ 					  (void *)key);
+ 	}
+ 
++put_live_table:
+ 	dm_put_live_table(md, srcu_idx);
+ 	return 0;
+ }
+-- 
+2.49.0
+
+
+From 20989dbcd2f03f71549e72072c9753105136dd28 Mon Sep 17 00:00:00 2001
+From: Tudor Ambarus <tudor.ambarus@linaro.org>
+Date: Tue, 6 May 2025 11:31:50 +0000
+Subject: [PATCH 25/26] dm: fix copying after src array boundaries
+
+The blammed commit copied to argv the size of the reallocated argv,
+instead of the size of the old_argv, thus reading and copying from
+past the old_argv allocated memory.
+
+Following BUG_ON was hit:
+[    3.038929][    T1] kernel BUG at lib/string_helpers.c:1040!
+[    3.039147][    T1] Internal error: Oops - BUG: 00000000f2000800 [#1]  SMP
+...
+[    3.056489][    T1] Call trace:
+[    3.056591][    T1]  __fortify_panic+0x10/0x18 (P)
+[    3.056773][    T1]  dm_split_args+0x20c/0x210
+[    3.056942][    T1]  dm_table_add_target+0x13c/0x360
+[    3.057132][    T1]  table_load+0x110/0x3ac
+[    3.057292][    T1]  dm_ctl_ioctl+0x424/0x56c
+[    3.057457][    T1]  __arm64_sys_ioctl+0xa8/0xec
+[    3.057634][    T1]  invoke_syscall+0x58/0x10c
+[    3.057804][    T1]  el0_svc_common+0xa8/0xdc
+[    3.057970][    T1]  do_el0_svc+0x1c/0x28
+[    3.058123][    T1]  el0_svc+0x50/0xac
+[    3.058266][    T1]  el0t_64_sync_handler+0x60/0xc4
+[    3.058452][    T1]  el0t_64_sync+0x1b0/0x1b4
+[    3.058620][    T1] Code: f800865e a9bf7bfd 910003fd 941f48aa (d4210000)
+[    3.058897][    T1] ---[ end trace 0000000000000000 ]---
+[    3.059083][    T1] Kernel panic - not syncing: Oops - BUG: Fatal exception
+
+Fix it by copying the size of src, and not the size of dst, as it was.
+
+Fixes: 5a2a6c428190 ("dm: always update the array size in realloc_argv on success")
+Cc: stable@vger.kernel.org
+Signed-off-by: Tudor Ambarus <tudor.ambarus@linaro.org>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+---
+ drivers/md/dm-table.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index b73a35944d3fe..efc6ec25e0c5d 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -524,9 +524,9 @@ static char **realloc_argv(unsigned int *size, char **old_argv)
+ 	}
+ 	argv = kmalloc_array(new_size, sizeof(*argv), gfp);
+ 	if (argv) {
+-		*size = new_size;
+ 		if (old_argv)
+ 			memcpy(argv, old_argv, *size * sizeof(*argv));
++		*size = new_size;
+ 	}
+ 
+ 	kfree(old_argv);
+-- 
+2.49.0
+
+
+From bc86991671dd7695027f59b0aef0251028112eee Mon Sep 17 00:00:00 2001
+From: Max Kellermann <max.kellermann@ionos.com>
+Date: Tue, 29 Apr 2025 20:58:27 +0200
+Subject: [PATCH 26/26] fs/eventpoll: fix endless busy loop after timeout has
+ expired
+
+After commit 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in
+the future"), the following program would immediately enter a busy
+loop in the kernel:
+
+```
+int main() {
+  int e = epoll_create1(0);
+  struct epoll_event event = {.events = EPOLLIN};
+  epoll_ctl(e, EPOLL_CTL_ADD, 0, &event);
+  const struct timespec timeout = {.tv_nsec = 1};
+  epoll_pwait2(e, &event, 1, &timeout, 0);
+}
+```
+
+This happens because the given (non-zero) timeout of 1 nanosecond
+usually expires before ep_poll() is entered and then
+ep_schedule_timeout() returns false, but `timed_out` is never set
+because the code line that sets it is skipped.  This quickly turns
+into a soft lockup, RCU stalls and deadlocks, inflicting severe
+headaches to the whole system.
+
+When the timeout has expired, we don't need to schedule a hrtimer, but
+we should set the `timed_out` variable.  Therefore, I suggest moving
+the ep_schedule_timeout() check into the `timed_out` expression
+instead of skipping it.
+
+Fixes: 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in the future")
+Cc: Joe Damato <jdamato@fastly.com>
+Cc: stable@vger.kernel.org
+Signed-off-by: Max Kellermann <max.kellermann@ionos.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+---
+ fs/eventpoll.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/fs/eventpoll.c b/fs/eventpoll.c
+index c01234bbac498..9a6b924958e2c 100644
+--- a/fs/eventpoll.c
++++ b/fs/eventpoll.c
+@@ -2111,9 +2111,10 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
+ 
+ 		write_unlock_irq(&ep->lock);
+ 
+-		if (!eavail && ep_schedule_timeout(to))
+-			timed_out = !schedule_hrtimeout_range(to, slack,
+-							      HRTIMER_MODE_ABS);
++		if (!eavail)
++			timed_out = !ep_schedule_timeout(to) ||
++				!schedule_hrtimeout_range(to, slack,
++							  HRTIMER_MODE_ABS);
+ 		__set_current_state(TASK_RUNNING);
+ 
+ 		/*
 -- 
 2.49.0
 
