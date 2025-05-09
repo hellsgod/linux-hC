@@ -1,18 +1,18 @@
-From 644610dd4bebfb3596988a41dc153169d04e17fb Mon Sep 17 00:00:00 2001
+From 27b7b5cef2e658bf3004662708c29a98cf2ada78 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Fri, 9 May 2025 16:33:50 +0200
+Date: Fri, 9 May 2025 19:58:45 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 290 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 147 ++++++++++++++++++++++++++++++++++++++++++++++++---
  init/Kconfig |   4 +-
- 2 files changed, 286 insertions(+), 8 deletions(-)
+ 2 files changed, 143 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..dcbf9b313480 100644
+index 907a4565f06a..fab999e8a7fa 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,216 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,101 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -25,120 +25,15 @@ index 907a4565f06a..dcbf9b313480 100644
 +  -Wl,--gc-sections -Wl,--no-undefined -Wl,--as-needed \
 +  -Wl,-z,now -Wl,--relro -Wl,--relax \
 +  -Wl,--icf=safe -Wl,--emit-relocs \
-+  -Wl,--compress-debug-sections=zstd \
-+  -Wl,--exclude-libs,ALL -Wl,--strip-debug \
-+  -plugin-opt=hoist-common-insts \
-+  -plugin-opt=interleave-loops \
-+  -plugin-opt=enable-load-in-loop-pre \
-+  -plugin-opt=enable-loop-simplifycfg-term-folding \
-+  -plugin-opt=addr-sink-combine-base-gv \
-+  -plugin-opt=addr-sink-combine-base-offs \
-+  -plugin-opt=addr-sink-combine-base-reg \
-+  -plugin-opt=addr-sink-combine-scaled-reg \
-+  -plugin-opt=addr-sink-new-phis \
-+  -plugin-opt=addr-sink-new-select \
-+  -plugin-opt=addr-sink-using-gep \
-+  -plugin-opt=select-opti-loop-cycle-gain-threshold=5 \
-+  -plugin-opt=select-opti-loop-gradient-gain-threshold=2 \
-+  -plugin-opt=select-opti-loop-relative-gain-threshold=2 \
-+  -plugin-opt=enable-split-backedge-in-load-pre \
-+  -plugin-opt=enable-memcpy-dag-opt \
-+  -plugin-opt=expand-memcmp \
-+  -plugin-opt=interleaved-access \
-+  -plugin-opt=interleaved-load-combine \
-+  -plugin-opt=div-rem-pairs \
-+  -plugin-opt=expand-large-div-rem \
-+  -plugin-opt=infer-address-spaces \
-+  -plugin-opt=typepromotion \
-+  -plugin-opt=partially-inline-libcalls \
-+  -plugin-opt=nary-reassociate \
-+  -plugin-opt=enable-loop-versioning-licm \
-+  -plugin-opt=enable-histogram-loop-vectorization \
-+  -plugin-opt=enable-tbaa \
-+  -plugin-opt=enable-local-reassign \
-+  -plugin-opt=enable-shrink-wrap \
-+  -plugin-opt=enable-shrink-wrap-region-split \
-+  -plugin-opt=enable-loadstore-runtime-interleave \
-+  -plugin-opt=enable-heap-to-stack-conversion \
-+  -plugin-opt=enable-vtable-profile-use \
-+  -plugin-opt=enable-unroll-and-jam \
-+  -plugin-opt=enable-loop-header-duplication \
-+  -plugin-opt=enable-split-loopiv-heuristic \
-+  -plugin-opt=lsr-drop-solution \
-+  -plugin-opt=enable-subreg-liveness \
-+  -plugin-opt=enable-linkonceodr-outlining \
-+  -plugin-opt=enable-phi-of-ops \
-+  -plugin-opt=lsr-exp-narrow \
-+  -plugin-opt=lsr-insns-cost \
-+  -plugin-opt=use-noalias-intrinsic-during-inlining \
-+  -plugin-opt=enable-unswitch-cost-multiplier \
-+  -plugin-opt=enable-vplan-native-path \
-+  -plugin-opt=enable-tail-merge \
-+  -plugin-opt=enable-indvars-post-increment-ranges \
-+  -plugin-opt=do-counter-promotion \
-+  -plugin-opt=hoist-runtime-checks \
-+  -plugin-opt=enable-gvn-sink \
-+  -plugin-opt=enable-newgvn \
-+  -plugin-opt=gvn-add-phi-translation \
-+  -plugin-opt=enable-spill-copy-elim \
-+  -plugin-opt=instcombine-code-sinking \
-+  -plugin-opt=sink-insts-to-avoid-spills \
-+  -plugin-opt=sink-freq-percent-threshold=50 \
-+  -plugin-opt=enable-interleaved-mem-accesses \
-+  -plugin-opt=enable-masked-interleaved-mem-accesses \
-+  -plugin-opt=enable-epilogue-vectorization \
-+  -plugin-opt=enable-early-exit-vectorization \
-+  -plugin-opt=enable-dse-initializes-attr-improvement \
-+  -plugin-opt=enable-dse-partial-store-merging \
-+  -plugin-opt=adce-remove-loops \
-+  -plugin-opt=licm-control-flow-hoisting \
-+  -plugin-opt=early-live-intervals \
-+  -plugin-opt=max-phi-entries-increase-after-removing-empty-block=12 \
-+  -plugin-opt=enable-post-misched \
-+  -plugin-opt=misched-cluster \
-+  -plugin-opt=misched-cyclicpath \
-+  -plugin-opt=misched-dcpl \
-+  -plugin-opt=misched-fusion \
-+  -plugin-opt=misched-regpressure \
-+  -plugin-opt=sched-avg-ipc=6 \
-+  -plugin-opt=sched-high-latency-cycles=10 \
-+  -plugin-opt=sched-model-force-enable-intervals \
-+  -plugin-opt=scheditins=1 \
-+  -plugin-opt=schedmodel=1 \
-+  -plugin-opt=max-sched-reorder=48 \
++  -Wl,--compress-debug-sections=zstd -Wl,--exclude-libs,ALL -Wl,--strip-debug \
 +  -plugin-opt=thinlto-assume-merged \
 +  -plugin-opt=thinlto-split-lto-unit \
 +  -plugin-opt=thinlto-invalidate-all-analyses \
-+  -plugin-opt=codegen-data-thinlto-two-rounds \
++  -plugin-opt=function-import \
 +  -plugin-opt=partial-inliner \
 +  -plugin-opt=mergefunc \
-+  -plugin-opt=globalsplit \
-+  -plugin-opt=globalopt \
-+  -plugin-opt=global-merge-func \
-+  -plugin-opt=function-import \
-+  -plugin-opt=deadargelim \
-+  -plugin-opt=rpo-function-attrs \
-+  -plugin-opt=called-value-propagation \
-+  -plugin-opt=globals-aa \
-+  -plugin-opt=recompute-globalsaa \
-+  -plugin-opt=tail-dup-placement \
-+  -plugin-opt=tail-dup-placement-aggressive-threshold=24 \
-+  -plugin-opt=tail-merge-size=3 \
-+  -plugin-opt=tail-merge-threshold=8 \
-+  -plugin-opt=jump-inst-cost=1 \
-+  -plugin-opt=jump-table-density=2 \
-+  -plugin-opt=jump-table-to-switch-function-size-threshold=256 \
-+  -plugin-opt=jump-table-to-switch-size-threshold=64 \
-+  -plugin-opt=temporal-reuse-threshold=12 \
-+  -plugin-opt=terminal-rule \
-+  -plugin-opt=canonicalize-aliases \
-+  -plugin-opt=elim-avail-extern \
-+  -plugin-opt=inferattrs \
-+  -plugin-opt=constmerge \
-+  -plugin-opt=lowertypetests \
-+  -plugin-opt=enable-global-analyses \
-+  -plugin-opt=enable-vfe \
-+  -plugin-opt=icp-lto \
++  -plugin-opt=mergefunc-preserve-debug-info \
++  -plugin-opt=pick-merged-source-locations \
 +  -plugin-opt=inline-threshold=350 \
 +  -plugin-opt=inlinehint-threshold=150 \
 +  -plugin-opt=inlinecold-threshold=100 \
@@ -155,83 +50,73 @@ index 907a4565f06a..dcbf9b313480 100644
 +  -plugin-opt=unroll-max-iteration-count-to-analyze=32 \
 +  -plugin-opt=unroll-allow-partial \
 +  -plugin-opt=unroll-partial-threshold=200 \
-+  -plugin-opt=ddg-pi-blocks \
-+  -plugin-opt=ddg-simplify \
-+  -plugin-opt=slp-threshold=8 \
-+  -plugin-opt=slp-schedule-budget=32 \
-+  -plugin-opt=slp-split-alternate-instructions \
-+  -plugin-opt=extra-vectorizer-passes \
-+  -plugin-opt=x86-pad-for-align \
-+  -plugin-opt=x86-pad-for-branch-align \
-+  -plugin-opt=x86-pad-max-prefix-size=8 \
-+  -plugin-opt=hot-cold-static-analysis \
-+  -plugin-opt=basic-block-sections=labels \
-+  -plugin-opt=unique-basic-block-section-names \
-+  -plugin-opt=hot-cold-split=true \
-+  -plugin-opt=use-mbpi \
-+  -plugin-opt=optimize-existing-hot-cold-new \
-+  -plugin-opt=enable-ext-tsp-block-placement \
-+  -plugin-opt=ext-tsp-apply-without-profile \
-+  -plugin-opt=ext-tsp-block-placement-max-blocks=256 \
-+  -plugin-opt=enable-if-conversion \
-+  -plugin-opt=enable-ipra \
-+  -plugin-opt=enable-machine-outliner \
++  -plugin-opt=enable-loop-flatten \
++  -plugin-opt=enable-loop-versioning-licm \
++  -plugin-opt=enable-unroll-and-jam \
++  -plugin-opt=unroll-and-jam-threshold=50 \
++  -plugin-opt=enable-interleaved-mem-accesses \
++  -plugin-opt=enable-masked-interleaved-mem-accesses \
++  -plugin-opt=expand-large-div-rem \
++  -plugin-opt=expand-memcmp \
++  -plugin-opt=enable-tbaa \
++  -plugin-opt=globals-aa \
++  -plugin-opt=recompute-globalsaa \
++  -plugin-opt=globalopt \
++  -plugin-opt=globalsplit \
++  -plugin-opt=global-merge-func \
++  -plugin-opt=addr-sink-new-phis \
++  -plugin-opt=addr-sink-combine-base-gv \
++  -plugin-opt=enable-memcpy-dag-opt \
++  -plugin-opt=enable-heap-to-stack-conversion \
++  -plugin-opt=enable-newgvn \
++  -plugin-opt=gvn-add-phi-translation \
++  -plugin-opt=enable-dse-initializes-attr-improvement \
++  -plugin-opt=enable-dse-partial-store-merging \
++  -plugin-opt=adce-remove-loops \
++  -plugin-opt=enable-post-misched \
++  -plugin-opt=misched-cluster \
++  -plugin-opt=misched-fusion \
++  -plugin-opt=max-sched-reorder=48 \
++  -plugin-opt=post-RA-scheduler \
++  -plugin-opt=early-live-intervals \
++  -plugin-opt=optimize-regalloc \
 +  -plugin-opt=regalloc=pbqp \
-+  -plugin-opt=pre-RA-sched=list-hybrid \
++  -plugin-opt=regalloc-enable-advisor=default \
 +  -plugin-opt=split-spill-mode=speed \
 +  -plugin-opt=split-threshold-for-reg-with-hint=32 \
-+  -plugin-opt=regalloc-csr-first-time-cost=20 \
-+  -plugin-opt=regalloc-enable-advisor=default \
-+  -plugin-opt=regalloc-enable-priority-advisor=default \
-+  -plugin-opt=regalloc-eviction-max-interference-cutoff=50 \
-+  -plugin-opt=regalloc-npm=pbqp \
-+  -plugin-opt=pre-RA-sched=list-hybrid \
 +  -plugin-opt=machine-sink-bfi \
-+  -plugin-opt=machine-sink-cycle-limit=1 \
-+  -plugin-opt=optimize-regalloc \
-+  -plugin-opt=post-RA-scheduler \
-+  -plugin-opt=max-jump-table-size=32 \
++  -plugin-opt=machine-sink-cycle-limit=4 \
++  -plugin-opt=machine-sink-split \
++  -plugin-opt=machine-sink-split-probability-threshold=25 \
 +  -plugin-opt=machine-sink-load-blocks-threshold=8 \
 +  -plugin-opt=machine-sink-load-instrs-threshold=4 \
-+  -plugin-opt=machine-sink-split \
-+  -plugin-opt=machine-sink-split-probability-threshold=30 \
 +  -plugin-opt=max-uses-for-sinking=6 \
-+  -plugin-opt=branch-hint-probability-threshold=75 \
-+  -plugin-opt=enable-branch-hint \
-+  -plugin-opt=hints-allow-reordering \
-+  -plugin-opt=ifcvt-branch-fold \
-+  -plugin-opt=ifcvt-limit=0 \
-+  -plugin-opt=x86-cmov-converter \
-+  -plugin-opt=x86-cmov-converter-threshold=1 \
-+  -plugin-opt=x86-early-ifcvt \
++  -plugin-opt=tail-dup-placement \
++  -plugin-opt=tail-dup-placement-aggressive-threshold=24 \
++  -plugin-opt=tail-merge-threshold=16 \
++  -plugin-opt=slp-threshold=8 \
++  -plugin-opt=slp-schedule-budget=32 \
++  -plugin-opt=extra-vectorizer-passes \
++  -plugin-opt=enable-vplan-native-path \
++  -plugin-opt=enable-epilogue-vectorization \
++  -plugin-opt=enable-early-exit-vectorization \
++  -plugin-opt=hot-cold-static-analysis \
++  -plugin-opt=hot-cold-split=true \
++  -plugin-opt=basic-block-sections=labels \
++  -plugin-opt=unique-basic-block-section-names \
++  -plugin-opt=ext-tsp-apply-without-profile \
++  -plugin-opt=ext-tsp-block-placement-max-blocks=256 \
++  -plugin-opt=optimize-existing-hot-cold-new \
++  -plugin-opt=enable-if-conversion \
++  -plugin-opt=enable-ipra \
 +  -plugin-opt=enable-cold-section \
-+  -plugin-opt=hotcoldsplit-threshold=30 \
-+  -plugin-opt=loop-to-cold-block-ratio=8 \
-+  -plugin-opt=max-switch-cases-per-result=12 \
-+  -plugin-opt=cold-branch-ratio=2 \
-+  -plugin-opt=cold-operand-max-cost-multiplier=4 \
-+  -plugin-opt=cold-operand-threshold=2 \
 +  -plugin-opt=prefetch-distance=16 \
 +  -plugin-opt=loop-prefetch-writes \
-+  -plugin-opt=max-prefetch-iters-ahead=8 \
-+  -plugin-opt=loop-to-cold-block-ratio=8 \
-+  -plugin-opt=lower-allow-check-percentile-cutoff-hot=90 \
-+  -plugin-opt=unroll-and-jam-threshold=50 \
-+  -plugin-opt=x86-machine-combiner \
-+  -plugin-opt=mul-constant-optimization \
-+  -plugin-opt=mergefunc-preserve-debug-info \
-+  -plugin-opt=pick-merged-source-locations \
-+  -plugin-opt=enable-merge-functions \
-+  -plugin-opt=enable-lto-internalization \
-+  -plugin-opt=cost-kind=latency \
-+  -plugin-opt=costmodel-reduxcost \
-+  -plugin-opt=relocation-model=static \
-+  -plugin-opt=enable-chr=true \
-+  -plugin-opt=dfa-early-exit-heuristic $(USERLDFLAGS)
++  -plugin-opt=max-prefetch-iters-ahead=8 $(USERLDFLAGS)
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +698,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +583,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -240,87 +125,59 @@ index 907a4565f06a..dcbf9b313480 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +782,78 @@ LINUXINCLUDE    := \
+@@ -575,7 +667,50 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
 -KBUILD_CFLAGS :=
 +KBUILD_CFLAGS := \
 +  -Wno-default-const-init-unsafe \
-+  -fdata-sections \
-+  -ffunction-sections \
++  -fdata-sections -ffunction-sections \
 +  -ffine-grained-bitfield-accesses \
-+  -Xclang -fmerge-functions \
 +  -fmerge-all-constants \
-+  -mllvm -enable-gvn-hoist \
-+  -mllvm -vectorize-slp \
-+  -mllvm -slp-revec \
-+  -mllvm -slp-vectorize-hor \
-+  -mllvm -slp-vectorize-hor-store \
-+  -mllvm -vectorize-loops \
-+  -mllvm -enable-loop-distribute \
-+  -mllvm -loop-rotate-multi \
-+  -mllvm -enable-loop-flatten \
++  -Xclang -fmerge-functions \
 +  -mllvm -enable-pre \
 +  -mllvm -enable-load-pre \
-+  -mllvm -enable-mem-access-versioning \
-+  -mllvm -mandatory-inlining-first \
-+  -mllvm -preserve-alignment-assumptions-during-inlining \
-+  -mllvm -enable-detailed-function-properties \
-+  -mllvm -enable-knowledge-retention \
-+  -mllvm -basic-aa-recphi \
-+  -mllvm -basic-aa-separate-storage \
-+  -mllvm -cgp-optimize-phi-types \
-+  -mllvm -cgp-split-large-offset-gep \
-+  -mllvm -cgp-type-promotion-merge \
-+  -mllvm -combiner-global-alias-analysis \
-+  -mllvm -combiner-reduce-load-op-store-width \
-+  -mllvm -combiner-reduce-load-op-store-width-force-narrowing-profitable \
-+  -mllvm -combiner-shrink-load-replace-store-with-store \
-+  -mllvm -combiner-split-load-index \
-+  -mllvm -combiner-store-merging \
-+  -mllvm -combiner-store-merge-dependence-limit=7 \
-+  -mllvm -combiner-tokenfactor-inline-limit=128 \
-+  -mllvm -combiner-use-tbaa \
-+  -mllvm -allow-unroll-and-jam \
-+  -mllvm -enable-misched \
 +  -mllvm -enable-gvn-memdep \
-+  -mllvm -enable-aa-sched-mi \
-+  -mllvm -simplifycfg-sink-common \
-+  -mllvm -phi-elim-split-all-critical-edges \
-+  -mllvm -enable-nontrivial-unswitch \
-+  -mllvm -memdep-block-scan-limit=32 \
-+  -mllvm -attributor-max-iterations=3 \
++  -mllvm -enable-gvn-memoryssa \
++  -mllvm -dse-optimize-memoryssa \
++  -mllvm -enable-dse-partial-overwrite-tracking \
++  -mllvm -enable-dse-partial-store-merging \
++  -mllvm -vectorize-loops \
++  -mllvm -vectorize-slp \
++  -mllvm -slp-vectorize-hor \
++  -mllvm -slp-vectorize-hor-store \
++  -mllvm -loop-rotate-multi \
++  -mllvm -enable-loop-flatten \
++  -mllvm -enable-loop-distribute \
++  -mllvm -allow-unroll-and-jam \
 +  -mllvm -simplifycfg-merge-cond-stores \
++  -mllvm -simplifycfg-hoist-common \
 +  -mllvm -simplifycfg-hoist-cond-stores \
 +  -mllvm -simplifycfg-hoist-loads-with-cond-faulting \
 +  -mllvm -simplifycfg-hoist-stores-with-cond-faulting \
-+  -mllvm -simplifycfg-hoist-common \
-+  -mllvm -simplifycfg-hoist-common-skip-limit=3 \
-+  -mllvm -simplifycfg-max-small-block-size=3 \
++  -mllvm -simplifycfg-sink-common \
 +  -mllvm -branch-fold-placement \
 +  -mllvm -forward-switch-cond \
 +  -mllvm -enable-dfa-jump-thread \
-+  -mllvm -mergefunc-use-aliases \
-+  -mllvm -enable-andcmp-sinking \
-+  -mllvm -hoist-const-loads \
-+  -mllvm -hoist-const-stores \
-+  -mllvm -enable-gvn-memoryssa \
-+  -mllvm -dse-optimize-memoryssa \
++  -mllvm -enable-aa-sched-mi \
 +  -mllvm -enable-constraint-elimination \
-+  -mllvm -enable-dse-partial-overwrite-tracking \
-+  -mllvm -enable-dse-partial-store-merging \
++  -mllvm -basic-aa-recphi \
++  -mllvm -basic-aa-separate-storage \
++  -mllvm -mergefunc-use-aliases \
 +  -mllvm -aggressive-ext-opt \
 +  -mllvm -aggressive-instcombine-max-scan-instrs=200 \
-+  -mllvm -aggressive-machine-cse \
++  -mllvm -enable-partial-inlining \
++  -mllvm -enable-misched \
++  -mllvm -memdep-block-scan-limit=32 \
++  -mllvm -attributor-max-iterations=3 \
 +  -mllvm -unswitch-threshold=50 \
 +  -mllvm -max-speculation-depth=10 \
-+  -mllvm -enable-partial-inlining \
-+  -mllvm -simplifycfg-merge-compatible-invokes
++  -mllvm -enable-nontrivial-unswitch
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1137,8 @@ endif # need-config
+@@ -859,8 +994,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
