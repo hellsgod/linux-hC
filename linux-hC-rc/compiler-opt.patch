@@ -1,18 +1,18 @@
-From 10a7ceb222a347ce7e9f2b477d3ef8998baaf000 Mon Sep 17 00:00:00 2001
+From 644610dd4bebfb3596988a41dc153169d04e17fb Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Sat, 3 May 2025 21:23:26 +0200
+Date: Fri, 9 May 2025 16:33:50 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 286 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 290 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 282 insertions(+), 8 deletions(-)
+ 2 files changed, 286 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06ab..a44ec9f0f296a 100644
+index 907a4565f06a..dcbf9b313480 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,212 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,216 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -125,6 +125,10 @@ index 907a4565f06ab..a44ec9f0f296a 100644
 +  -plugin-opt=tail-dup-placement-aggressive-threshold=24 \
 +  -plugin-opt=tail-merge-size=3 \
 +  -plugin-opt=tail-merge-threshold=8 \
++  -plugin-opt=jump-inst-cost=1 \
++  -plugin-opt=jump-table-density=2 \
++  -plugin-opt=jump-table-to-switch-function-size-threshold=256 \
++  -plugin-opt=jump-table-to-switch-size-threshold=64 \
 +  -plugin-opt=temporal-reuse-threshold=12 \
 +  -plugin-opt=terminal-rule \
 +  -plugin-opt=canonicalize-aliases \
@@ -227,7 +231,7 @@ index 907a4565f06ab..a44ec9f0f296a 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +694,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +698,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -236,7 +240,7 @@ index 907a4565f06ab..a44ec9f0f296a 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +778,78 @@ LINUXINCLUDE    := \
+@@ -575,7 +782,78 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -316,7 +320,7 @@ index 907a4565f06ab..a44ec9f0f296a 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1133,8 @@ endif # need-config
+@@ -859,8 +1137,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -328,7 +332,7 @@ index 907a4565f06ab..a44ec9f0f296a 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index 5ab47c346ef93..288a0f7cc89ff 100644
+index 5ab47c346ef9..288a0f7cc89f 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -1464,10 +1464,10 @@ choice
