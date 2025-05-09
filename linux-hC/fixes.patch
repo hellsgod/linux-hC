@@ -1,7 +1,7 @@
-From a639f453c777cbe8256b18e0b4d9baa7a36265cd Mon Sep 17 00:00:00 2001
+From 5cf519f086e9f7b2527813c444c6819500ad1ccd Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/26] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/17] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -12,7 +12,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index b8a4ff3655822..9b087f9bb4133 100644
+index b8a4ff365582..9b087f9bb413 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
@@ -37,10 +37,10 @@ index b8a4ff3655822..9b087f9bb4133 100644
 2.49.0
 
 
-From 924b0d6e92207867b6da8a4a98aa9992d2df2db1 Mon Sep 17 00:00:00 2001
+From b3ddba4725a88927b7f7aec99f6b2145c1d3870a Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/26] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/17] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -53,7 +53,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 0cf3a55b05e14..a27d4344a4e8f 100644
+index 0cf3a55b05e1..a27d4344a4e8 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -72,10 +72,10 @@ index 0cf3a55b05e14..a27d4344a4e8f 100644
 2.49.0
 
 
-From 0cd2ee846973106fe341c205ee4d0a9b9dff506c Mon Sep 17 00:00:00 2001
+From 5c33de046606a14edf021eb76a57f51132f4fb90 Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 03/26] sched/fair: Refactor can_migrate_task() to elimate
+Subject: [PATCH 03/17] sched/fair: Refactor can_migrate_task() to elimate
  looping
 
 The function "can_migrate_task()" utilize "for_each_cpu_and" with a
@@ -108,7 +108,7 @@ Link: https://lkml.kernel.org/r/20250210103019.283824-1-richard120310@gmail.com
  1 file changed, 5 insertions(+), 6 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3d9b68a347b76..96ba0c1e2e440 100644
+index 3d9b68a347b7..96ba0c1e2e44 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9439,12 +9439,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
@@ -133,11 +133,11 @@ index 3d9b68a347b76..96ba0c1e2e440 100644
 2.49.0
 
 
-From ba1ec60df16d34fad8071305c23539d5b1b158a6 Mon Sep 17 00:00:00 2001
+From 11dfdce5da12a0c0b2a6de7359b6558796e5d20d Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 04/26] Kunit to check the longest symbol length
+Subject: [PATCH 04/17] Kunit to check the longest symbol length
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -177,7 +177,7 @@ Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/lin
  create mode 100644 lib/longest_symbol_kunit.c
 
 diff --git a/arch/x86/tools/insn_decoder_test.c b/arch/x86/tools/insn_decoder_test.c
-index 472540aeabc23..6c2986d2ad117 100644
+index 472540aeabc2..6c2986d2ad11 100644
 --- a/arch/x86/tools/insn_decoder_test.c
 +++ b/arch/x86/tools/insn_decoder_test.c
 @@ -10,6 +10,7 @@
@@ -198,7 +198,7 @@ index 472540aeabc23..6c2986d2ad117 100644
  int main(int argc, char **argv)
  {
 diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-index 35796c290ca35..a6da7f4411f46 100644
+index 35796c290ca3..a6da7f4411f4 100644
 --- a/lib/Kconfig.debug
 +++ b/lib/Kconfig.debug
 @@ -2838,6 +2838,15 @@ config FORTIFY_KUNIT_TEST
@@ -218,7 +218,7 @@ index 35796c290ca35..a6da7f4411f46 100644
  	bool "Test hw_breakpoint constraints accounting" if !KUNIT_ALL_TESTS
  	depends on HAVE_HW_BREAKPOINT
 diff --git a/lib/Makefile b/lib/Makefile
-index 4f3d00a2fd659..9a54526008d0a 100644
+index 4f3d00a2fd65..9a54526008d0 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
 @@ -398,6 +398,8 @@ obj-$(CONFIG_FORTIFY_KUNIT_TEST) += fortify_kunit.o
@@ -232,7 +232,7 @@ index 4f3d00a2fd659..9a54526008d0a 100644
  
 diff --git a/lib/longest_symbol_kunit.c b/lib/longest_symbol_kunit.c
 new file mode 100644
-index 0000000000000..e3c28ff1807f0
+index 000000000000..e3c28ff1807f
 --- /dev/null
 +++ b/lib/longest_symbol_kunit.c
 @@ -0,0 +1,82 @@
@@ -322,10 +322,10 @@ index 0000000000000..e3c28ff1807f0
 2.49.0
 
 
-From cc7116c712c41be24748cefc79307ca9c130b3a4 Mon Sep 17 00:00:00 2001
+From 587ea1c28353cfbecef0dfc6d62616de5c041f93 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 05/26] driver/base: Optimize memory block registration to
+Subject: [PATCH 05/17] driver/base: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -430,7 +430,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 47 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index 348c5dbbfa68a..7632da6a29610 100644
+index 348c5dbbfa68..7632da6a2961 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
 @@ -60,7 +60,7 @@ static inline unsigned long pfn_to_block_id(unsigned long pfn)
@@ -452,7 +452,7 @@ index 348c5dbbfa68a..7632da6a29610 100644
  	struct memory_block *mem;
  
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 0ea653fa34330..907b16275296a 100644
+index 0ea653fa3433..907b16275296 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -20,6 +20,7 @@
@@ -508,7 +508,7 @@ index 0ea653fa34330..907b16275296a 100644
  				       unsigned long end_pfn,
  				       enum meminit_context context)
 diff --git a/include/linux/memory.h b/include/linux/memory.h
-index c0afee5d126ef..c94d44893699f 100644
+index c0afee5d126e..c94d44893699 100644
 --- a/include/linux/memory.h
 +++ b/include/linux/memory.h
 @@ -171,6 +171,8 @@ struct memory_group *memory_group_find_by_id(int mgid);
@@ -521,7 +521,7 @@ index c0afee5d126ef..c94d44893699f 100644
  	static __meminitdata struct notifier_block fn##_mem_nb =\
  		{ .notifier_call = fn, .priority = pri };\
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 9a881c2208b3b..02c27adc21edf 100644
+index 9a881c2208b3..02c27adc21ed 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -107,12 +107,16 @@ extern struct node *node_devices[];
@@ -562,10 +562,10 @@ index 9a881c2208b3b..02c27adc21edf 100644
 2.49.0
 
 
-From 400274de0d6263b244ecba5fdda93da6af35d843 Mon Sep 17 00:00:00 2001
+From 2dacc13e0b16fe4e36ea28042d1148f6db4a71ee Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 06/26] driver/base: remove
+Subject: [PATCH 06/17] driver/base: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -582,7 +582,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 57 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 907b16275296a..063915a9ff572 100644
+index 907b16275296..063915a9ff57 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -746,15 +746,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
@@ -669,10 +669,10 @@ index 907b16275296a..063915a9ff572 100644
 2.49.0
 
 
-From a9817af5ea8f0447214ceee5f7a0ef25e5670ebb Mon Sep 17 00:00:00 2001
+From a9f522b6c3b9fdcf1071ae1bcf3d95c622153d64 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 07/26] drivers/base : Rename
+Subject: [PATCH 07/17] drivers/base : Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -693,7 +693,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  3 files changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 063915a9ff572..7056c85b7496c 100644
+index 063915a9ff57..7056c85b7496 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -837,9 +837,8 @@ void register_memory_blocks_under_node_early(int nid)
@@ -709,7 +709,7 @@ index 063915a9ff572..7056c85b7496c 100644
  	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
  			   (void *)&nid, register_mem_block_under_node_hotplug);
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 02c27adc21edf..83e4b4e1de972 100644
+index 02c27adc21ed..83e4b4e1de97 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -104,14 +104,13 @@ struct memory_block;
@@ -733,7 +733,7 @@ index 02c27adc21edf..83e4b4e1de972 100644
  }
  static inline void register_memory_blocks_under_node_early(int nid)
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index 75401866fb760..27672fe645a9c 100644
+index 75401866fb76..27672fe645a9 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -752,10 +752,10 @@ index 75401866fb760..27672fe645a9c 100644
 2.49.0
 
 
-From 93338dfea3153e288591cdd980f4ffa7bcf51004 Mon Sep 17 00:00:00 2001
+From dee23ec7d2f9fcad86c9bf2f27268509cf1896eb Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 08/26] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 08/17] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -780,7 +780,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 7da531b1cf6be..0eaf3522abe9a 100644
+index 7da531b1cf6b..0eaf3522abe9 100644
 --- a/fs/select.c
 +++ b/fs/select.c
 @@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
@@ -796,1241 +796,10 @@ index 7da531b1cf6be..0eaf3522abe9a 100644
 2.49.0
 
 
-From ca4da0fb05b86c2080a96c2e428c409df33da969 Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Thu, 27 Mar 2025 17:51:13 +0800
-Subject: [PATCH 09/26] ublk: add helper of ublk_need_map_io()
-
-ublk_need_map_io() is more readable.
-
-Reviewed-by: Caleb Sander Mateos <csander@purestorage.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250327095123.179113-5-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index ab06a7a064fbf..4e81505179c6b 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -594,6 +594,11 @@ static inline bool ublk_support_user_copy(const struct ublk_queue *ubq)
- 	return ubq->flags & UBLK_F_USER_COPY;
- }
- 
-+static inline bool ublk_need_map_io(const struct ublk_queue *ubq)
-+{
-+	return !ublk_support_user_copy(ubq);
-+}
-+
- static inline bool ublk_need_req_ref(const struct ublk_queue *ubq)
- {
- 	/*
-@@ -921,7 +926,7 @@ static int ublk_map_io(const struct ublk_queue *ubq, const struct request *req,
- {
- 	const unsigned int rq_bytes = blk_rq_bytes(req);
- 
--	if (ublk_support_user_copy(ubq))
-+	if (!ublk_need_map_io(ubq))
- 		return rq_bytes;
- 
- 	/*
-@@ -945,7 +950,7 @@ static int ublk_unmap_io(const struct ublk_queue *ubq,
- {
- 	const unsigned int rq_bytes = blk_rq_bytes(req);
- 
--	if (ublk_support_user_copy(ubq))
-+	if (!ublk_need_map_io(ubq))
- 		return rq_bytes;
- 
- 	if (ublk_need_unmap_req(req)) {
-@@ -1914,7 +1919,7 @@ static int __ublk_ch_uring_cmd(struct io_uring_cmd *cmd,
- 		if (io->flags & UBLK_IO_FLAG_OWNED_BY_SRV)
- 			goto out;
- 
--		if (!ublk_support_user_copy(ubq)) {
-+		if (ublk_need_map_io(ubq)) {
- 			/*
- 			 * FETCH_RQ has to provide IO buffer if NEED GET
- 			 * DATA is not enabled
-@@ -1936,7 +1941,7 @@ static int __ublk_ch_uring_cmd(struct io_uring_cmd *cmd,
- 		if (!(io->flags & UBLK_IO_FLAG_OWNED_BY_SRV))
- 			goto out;
- 
--		if (!ublk_support_user_copy(ubq)) {
-+		if (ublk_need_map_io(ubq)) {
- 			/*
- 			 * COMMIT_AND_FETCH_REQ has to provide IO buffer if
- 			 * NEED GET DATA is not enabled or it is Read IO.
--- 
-2.49.0
-
-
-From b32db1a6d172cac9367a7aee6981f9157d687d57 Mon Sep 17 00:00:00 2001
-From: Uday Shankar <ushankar@purestorage.com>
-Date: Wed, 16 Apr 2025 11:54:35 +0800
-Subject: [PATCH 10/26] ublk: properly serialize all FETCH_REQs
-
-Most uring_cmds issued against ublk character devices are serialized
-because each command affects only one queue, and there is an early check
-which only allows a single task (the queue's ubq_daemon) to issue
-uring_cmds against that queue. However, this mechanism does not work for
-FETCH_REQs, since they are expected before ubq_daemon is set. Since
-FETCH_REQs are only used at initialization and not in the fast path,
-serialize them using the per-ublk-device mutex. This fixes a number of
-data races that were previously possible if a badly behaved ublk server
-decided to issue multiple FETCH_REQs against the same qid/tag
-concurrently.
-
-Reported-by: Caleb Sander Mateos <csander@purestorage.com>
-Signed-off-by: Uday Shankar <ushankar@purestorage.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250416035444.99569-2-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 77 +++++++++++++++++++++++++---------------
- 1 file changed, 49 insertions(+), 28 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index 4e81505179c6b..9345a6d8dbd8e 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -1803,8 +1803,8 @@ static void ublk_nosrv_work(struct work_struct *work)
- 
- /* device can only be started after all IOs are ready */
- static void ublk_mark_io_ready(struct ublk_device *ub, struct ublk_queue *ubq)
-+	__must_hold(&ub->mutex)
- {
--	mutex_lock(&ub->mutex);
- 	ubq->nr_io_ready++;
- 	if (ublk_queue_ready(ubq)) {
- 		ubq->ubq_daemon = current;
-@@ -1816,7 +1816,6 @@ static void ublk_mark_io_ready(struct ublk_device *ub, struct ublk_queue *ubq)
- 	}
- 	if (ub->nr_queues_ready == ub->dev_info.nr_hw_queues)
- 		complete_all(&ub->completion);
--	mutex_unlock(&ub->mutex);
- }
- 
- static inline int ublk_check_cmd_op(u32 cmd_op)
-@@ -1855,6 +1854,52 @@ static inline void ublk_prep_cancel(struct io_uring_cmd *cmd,
- 	io_uring_cmd_mark_cancelable(cmd, issue_flags);
- }
- 
-+static int ublk_fetch(struct io_uring_cmd *cmd, struct ublk_queue *ubq,
-+		      struct ublk_io *io, __u64 buf_addr)
-+{
-+	struct ublk_device *ub = ubq->dev;
-+	int ret = 0;
-+
-+	/*
-+	 * When handling FETCH command for setting up ublk uring queue,
-+	 * ub->mutex is the innermost lock, and we won't block for handling
-+	 * FETCH, so it is fine even for IO_URING_F_NONBLOCK.
-+	 */
-+	mutex_lock(&ub->mutex);
-+	/* UBLK_IO_FETCH_REQ is only allowed before queue is setup */
-+	if (ublk_queue_ready(ubq)) {
-+		ret = -EBUSY;
-+		goto out;
-+	}
-+
-+	/* allow each command to be FETCHed at most once */
-+	if (io->flags & UBLK_IO_FLAG_ACTIVE) {
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	WARN_ON_ONCE(io->flags & UBLK_IO_FLAG_OWNED_BY_SRV);
-+
-+	if (ublk_need_map_io(ubq)) {
-+		/*
-+		 * FETCH_RQ has to provide IO buffer if NEED GET
-+		 * DATA is not enabled
-+		 */
-+		if (!buf_addr && !ublk_need_get_data(ubq))
-+			goto out;
-+	} else if (buf_addr) {
-+		/* User copy requires addr to be unset */
-+		ret = -EINVAL;
-+		goto out;
-+	}
-+
-+	ublk_fill_io_cmd(io, cmd, buf_addr);
-+	ublk_mark_io_ready(ub, ubq);
-+out:
-+	mutex_unlock(&ub->mutex);
-+	return ret;
-+}
-+
- static int __ublk_ch_uring_cmd(struct io_uring_cmd *cmd,
- 			       unsigned int issue_flags,
- 			       const struct ublksrv_io_cmd *ub_cmd)
-@@ -1907,33 +1952,9 @@ static int __ublk_ch_uring_cmd(struct io_uring_cmd *cmd,
- 	ret = -EINVAL;
- 	switch (_IOC_NR(cmd_op)) {
- 	case UBLK_IO_FETCH_REQ:
--		/* UBLK_IO_FETCH_REQ is only allowed before queue is setup */
--		if (ublk_queue_ready(ubq)) {
--			ret = -EBUSY;
--			goto out;
--		}
--		/*
--		 * The io is being handled by server, so COMMIT_RQ is expected
--		 * instead of FETCH_REQ
--		 */
--		if (io->flags & UBLK_IO_FLAG_OWNED_BY_SRV)
--			goto out;
--
--		if (ublk_need_map_io(ubq)) {
--			/*
--			 * FETCH_RQ has to provide IO buffer if NEED GET
--			 * DATA is not enabled
--			 */
--			if (!ub_cmd->addr && !ublk_need_get_data(ubq))
--				goto out;
--		} else if (ub_cmd->addr) {
--			/* User copy requires addr to be unset */
--			ret = -EINVAL;
-+		ret = ublk_fetch(cmd, ubq, io, ub_cmd->addr);
-+		if (ret)
- 			goto out;
--		}
--
--		ublk_fill_io_cmd(io, cmd, ub_cmd->addr);
--		ublk_mark_io_ready(ub, ubq);
- 		break;
- 	case UBLK_IO_COMMIT_AND_FETCH_REQ:
- 		req = blk_mq_tag_to_rq(ub->tag_set.tags[ub_cmd->q_id], tag);
--- 
-2.49.0
-
-
-From 6409c6d9ecc191f618646c0ec5f4c2601b2eae08 Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Wed, 16 Apr 2025 11:54:38 +0800
-Subject: [PATCH 11/26] ublk: move device reset into ublk_ch_release()
-
-ublk_ch_release() is called after ublk char device is closed, when all
-uring_cmd are done, so it is perfect fine to move ublk device reset to
-ublk_ch_release() from ublk_ctrl_start_recovery().
-
-This way can avoid to grab the exiting daemon task_struct too long.
-
-However, reset of the following ublk IO flags has to be moved until ublk
-io_uring queues are ready:
-
-- ubq->canceling
-
-For requeuing IO in case of ublk_nosrv_dev_should_queue_io() before device
-is recovered
-
-- ubq->fail_io
-
-For failing IO in case of UBLK_F_USER_RECOVERY_FAIL_IO before device is
-recovered
-
-- ublk_io->flags
-
-For preventing using io->cmd
-
-With this way, recovery is simplified a lot.
-
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250416035444.99569-5-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 121 +++++++++++++++++++++++----------------
- 1 file changed, 72 insertions(+), 49 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index 9345a6d8dbd8e..c619df880c72e 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -1043,7 +1043,7 @@ static inline struct ublk_uring_cmd_pdu *ublk_get_uring_cmd_pdu(
- 
- static inline bool ubq_daemon_is_dying(struct ublk_queue *ubq)
- {
--	return ubq->ubq_daemon->flags & PF_EXITING;
-+	return !ubq->ubq_daemon || ubq->ubq_daemon->flags & PF_EXITING;
- }
- 
- /* todo: handle partial completion */
-@@ -1440,6 +1440,37 @@ static const struct blk_mq_ops ublk_mq_ops = {
- 	.timeout	= ublk_timeout,
- };
- 
-+static void ublk_queue_reinit(struct ublk_device *ub, struct ublk_queue *ubq)
-+{
-+	int i;
-+
-+	/* All old ioucmds have to be completed */
-+	ubq->nr_io_ready = 0;
-+
-+	/*
-+	 * old daemon is PF_EXITING, put it now
-+	 *
-+	 * It could be NULL in case of closing one quisced device.
-+	 */
-+	if (ubq->ubq_daemon)
-+		put_task_struct(ubq->ubq_daemon);
-+	/* We have to reset it to NULL, otherwise ub won't accept new FETCH_REQ */
-+	ubq->ubq_daemon = NULL;
-+	ubq->timeout = false;
-+
-+	for (i = 0; i < ubq->q_depth; i++) {
-+		struct ublk_io *io = &ubq->ios[i];
-+
-+		/*
-+		 * UBLK_IO_FLAG_CANCELED is kept for avoiding to touch
-+		 * io->cmd
-+		 */
-+		io->flags &= UBLK_IO_FLAG_CANCELED;
-+		io->cmd = NULL;
-+		io->addr = 0;
-+	}
-+}
-+
- static int ublk_ch_open(struct inode *inode, struct file *filp)
- {
- 	struct ublk_device *ub = container_of(inode->i_cdev,
-@@ -1451,10 +1482,26 @@ static int ublk_ch_open(struct inode *inode, struct file *filp)
- 	return 0;
- }
- 
-+static void ublk_reset_ch_dev(struct ublk_device *ub)
-+{
-+	int i;
-+
-+	for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
-+		ublk_queue_reinit(ub, ublk_get_queue(ub, i));
-+
-+	/* set to NULL, otherwise new ubq_daemon cannot mmap the io_cmd_buf */
-+	ub->mm = NULL;
-+	ub->nr_queues_ready = 0;
-+	ub->nr_privileged_daemon = 0;
-+}
-+
- static int ublk_ch_release(struct inode *inode, struct file *filp)
- {
- 	struct ublk_device *ub = filp->private_data;
- 
-+	/* all uring_cmd has been done now, reset device & ubq */
-+	ublk_reset_ch_dev(ub);
-+
- 	clear_bit(UB_STATE_OPEN, &ub->state);
- 	return 0;
- }
-@@ -1801,6 +1848,24 @@ static void ublk_nosrv_work(struct work_struct *work)
- 	ublk_cancel_dev(ub);
- }
- 
-+/* reset ublk io_uring queue & io flags */
-+static void ublk_reset_io_flags(struct ublk_device *ub)
-+{
-+	int i, j;
-+
-+	for (i = 0; i < ub->dev_info.nr_hw_queues; i++) {
-+		struct ublk_queue *ubq = ublk_get_queue(ub, i);
-+
-+		/* UBLK_IO_FLAG_CANCELED can be cleared now */
-+		spin_lock(&ubq->cancel_lock);
-+		for (j = 0; j < ubq->q_depth; j++)
-+			ubq->ios[j].flags &= ~UBLK_IO_FLAG_CANCELED;
-+		spin_unlock(&ubq->cancel_lock);
-+		ubq->canceling = false;
-+		ubq->fail_io = false;
-+	}
-+}
-+
- /* device can only be started after all IOs are ready */
- static void ublk_mark_io_ready(struct ublk_device *ub, struct ublk_queue *ubq)
- 	__must_hold(&ub->mutex)
-@@ -1814,8 +1879,12 @@ static void ublk_mark_io_ready(struct ublk_device *ub, struct ublk_queue *ubq)
- 		if (capable(CAP_SYS_ADMIN))
- 			ub->nr_privileged_daemon++;
- 	}
--	if (ub->nr_queues_ready == ub->dev_info.nr_hw_queues)
-+
-+	if (ub->nr_queues_ready == ub->dev_info.nr_hw_queues) {
-+		/* now we are ready for handling ublk io request */
-+		ublk_reset_io_flags(ub);
- 		complete_all(&ub->completion);
-+	}
- }
- 
- static inline int ublk_check_cmd_op(u32 cmd_op)
-@@ -2866,42 +2935,15 @@ static int ublk_ctrl_set_params(struct ublk_device *ub,
- 	return ret;
- }
- 
--static void ublk_queue_reinit(struct ublk_device *ub, struct ublk_queue *ubq)
--{
--	int i;
--
--	WARN_ON_ONCE(!(ubq->ubq_daemon && ubq_daemon_is_dying(ubq)));
--
--	/* All old ioucmds have to be completed */
--	ubq->nr_io_ready = 0;
--	/* old daemon is PF_EXITING, put it now */
--	put_task_struct(ubq->ubq_daemon);
--	/* We have to reset it to NULL, otherwise ub won't accept new FETCH_REQ */
--	ubq->ubq_daemon = NULL;
--	ubq->timeout = false;
--
--	for (i = 0; i < ubq->q_depth; i++) {
--		struct ublk_io *io = &ubq->ios[i];
--
--		/* forget everything now and be ready for new FETCH_REQ */
--		io->flags = 0;
--		io->cmd = NULL;
--		io->addr = 0;
--	}
--}
--
- static int ublk_ctrl_start_recovery(struct ublk_device *ub,
- 		struct io_uring_cmd *cmd)
- {
- 	const struct ublksrv_ctrl_cmd *header = io_uring_sqe_cmd(cmd->sqe);
- 	int ret = -EINVAL;
--	int i;
- 
- 	mutex_lock(&ub->mutex);
- 	if (ublk_nosrv_should_stop_dev(ub))
- 		goto out_unlock;
--	if (!ub->nr_queues_ready)
--		goto out_unlock;
- 	/*
- 	 * START_RECOVERY is only allowd after:
- 	 *
-@@ -2925,12 +2967,6 @@ static int ublk_ctrl_start_recovery(struct ublk_device *ub,
- 		goto out_unlock;
- 	}
- 	pr_devel("%s: start recovery for dev id %d.\n", __func__, header->dev_id);
--	for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
--		ublk_queue_reinit(ub, ublk_get_queue(ub, i));
--	/* set to NULL, otherwise new ubq_daemon cannot mmap the io_cmd_buf */
--	ub->mm = NULL;
--	ub->nr_queues_ready = 0;
--	ub->nr_privileged_daemon = 0;
- 	init_completion(&ub->completion);
- 	ret = 0;
-  out_unlock:
-@@ -2944,7 +2980,6 @@ static int ublk_ctrl_end_recovery(struct ublk_device *ub,
- 	const struct ublksrv_ctrl_cmd *header = io_uring_sqe_cmd(cmd->sqe);
- 	int ublksrv_pid = (int)header->data[0];
- 	int ret = -EINVAL;
--	int i;
- 
- 	pr_devel("%s: Waiting for new ubq_daemons(nr: %d) are ready, dev id %d...\n",
- 			__func__, ub->dev_info.nr_hw_queues, header->dev_id);
-@@ -2964,22 +2999,10 @@ static int ublk_ctrl_end_recovery(struct ublk_device *ub,
- 		goto out_unlock;
- 	}
- 	ub->dev_info.ublksrv_pid = ublksrv_pid;
-+	ub->dev_info.state = UBLK_S_DEV_LIVE;
- 	pr_devel("%s: new ublksrv_pid %d, dev id %d\n",
- 			__func__, ublksrv_pid, header->dev_id);
--
--	blk_mq_quiesce_queue(ub->ub_disk->queue);
--	ub->dev_info.state = UBLK_S_DEV_LIVE;
--	for (i = 0; i < ub->dev_info.nr_hw_queues; i++) {
--		struct ublk_queue *ubq = ublk_get_queue(ub, i);
--
--		ubq->canceling = false;
--		ubq->fail_io = false;
--	}
--	blk_mq_unquiesce_queue(ub->ub_disk->queue);
--	pr_devel("%s: queue unquiesced, dev id %d.\n",
--			__func__, header->dev_id);
- 	blk_mq_kick_requeue_list(ub->ub_disk->queue);
--
- 	ret = 0;
-  out_unlock:
- 	mutex_unlock(&ub->mutex);
--- 
-2.49.0
-
-
-From 66e106b76b4099025264979af5850f93ca56d539 Mon Sep 17 00:00:00 2001
-From: Uday Shankar <ushankar@purestorage.com>
-Date: Wed, 16 Apr 2025 11:54:39 +0800
-Subject: [PATCH 12/26] ublk: improve detection and handling of ublk server
- exit
-
-There are currently two ways in which ublk server exit is detected by
-ublk_drv:
-
-1. uring_cmd cancellation. If there are any outstanding uring_cmds which
-   have not been completed to the ublk server when it exits, io_uring
-   calls the uring_cmd callback with a special cancellation flag as the
-   issuing task is exiting.
-2. I/O timeout. This is needed in addition to the above to handle the
-   "saturated queue" case, when all I/Os for a given queue are in the
-   ublk server, and therefore there are no outstanding uring_cmds to
-   cancel when the ublk server exits.
-
-There are a couple of issues with this approach:
-
-- It is complex and inelegant to have two methods to detect the same
-  condition
-- The second method detects ublk server exit only after a long delay
-  (~30s, the default timeout assigned by the block layer). This delays
-  the nosrv behavior from kicking in and potential subsequent recovery
-  of the device.
-
-The second issue is brought to light with the new test_generic_06 which
-will be added in following patch. It fails before this fix:
-
-selftests: ublk: test_generic_06.sh
-dev id is 0
-dd: error writing '/dev/ublkb0': Input/output error
-1+0 records in
-0+0 records out
-0 bytes copied, 30.0611 s, 0.0 kB/s
-DEAD
-dd took 31 seconds to exit (>= 5s tolerance)!
-generic_06 : [FAIL]
-
-Fix this by instead detecting and handling ublk server exit in the
-character file release callback. This has several advantages:
-
-- This one place can handle both saturated and unsaturated queues. Thus,
-  it replaces both preexisting methods of detecting ublk server exit.
-- It runs quickly on ublk server exit - there is no 30s delay.
-- It starts the process of removing task references in ublk_drv. This is
-  needed if we want to relax restrictions in the driver like letting
-  only one thread serve each queue
-
-There is also the disadvantage that the character file release callback
-can also be triggered by intentional close of the file, which is a
-significant behavior change. Preexisting ublk servers (libublksrv) are
-dependent on the ability to open/close the file multiple times. To
-address this, only transition to a nosrv state if the file is released
-while the ublk device is live. This allows for programs to open/close
-the file multiple times during setup. It is still a behavior change if a
-ublk server decides to close/reopen the file while the device is LIVE
-(i.e. while it is responsible for serving I/O), but that would be highly
-unusual. This behavior is in line with what is done by FUSE, which is
-very similar to ublk in that a userspace daemon is providing services
-traditionally provided by the kernel.
-
-With this change in, the new test (and all other selftests, and all
-ublksrv tests) pass:
-
-selftests: ublk: test_generic_06.sh
-dev id is 0
-dd: error writing '/dev/ublkb0': Input/output error
-1+0 records in
-0+0 records out
-0 bytes copied, 0.0376731 s, 0.0 kB/s
-DEAD
-generic_04 : [PASS]
-
-Signed-off-by: Uday Shankar <ushankar@purestorage.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250416035444.99569-6-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 223 ++++++++++++++++++++++-----------------
- 1 file changed, 124 insertions(+), 99 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index c619df880c72e..652742db03967 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -194,8 +194,6 @@ struct ublk_device {
- 	struct completion	completion;
- 	unsigned int		nr_queues_ready;
- 	unsigned int		nr_privileged_daemon;
--
--	struct work_struct	nosrv_work;
- };
- 
- /* header of ublk_params */
-@@ -204,7 +202,10 @@ struct ublk_params_header {
- 	__u32	types;
- };
- 
--static bool ublk_abort_requests(struct ublk_device *ub, struct ublk_queue *ubq);
-+
-+static void ublk_stop_dev_unlocked(struct ublk_device *ub);
-+static void ublk_abort_queue(struct ublk_device *ub, struct ublk_queue *ubq);
-+static void __ublk_quiesce_dev(struct ublk_device *ub);
- 
- static inline unsigned int ublk_req_build_flags(struct request *req);
- static inline struct ublksrv_io_desc *ublk_get_iod(struct ublk_queue *ubq,
-@@ -1306,8 +1307,6 @@ static void ublk_queue_cmd_list(struct ublk_queue *ubq, struct rq_list *l)
- static enum blk_eh_timer_return ublk_timeout(struct request *rq)
- {
- 	struct ublk_queue *ubq = rq->mq_hctx->driver_data;
--	unsigned int nr_inflight = 0;
--	int i;
- 
- 	if (ubq->flags & UBLK_F_UNPRIVILEGED_DEV) {
- 		if (!ubq->timeout) {
-@@ -1318,26 +1317,6 @@ static enum blk_eh_timer_return ublk_timeout(struct request *rq)
- 		return BLK_EH_DONE;
- 	}
- 
--	if (!ubq_daemon_is_dying(ubq))
--		return BLK_EH_RESET_TIMER;
--
--	for (i = 0; i < ubq->q_depth; i++) {
--		struct ublk_io *io = &ubq->ios[i];
--
--		if (!(io->flags & UBLK_IO_FLAG_ACTIVE))
--			nr_inflight++;
--	}
--
--	/* cancelable uring_cmd can't help us if all commands are in-flight */
--	if (nr_inflight == ubq->q_depth) {
--		struct ublk_device *ub = ubq->dev;
--
--		if (ublk_abort_requests(ub, ubq)) {
--			schedule_work(&ub->nosrv_work);
--		}
--		return BLK_EH_DONE;
--	}
--
- 	return BLK_EH_RESET_TIMER;
- }
- 
-@@ -1495,13 +1474,105 @@ static void ublk_reset_ch_dev(struct ublk_device *ub)
- 	ub->nr_privileged_daemon = 0;
- }
- 
-+static struct gendisk *ublk_get_disk(struct ublk_device *ub)
-+{
-+	struct gendisk *disk;
-+
-+	spin_lock(&ub->lock);
-+	disk = ub->ub_disk;
-+	if (disk)
-+		get_device(disk_to_dev(disk));
-+	spin_unlock(&ub->lock);
-+
-+	return disk;
-+}
-+
-+static void ublk_put_disk(struct gendisk *disk)
-+{
-+	if (disk)
-+		put_device(disk_to_dev(disk));
-+}
-+
- static int ublk_ch_release(struct inode *inode, struct file *filp)
- {
- 	struct ublk_device *ub = filp->private_data;
-+	struct gendisk *disk;
-+	int i;
-+
-+	/*
-+	 * disk isn't attached yet, either device isn't live, or it has
-+	 * been removed already, so we needn't to do anything
-+	 */
-+	disk = ublk_get_disk(ub);
-+	if (!disk)
-+		goto out;
-+
-+	/*
-+	 * All uring_cmd are done now, so abort any request outstanding to
-+	 * the ublk server
-+	 *
-+	 * This can be done in lockless way because ublk server has been
-+	 * gone
-+	 *
-+	 * More importantly, we have to provide forward progress guarantee
-+	 * without holding ub->mutex, otherwise control task grabbing
-+	 * ub->mutex triggers deadlock
-+	 *
-+	 * All requests may be inflight, so ->canceling may not be set, set
-+	 * it now.
-+	 */
-+	for (i = 0; i < ub->dev_info.nr_hw_queues; i++) {
-+		struct ublk_queue *ubq = ublk_get_queue(ub, i);
-+
-+		ubq->canceling = true;
-+		ublk_abort_queue(ub, ubq);
-+	}
-+	blk_mq_kick_requeue_list(disk->queue);
-+
-+	/*
-+	 * All infligh requests have been completed or requeued and any new
-+	 * request will be failed or requeued via `->canceling` now, so it is
-+	 * fine to grab ub->mutex now.
-+	 */
-+	mutex_lock(&ub->mutex);
-+
-+	/* double check after grabbing lock */
-+	if (!ub->ub_disk)
-+		goto unlock;
-+
-+	/*
-+	 * Transition the device to the nosrv state. What exactly this
-+	 * means depends on the recovery flags
-+	 */
-+	blk_mq_quiesce_queue(disk->queue);
-+	if (ublk_nosrv_should_stop_dev(ub)) {
-+		/*
-+		 * Allow any pending/future I/O to pass through quickly
-+		 * with an error. This is needed because del_gendisk
-+		 * waits for all pending I/O to complete
-+		 */
-+		for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
-+			ublk_get_queue(ub, i)->force_abort = true;
-+		blk_mq_unquiesce_queue(disk->queue);
-+
-+		ublk_stop_dev_unlocked(ub);
-+	} else {
-+		if (ublk_nosrv_dev_should_queue_io(ub)) {
-+			__ublk_quiesce_dev(ub);
-+		} else {
-+			ub->dev_info.state = UBLK_S_DEV_FAIL_IO;
-+			for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
-+				ublk_get_queue(ub, i)->fail_io = true;
-+		}
-+		blk_mq_unquiesce_queue(disk->queue);
-+	}
-+unlock:
-+	mutex_unlock(&ub->mutex);
-+	ublk_put_disk(disk);
- 
- 	/* all uring_cmd has been done now, reset device & ubq */
- 	ublk_reset_ch_dev(ub);
--
-+out:
- 	clear_bit(UB_STATE_OPEN, &ub->state);
- 	return 0;
- }
-@@ -1597,37 +1668,22 @@ static void ublk_abort_queue(struct ublk_device *ub, struct ublk_queue *ubq)
- }
- 
- /* Must be called when queue is frozen */
--static bool ublk_mark_queue_canceling(struct ublk_queue *ubq)
-+static void ublk_mark_queue_canceling(struct ublk_queue *ubq)
- {
--	bool canceled;
--
- 	spin_lock(&ubq->cancel_lock);
--	canceled = ubq->canceling;
--	if (!canceled)
-+	if (!ubq->canceling)
- 		ubq->canceling = true;
- 	spin_unlock(&ubq->cancel_lock);
--
--	return canceled;
- }
- 
--static bool ublk_abort_requests(struct ublk_device *ub, struct ublk_queue *ubq)
-+static void ublk_start_cancel(struct ublk_queue *ubq)
- {
--	bool was_canceled = ubq->canceling;
--	struct gendisk *disk;
--
--	if (was_canceled)
--		return false;
--
--	spin_lock(&ub->lock);
--	disk = ub->ub_disk;
--	if (disk)
--		get_device(disk_to_dev(disk));
--	spin_unlock(&ub->lock);
-+	struct ublk_device *ub = ubq->dev;
-+	struct gendisk *disk = ublk_get_disk(ub);
- 
- 	/* Our disk has been dead */
- 	if (!disk)
--		return false;
--
-+		return;
- 	/*
- 	 * Now we are serialized with ublk_queue_rq()
- 	 *
-@@ -1636,15 +1692,9 @@ static bool ublk_abort_requests(struct ublk_device *ub, struct ublk_queue *ubq)
- 	 * touch completed uring_cmd
- 	 */
- 	blk_mq_quiesce_queue(disk->queue);
--	was_canceled = ublk_mark_queue_canceling(ubq);
--	if (!was_canceled) {
--		/* abort queue is for making forward progress */
--		ublk_abort_queue(ub, ubq);
--	}
-+	ublk_mark_queue_canceling(ubq);
- 	blk_mq_unquiesce_queue(disk->queue);
--	put_device(disk_to_dev(disk));
--
--	return !was_canceled;
-+	ublk_put_disk(disk);
- }
- 
- static void ublk_cancel_cmd(struct ublk_queue *ubq, struct ublk_io *io,
-@@ -1668,6 +1718,17 @@ static void ublk_cancel_cmd(struct ublk_queue *ubq, struct ublk_io *io,
- /*
-  * The ublk char device won't be closed when calling cancel fn, so both
-  * ublk device and queue are guaranteed to be live
-+ *
-+ * Two-stage cancel:
-+ *
-+ * - make every active uring_cmd done in ->cancel_fn()
-+ *
-+ * - aborting inflight ublk IO requests in ublk char device release handler,
-+ *   which depends on 1st stage because device can only be closed iff all
-+ *   uring_cmd are done
-+ *
-+ * Do _not_ try to acquire ub->mutex before all inflight requests are
-+ * aborted, otherwise deadlock may be caused.
-  */
- static void ublk_uring_cmd_cancel_fn(struct io_uring_cmd *cmd,
- 		unsigned int issue_flags)
-@@ -1675,8 +1736,6 @@ static void ublk_uring_cmd_cancel_fn(struct io_uring_cmd *cmd,
- 	struct ublk_uring_cmd_pdu *pdu = ublk_get_uring_cmd_pdu(cmd);
- 	struct ublk_queue *ubq = pdu->ubq;
- 	struct task_struct *task;
--	struct ublk_device *ub;
--	bool need_schedule;
- 	struct ublk_io *io;
- 
- 	if (WARN_ON_ONCE(!ubq))
-@@ -1689,16 +1748,12 @@ static void ublk_uring_cmd_cancel_fn(struct io_uring_cmd *cmd,
- 	if (WARN_ON_ONCE(task && task != ubq->ubq_daemon))
- 		return;
- 
--	ub = ubq->dev;
--	need_schedule = ublk_abort_requests(ub, ubq);
-+	if (!ubq->canceling)
-+		ublk_start_cancel(ubq);
- 
- 	io = &ubq->ios[pdu->tag];
- 	WARN_ON_ONCE(io->cmd != cmd);
- 	ublk_cancel_cmd(ubq, io, issue_flags);
--
--	if (need_schedule) {
--		schedule_work(&ub->nosrv_work);
--	}
- }
- 
- static inline bool ublk_queue_ready(struct ublk_queue *ubq)
-@@ -1757,13 +1812,11 @@ static void __ublk_quiesce_dev(struct ublk_device *ub)
- 			__func__, ub->dev_info.dev_id,
- 			ub->dev_info.state == UBLK_S_DEV_LIVE ?
- 			"LIVE" : "QUIESCED");
--	blk_mq_quiesce_queue(ub->ub_disk->queue);
- 	/* mark every queue as canceling */
- 	for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
- 		ublk_get_queue(ub, i)->canceling = true;
- 	ublk_wait_tagset_rqs_idle(ub);
- 	ub->dev_info.state = UBLK_S_DEV_QUIESCED;
--	blk_mq_unquiesce_queue(ub->ub_disk->queue);
- }
- 
- static void ublk_force_abort_dev(struct ublk_device *ub)
-@@ -1800,50 +1853,25 @@ static struct gendisk *ublk_detach_disk(struct ublk_device *ub)
- 	return disk;
- }
- 
--static void ublk_stop_dev(struct ublk_device *ub)
-+static void ublk_stop_dev_unlocked(struct ublk_device *ub)
-+	__must_hold(&ub->mutex)
- {
- 	struct gendisk *disk;
- 
--	mutex_lock(&ub->mutex);
- 	if (ub->dev_info.state == UBLK_S_DEV_DEAD)
--		goto unlock;
-+		return;
-+
- 	if (ublk_nosrv_dev_should_queue_io(ub))
- 		ublk_force_abort_dev(ub);
- 	del_gendisk(ub->ub_disk);
- 	disk = ublk_detach_disk(ub);
- 	put_disk(disk);
-- unlock:
--	mutex_unlock(&ub->mutex);
--	ublk_cancel_dev(ub);
- }
- 
--static void ublk_nosrv_work(struct work_struct *work)
-+static void ublk_stop_dev(struct ublk_device *ub)
- {
--	struct ublk_device *ub =
--		container_of(work, struct ublk_device, nosrv_work);
--	int i;
--
--	if (ublk_nosrv_should_stop_dev(ub)) {
--		ublk_stop_dev(ub);
--		return;
--	}
--
- 	mutex_lock(&ub->mutex);
--	if (ub->dev_info.state != UBLK_S_DEV_LIVE)
--		goto unlock;
--
--	if (ublk_nosrv_dev_should_queue_io(ub)) {
--		__ublk_quiesce_dev(ub);
--	} else {
--		blk_mq_quiesce_queue(ub->ub_disk->queue);
--		ub->dev_info.state = UBLK_S_DEV_FAIL_IO;
--		for (i = 0; i < ub->dev_info.nr_hw_queues; i++) {
--			ublk_get_queue(ub, i)->fail_io = true;
--		}
--		blk_mq_unquiesce_queue(ub->ub_disk->queue);
--	}
--
-- unlock:
-+	ublk_stop_dev_unlocked(ub);
- 	mutex_unlock(&ub->mutex);
- 	ublk_cancel_dev(ub);
- }
-@@ -2419,7 +2447,6 @@ static int ublk_add_tag_set(struct ublk_device *ub)
- static void ublk_remove(struct ublk_device *ub)
- {
- 	ublk_stop_dev(ub);
--	cancel_work_sync(&ub->nosrv_work);
- 	cdev_device_del(&ub->cdev, &ub->cdev_dev);
- 	ublk_put_device(ub);
- 	ublks_added--;
-@@ -2693,7 +2720,6 @@ static int ublk_ctrl_add_dev(struct io_uring_cmd *cmd)
- 		goto out_unlock;
- 	mutex_init(&ub->mutex);
- 	spin_lock_init(&ub->lock);
--	INIT_WORK(&ub->nosrv_work, ublk_nosrv_work);
- 
- 	ret = ublk_alloc_dev_number(ub, header->dev_id);
- 	if (ret < 0)
-@@ -2828,7 +2854,6 @@ static inline void ublk_ctrl_cmd_dump(struct io_uring_cmd *cmd)
- static int ublk_ctrl_stop_dev(struct ublk_device *ub)
- {
- 	ublk_stop_dev(ub);
--	cancel_work_sync(&ub->nosrv_work);
- 	return 0;
- }
- 
--- 
-2.49.0
-
-
-From 9425e68540a5b1b6863c9336c01ebf69d88df801 Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Wed, 16 Apr 2025 11:54:40 +0800
-Subject: [PATCH 13/26] ublk: remove __ublk_quiesce_dev()
-
-Remove __ublk_quiesce_dev() and open code for updating device state as
-QUIESCED.
-
-We needn't to drain inflight requests in __ublk_quiesce_dev() any more,
-because all inflight requests are aborted in ublk char device release
-handler.
-
-Also we needn't to set ->canceling in __ublk_quiesce_dev() any more
-because it is done unconditionally now in ublk_ch_release().
-
-Reviewed-by: Uday Shankar <ushankar@purestorage.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250416035444.99569-7-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 19 ++-----------------
- 1 file changed, 2 insertions(+), 17 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index 652742db03967..c3f576a9dbf23 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -205,7 +205,6 @@ struct ublk_params_header {
- 
- static void ublk_stop_dev_unlocked(struct ublk_device *ub);
- static void ublk_abort_queue(struct ublk_device *ub, struct ublk_queue *ubq);
--static void __ublk_quiesce_dev(struct ublk_device *ub);
- 
- static inline unsigned int ublk_req_build_flags(struct request *req);
- static inline struct ublksrv_io_desc *ublk_get_iod(struct ublk_queue *ubq,
-@@ -1558,7 +1557,8 @@ static int ublk_ch_release(struct inode *inode, struct file *filp)
- 		ublk_stop_dev_unlocked(ub);
- 	} else {
- 		if (ublk_nosrv_dev_should_queue_io(ub)) {
--			__ublk_quiesce_dev(ub);
-+			/* ->canceling is set and all requests are aborted */
-+			ub->dev_info.state = UBLK_S_DEV_QUIESCED;
- 		} else {
- 			ub->dev_info.state = UBLK_S_DEV_FAIL_IO;
- 			for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
-@@ -1804,21 +1804,6 @@ static void ublk_wait_tagset_rqs_idle(struct ublk_device *ub)
- 	}
- }
- 
--static void __ublk_quiesce_dev(struct ublk_device *ub)
--{
--	int i;
--
--	pr_devel("%s: quiesce ub: dev_id %d state %s\n",
--			__func__, ub->dev_info.dev_id,
--			ub->dev_info.state == UBLK_S_DEV_LIVE ?
--			"LIVE" : "QUIESCED");
--	/* mark every queue as canceling */
--	for (i = 0; i < ub->dev_info.nr_hw_queues; i++)
--		ublk_get_queue(ub, i)->canceling = true;
--	ublk_wait_tagset_rqs_idle(ub);
--	ub->dev_info.state = UBLK_S_DEV_QUIESCED;
--}
--
- static void ublk_force_abort_dev(struct ublk_device *ub)
- {
- 	int i;
--- 
-2.49.0
-
-
-From 8c5006cf01cf07a69a1b63fec615d39b56d40680 Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Wed, 16 Apr 2025 11:54:41 +0800
-Subject: [PATCH 14/26] ublk: simplify aborting ublk request
-
-Now ublk_abort_queue() is moved to ublk char device release handler,
-meantime our request queue is "quiesced" because either ->canceling was
-set from uring_cmd cancel function or all IOs are inflight and can't be
-completed by ublk server, things becomes easy much:
-
-- all uring_cmd are done, so we needn't to mark io as UBLK_IO_FLAG_ABORTED
-for handling completion from uring_cmd
-
-- ublk char device is closed, no one can hold IO request reference any more,
-so we can simply complete this request or requeue it for ublk_nosrv_should_reissue_outstanding.
-
-Reviewed-by: Uday Shankar <ushankar@purestorage.com>
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250416035444.99569-8-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 82 ++++++++++------------------------------
- 1 file changed, 20 insertions(+), 62 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index c3f576a9dbf23..6000147ac2a5f 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -115,15 +115,6 @@ struct ublk_uring_cmd_pdu {
-  */
- #define UBLK_IO_FLAG_OWNED_BY_SRV 0x02
- 
--/*
-- * IO command is aborted, so this flag is set in case of
-- * !UBLK_IO_FLAG_ACTIVE.
-- *
-- * After this flag is observed, any pending or new incoming request
-- * associated with this io command will be failed immediately
-- */
--#define UBLK_IO_FLAG_ABORTED 0x04
--
- /*
-  * UBLK_IO_FLAG_NEED_GET_DATA is set because IO command requires
-  * get data buffer address from ublksrv.
-@@ -1054,12 +1045,6 @@ static inline void __ublk_complete_rq(struct request *req)
- 	unsigned int unmapped_bytes;
- 	blk_status_t res = BLK_STS_OK;
- 
--	/* called from ublk_abort_queue() code path */
--	if (io->flags & UBLK_IO_FLAG_ABORTED) {
--		res = BLK_STS_IOERR;
--		goto exit;
--	}
--
- 	/* failed read IO if nothing is read */
- 	if (!io->res && req_op(req) == REQ_OP_READ)
- 		io->res = -EIO;
-@@ -1109,47 +1094,6 @@ static void ublk_complete_rq(struct kref *ref)
- 	__ublk_complete_rq(req);
- }
- 
--static void ublk_do_fail_rq(struct request *req)
--{
--	struct ublk_queue *ubq = req->mq_hctx->driver_data;
--
--	if (ublk_nosrv_should_reissue_outstanding(ubq->dev))
--		blk_mq_requeue_request(req, false);
--	else
--		__ublk_complete_rq(req);
--}
--
--static void ublk_fail_rq_fn(struct kref *ref)
--{
--	struct ublk_rq_data *data = container_of(ref, struct ublk_rq_data,
--			ref);
--	struct request *req = blk_mq_rq_from_pdu(data);
--
--	ublk_do_fail_rq(req);
--}
--
--/*
-- * Since ublk_rq_task_work_cb always fails requests immediately during
-- * exiting, __ublk_fail_req() is only called from abort context during
-- * exiting. So lock is unnecessary.
-- *
-- * Also aborting may not be started yet, keep in mind that one failed
-- * request may be issued by block layer again.
-- */
--static void __ublk_fail_req(struct ublk_queue *ubq, struct ublk_io *io,
--		struct request *req)
--{
--	WARN_ON_ONCE(io->flags & UBLK_IO_FLAG_ACTIVE);
--
--	if (ublk_need_req_ref(ubq)) {
--		struct ublk_rq_data *data = blk_mq_rq_to_pdu(req);
--
--		kref_put(&data->ref, ublk_fail_rq_fn);
--	} else {
--		ublk_do_fail_rq(req);
--	}
--}
--
- static void ubq_complete_io_cmd(struct ublk_io *io, int res,
- 				unsigned issue_flags)
- {
-@@ -1639,10 +1583,26 @@ static void ublk_commit_completion(struct ublk_device *ub,
- 		ublk_put_req_ref(ubq, req);
- }
- 
-+static void __ublk_fail_req(struct ublk_queue *ubq, struct ublk_io *io,
-+		struct request *req)
-+{
-+	WARN_ON_ONCE(io->flags & UBLK_IO_FLAG_ACTIVE);
-+
-+	if (ublk_nosrv_should_reissue_outstanding(ubq->dev))
-+		blk_mq_requeue_request(req, false);
-+	else {
-+		io->res = -EIO;
-+		__ublk_complete_rq(req);
-+	}
-+}
-+
- /*
-- * Called from ubq_daemon context via cancel fn, meantime quiesce ublk
-- * blk-mq queue, so we are called exclusively with blk-mq and ubq_daemon
-- * context, so everything is serialized.
-+ * Called from ublk char device release handler, when any uring_cmd is
-+ * done, meantime request queue is "quiesced" since all inflight requests
-+ * can't be completed because ublk server is dead.
-+ *
-+ * So no one can hold our request IO reference any more, simply ignore the
-+ * reference, and complete the request immediately
-  */
- static void ublk_abort_queue(struct ublk_device *ub, struct ublk_queue *ubq)
- {
-@@ -1659,10 +1619,8 @@ static void ublk_abort_queue(struct ublk_device *ub, struct ublk_queue *ubq)
- 			 * will do it
- 			 */
- 			rq = blk_mq_tag_to_rq(ub->tag_set.tags[ubq->q_id], i);
--			if (rq && blk_mq_request_started(rq)) {
--				io->flags |= UBLK_IO_FLAG_ABORTED;
-+			if (rq && blk_mq_request_started(rq))
- 				__ublk_fail_req(ubq, io, rq);
--			}
- 		}
- 	}
- }
--- 
-2.49.0
-
-
-From 97853a92d47a30849a1e49e31325e72e5b2a7f12 Mon Sep 17 00:00:00 2001
-From: Ming Lei <ming.lei@redhat.com>
-Date: Fri, 25 Apr 2025 09:37:40 +0800
-Subject: [PATCH 15/26] ublk: fix race between io_uring_cmd_complete_in_task
- and ublk_cancel_cmd
-
-ublk_cancel_cmd() calls io_uring_cmd_done() to complete uring_cmd, but
-we may have scheduled task work via io_uring_cmd_complete_in_task() for
-dispatching request, then kernel crash can be triggered.
-
-Fix it by not trying to canceling the command if ublk block request is
-started.
-
-Fixes: 216c8f5ef0f2 ("ublk: replace monitor with cancelable uring_cmd")
-Reported-by: Jared Holzman <jholzman@nvidia.com>
-Tested-by: Jared Holzman <jholzman@nvidia.com>
-Closes: https://lore.kernel.org/linux-block/d2179120-171b-47ba-b664-23242981ef19@nvidia.com/
-Signed-off-by: Ming Lei <ming.lei@redhat.com>
-Link: https://lore.kernel.org/r/20250425013742.1079549-3-ming.lei@redhat.com
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
----
- drivers/block/ublk_drv.c | 27 +++++++++++++++++++++------
- 1 file changed, 21 insertions(+), 6 deletions(-)
-
-diff --git a/drivers/block/ublk_drv.c b/drivers/block/ublk_drv.c
-index 6000147ac2a5f..348c4feb7a2df 100644
---- a/drivers/block/ublk_drv.c
-+++ b/drivers/block/ublk_drv.c
-@@ -1655,14 +1655,31 @@ static void ublk_start_cancel(struct ublk_queue *ubq)
- 	ublk_put_disk(disk);
- }
- 
--static void ublk_cancel_cmd(struct ublk_queue *ubq, struct ublk_io *io,
-+static void ublk_cancel_cmd(struct ublk_queue *ubq, unsigned tag,
- 		unsigned int issue_flags)
- {
-+	struct ublk_io *io = &ubq->ios[tag];
-+	struct ublk_device *ub = ubq->dev;
-+	struct request *req;
- 	bool done;
- 
- 	if (!(io->flags & UBLK_IO_FLAG_ACTIVE))
- 		return;
- 
-+	/*
-+	 * Don't try to cancel this command if the request is started for
-+	 * avoiding race between io_uring_cmd_done() and
-+	 * io_uring_cmd_complete_in_task().
-+	 *
-+	 * Either the started request will be aborted via __ublk_abort_rq(),
-+	 * then this uring_cmd is canceled next time, or it will be done in
-+	 * task work function ublk_dispatch_req() because io_uring guarantees
-+	 * that ublk_dispatch_req() is always called
-+	 */
-+	req = blk_mq_tag_to_rq(ub->tag_set.tags[ubq->q_id], tag);
-+	if (req && blk_mq_request_started(req))
-+		return;
-+
- 	spin_lock(&ubq->cancel_lock);
- 	done = !!(io->flags & UBLK_IO_FLAG_CANCELED);
- 	if (!done)
-@@ -1694,7 +1711,6 @@ static void ublk_uring_cmd_cancel_fn(struct io_uring_cmd *cmd,
- 	struct ublk_uring_cmd_pdu *pdu = ublk_get_uring_cmd_pdu(cmd);
- 	struct ublk_queue *ubq = pdu->ubq;
- 	struct task_struct *task;
--	struct ublk_io *io;
- 
- 	if (WARN_ON_ONCE(!ubq))
- 		return;
-@@ -1709,9 +1725,8 @@ static void ublk_uring_cmd_cancel_fn(struct io_uring_cmd *cmd,
- 	if (!ubq->canceling)
- 		ublk_start_cancel(ubq);
- 
--	io = &ubq->ios[pdu->tag];
--	WARN_ON_ONCE(io->cmd != cmd);
--	ublk_cancel_cmd(ubq, io, issue_flags);
-+	WARN_ON_ONCE(ubq->ios[pdu->tag].cmd != cmd);
-+	ublk_cancel_cmd(ubq, pdu->tag, issue_flags);
- }
- 
- static inline bool ublk_queue_ready(struct ublk_queue *ubq)
-@@ -1724,7 +1739,7 @@ static void ublk_cancel_queue(struct ublk_queue *ubq)
- 	int i;
- 
- 	for (i = 0; i < ubq->q_depth; i++)
--		ublk_cancel_cmd(ubq, &ubq->ios[i], IO_URING_F_UNLOCKED);
-+		ublk_cancel_cmd(ubq, i, IO_URING_F_UNLOCKED);
- }
- 
- /* Cancel all pending commands, must be called after del_gendisk() returns */
--- 
-2.49.0
-
-
-From 176cbf0188c6be291d920a3b41e7dd840cb77f9d Mon Sep 17 00:00:00 2001
+From 5e157e5b24e73cc3d74e90d0b76708481d2e35cc Mon Sep 17 00:00:00 2001
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Date: Wed, 26 Feb 2025 10:10:57 +0100
-Subject: [PATCH 16/26] futex: Use a hashmask instead of hashsize
+Subject: [PATCH 09/17] futex: Use a hashmask instead of hashsize
 
 The global hash uses futex_hashsize to save the amount of the hash
 buckets that have been allocated during system boot. On each
@@ -2050,7 +819,7 @@ Link: https://lore.kernel.org/all/20250226091057.bX8vObR4@linutronix.de
  1 file changed, 11 insertions(+), 10 deletions(-)
 
 diff --git a/kernel/futex/core.c b/kernel/futex/core.c
-index 3db8567f5a44e..cca15859a50be 100644
+index 3db8567f5a44..cca15859a50b 100644
 --- a/kernel/futex/core.c
 +++ b/kernel/futex/core.c
 @@ -50,10 +50,10 @@
@@ -2115,10 +884,10 @@ index 3db8567f5a44e..cca15859a50be 100644
 2.49.0
 
 
-From 3bf15246701cc9672d946e8287615a5c96456340 Mon Sep 17 00:00:00 2001
+From 30ac76449a8fd7d8b4861858676e2873a834da2f Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 27 Jan 2025 14:45:23 -0800
-Subject: [PATCH 17/26] x86/fpu: make WARN_ON_FPU get fully optimized out
+Subject: [PATCH 10/17] x86/fpu: make WARN_ON_FPU get fully optimized out
 
 Currently WARN_ON_FPU evaluates its argument even if
 CONFIG_X86_DEBUG_FPU is disabled, which adds unnecessary instructions to
@@ -2133,7 +902,7 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/arch/x86/kernel/fpu/internal.h b/arch/x86/kernel/fpu/internal.h
-index dbdb31f55fc7f..975de070c9c98 100644
+index dbdb31f55fc7..975de070c9c9 100644
 --- a/arch/x86/kernel/fpu/internal.h
 +++ b/arch/x86/kernel/fpu/internal.h
 @@ -18,7 +18,7 @@ static __always_inline __pure bool use_fxsr(void)
@@ -2149,10 +918,10 @@ index dbdb31f55fc7f..975de070c9c98 100644
 2.49.0
 
 
-From 817c4333f5eeb87b4b28adfcf1a490fb74bcfa03 Mon Sep 17 00:00:00 2001
+From e54af97d5420f778e9e440c098e1b95af91912b1 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 18/26] x86/mm: Simplify redundant overlap calculation
+Subject: [PATCH 11/17] x86/mm: Simplify redundant overlap calculation
 
 There have been a couple of reports that the two sides of the
 overlaps() calculation are redundant.  I spent way too much time
@@ -2177,7 +946,7 @@ Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index b491d8190a6c5..1c6db6bba56f2 100644
+index b491d8190a6c..1c6db6bba56f 100644
 --- a/arch/x86/mm/pat/set_memory.c
 +++ b/arch/x86/mm/pat/set_memory.c
 @@ -433,8 +433,7 @@ static void cpa_flush(struct cpa_data *data, int cache)
@@ -2194,10 +963,10 @@ index b491d8190a6c5..1c6db6bba56f2 100644
 2.49.0
 
 
-From 75e1c6cc2ed253486cb2ff87101f8b524b5f5dd0 Mon Sep 17 00:00:00 2001
+From c9fa6b2ec151029d628a083fa654ecc4a481be7e Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Fri, 25 Apr 2025 12:57:55 -0700
-Subject: [PATCH 19/26] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 12/17] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -2259,7 +1028,7 @@ Tested-by: K Prateek Nayak <kprateek.nayak@amd.com>
  1 file changed, 6 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3c7c942c7c429..c413e12825d7d 100644
+index 3c7c942c7c42..c413e12825d7 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -2278,6 +2278,12 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
@@ -2279,10 +1048,10 @@ index 3c7c942c7c429..c413e12825d7d 100644
 2.49.0
 
 
-From a509f13f4d5f6494a06372b78f0d42d39f44f5fb Mon Sep 17 00:00:00 2001
+From 76a78823b40e5ba425b9a6db3bf56acfe7c4ef60 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 26 Feb 2025 19:43:01 +0800
-Subject: [PATCH 20/26] sched/fair: Prevent from cpufreq not being updated when
+Subject: [PATCH 13/17] sched/fair: Prevent from cpufreq not being updated when
  delayed-task is iowait
 
 Because the sched-delayed task maybe in io-wait state,
@@ -2296,7 +1065,7 @@ Signed-off-by: Xuewen Yan <xuewen.yan@unisoc.com>
  1 file changed, 5 insertions(+), 5 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 96ba0c1e2e440..a9f47d5954275 100644
+index 96ba0c1e2e44..a9f47d595427 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -6946,11 +6946,6 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
@@ -2327,10 +1096,10 @@ index 96ba0c1e2e440..a9f47d5954275 100644
 2.49.0
 
 
-From 67bb9804f4521735aebe498367148c8b95614395 Mon Sep 17 00:00:00 2001
+From 9f0a50d0fc02f46ac28839954e9a3be7bb8108cf Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Sun, 9 Mar 2025 18:09:36 +0100
-Subject: [PATCH 21/26] x86/locking/atomic: Use asm_inline for atomic locking
+Subject: [PATCH 14/17] x86/locking/atomic: Use asm_inline for atomic locking
  insns
 
 According to:
@@ -2567,7 +1336,7 @@ Cc: David Laight <david.laight.linux@gmail.com>
  7 files changed, 38 insertions(+), 38 deletions(-)
 
 diff --git a/arch/x86/include/asm/atomic.h b/arch/x86/include/asm/atomic.h
-index 55b4d24356eac..75743f1dfd4e4 100644
+index 55b4d24356ea..75743f1dfd4e 100644
 --- a/arch/x86/include/asm/atomic.h
 +++ b/arch/x86/include/asm/atomic.h
 @@ -30,14 +30,14 @@ static __always_inline void arch_atomic_set(atomic_t *v, int i)
@@ -2632,7 +1401,7 @@ index 55b4d24356eac..75743f1dfd4e4 100644
  			: "ir" (i)
  			: "memory");
 diff --git a/arch/x86/include/asm/atomic64_64.h b/arch/x86/include/asm/atomic64_64.h
-index ae12acae5b06a..87b496325b5ba 100644
+index ae12acae5b06..87b496325b5b 100644
 --- a/arch/x86/include/asm/atomic64_64.h
 +++ b/arch/x86/include/asm/atomic64_64.h
 @@ -22,14 +22,14 @@ static __always_inline void arch_atomic64_set(atomic64_t *v, s64 i)
@@ -2698,7 +1467,7 @@ index ae12acae5b06a..87b496325b5ba 100644
  			: "er" (i)
  			: "memory");
 diff --git a/arch/x86/include/asm/bitops.h b/arch/x86/include/asm/bitops.h
-index b96d45944c590..100413aff6402 100644
+index b96d45944c59..100413aff640 100644
 --- a/arch/x86/include/asm/bitops.h
 +++ b/arch/x86/include/asm/bitops.h
 @@ -52,12 +52,12 @@ static __always_inline void
@@ -2754,7 +1523,7 @@ index b96d45944c590..100413aff6402 100644
  	}
  }
 diff --git a/arch/x86/include/asm/cmpxchg.h b/arch/x86/include/asm/cmpxchg.h
-index 5612648b02022..5a9acaa6a56be 100644
+index 5612648b0202..5a9acaa6a56b 100644
 --- a/arch/x86/include/asm/cmpxchg.h
 +++ b/arch/x86/include/asm/cmpxchg.h
 @@ -44,22 +44,22 @@ extern void __add_wrong_size(void)
@@ -2857,7 +1626,7 @@ index 5612648b02022..5a9acaa6a56be 100644
  			     : CC_OUT(z) (success),			\
  			       [ptr] "+m" (*__ptr),			\
 diff --git a/arch/x86/include/asm/cmpxchg_32.h b/arch/x86/include/asm/cmpxchg_32.h
-index fd1282a783ddb..db08a4bd898a3 100644
+index fd1282a783dd..db08a4bd898a 100644
 --- a/arch/x86/include/asm/cmpxchg_32.h
 +++ b/arch/x86/include/asm/cmpxchg_32.h
 @@ -19,7 +19,7 @@ union __u64_halves {
@@ -2879,7 +1648,7 @@ index fd1282a783ddb..db08a4bd898a3 100644
  		     : CC_OUT(e) (ret),					\
  		       [ptr] "+m" (*(_ptr)),				\
 diff --git a/arch/x86/include/asm/cmpxchg_64.h b/arch/x86/include/asm/cmpxchg_64.h
-index 5e241306db26a..71d1e72ed8798 100644
+index 5e241306db26..71d1e72ed879 100644
 --- a/arch/x86/include/asm/cmpxchg_64.h
 +++ b/arch/x86/include/asm/cmpxchg_64.h
 @@ -38,7 +38,7 @@ union __u128_halves {
@@ -2901,7 +1670,7 @@ index 5e241306db26a..71d1e72ed8798 100644
  		     : CC_OUT(e) (ret),					\
  		       [ptr] "+m" (*(_ptr)),				\
 diff --git a/arch/x86/include/asm/rmwcc.h b/arch/x86/include/asm/rmwcc.h
-index 363266cbcadaf..3821ee3fae35d 100644
+index 363266cbcada..3821ee3fae35 100644
 --- a/arch/x86/include/asm/rmwcc.h
 +++ b/arch/x86/include/asm/rmwcc.h
 @@ -29,7 +29,7 @@ cc_label:	c = true;						\
@@ -2917,10 +1686,10 @@ index 363266cbcadaf..3821ee3fae35d 100644
 2.49.0
 
 
-From 089fb9a07748ce2ce55b535e1e22dfbe5ca207d7 Mon Sep 17 00:00:00 2001
+From d4d564da46428fdb573ec72fc85b7690f9bc6a43 Mon Sep 17 00:00:00 2001
 From: Yujun Dong <yujundong@pascal-lab.net>
 Date: Mon, 30 Dec 2024 22:16:24 +0800
-Subject: [PATCH 22/26] cpuidle, sched: Use smp_mb__after_atomic() in
+Subject: [PATCH 15/17] cpuidle, sched: Use smp_mb__after_atomic() in
  current_clr_polling()
 
 In architectures that use the polling bit, current_clr_polling() employs
@@ -2947,7 +1716,7 @@ Link: https://lore.kernel.org/r/20241230141624.155356-1-yujundong@pascal-lab.net
  1 file changed, 16 insertions(+), 7 deletions(-)
 
 diff --git a/include/linux/sched/idle.h b/include/linux/sched/idle.h
-index e670ac282333e..439f6029d3b94 100644
+index e670ac282333..439f6029d3b9 100644
 --- a/include/linux/sched/idle.h
 +++ b/include/linux/sched/idle.h
 @@ -79,6 +79,21 @@ static __always_inline bool __must_check current_clr_polling_and_test(void)
@@ -2999,55 +1768,10 @@ index e670ac282333e..439f6029d3b94 100644
 2.49.0
 
 
-From a6005063deef66c05f4311aace6e356db8146fa4 Mon Sep 17 00:00:00 2001
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Date: Tue, 15 Apr 2025 00:17:16 -0400
-Subject: [PATCH 23/26] dm: always update the array size in realloc_argv on
- success
-
-realloc_argv() was only updating the array size if it was called with
-old_argv already allocated. The first time it was called to create an
-argv array, it would allocate the array but return the array size as
-zero. dm_split_args() would think that it couldn't store any arguments
-in the array and would call realloc_argv() again, causing it to
-reallocate the initial slots (this time using GPF_KERNEL) and finally
-return a size. Aside from being wasteful, this could cause deadlocks on
-targets that need to process messages without starting new IO. Instead,
-realloc_argv should always update the allocated array size on success.
-
-Fixes: a0651926553c ("dm table: don't copy from a NULL pointer in realloc_argv()")
-Cc: stable@vger.kernel.org
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm-table.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 0ef5203387b26..3e61c8ad24791 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -523,9 +523,10 @@ static char **realloc_argv(unsigned int *size, char **old_argv)
- 		gfp = GFP_NOIO;
- 	}
- 	argv = kmalloc_array(new_size, sizeof(*argv), gfp);
--	if (argv && old_argv) {
--		memcpy(argv, old_argv, *size * sizeof(*argv));
-+	if (argv) {
- 		*size = new_size;
-+		if (old_argv)
-+			memcpy(argv, old_argv, *size * sizeof(*argv));
- 	}
- 
- 	kfree(old_argv);
--- 
-2.49.0
-
-
-From 75614496aa404181271bbacfa64eb6405fe49eb0 Mon Sep 17 00:00:00 2001
+From 8ec76dc3f0dd40e2a51ec840da2113f4d2f78307 Mon Sep 17 00:00:00 2001
 From: Dan Carpenter <dan.carpenter@linaro.org>
 Date: Wed, 30 Apr 2025 11:05:54 +0300
-Subject: [PATCH 24/26] dm: add missing unlock on in dm_keyslot_evict()
+Subject: [PATCH 16/17] dm: add missing unlock on in dm_keyslot_evict()
 
 We need to call dm_put_live_table() even if dm_get_live_table() returns
 NULL.
@@ -3061,7 +1785,7 @@ Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 3e61c8ad24791..b73a35944d3fe 100644
+index 58febd1bc772..efc6ec25e0c5 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
 @@ -1178,7 +1178,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
@@ -3085,69 +1809,10 @@ index 3e61c8ad24791..b73a35944d3fe 100644
 2.49.0
 
 
-From 20989dbcd2f03f71549e72072c9753105136dd28 Mon Sep 17 00:00:00 2001
-From: Tudor Ambarus <tudor.ambarus@linaro.org>
-Date: Tue, 6 May 2025 11:31:50 +0000
-Subject: [PATCH 25/26] dm: fix copying after src array boundaries
-
-The blammed commit copied to argv the size of the reallocated argv,
-instead of the size of the old_argv, thus reading and copying from
-past the old_argv allocated memory.
-
-Following BUG_ON was hit:
-[    3.038929][    T1] kernel BUG at lib/string_helpers.c:1040!
-[    3.039147][    T1] Internal error: Oops - BUG: 00000000f2000800 [#1]  SMP
-...
-[    3.056489][    T1] Call trace:
-[    3.056591][    T1]  __fortify_panic+0x10/0x18 (P)
-[    3.056773][    T1]  dm_split_args+0x20c/0x210
-[    3.056942][    T1]  dm_table_add_target+0x13c/0x360
-[    3.057132][    T1]  table_load+0x110/0x3ac
-[    3.057292][    T1]  dm_ctl_ioctl+0x424/0x56c
-[    3.057457][    T1]  __arm64_sys_ioctl+0xa8/0xec
-[    3.057634][    T1]  invoke_syscall+0x58/0x10c
-[    3.057804][    T1]  el0_svc_common+0xa8/0xdc
-[    3.057970][    T1]  do_el0_svc+0x1c/0x28
-[    3.058123][    T1]  el0_svc+0x50/0xac
-[    3.058266][    T1]  el0t_64_sync_handler+0x60/0xc4
-[    3.058452][    T1]  el0t_64_sync+0x1b0/0x1b4
-[    3.058620][    T1] Code: f800865e a9bf7bfd 910003fd 941f48aa (d4210000)
-[    3.058897][    T1] ---[ end trace 0000000000000000 ]---
-[    3.059083][    T1] Kernel panic - not syncing: Oops - BUG: Fatal exception
-
-Fix it by copying the size of src, and not the size of dst, as it was.
-
-Fixes: 5a2a6c428190 ("dm: always update the array size in realloc_argv on success")
-Cc: stable@vger.kernel.org
-Signed-off-by: Tudor Ambarus <tudor.ambarus@linaro.org>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm-table.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index b73a35944d3fe..efc6ec25e0c5d 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -524,9 +524,9 @@ static char **realloc_argv(unsigned int *size, char **old_argv)
- 	}
- 	argv = kmalloc_array(new_size, sizeof(*argv), gfp);
- 	if (argv) {
--		*size = new_size;
- 		if (old_argv)
- 			memcpy(argv, old_argv, *size * sizeof(*argv));
-+		*size = new_size;
- 	}
- 
- 	kfree(old_argv);
--- 
-2.49.0
-
-
-From bc86991671dd7695027f59b0aef0251028112eee Mon Sep 17 00:00:00 2001
+From 31bcb549fb16c57a5417f75500e24edcdf3d8e31 Mon Sep 17 00:00:00 2001
 From: Max Kellermann <max.kellermann@ionos.com>
 Date: Tue, 29 Apr 2025 20:58:27 +0200
-Subject: [PATCH 26/26] fs/eventpoll: fix endless busy loop after timeout has
+Subject: [PATCH 17/17] fs/eventpoll: fix endless busy loop after timeout has
  expired
 
 After commit 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in
@@ -3186,7 +1851,7 @@ Reviewed-by: Jan Kara <jack@suse.cz>
  1 file changed, 4 insertions(+), 3 deletions(-)
 
 diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index c01234bbac498..9a6b924958e2c 100644
+index c01234bbac49..9a6b924958e2 100644
 --- a/fs/eventpoll.c
 +++ b/fs/eventpoll.c
 @@ -2111,9 +2111,10 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
