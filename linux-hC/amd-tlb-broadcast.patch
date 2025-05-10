@@ -1,7 +1,7 @@
 From 3f808edc060d98b27bd8700cff4d87b6dcca5bf6 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 13 Feb 2025 11:13:52 -0500
-Subject: [PATCH 01/14] x86/mm: make MMU_GATHER_RCU_TABLE_FREE unconditional
+Subject: [PATCH 01/15] x86/mm: make MMU_GATHER_RCU_TABLE_FREE unconditional
 
 Currently x86 uses CONFIG_MMU_GATHER_TABLE_FREE when using
 paravirt, and not when running on bare metal.
@@ -157,7 +157,7 @@ index 1fef5ad32d5a..b1c1f72c1fd1 100644
 From e6675002182bb27cc0bcbaa9de8bf33bc09a247c Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Thu, 13 Feb 2025 11:13:53 -0500
-Subject: [PATCH 02/14] x86/mm: remove pv_ops.mmu.tlb_remove_table call
+Subject: [PATCH 02/15] x86/mm: remove pv_ops.mmu.tlb_remove_table call
 
 Every pv_ops.mmu.tlb_remove_table call ends up calling tlb_remove_table.
 
@@ -260,7 +260,7 @@ index d078de2c952b..38971c6dcd4b 100644
 From 762c640b4b29f15ec4e2b5dbfa8dec44cd280de0 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:36 -0500
-Subject: [PATCH 03/14] x86/mm: Consolidate full flush threshold decision
+Subject: [PATCH 03/15] x86/mm: Consolidate full flush threshold decision
 
 Reduce code duplication by consolidating the decision point for whether to do
 individual invalidations or a full flush inside get_flush_tlb_info().
@@ -353,7 +353,7 @@ index 6cf881a942bb..ac2149a6281e 100644
 From 09049ecb9e577a55c9f87e7d8d221bfaaea162ff Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:37 -0500
-Subject: [PATCH 04/14] x86/mm: Add INVLPGB feature and Kconfig entry
+Subject: [PATCH 04/15] x86/mm: Add INVLPGB feature and Kconfig entry
 
 In addition, the CPU advertises the maximum number of pages that can be
 shot down with one INVLPGB instruction in CPUID. Save that information
@@ -470,7 +470,7 @@ index 54194f5995de..7a72ef47a983 100644
 From 3e121e913ae3d535546ea61cf3f11a492e2d7966 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Fri, 28 Feb 2025 20:32:30 +0100
-Subject: [PATCH 05/14] x86/mm: Add INVLPGB support code
+Subject: [PATCH 05/15] x86/mm: Add INVLPGB support code
 
 Add helper functions and definitions needed to use broadcast TLB
 invalidation on AMD CPUs.
@@ -646,7 +646,7 @@ index 77f52bc1578a..31f6db40fa0d 100644
 From 677ff9eedb77e32374b651b93857222cffa4e0f2 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:39 -0500
-Subject: [PATCH 06/14] x86/mm: Use INVLPGB for kernel TLB flushes
+Subject: [PATCH 06/15] x86/mm: Use INVLPGB for kernel TLB flushes
 
 Use broadcast TLB invalidation for kernel addresses when available.
 Remove the need to send IPIs for kernel TLB flushes.
@@ -749,7 +749,7 @@ index ac2149a6281e..487ed82e234b 100644
 From 64840e4c4f1f53dbc9850317eb0a0dbbe8e29093 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:41 -0500
-Subject: [PATCH 07/14] x86/mm: Use broadcast TLB flushing in page reclaim
+Subject: [PATCH 07/15] x86/mm: Use broadcast TLB flushing in page reclaim
 
 Page reclaim tracks only the CPU(s) where the TLB needs to be flushed, rather
 than all the individual mappings that may be getting invalidated.
@@ -787,7 +787,7 @@ index 487ed82e234b..b619cc230ed4 100644
 From ca33555c9b25586739fb914050c82991dae28d8a Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:42 -0500
-Subject: [PATCH 08/14] x86/mm: Add global ASID allocation helper functions
+Subject: [PATCH 08/15] x86/mm: Add global ASID allocation helper functions
 
 Add functions to manage global ASID space. Multithreaded processes that are
 simultaneously active on 4 or more CPUs can get a global ASID, resulting in the
@@ -1085,7 +1085,7 @@ index b619cc230ed4..2392611d4339 100644
 From 40d5eae67225649883be6e8f544355aa8ac2da33 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:43 -0500
-Subject: [PATCH 09/14] x86/mm: Handle global ASID context switch and TLB flush
+Subject: [PATCH 09/15] x86/mm: Handle global ASID context switch and TLB flush
 
 Do context switch and TLB flush support for processes that use a global
 ASID and PCID across all CPUs.
@@ -1308,7 +1308,7 @@ index 2392611d4339..7cd0e3475e99 100644
 From 361cda14e34eb6593abca8a1e1e3157fec064a7a Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:44 -0500
-Subject: [PATCH 10/14] x86/mm: Add global ASID process exit helpers
+Subject: [PATCH 10/15] x86/mm: Add global ASID process exit helpers
 
 A global ASID is allocated for the lifetime of a process. Free the global ASID
 at process exit time.
@@ -1404,7 +1404,7 @@ index 6e34ad3fd6a5..dca2838fb723 100644
 From 10d716e2dc47e14aa7cdc773355a047ffc83a548 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:45 -0500
-Subject: [PATCH 11/14] x86/mm: Enable broadcast TLB invalidation for
+Subject: [PATCH 11/15] x86/mm: Enable broadcast TLB invalidation for
  multi-threaded processes
 
 There is not enough room in the 12-bit ASID address space to hand out
@@ -1631,7 +1631,7 @@ index 7cd0e3475e99..7505c2d94bc0 100644
 From fd9bec6382ca738bf89fa35f88b22a823c65f539 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Tue, 25 Feb 2025 22:00:47 -0500
-Subject: [PATCH 12/14] x86/mm: Enable AMD translation cache extensions
+Subject: [PATCH 12/15] x86/mm: Enable AMD translation cache extensions
 
 With AMD TCE (translation cache extensions) only the intermediate mappings
 that cover the address range zapped by INVLPG / INVLPGB get invalidated,
@@ -1724,7 +1724,7 @@ index 3ae84c3b8e6d..dc1c1057f26e 100644
 From f330a8d6f6e545a124eb06a48e793eff03f8d7ae Mon Sep 17 00:00:00 2001
 From: Tom Lendacky <thomas.lendacky@amd.com>
 Date: Tue, 4 Mar 2025 12:59:56 +0100
-Subject: [PATCH 13/14] x86/mm: Always set the ASID valid bit for the INVLPGB
+Subject: [PATCH 13/15] x86/mm: Always set the ASID valid bit for the INVLPGB
  instruction
 
 When executing the INVLPGB instruction on a bare-metal host or hypervisor, if
@@ -1852,7 +1852,7 @@ index 31f6db40fa0d..866ea78ba156 100644
 From af86ae5a38475a6467d7473e40c5f3d421c7b129 Mon Sep 17 00:00:00 2001
 From: Rik van Riel <riel@surriel.com>
 Date: Wed, 19 Mar 2025 13:25:20 -0400
-Subject: [PATCH 14/14] x86/mm: Only do broadcast flush from reclaim if pages
+Subject: [PATCH 14/15] x86/mm: Only do broadcast flush from reclaim if pages
  were unmapped
 
 Track whether pages were unmapped from any MM (even ones with a currently
@@ -1928,3 +1928,136 @@ index 7505c2d94bc0..296346b638bc 100644
  	} else if (cpumask_test_cpu(cpu, &batch->cpumask)) {
 -- 
 2.49.0
+
+
+From 523faacdc5d5a095853ba57f25ab8cbc222a6550 Mon Sep 17 00:00:00 2001
+From: Dave Hansen <dave.hansen@linux.intel.com>
+Date: Thu, 8 May 2025 15:41:32 -0700
+Subject: [PATCH 15/15] x86/mm: Eliminate window where TLB flushes may be
+ inadvertently skipped
+
+tl;dr: There is a window in the mm switching code where the new CR3 is
+set and the CPU should be getting TLB flushes for the new mm.  But
+should_flush_tlb() has a bug and suppresses the flush.  Fix it by
+widening the window where should_flush_tlb() sends an IPI.
+
+Long Version:
+
+=== History ===
+
+There were a few things leading up to this.
+
+First, updating mm_cpumask() was observed to be too expensive, so it was
+made lazier.  But being lazy caused too many unnecessary IPIs to CPUs
+due to the now-lazy mm_cpumask().  So code was added to cull
+mm_cpumask() periodically[2].  But that culling was a bit too aggressive
+and skipped sending TLB flushes to CPUs that need them.  So here we are
+again.
+
+=== Problem ===
+
+The too-aggressive code in should_flush_tlb() strikes in this window:
+
+	// Turn on IPIs for this CPU/mm combination, but only
+	// if should_flush_tlb() agrees:
+	cpumask_set_cpu(cpu, mm_cpumask(next));
+
+	next_tlb_gen = atomic64_read(&next->context.tlb_gen);
+	choose_new_asid(next, next_tlb_gen, &new_asid, &need_flush);
+	load_new_mm_cr3(need_flush);
+	// ^ After 'need_flush' is set to false, IPIs *MUST*
+	// be sent to this CPU and not be ignored.
+
+        this_cpu_write(cpu_tlbstate.loaded_mm, next);
+	// ^ Not until this point does should_flush_tlb()
+	// become true!
+
+should_flush_tlb() will suppress TLB flushes between load_new_mm_cr3()
+and writing to 'loaded_mm', which is a window where they should not be
+suppressed.  Whoops.
+
+=== Solution ===
+
+Thankfully, the fuzzy "just about to write CR3" window is already marked
+with loaded_mm==LOADED_MM_SWITCHING.  Simply checking for that state in
+should_flush_tlb() is sufficient to ensure that the CPU is targeted with
+an IPI.
+
+This will cause more TLB flush IPIs.  But the window is relatively small
+and I do not expect this to cause any kind of measurable performance
+impact.
+
+Update the comment where LOADED_MM_SWITCHING is written since it grew
+yet another user.
+
+Peter Z also raised a concern that should_flush_tlb() might not observe
+'loaded_mm' and 'is_lazy' in the same order that switch_mm_irqs_off()
+writes them.  Add a barrier to ensure that they are observed in the
+order they are written.
+
+Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Acked-by: Rik van Riel <riel@surriel.com>
+Link: https://lore.kernel.org/oe-lkp/202411282207.6bd28eae-lkp@intel.com/ [1]
+Fixes: 6db2526c1d69 ("x86/mm/tlb: Only trim the mm_cpumask once a second") [2]
+Reported-by: Stephen Dolan <sdolan@janestreet.com>
+Cc: stable@vger.kernel.org
+Acked-by: Ingo Molnar <mingo@kernel.org>
+Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
+---
+ arch/x86/mm/tlb.c | 22 +++++++++++++++++++---
+ 1 file changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
+index 296346b638bc..771760f7005e 100644
+--- a/arch/x86/mm/tlb.c
++++ b/arch/x86/mm/tlb.c
+@@ -900,8 +900,9 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
+ 		cond_mitigation(tsk);
+ 
+ 		/*
+-		 * Let nmi_uaccess_okay() and finish_asid_transition()
+-		 * know that CR3 is changing.
++		 * Indicate that CR3 is about to change. nmi_uaccess_okay()
++		 * and others are sensitive to the window where mm_cpumask(),
++		 * CR3 and cpu_tlbstate.loaded_mm are not all in sync.
+ 		 */
+ 		this_cpu_write(cpu_tlbstate.loaded_mm, LOADED_MM_SWITCHING);
+ 		barrier();
+@@ -1205,8 +1206,16 @@ static void flush_tlb_func(void *info)
+ 
+ static bool should_flush_tlb(int cpu, void *data)
+ {
++	struct mm_struct *loaded_mm = per_cpu(cpu_tlbstate.loaded_mm, cpu);
+ 	struct flush_tlb_info *info = data;
+ 
++	/*
++	 * Order the 'loaded_mm' and 'is_lazy' against their
++	 * write ordering in switch_mm_irqs_off(). Ensure
++	 * 'is_lazy' is at least as new as 'loaded_mm'.
++	 */
++	smp_rmb();
++
+ 	/* Lazy TLB will get flushed at the next context switch. */
+ 	if (per_cpu(cpu_tlbstate_shared.is_lazy, cpu))
+ 		return false;
+@@ -1215,8 +1224,15 @@ static bool should_flush_tlb(int cpu, void *data)
+ 	if (!info->mm)
+ 		return true;
+ 
++	/*
++	 * While switching, the remote CPU could have state from
++	 * either the prev or next mm. Assume the worst and flush.
++	 */
++	if (loaded_mm == LOADED_MM_SWITCHING)
++		return true;
++
+ 	/* The target mm is loaded, and the CPU is not lazy. */
+-	if (per_cpu(cpu_tlbstate.loaded_mm, cpu) == info->mm)
++	if (loaded_mm == info->mm)
+ 		return true;
+ 
+ 	/* In cpumask, but not the loaded mm? Periodically remove by flushing. */
+-- 
+2.49.0
+
