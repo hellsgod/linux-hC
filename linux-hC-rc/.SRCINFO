@@ -1,7 +1,7 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 6.15.rc5
-	pkgrel = 2
+	pkgver = 6.15.rc6
+	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
 	license = GPL-2.0-only
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v6.15-rc5.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v6.15-rc6.tar.gz
 	source = config
 	source = auto-cpu-optimization.sh
 	source = 0002-sched-fair-Prefer-full-idle-SMT-cores.patch
@@ -46,7 +46,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0007-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0008-kbuild-Add-workaround-for-GCC-15-Compilation.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/sched/0001-bore.patch
-	b2sums = bb5079c48dfdeb2fa55d39bbeb232ea8605ff7c1f93d5cf55c04dc360b291b4692249a7b610c947562678cb87e03ac506bb4ea27c3bbda94011d559d8ded34f7
+	b2sums = 076b095b416fb2d510e227a14a3845bf7e472089ebc19f417d1493a62f50bfee29eb96f760c6fb43d09d22397caa2da9c00ab6d8cdea735bd34aa02228e7846f
 	b2sums = 988732c59dcf38d279ea171315ce474331a29c2273284a09c62ca1b7b5549f6209b50b375f5b7337767acba162b2f9c9915b9a2b6669a2af956336fc0b29c085
 	b2sums = 390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab
 	b2sums = eb57fb07a2661760cdba725c8cba04db9d34d28bedb3c1a97dd0467dcba8924416d8f75595a48997daf18e991a1224380723bc7f1a3d138eca0296d3ce12a9db
@@ -97,7 +97,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 570.144 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.15.rc5-2
+	depends = linux-hC-rc=6.15.rc6-1
 	depends = nvidia-utils=570.144
 	depends = libglvnd
 	provides = NVIDIA-MODULE
