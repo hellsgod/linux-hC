@@ -1,18 +1,18 @@
-From b1fbb4e052b62d6c9ca782a72d3f4891b306a674 Mon Sep 17 00:00:00 2001
+From 88b4dda6f0314dc0095d78a08f71452704b048ef Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Tue, 13 May 2025 18:17:45 +0200
+Date: Tue, 13 May 2025 19:31:38 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 156 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 162 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 152 insertions(+), 8 deletions(-)
+ 2 files changed, 158 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..1fb6e7085cf9 100644
+index 907a4565f06a..863273481f5b 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,110 @@ HOSTRUSTC = rustc
+@@ -462,9 +462,113 @@ HOSTRUSTC = rustc
  HOSTPKG_CONFIG	= pkg-config
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -79,6 +79,9 @@ index 907a4565f06a..1fb6e7085cf9 100644
 +  -plugin-opt=enable-post-misched \
 +  -plugin-opt=misched-cluster \
 +  -plugin-opt=misched-fusion \
++  -plugin-opt=misched-cyclicpath \
++  -plugin-opt=misched-dcpl \
++  -plugin-opt=misched-regpressure \
 +  -plugin-opt=max-sched-reorder=48 \
 +  -plugin-opt=post-RA-scheduler \
 +  -plugin-opt=early-live-intervals \
@@ -125,7 +128,7 @@ index 907a4565f06a..1fb6e7085cf9 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +592,7 @@ export rust_common_flags := --edition=2021 \
+@@ -491,7 +595,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -134,7 +137,7 @@ index 907a4565f06a..1fb6e7085cf9 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +676,50 @@ LINUXINCLUDE    := \
+@@ -575,7 +679,53 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -166,6 +169,7 @@ index 907a4565f06a..1fb6e7085cf9 100644
 +  -mllvm -simplifycfg-hoist-loads-with-cond-faulting \
 +  -mllvm -simplifycfg-hoist-stores-with-cond-faulting \
 +  -mllvm -simplifycfg-sink-common \
++  -mllvm -simplifycfg-merge-compatible-invokes \
 +  -mllvm -branch-fold-placement \
 +  -mllvm -forward-switch-cond \
 +  -mllvm -enable-dfa-jump-thread \
@@ -182,11 +186,13 @@ index 907a4565f06a..1fb6e7085cf9 100644
 +  -mllvm -attributor-max-iterations=3 \
 +  -mllvm -unswitch-threshold=50 \
 +  -mllvm -max-speculation-depth=10 \
-+  -mllvm -enable-nontrivial-unswitch
++  -mllvm -enable-nontrivial-unswitch \
++  -mllvm -hoist-const-loads \
++  -mllvm -hoist-const-stores
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1003,8 @@ endif # need-config
+@@ -859,8 +1009,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
