@@ -1,7 +1,7 @@
 From 6d08bc8cdeaa12c0b949be2935e7be02b3a9b194 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/2] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/6] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index b0adb665041f..eea830cc90a7 100644
 From 2900294ff42693d91006d31050ae358a0cb3f6ff Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/2] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/6] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -68,6 +68,479 @@ index 452374d63c24..08f80d7c5df0 100644
  	echo "Installing System.map and config..."
  	mkdir -p "${builddir}"
  	cp System.map "${builddir}/System.map"
+-- 
+2.49.0
+
+
+From 98cc9a44845049fbcc75c499081dbfa1c5c917a4 Mon Sep 17 00:00:00 2001
+From: Donet Tom <donettom@linux.ibm.com>
+Date: Sat, 3 May 2025 11:10:12 +0530
+Subject: [PATCH 3/6] driver/base: Optimize memory block registration to reduce
+ boot time
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+During node device initialization, `memory blocks` are registered under
+each NUMA node. The `memory blocks` to be registered are identified using
+the node’s start and end PFNs, which are obtained from the node's pg_data
+
+However, not all PFNs within this range necessarily belong to the same
+node—some may belong to other nodes. Additionally, due to the
+discontiguous nature of physical memory, certain sections within a
+`memory block` may be absent.
+
+As a result, `memory blocks` that fall between a node’s start and end
+PFNs may span across multiple nodes, and some sections within those blocks
+may be missing. `Memory blocks` have a fixed size, which is architecture
+dependent.
+
+Due to these considerations, the memory block registration is currently
+performed as follows:
+
+for_each_online_node(nid):
+    start_pfn = pgdat->node_start_pfn;
+    end_pfn = pgdat->node_start_pfn + node_spanned_pages;
+    for_each_memory_block_between(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn))
+        mem_blk = memory_block_id(pfn_to_section_nr(pfn));
+        pfn_mb_start=section_nr_to_pfn(mem_blk->start_section_nr)
+        pfn_mb_end = pfn_start + memory_block_pfns - 1
+        for (pfn = pfn_mb_start; pfn < pfn_mb_end; pfn++):
+            if (get_nid_for_pfn(pfn) != nid):
+                continue;
+            else
+                do_register_memory_block_under_node(nid, mem_blk,
+                                                        MEMINIT_EARLY);
+
+Here, we derive the start and end PFNs from the node's pg_data, then
+determine the memory blocks that may belong to the node. For each
+`memory block` in this range, we inspect all PFNs it contains and check
+their associated NUMA node ID. If a PFN within the block matches the
+current node, the memory block is registered under that node.
+
+If CONFIG_DEFERRED_STRUCT_PAGE_INIT is enabled, get_nid_for_pfn() performs
+a binary search in the `memblock regions` to determine the NUMA node ID
+for a given PFN. If it is not enabled, the node ID is retrieved directly
+from the struct page.
+
+On large systems, this process can become time-consuming, especially since
+we iterate over each `memory block` and all PFNs within it until a match is
+found. When CONFIG_DEFERRED_STRUCT_PAGE_INIT is enabled, the additional
+overhead of the binary search increases the execution time significantly,
+potentially leading to soft lockups during boot.
+
+In this patch, we iterate over `memblock region` to identify the
+`memory blocks` that belong to the current NUMA node. `memblock regions`
+are contiguous memory ranges, each associated with a single NUMA node, and
+they do not span across multiple nodes.
+
+for_each_online_node(nid):
+  for_each_memory_region(r): // r => region
+    if (r->nid != nid):
+      continue;
+    else
+      for_each_memory_block_between(r->base, r->base + r->size - 1):
+        do_register_memory_block_under_node(nid, mem_blk, MEMINIT_EARLY);
+
+We iterate over all `memblock regions` and identify those that belong to
+the current NUMA node. For each `memblock region` associated with the
+current node, we calculate the start and end `memory blocks` based on the
+region's start and end PFNs. We then register all `memory blocks` within
+that range under the current node.
+
+Test Results on My system with 32TB RAM
+=======================================
+1. Boot time with CONFIG_DEFERRED_STRUCT_PAGE_INIT enabled.
+
+Without this patch
+------------------
+Startup finished in 1min 16.528s (kernel)
+
+With this patch
+---------------
+Startup finished in 17.236s (kernel) - 78% Improvement
+
+2. Boot time with CONFIG_DEFERRED_STRUCT_PAGE_INIT disabled.
+
+Without this patch
+------------------
+Startup finished in 28.320s (kernel)
+
+With this patch
+---------------
+Startup finished in 15.621s (kernel) - 46% Improvement
+
+Acked-by: David Hildenbrand <david@redhat.com>
+Signed-off-by: Donet Tom <donettom@linux.ibm.com>
+---
+ drivers/base/memory.c  |  4 ++--
+ drivers/base/node.c    | 38 ++++++++++++++++++++++++++++++++++++++
+ include/linux/memory.h |  2 ++
+ include/linux/node.h   | 11 +++++------
+ 4 files changed, 47 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/base/memory.c b/drivers/base/memory.c
+index 8f3a41d9bfaa..720c5906f65d 100644
+--- a/drivers/base/memory.c
++++ b/drivers/base/memory.c
+@@ -60,7 +60,7 @@ static inline unsigned long pfn_to_block_id(unsigned long pfn)
+ 	return memory_block_id(pfn_to_section_nr(pfn));
+ }
+ 
+-static inline unsigned long phys_to_block_id(unsigned long phys)
++unsigned long phys_to_block_id(unsigned long phys)
+ {
+ 	return pfn_to_block_id(PFN_DOWN(phys));
+ }
+@@ -632,7 +632,7 @@ int __weak arch_get_memory_phys_device(unsigned long start_pfn)
+  *
+  * Called under device_hotplug_lock.
+  */
+-static struct memory_block *find_memory_block_by_id(unsigned long block_id)
++struct memory_block *find_memory_block_by_id(unsigned long block_id)
+ {
+ 	struct memory_block *mem;
+ 
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index cd13ef287011..0f8a4645b26c 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -20,6 +20,7 @@
+ #include <linux/pm_runtime.h>
+ #include <linux/swap.h>
+ #include <linux/slab.h>
++#include <linux/memblock.h>
+ 
+ static const struct bus_type node_subsys = {
+ 	.name = "node",
+@@ -850,6 +851,43 @@ void unregister_memory_block_under_nodes(struct memory_block *mem_blk)
+ 			  kobject_name(&node_devices[mem_blk->nid]->dev.kobj));
+ }
+ 
++/*
++ * register_memory_blocks_under_node_early : Register the memory
++ *		  blocks under the current node.
++ * @nid : Current node under registration
++ *
++ * This function iterates over all memblock regions and identifies the regions
++ * that belong to the current node. For each region which belongs to current
++ * node, it calculates the start and end memory blocks based on the region's
++ * start and end PFNs. It then registers all memory blocks within that range
++ * under the current node.
++ */
++void register_memory_blocks_under_node_early(int nid)
++{
++	struct memblock_region *r;
++
++	for_each_mem_region(r) {
++		if (r->nid != nid)
++			continue;
++
++		const unsigned long start_block_id = phys_to_block_id(r->base);
++		const unsigned long end_block_id = phys_to_block_id(r->base + r->size - 1);
++		unsigned long block_id;
++
++		for (block_id = start_block_id; block_id <= end_block_id; block_id++) {
++			struct memory_block *mem;
++
++			mem = find_memory_block_by_id(block_id);
++			if (!mem)
++				continue;
++
++			do_register_memory_block_under_node(nid, mem, MEMINIT_EARLY);
++			put_device(&mem->dev);
++		}
++
++	}
++}
++
+ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+ 				       unsigned long end_pfn,
+ 				       enum meminit_context context)
+diff --git a/include/linux/memory.h b/include/linux/memory.h
+index 12daa6ec7d09..cb8579226536 100644
+--- a/include/linux/memory.h
++++ b/include/linux/memory.h
+@@ -171,6 +171,8 @@ struct memory_group *memory_group_find_by_id(int mgid);
+ typedef int (*walk_memory_groups_func_t)(struct memory_group *, void *);
+ int walk_dynamic_memory_groups(int nid, walk_memory_groups_func_t func,
+ 			       struct memory_group *excluded, void *arg);
++unsigned long phys_to_block_id(unsigned long phys);
++struct memory_block *find_memory_block_by_id(unsigned long block_id);
+ #define hotplug_memory_notifier(fn, pri) ({		\
+ 	static __meminitdata struct notifier_block fn##_mem_nb =\
+ 		{ .notifier_call = fn, .priority = pri };\
+diff --git a/include/linux/node.h b/include/linux/node.h
+index 2b7517892230..93beefe8f179 100644
+--- a/include/linux/node.h
++++ b/include/linux/node.h
+@@ -114,12 +114,16 @@ extern struct node *node_devices[];
+ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+ 				       unsigned long end_pfn,
+ 				       enum meminit_context context);
++void register_memory_blocks_under_node_early(int nid);
+ #else
+ static inline void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+ 						     unsigned long end_pfn,
+ 						     enum meminit_context context)
+ {
+ }
++static inline void register_memory_blocks_under_node_early(int nid)
++{
++}
+ #endif
+ 
+ extern void unregister_node(struct node *node);
+@@ -134,15 +138,10 @@ static inline int register_one_node(int nid)
+ 	int error = 0;
+ 
+ 	if (node_online(nid)) {
+-		struct pglist_data *pgdat = NODE_DATA(nid);
+-		unsigned long start_pfn = pgdat->node_start_pfn;
+-		unsigned long end_pfn = start_pfn + pgdat->node_spanned_pages;
+-
+ 		error = __register_one_node(nid);
+ 		if (error)
+ 			return error;
+-		register_memory_blocks_under_node(nid, start_pfn, end_pfn,
+-						  MEMINIT_EARLY);
++		register_memory_blocks_under_node_early(nid);
+ 	}
+ 
+ 	return error;
+-- 
+2.49.0
+
+
+From db342d443c49d0e4cc1d49059c3ea4f845eb64b4 Mon Sep 17 00:00:00 2001
+From: Donet Tom <donettom@linux.ibm.com>
+Date: Sat, 3 May 2025 11:10:13 +0530
+Subject: [PATCH 4/6] driver/base: remove register_mem_block_under_node_early()
+
+The function register_mem_block_under_node_early() is no longer used,
+as register_memory_blocks_under_node_early() now handles memory block
+registration during early boot.
+
+Removed register_mem_block_under_node_early() and get_nid_for_pfn(),
+the latter was only used by the former.
+
+Acked-by: David Hildenbrand <david@redhat.com>
+Signed-off-by: Donet Tom <donettom@linux.ibm.com>
+---
+ drivers/base/node.c | 58 +--------------------------------------------
+ 1 file changed, 1 insertion(+), 57 deletions(-)
+
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index 0f8a4645b26c..948392b477ea 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -748,15 +748,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
+ }
+ 
+ #ifdef CONFIG_MEMORY_HOTPLUG
+-static int __ref get_nid_for_pfn(unsigned long pfn)
+-{
+-#ifdef CONFIG_DEFERRED_STRUCT_PAGE_INIT
+-	if (system_state < SYSTEM_RUNNING)
+-		return early_pfn_to_nid(pfn);
+-#endif
+-	return pfn_to_nid(pfn);
+-}
+-
+ static void do_register_memory_block_under_node(int nid,
+ 						struct memory_block *mem_blk,
+ 						enum meminit_context context)
+@@ -783,46 +774,6 @@ static void do_register_memory_block_under_node(int nid,
+ 				    ret);
+ }
+ 
+-/* register memory section under specified node if it spans that node */
+-static int register_mem_block_under_node_early(struct memory_block *mem_blk,
+-					       void *arg)
+-{
+-	unsigned long memory_block_pfns = memory_block_size_bytes() / PAGE_SIZE;
+-	unsigned long start_pfn = section_nr_to_pfn(mem_blk->start_section_nr);
+-	unsigned long end_pfn = start_pfn + memory_block_pfns - 1;
+-	int nid = *(int *)arg;
+-	unsigned long pfn;
+-
+-	for (pfn = start_pfn; pfn <= end_pfn; pfn++) {
+-		int page_nid;
+-
+-		/*
+-		 * memory block could have several absent sections from start.
+-		 * skip pfn range from absent section
+-		 */
+-		if (!pfn_in_present_section(pfn)) {
+-			pfn = round_down(pfn + PAGES_PER_SECTION,
+-					 PAGES_PER_SECTION) - 1;
+-			continue;
+-		}
+-
+-		/*
+-		 * We need to check if page belongs to nid only at the boot
+-		 * case because node's ranges can be interleaved.
+-		 */
+-		page_nid = get_nid_for_pfn(pfn);
+-		if (page_nid < 0)
+-			continue;
+-		if (page_nid != nid)
+-			continue;
+-
+-		do_register_memory_block_under_node(nid, mem_blk, MEMINIT_EARLY);
+-		return 0;
+-	}
+-	/* mem section does not span the specified node */
+-	return 0;
+-}
+-
+ /*
+  * During hotplug we know that all pages in the memory block belong to the same
+  * node.
+@@ -892,15 +843,8 @@ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+ 				       unsigned long end_pfn,
+ 				       enum meminit_context context)
+ {
+-	walk_memory_blocks_func_t func;
+-
+-	if (context == MEMINIT_HOTPLUG)
+-		func = register_mem_block_under_node_hotplug;
+-	else
+-		func = register_mem_block_under_node_early;
+-
+ 	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
+-			   (void *)&nid, func);
++			   (void *)&nid, register_mem_block_under_node_hotplug);
+ 	return;
+ }
+ #endif /* CONFIG_MEMORY_HOTPLUG */
+-- 
+2.49.0
+
+
+From 0830b7fed16951b041680940979e7f11020b3e0f Mon Sep 17 00:00:00 2001
+From: Donet Tom <donettom@linux.ibm.com>
+Date: Sat, 3 May 2025 11:10:14 +0530
+Subject: [PATCH 5/6] drivers/base : Rename register_memory_blocks_under_node()
+ and remove context argument
+
+The function register_memory_blocks_under_node() is now only called from
+the memory hotplug path, as register_memory_blocks_under_node_early()
+handles registration during early boot. Therefore, the context argument
+used to differentiate between early boot and hotplug is no longer needed
+and was removed.
+
+Since the function is only called from the hotplug path, we renamed
+register_memory_blocks_under_node() to
+register_memory_blocks_under_node_hotplug()
+
+Signed-off-by: Donet Tom <donettom@linux.ibm.com>
+---
+ drivers/base/node.c  |  5 ++---
+ include/linux/node.h | 11 +++++------
+ mm/memory_hotplug.c  |  5 ++---
+ 3 files changed, 9 insertions(+), 12 deletions(-)
+
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index 948392b477ea..206944c83849 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -839,9 +839,8 @@ void register_memory_blocks_under_node_early(int nid)
+ 	}
+ }
+ 
+-void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+-				       unsigned long end_pfn,
+-				       enum meminit_context context)
++void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
++					       unsigned long end_pfn)
+ {
+ 	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
+ 			   (void *)&nid, register_mem_block_under_node_hotplug);
+diff --git a/include/linux/node.h b/include/linux/node.h
+index 93beefe8f179..ac233c302d1d 100644
+--- a/include/linux/node.h
++++ b/include/linux/node.h
+@@ -111,14 +111,13 @@ struct memory_block;
+ extern struct node *node_devices[];
+ 
+ #if defined(CONFIG_MEMORY_HOTPLUG) && defined(CONFIG_NUMA)
+-void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+-				       unsigned long end_pfn,
+-				       enum meminit_context context);
++void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
++					       unsigned long end_pfn);
+ void register_memory_blocks_under_node_early(int nid);
+ #else
+-static inline void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+-						     unsigned long end_pfn,
+-						     enum meminit_context context)
++static inline void register_memory_blocks_under_node_hotplug(int nid,
++							     unsigned long start_pfn,
++							     unsigned long end_pfn)
+ {
+ }
+ static inline void register_memory_blocks_under_node_early(int nid)
+diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
+index 8305483de38b..e3e83ae90c7c 100644
+--- a/mm/memory_hotplug.c
++++ b/mm/memory_hotplug.c
+@@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
+ 		BUG_ON(ret);
+ 	}
+ 
+-	register_memory_blocks_under_node(nid, PFN_DOWN(start),
+-					  PFN_UP(start + size - 1),
+-					  MEMINIT_HOTPLUG);
++	register_memory_blocks_under_node_hotplug(nid, PFN_DOWN(start),
++						  PFN_UP(start + size - 1));
+ 
+ 	/* create new memmap entry */
+ 	if (!strcmp(res->name, "System RAM"))
+-- 
+2.49.0
+
+
+From 0ec25d57fdef79acc2a2cc7bf16952784c1ef5b3 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Wed, 9 Apr 2025 16:55:10 +0100
+Subject: [PATCH 6/6] select: do_pollfd: add unlikely branch hint return path
+
+Adding an unlikely() hint on the fd < 0 comparison return path improves
+run-time performance of the poll() system call. gcov based coverage
+analysis based on running stress-ng and a kernel build shows that this
+path return path is highly unlikely.
+
+Benchmarking on an Debian based Intel(R) Core(TM) Ultra 9 285K with
+a 6.15-rc1 kernel and a poll of 1024 file descriptors with zero timeout
+shows an call reduction from 32818 ns down to 32635 ns, which is a ~0.5%
+performance improvement.
+
+Results based on running 25 tests with turbo disabled (to reduce clock
+freq turbo changes), with 30 second run per test and comparing the number
+of poll() calls per second. The % standard deviation of the 25 tests
+was 0.08%, so results are reliable.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+Link: https://lore.kernel.org/20250409155510.577490-1-colin.i.king@gmail.com
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/select.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/select.c b/fs/select.c
+index 7da531b1cf6b..0eaf3522abe9 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+ 	int fd = pollfd->fd;
+ 	__poll_t mask, filter;
+ 
+-	if (fd < 0)
++	if (unlikely(fd < 0))
+ 		return 0;
+ 
+ 	CLASS(fd, f)(fd);
 -- 
 2.49.0
 
