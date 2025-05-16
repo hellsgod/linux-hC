@@ -1,15 +1,15 @@
-From 88b4dda6f0314dc0095d78a08f71452704b048ef Mon Sep 17 00:00:00 2001
+From 44005849d189820f576f95ad7c52185ac545b3c8 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Tue, 13 May 2025 19:31:38 +0200
+Date: Fri, 16 May 2025 10:02:52 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 162 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 161 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 158 insertions(+), 8 deletions(-)
+ 2 files changed, 157 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..863273481f5b 100644
+index 907a4565f06a..80ce2b3d8358 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -462,9 +462,113 @@ HOSTRUSTC = rustc
@@ -137,13 +137,12 @@ index 907a4565f06a..863273481f5b 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +679,53 @@ LINUXINCLUDE    := \
+@@ -575,7 +679,52 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
 -KBUILD_CFLAGS :=
 +KBUILD_CFLAGS := \
-+  -Wno-default-const-init-unsafe \
 +  -fdata-sections -ffunction-sections \
 +  -ffine-grained-bitfield-accesses \
 +  -fmerge-all-constants \
@@ -192,7 +191,7 @@ index 907a4565f06a..863273481f5b 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1009,8 @@ endif # need-config
+@@ -859,8 +1008,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
