@@ -203,6 +203,7 @@ source=(
     "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
     "config"
     "auto-cpu-optimization.sh"
+    "0001-linux6.15.y-le9uo-1.15.patch"
     "0002-sched-fair-Prefer-full-idle-SMT-cores.patch"
     "amd-pstate.patch"
     "block.patch"
@@ -211,7 +212,6 @@ source=(
     "cpuidle.patch"
     "fixes.patch"
     "kbuild.patch"
-    "le9uo.patch"
     "rcu-Change-sched_setscheduler_nocheck-calls-t.patch"
     "tweaks.patch")
 
