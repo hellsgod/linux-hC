@@ -1,4 +1,4 @@
-From d37a0b234f8bc539b7a52ad7ed4f0810723aab6e Mon Sep 17 00:00:00 2001
+From 76c8d292fc739504c8978b25b9220564bec1f8d5 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 29 Jan 2025 19:51:20 -0800
 Subject: [PATCH 01/23] lib/crc64-rocksoft: stop wrapping the crypto API
@@ -83,10 +83,10 @@ index dccb61b7d698..da07fd39cf97 100644
  	tristate "CRC ITU-T V.41 functions"
  	help
 diff --git a/lib/Makefile b/lib/Makefile
-index d5cfc7afbbb8..e07c8aa10d48 100644
+index 4f3d00a2fd65..2818b8414692 100644
 --- a/lib/Makefile
 +++ b/lib/Makefile
-@@ -167,7 +167,6 @@ obj-$(CONFIG_CRC64)     += crc64.o
+@@ -172,7 +172,6 @@ obj-$(CONFIG_CRC64)     += crc64.o
  obj-$(CONFIG_CRC4)	+= crc4.o
  obj-$(CONFIG_CRC7)	+= crc7.o
  obj-$(CONFIG_CRC8)	+= crc8.o
@@ -245,10 +245,10 @@ index 61ae8dfb6a1c..b5136fb4c199 100644
  {
  	const unsigned char *_p = p;
 -- 
-2.48.1
+2.49.0
 
 
-From a84f51e11b838a09c8d41f8b4aaee1c8fbc88080 Mon Sep 17 00:00:00 2001
+From 73bbf17de21add98d249740379bbe4fd7fcc4854 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 29 Jan 2025 19:51:21 -0800
 Subject: [PATCH 02/23] crypto: crc64-rocksoft - remove from crypto API
@@ -285,10 +285,10 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  delete mode 100644 crypto/crc64_rocksoft_generic.c
 
 diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 74ae5f52b784..9ffb59b1aac3 100644
+index 561ed11cd074..278b6cdaa3df 100644
 --- a/crypto/Kconfig
 +++ b/crypto/Kconfig
-@@ -1090,17 +1090,6 @@ config CRYPTO_CRCT10DIF
+@@ -1093,17 +1093,6 @@ config CRYPTO_CRCT10DIF
  
  	  CRC algorithm used by the SCSI Block Commands standard.
  
@@ -471,10 +471,10 @@ index 0a595b272166..7880aeab69d6 100644
  u64 __pure crc64_rocksoft_generic(u64 crc, const void *p, size_t len);
  
 -- 
-2.48.1
+2.49.0
 
 
-From 3978109e55897203957a5831c84fe4af0263532c Mon Sep 17 00:00:00 2001
+From 42a4a4929e27d386d1c213f25d8ee9090f7e8702 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 29 Jan 2025 19:51:22 -0800
 Subject: [PATCH 03/23] lib/crc64: rename CRC64-Rocksoft to CRC64-NVME
@@ -626,10 +626,10 @@ index 55e222acd0b8..e05a4230a0a0 100644
  	return 0;
  }
 -- 
-2.48.1
+2.49.0
 
 
-From 4847ceccbc7dcc7a71b4ac5bfcbb69582f5bb637 Mon Sep 17 00:00:00 2001
+From 4e9cbf8329ac62815d8c9f2010fd9153a1d88ffc Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 29 Jan 2025 19:51:23 -0800
 Subject: [PATCH 04/23] lib/crc_kunit.c: add test and benchmark for CRC64-NVME
@@ -704,10 +704,10 @@ index 6a61d4b5fd45..1e82fcf9489e 100644
  };
  
 -- 
-2.48.1
+2.49.0
 
 
-From ab46ea428ffa8908253bb422cf33b288842f3ee4 Mon Sep 17 00:00:00 2001
+From 04642b0c3191ca8d6a504a9c70e7e324a61512a7 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Wed, 29 Jan 2025 19:51:24 -0800
 Subject: [PATCH 05/23] lib/crc64: add support for arch-optimized
@@ -850,10 +850,10 @@ index d6f3f245eede..5b1b17057f0a 100644
  }
  EXPORT_SYMBOL_GPL(crc64_nvme_generic);
 -- 
-2.48.1
+2.49.0
 
 
-From fdcb81cecbb0e2c227b049dbfb02037a8e252992 Mon Sep 17 00:00:00 2001
+From 12bdd077c10392deb625765f9b0175e967164922 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Tue, 4 Feb 2025 16:04:24 -0800
 Subject: [PATCH 06/23] lib/crc32: remove obsolete CRC32 options from defconfig
@@ -974,7 +974,7 @@ index 6f449411abf7..a0d27c59ea78 100644
  CONFIG_CRC_CCITT=y
 -CONFIG_CRC32_SLICEBY4=y
 diff --git a/arch/powerpc/configs/mpc885_ads_defconfig b/arch/powerpc/configs/mpc885_ads_defconfig
-index 77306be62e9e..89da51d724fb 100644
+index 129355f87f80..9bc2758a6a9a 100644
 --- a/arch/powerpc/configs/mpc885_ads_defconfig
 +++ b/arch/powerpc/configs/mpc885_ads_defconfig
 @@ -70,7 +70,6 @@ CONFIG_NFS_FS=y
@@ -998,10 +998,10 @@ index 383c0966e92f..425f10837a18 100644
  CONFIG_MAGIC_SYSRQ=y
  CONFIG_DETECT_HUNG_TASK=y
 -- 
-2.48.1
+2.49.0
 
 
-From 645d189ae8d8b2ccbb6633125a4d323f62b73c9d Mon Sep 17 00:00:00 2001
+From 367c3a4f9098f8259c5b47b34358edf5e48278be Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 7 Feb 2025 18:49:06 -0800
 Subject: [PATCH 07/23] mips/crc32: remove unused enums
@@ -1042,10 +1042,10 @@ index 083e5d693a16..100ac586aadb 100644
  #define _ASM_SET_CRC(OP, SZ, TYPE)					  \
  _ASM_MACRO_3R(OP, rt, rs, rt2,						  \
 -- 
-2.48.1
+2.49.0
 
 
-From 20a6a9915cab0f98bc159620733daf5683de4dd7 Mon Sep 17 00:00:00 2001
+From 7886d760cabd5ff646ce0af4c9b9000773d20418 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 7 Feb 2025 18:49:07 -0800
 Subject: [PATCH 08/23] lib/crc32: use void pointer for data
@@ -1102,10 +1102,10 @@ index e9bd40056687..e70977014cfd 100644
  	if (IS_ENABLED(CONFIG_CRC32_ARCH))
  		return crc32c_le_arch(crc, p, len);
 -- 
-2.48.1
+2.49.0
 
 
-From 6d46447db3869ee220a3168668084b39ef83fa01 Mon Sep 17 00:00:00 2001
+From cb9bf9a6a9353288d8ccb71f86402e38734077ed Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 7 Feb 2025 18:49:08 -0800
 Subject: [PATCH 09/23] lib/crc32: don't bother with pure and const function
@@ -1327,10 +1327,10 @@ index ede6131f66fc..3c080cda5e1c 100644
  	while (len--)
  		crc = (crc << 8) ^ crc32table_be[(crc >> 24) ^ *p++];
 -- 
-2.48.1
+2.49.0
 
 
-From c88a7c8f2da8709f8df0894429003b47f9d57dd3 Mon Sep 17 00:00:00 2001
+From df36fcbc15d3fd7df6cfe55755114345cbbcdc6c Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 7 Feb 2025 18:49:09 -0800
 Subject: [PATCH 10/23] lib/crc32: standardize on crc32c() name for Castagnoli
@@ -1679,10 +1679,10 @@ index 6b333d1c6e94..b7ea8be0d0cb 100644
  	return aw_dev_dsp_write(aw_dev, AW88395_DSP_REG_CRC_ADDR, crc_value,
  						AW88395_DSP_32_DATA);
 -- 
-2.48.1
+2.49.0
 
 
-From a1d6fbd4c45f7a4e6d6b1991084bab83e28658db Mon Sep 17 00:00:00 2001
+From 16c51d53b8164cf3f4158da810447fac3ca5f041 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 7 Feb 2025 18:49:10 -0800
 Subject: [PATCH 11/23] lib/crc32: rename __crc32c_le_combine() to
@@ -1814,10 +1814,10 @@ index 1e82fcf9489e..40b4b41f2184 100644
  
  static const struct crc_variant crc_variant_crc32c = {
 -- 
-2.48.1
+2.49.0
 
 
-From d75c5de9054bf76882d5566ecf756fb9f28835cc Mon Sep 17 00:00:00 2001
+From 0a7d51d44e0849b7a318dcda27a76cebc2d0a4bb Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Fri, 7 Feb 2025 18:49:11 -0800
 Subject: [PATCH 12/23] lib/crc32: remove "_le" from crc32c base and arch
@@ -2176,10 +2176,10 @@ index 554ef6827b80..fddd424ff224 100644
  /*
   * This multiplies the polynomials x and y modulo the given modulus.
 -- 
-2.48.1
+2.49.0
 
 
-From b84f6cd380b5d200705c57ef3a220e3fec4bb264 Mon Sep 17 00:00:00 2001
+From a1934a3ae4d10c903c2546e6b9534ebe89320278 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Thu, 6 Feb 2025 09:38:57 -0800
 Subject: [PATCH 13/23] crypto: crct10dif - remove from crypto API
@@ -2261,10 +2261,10 @@ index cfc8bf791792..58c36720c94a 100644
  CONFIG_CRYPTO_MICHAEL_MIC=m
  CONFIG_CRYPTO_RMD160=m
 diff --git a/crypto/Kconfig b/crypto/Kconfig
-index 9ffb59b1aac3..b8a436edf4c3 100644
+index 278b6cdaa3df..76693e3edff8 100644
 --- a/crypto/Kconfig
 +++ b/crypto/Kconfig
-@@ -1081,15 +1081,6 @@ config CRYPTO_CRC32
+@@ -1084,15 +1084,6 @@ config CRYPTO_CRC32
  
  	  Used by RoCEv2 and f2fs.
  
@@ -2837,10 +2837,10 @@ index 348e8bef62c7..e3cec3723ffa 100644
  	"sha224-arm64",
  	"sha224-arm64-neon",
 -- 
-2.48.1
+2.49.0
 
 
-From 37d071b800fc181bb5a5acf75561d726e3523b66 Mon Sep 17 00:00:00 2001
+From 8b6bf9382c93cfd93800b242fe7170ca2d7d51ac Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Sat, 8 Feb 2025 09:56:47 -0800
 Subject: [PATCH 14/23] lib/crc-t10dif: remove crc_t10dif_is_optimized()
@@ -2860,10 +2860,10 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  5 files changed, 33 deletions(-)
 
 diff --git a/arch/arm/lib/crc-t10dif-glue.c b/arch/arm/lib/crc-t10dif-glue.c
-index d24dee62670e..f3584ba70e57 100644
+index 4ab8daa4ec0b..6efad3d78284 100644
 --- a/arch/arm/lib/crc-t10dif-glue.c
 +++ b/arch/arm/lib/crc-t10dif-glue.c
-@@ -69,12 +69,6 @@ static void __exit crc_t10dif_arm_exit(void)
+@@ -67,12 +67,6 @@ static void __exit crc_t10dif_arm_exit(void)
  }
  module_exit(crc_t10dif_arm_exit);
  
@@ -2877,10 +2877,10 @@ index d24dee62670e..f3584ba70e57 100644
  MODULE_DESCRIPTION("Accelerated CRC-T10DIF using ARM NEON and Crypto Extensions");
  MODULE_LICENSE("GPL v2");
 diff --git a/arch/arm64/lib/crc-t10dif-glue.c b/arch/arm64/lib/crc-t10dif-glue.c
-index dab7e3796232..a007d0c5f3fe 100644
+index 2dcb1e31bbb2..bacd18f23168 100644
 --- a/arch/arm64/lib/crc-t10dif-glue.c
 +++ b/arch/arm64/lib/crc-t10dif-glue.c
-@@ -70,12 +70,6 @@ static void __exit crc_t10dif_arm64_exit(void)
+@@ -68,12 +68,6 @@ static void __exit crc_t10dif_arm64_exit(void)
  }
  module_exit(crc_t10dif_arm64_exit);
  
@@ -2945,10 +2945,10 @@ index d0706544fc11..a559fdff3f7e 100644
 -
  #endif
 -- 
-2.48.1
+2.49.0
 
 
-From 1f286891fc748fb1d87c15f72394765a801793d3 Mon Sep 17 00:00:00 2001
+From ce7da6a0d71e6f2f23faa742c4f3de642dd90243 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 09:26:44 -0800
 Subject: [PATCH 15/23] x86: move ZMM exclusion list into CPU feature flag
@@ -3017,19 +3017,19 @@ index 11e95fc62636..3e9ab5cdade4 100644
  
  		aes_xts_alg_vaes_avx10_512.base.cra_priority = 1;
 diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 508c0dad116b..99334026a26c 100644
+index b8fbd847c34a..f26b976e1427 100644
 --- a/arch/x86/include/asm/cpufeatures.h
 +++ b/arch/x86/include/asm/cpufeatures.h
-@@ -483,6 +483,7 @@
- #define X86_FEATURE_AMD_FAST_CPPC	(21*32 + 5) /* Fast CPPC */
+@@ -484,6 +484,7 @@
  #define X86_FEATURE_AMD_HETEROGENEOUS_CORES (21*32 + 6) /* Heterogeneous Core Topology */
  #define X86_FEATURE_AMD_WORKLOAD_CLASS	(21*32 + 7) /* Workload Classification */
-+#define X86_FEATURE_PREFER_YMM		(21*32 + 8) /* Avoid ZMM registers due to downclocking */
+ #define X86_FEATURE_INDIRECT_THUNK_ITS	(21*32 + 8) /* Use thunk for indirect branches in lower half of cacheline */
++#define X86_FEATURE_PREFER_YMM		(21*32 + 9) /* Avoid ZMM registers due to downclocking */
  
  /*
   * BUG word(s)
 diff --git a/arch/x86/kernel/cpu/intel.c b/arch/x86/kernel/cpu/intel.c
-index 3dce22f00dc3..c3005c4ec46a 100644
+index 134368a3f4b1..5fe563eeb17d 100644
 --- a/arch/x86/kernel/cpu/intel.c
 +++ b/arch/x86/kernel/cpu/intel.c
 @@ -521,6 +521,25 @@ static void init_intel_misc_features(struct cpuinfo_x86 *c)
@@ -3069,10 +3069,10 @@ index 3dce22f00dc3..c3005c4ec46a 100644
  	srat_detect_node(c);
  
 -- 
-2.48.1
+2.49.0
 
 
-From 4737564f9ef7296527df7cdc693c524687c2509c Mon Sep 17 00:00:00 2001
+From 7d7ce5ddbead0d21559734342be3b8cf37624f18 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 09:26:44 -0800
 Subject: [PATCH 16/23] scripts/gen-crc-consts: add gen-crc-consts.py
@@ -3107,10 +3107,10 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  create mode 100755 scripts/gen-crc-consts.py
 
 diff --git a/MAINTAINERS b/MAINTAINERS
-index 25c86f47353d..f4def1739559 100644
+index 00e94bec401e..3e00f5654f60 100644
 --- a/MAINTAINERS
 +++ b/MAINTAINERS
-@@ -6132,6 +6132,7 @@ F:	Documentation/staging/crc*
+@@ -6140,6 +6140,7 @@ F:	Documentation/staging/crc*
  F:	arch/*/lib/crc*
  F:	include/linux/crc*
  F:	lib/crc*
@@ -3363,10 +3363,10 @@ index 000000000000..aa678a50897d
 +    else:
 +        raise ValueError(f'Unknown consts_type: {consts_type}')
 -- 
-2.48.1
+2.49.0
 
 
-From ed8f377ab52dc05b4de0acaa0f396d825ccba0c4 Mon Sep 17 00:00:00 2001
+From 03141c87799b551c122c05c35719a957e95c23a8 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 09:26:44 -0800
 Subject: [PATCH 17/23] x86/crc: add "template" for [V]PCLMULQDQ based CRC
@@ -4101,10 +4101,10 @@ index 000000000000..7b89f0edbc17
 +
 +#endif /* _CRC_PCLMUL_TEMPLATE_H */
 -- 
-2.48.1
+2.49.0
 
 
-From c14e20ceee91b6e0dbc2eb3d0a8cfff66331767f Mon Sep 17 00:00:00 2001
+From 13be379db964919697a4475e8b361588e863c1ee Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 09:26:44 -0800
 Subject: [PATCH 18/23] x86/crc32: implement crc32_le using new template
@@ -4500,10 +4500,10 @@ index f9637789cac1..f20f40fb0172 100644
 -SYM_FUNC_END(crc32_pclmul_le_16)
 +DEFINE_CRC_PCLMUL_FUNCS(crc32_lsb, /* bits= */ 32, /* lsb= */ 1)
 -- 
-2.48.1
+2.49.0
 
 
-From 7eadc52b7e08a0064cb9bd8b8c709f4ee445e6df Mon Sep 17 00:00:00 2001
+From 1249aeea612313f23bc385b884108b2e76f650a9 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 09:26:45 -0800
 Subject: [PATCH 19/23] x86/crc-t10dif: implement crc_t10dif using new template
@@ -4551,7 +4551,7 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  delete mode 100644 arch/x86/lib/crct10dif-pcl-asm_64.S
 
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 87198d957e2f..7f59d73201ce 100644
+index f86e7072a5ba..2253ce8f2a2e 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
 @@ -77,7 +77,7 @@ config X86
@@ -5047,10 +5047,10 @@ index 5286db5b8165..000000000000
 -	.byte		 0x0,  0x1,  0x2,  0x3,  0x4,  0x5,  0x6,  0x7
 -	.byte		 0x8,  0x9,  0xa,  0xb,  0xc,  0xd,  0xe , 0x0
 -- 
-2.48.1
+2.49.0
 
 
-From 138a6515cba24d344a81c65966507c0af78b0c67 Mon Sep 17 00:00:00 2001
+From e1793640a8bd5317d5053686dc390b9c5a004832 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 09:26:45 -0800
 Subject: [PATCH 20/23] x86/crc64: implement crc64_be and crc64_nvme using new
@@ -5119,7 +5119,7 @@ Signed-off-by: Eric Biggers <ebiggers@google.com>
  create mode 100644 arch/x86/lib/crc64-pclmul.S
 
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index 7f59d73201ce..aa7c9d57e4d3 100644
+index 2253ce8f2a2e..eba0527e3ef1 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
 @@ -77,6 +77,7 @@ config X86
@@ -5327,10 +5327,10 @@ index 000000000000..4173051b5197
 +DEFINE_CRC_PCLMUL_FUNCS(crc64_msb, /* bits= */ 64, /* lsb= */ 0)
 +DEFINE_CRC_PCLMUL_FUNCS(crc64_lsb, /* bits= */ 64, /* lsb= */ 1)
 -- 
-2.48.1
+2.49.0
 
 
-From 00485675cb4cd936deb231e3a320c483cab1b95f Mon Sep 17 00:00:00 2001
+From 0ebad5063221954b3dec61cae401ec48eaa6e121 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 12:48:40 -0800
 Subject: [PATCH 21/23] x86/crc32: improve crc32c_arch() code generation with
@@ -5366,10 +5366,10 @@ index 9c3f9c1b7bb9..4b4721176799 100644
  	return crc;
  }
 -- 
-2.48.1
+2.49.0
 
 
-From 5cc90f8c346ef672fa19d7d5f7051afe545fa1d8 Mon Sep 17 00:00:00 2001
+From 94930d7dd813e7e3f2341e80f9748bb44abeb650 Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 27 Jan 2025 13:16:09 -0800
 Subject: [PATCH 22/23] crypto: x86/aes-xts - make the fast path 64-bit
@@ -5439,10 +5439,10 @@ index 3e9ab5cdade4..80d72d6fdc2b 100644
  		return 0;
  	}
 -- 
-2.48.1
+2.49.0
 
 
-From e62d4dadeee995a0c71c34a4f2e5b0cf65e27938 Mon Sep 17 00:00:00 2001
+From 6ca95dac143807874204c0f201a900482e0b7fff Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 10 Feb 2025 08:46:14 -0800
 Subject: [PATCH 23/23] crypto: x86/aes-ctr - rewrite AESNI+AVX optimized CTR
@@ -7310,4 +7310,5 @@ index 80d72d6fdc2b..b59480ea97dc 100644
  }
  
 -- 
-2.48.1
+2.49.0
+

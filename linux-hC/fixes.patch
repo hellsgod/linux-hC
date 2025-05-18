@@ -1,4 +1,4 @@
-From 5cf519f086e9f7b2527813c444c6819500ad1ccd Mon Sep 17 00:00:00 2001
+From 2de2ed992275e552dc415d8034d2f6887f6c4fec Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
 Subject: [PATCH 01/23] arch/Kconfig: Default to maximum amount of ASLR bits
@@ -37,7 +37,7 @@ index b8a4ff365582..9b087f9bb413 100644
 2.49.0
 
 
-From b3ddba4725a88927b7f7aec99f6b2145c1d3870a Mon Sep 17 00:00:00 2001
+From 78119a5b1a66becbbaa99243c29a9ba9c88864f0 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
 Subject: [PATCH 02/23] kbuild: add resolve_btfids to pacman PKGBUILD
@@ -72,7 +72,7 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 2.49.0
 
 
-From 5c33de046606a14edf021eb76a57f51132f4fb90 Mon Sep 17 00:00:00 2001
+From 4b5bcde991668bedecef870ac1281124bf979e2e Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
 Subject: [PATCH 03/23] sched/fair: Refactor can_migrate_task() to elimate
@@ -133,7 +133,7 @@ index 3d9b68a347b7..96ba0c1e2e44 100644
 2.49.0
 
 
-From 11dfdce5da12a0c0b2a6de7359b6558796e5d20d Mon Sep 17 00:00:00 2001
+From 862d8f511f87edd4300c4ba7989ea3fcd280007a Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
@@ -322,7 +322,7 @@ index 000000000000..e3c28ff1807f
 2.49.0
 
 
-From 587ea1c28353cfbecef0dfc6d62616de5c041f93 Mon Sep 17 00:00:00 2001
+From a8e6aabbde62af00b1e453b5f1b4edbcf37c2eaf Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
 Subject: [PATCH 05/23] driver/base: Optimize memory block registration to
@@ -562,7 +562,7 @@ index 9a881c2208b3..02c27adc21ed 100644
 2.49.0
 
 
-From 2dacc13e0b16fe4e36ea28042d1148f6db4a71ee Mon Sep 17 00:00:00 2001
+From 78c23db3e275746990b8ef76aac674c148bbe8a8 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
 Subject: [PATCH 06/23] driver/base: remove
@@ -669,7 +669,7 @@ index 907b16275296..063915a9ff57 100644
 2.49.0
 
 
-From a9f522b6c3b9fdcf1071ae1bcf3d95c622153d64 Mon Sep 17 00:00:00 2001
+From bb746b0adaef0c3c82f520119175291d235b7b14 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
 Subject: [PATCH 07/23] drivers/base : Rename
@@ -752,7 +752,7 @@ index 75401866fb76..27672fe645a9 100644
 2.49.0
 
 
-From dee23ec7d2f9fcad86c9bf2f27268509cf1896eb Mon Sep 17 00:00:00 2001
+From 7f515618d7af16c426e0778bc98e970cc2c40151 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
 Subject: [PATCH 08/23] select: do_pollfd: add unlikely branch hint return path
@@ -796,7 +796,7 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 2.49.0
 
 
-From 5e157e5b24e73cc3d74e90d0b76708481d2e35cc Mon Sep 17 00:00:00 2001
+From e8652469ba7701de998eabd1fca106a6972d1fa5 Mon Sep 17 00:00:00 2001
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Date: Wed, 26 Feb 2025 10:10:57 +0100
 Subject: [PATCH 09/23] futex: Use a hashmask instead of hashsize
@@ -884,7 +884,7 @@ index 3db8567f5a44..cca15859a50b 100644
 2.49.0
 
 
-From 30ac76449a8fd7d8b4861858676e2873a834da2f Mon Sep 17 00:00:00 2001
+From efd6ee6e622cdbc05360143c4b0cec983c3627dc Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 27 Jan 2025 14:45:23 -0800
 Subject: [PATCH 10/23] x86/fpu: make WARN_ON_FPU get fully optimized out
@@ -918,7 +918,7 @@ index dbdb31f55fc7..975de070c9c9 100644
 2.49.0
 
 
-From e54af97d5420f778e9e440c098e1b95af91912b1 Mon Sep 17 00:00:00 2001
+From d55f073d7f84b2c02f89dd14ec3dea972633ecd8 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Tue, 23 Jan 2024 08:36:23 -0800
 Subject: [PATCH 11/23] x86/mm: Simplify redundant overlap calculation
@@ -963,7 +963,7 @@ index b491d8190a6c..1c6db6bba56f 100644
 2.49.0
 
 
-From c9fa6b2ec151029d628a083fa654ecc4a481be7e Mon Sep 17 00:00:00 2001
+From 4fc2dcb6e1f056b988acd28f41c9f1c0c494bb4d Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Fri, 25 Apr 2025 12:57:55 -0700
 Subject: [PATCH 12/23] sched/core: Tweak wait_task_inactive() to force dequeue
@@ -1048,7 +1048,7 @@ index 3c7c942c7c42..c413e12825d7 100644
 2.49.0
 
 
-From 76a78823b40e5ba425b9a6db3bf56acfe7c4ef60 Mon Sep 17 00:00:00 2001
+From d51fea92ada01d175aba1f91bb78105e760c0245 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 26 Feb 2025 19:43:01 +0800
 Subject: [PATCH 13/23] sched/fair: Prevent from cpufreq not being updated when
@@ -1096,7 +1096,7 @@ index 96ba0c1e2e44..a9f47d595427 100644
 2.49.0
 
 
-From 9f0a50d0fc02f46ac28839954e9a3be7bb8108cf Mon Sep 17 00:00:00 2001
+From 0a2febfa2e8b80213dbece4c99ae2177907821e4 Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Sun, 9 Mar 2025 18:09:36 +0100
 Subject: [PATCH 14/23] x86/locking/atomic: Use asm_inline for atomic locking
@@ -1686,7 +1686,7 @@ index 363266cbcada..3821ee3fae35 100644
 2.49.0
 
 
-From d4d564da46428fdb573ec72fc85b7690f9bc6a43 Mon Sep 17 00:00:00 2001
+From 9d81078a58f5848ede0afdd66bb2461622bdd17c Mon Sep 17 00:00:00 2001
 From: Yujun Dong <yujundong@pascal-lab.net>
 Date: Mon, 30 Dec 2024 22:16:24 +0800
 Subject: [PATCH 15/23] cpuidle, sched: Use smp_mb__after_atomic() in
@@ -1768,51 +1768,10 @@ index e670ac282333..439f6029d3b9 100644
 2.49.0
 
 
-From 8ec76dc3f0dd40e2a51ec840da2113f4d2f78307 Mon Sep 17 00:00:00 2001
-From: Dan Carpenter <dan.carpenter@linaro.org>
-Date: Wed, 30 Apr 2025 11:05:54 +0300
-Subject: [PATCH 16/23] dm: add missing unlock on in dm_keyslot_evict()
-
-We need to call dm_put_live_table() even if dm_get_live_table() returns
-NULL.
-
-Fixes: 9355a9eb21a5 ("dm: support key eviction from keyslot managers of underlying devices")
-Cc: stable@vger.kernel.org	# v5.12+
-Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm-table.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 58febd1bc772..efc6ec25e0c5 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1178,7 +1178,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
- 
- 	t = dm_get_live_table(md, &srcu_idx);
- 	if (!t)
--		return 0;
-+		goto put_live_table;
- 
- 	for (unsigned int i = 0; i < t->num_targets; i++) {
- 		struct dm_target *ti = dm_table_get_target(t, i);
-@@ -1189,6 +1189,7 @@ static int dm_keyslot_evict(struct blk_crypto_profile *profile,
- 					  (void *)key);
- 	}
- 
-+put_live_table:
- 	dm_put_live_table(md, srcu_idx);
- 	return 0;
- }
--- 
-2.49.0
-
-
-From 31bcb549fb16c57a5417f75500e24edcdf3d8e31 Mon Sep 17 00:00:00 2001
+From d7375e4c9ad328b6d7b6e8af74324cc98ec7f50d Mon Sep 17 00:00:00 2001
 From: Max Kellermann <max.kellermann@ionos.com>
 Date: Tue, 29 Apr 2025 20:58:27 +0200
-Subject: [PATCH 17/23] fs/eventpoll: fix endless busy loop after timeout has
+Subject: [PATCH 16/23] fs/eventpoll: fix endless busy loop after timeout has
  expired
 
 After commit 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in
@@ -1872,352 +1831,10 @@ index c01234bbac49..9a6b924958e2 100644
 2.49.0
 
 
-From a04c9949352e6a0d5929ec0f36e828988cb951ed Mon Sep 17 00:00:00 2001
-From: Johannes Weiner <hannes@cmpxchg.org>
-Date: Thu, 8 May 2025 11:33:53 -0400
-Subject: [PATCH 18/23] mm: page_alloc: don't steal single pages from biggest
- buddy
-
-The fallback code searches for the biggest buddy first in an attempt to
-steal the whole block and encourage type grouping down the line.
-
-The approach used to be this:
-
-- Non-movable requests will split the largest buddy and steal the
-  remainder. This splits up contiguity, but it allows subsequent
-  requests of this type to fall back into adjacent space.
-
-- Movable requests go and look for the smallest buddy instead. The
-  thinking is that movable requests can be compacted, so grouping is
-  less important than retaining contiguity.
-
-c0cd6f557b90 ("mm: page_alloc: fix freelist movement during block
-conversion") enforces freelist type hygiene, which restricts stealing to
-either claiming the whole block or just taking the requested chunk; no
-additional pages or buddy remainders can be stolen any more.
-
-The patch mishandled when to switch to finding the smallest buddy in that
-new reality.  As a result, it may steal the exact request size, but from
-the biggest buddy.  This causes fracturing for no good reason.
-
-Fix this by committing to the new behavior: either steal the whole block,
-or fall back to the smallest buddy.
-
-Remove single-page stealing from steal_suitable_fallback().  Rename it to
-try_to_steal_block() to make the intentions clear.  If this fails, always
-fall back to the smallest buddy.
-
-The following is from 4 runs of mmtest's thpchallenge.  "Pollute" is
-single page fallback, "steal" is conversion of a partially used block.
-The numbers for free block conversions (omitted) are comparable.
-
-				     vanilla	      patched
-
-@pollute[unmovable from reclaimable]:	  27		  106
-@pollute[unmovable from movable]:	  82		   46
-@pollute[reclaimable from unmovable]:	 256		   83
-@pollute[reclaimable from movable]:	  46		    8
-@pollute[movable from unmovable]:	4841		  868
-@pollute[movable from reclaimable]:	5278		12568
-
-@steal[unmovable from reclaimable]:	  11		   12
-@steal[unmovable from movable]:		 113		   49
-@steal[reclaimable from unmovable]:	  19		   34
-@steal[reclaimable from movable]:	  47		   21
-@steal[movable from unmovable]:		 250		  183
-@steal[movable from reclaimable]:	  81		   93
-
-The allocator appears to do a better job at keeping stealing and polluting
-to the first fallback preference.  As a result, the numbers for "from
-movable" - the least preferred fallback option, and most detrimental to
-compactability - are down across the board.
-
-Link: https://lkml.kernel.org/r/20250225001023.1494422-2-hannes@cmpxchg.org
-Fixes: c0cd6f557b90 ("mm: page_alloc: fix freelist movement during block conversion")
-Signed-off-by: Johannes Weiner <hannes@cmpxchg.org>
-Suggested-by: Vlastimil Babka <vbabka@suse.cz>
-Reviewed-by: Brendan Jackman <jackmanb@google.com>
-Reviewed-by: Vlastimil Babka <vbabka@suse.cz>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-(cherry picked from commit c2f6ea38fc1b640aa7a2e155cc1c0410ff91afa2)
-Signed-off-by: Johannes Weiner <hannes@cmpxchg.org>
----
- mm/page_alloc.c | 161 +++++++++++++++++++++++++++++-------------------
- 1 file changed, 98 insertions(+), 63 deletions(-)
-
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 542d25f77be8..74a996a3508e 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -1908,13 +1908,12 @@ static inline bool boost_watermark(struct zone *zone)
-  * can claim the whole pageblock for the requested migratetype. If not, we check
-  * the pageblock for constituent pages; if at least half of the pages are free
-  * or compatible, we can still claim the whole block, so pages freed in the
-- * future will be put on the correct free list. Otherwise, we isolate exactly
-- * the order we need from the fallback block and leave its migratetype alone.
-+ * future will be put on the correct free list.
-  */
- static struct page *
--steal_suitable_fallback(struct zone *zone, struct page *page,
--			int current_order, int order, int start_type,
--			unsigned int alloc_flags, bool whole_block)
-+try_to_steal_block(struct zone *zone, struct page *page,
-+		   int current_order, int order, int start_type,
-+		   unsigned int alloc_flags)
- {
- 	int free_pages, movable_pages, alike_pages;
- 	unsigned long start_pfn;
-@@ -1927,7 +1926,7 @@ steal_suitable_fallback(struct zone *zone, struct page *page,
- 	 * highatomic accounting.
- 	 */
- 	if (is_migrate_highatomic(block_type))
--		goto single_page;
-+		return NULL;
- 
- 	/* Take ownership for orders >= pageblock_order */
- 	if (current_order >= pageblock_order) {
-@@ -1948,14 +1947,10 @@ steal_suitable_fallback(struct zone *zone, struct page *page,
- 	if (boost_watermark(zone) && (alloc_flags & ALLOC_KSWAPD))
- 		set_bit(ZONE_BOOSTED_WATERMARK, &zone->flags);
- 
--	/* We are not allowed to try stealing from the whole block */
--	if (!whole_block)
--		goto single_page;
--
- 	/* moving whole block can fail due to zone boundary conditions */
- 	if (!prep_move_freepages_block(zone, page, &start_pfn, &free_pages,
- 				       &movable_pages))
--		goto single_page;
-+		return NULL;
- 
- 	/*
- 	 * Determine how many pages are compatible with our allocation.
-@@ -1988,9 +1983,7 @@ steal_suitable_fallback(struct zone *zone, struct page *page,
- 		return __rmqueue_smallest(zone, order, start_type);
- 	}
- 
--single_page:
--	page_del_and_expand(zone, page, order, current_order, block_type);
--	return page;
-+	return NULL;
- }
- 
- /*
-@@ -2172,17 +2165,15 @@ static bool unreserve_highatomic_pageblock(const struct alloc_context *ac,
- }
- 
- /*
-- * Try finding a free buddy page on the fallback list and put it on the free
-- * list of requested migratetype, possibly along with other pages from the same
-- * block, depending on fragmentation avoidance heuristics. Returns true if
-- * fallback was found so that __rmqueue_smallest() can grab it.
-+ * Try to allocate from some fallback migratetype by claiming the entire block,
-+ * i.e. converting it to the allocation's start migratetype.
-  *
-  * The use of signed ints for order and current_order is a deliberate
-  * deviation from the rest of this file, to make the for loop
-  * condition simpler.
-  */
- static __always_inline struct page *
--__rmqueue_fallback(struct zone *zone, int order, int start_migratetype,
-+__rmqueue_claim(struct zone *zone, int order, int start_migratetype,
- 						unsigned int alloc_flags)
- {
- 	struct free_area *area;
-@@ -2213,58 +2204,66 @@ __rmqueue_fallback(struct zone *zone, int order, int start_migratetype,
- 		if (fallback_mt == -1)
- 			continue;
- 
--		/*
--		 * We cannot steal all free pages from the pageblock and the
--		 * requested migratetype is movable. In that case it's better to
--		 * steal and split the smallest available page instead of the
--		 * largest available page, because even if the next movable
--		 * allocation falls back into a different pageblock than this
--		 * one, it won't cause permanent fragmentation.
--		 */
--		if (!can_steal && start_migratetype == MIGRATE_MOVABLE
--					&& current_order > order)
--			goto find_smallest;
-+		if (!can_steal)
-+			break;
- 
--		goto do_steal;
-+		page = get_page_from_free_area(area, fallback_mt);
-+		page = try_to_steal_block(zone, page, current_order, order,
-+					  start_migratetype, alloc_flags);
-+		if (page) {
-+			trace_mm_page_alloc_extfrag(page, order, current_order,
-+						    start_migratetype, fallback_mt);
-+			return page;
-+		}
- 	}
- 
- 	return NULL;
-+}
-+
-+/*
-+ * Try to steal a single page from some fallback migratetype. Leave the rest of
-+ * the block as its current migratetype, potentially causing fragmentation.
-+ */
-+static __always_inline struct page *
-+__rmqueue_steal(struct zone *zone, int order, int start_migratetype)
-+{
-+	struct free_area *area;
-+	int current_order;
-+	struct page *page;
-+	int fallback_mt;
-+	bool can_steal;
- 
--find_smallest:
- 	for (current_order = order; current_order < NR_PAGE_ORDERS; current_order++) {
- 		area = &(zone->free_area[current_order]);
- 		fallback_mt = find_suitable_fallback(area, current_order,
- 				start_migratetype, false, &can_steal);
--		if (fallback_mt != -1)
--			break;
--	}
--
--	/*
--	 * This should not happen - we already found a suitable fallback
--	 * when looking for the largest page.
--	 */
--	VM_BUG_ON(current_order > MAX_PAGE_ORDER);
--
--do_steal:
--	page = get_page_from_free_area(area, fallback_mt);
--
--	/* take off list, maybe claim block, expand remainder */
--	page = steal_suitable_fallback(zone, page, current_order, order,
--				       start_migratetype, alloc_flags, can_steal);
-+		if (fallback_mt == -1)
-+			continue;
- 
--	trace_mm_page_alloc_extfrag(page, order, current_order,
--		start_migratetype, fallback_mt);
-+		page = get_page_from_free_area(area, fallback_mt);
-+		page_del_and_expand(zone, page, order, current_order, fallback_mt);
-+		trace_mm_page_alloc_extfrag(page, order, current_order,
-+					    start_migratetype, fallback_mt);
-+		return page;
-+	}
- 
--	return page;
-+	return NULL;
- }
- 
-+enum rmqueue_mode {
-+	RMQUEUE_NORMAL,
-+	RMQUEUE_CMA,
-+	RMQUEUE_CLAIM,
-+	RMQUEUE_STEAL,
-+};
-+
- /*
-  * Do the hard work of removing an element from the buddy allocator.
-  * Call me with the zone->lock already held.
-  */
- static __always_inline struct page *
- __rmqueue(struct zone *zone, unsigned int order, int migratetype,
--						unsigned int alloc_flags)
-+	  unsigned int alloc_flags, enum rmqueue_mode *mode)
- {
- 	struct page *page;
- 
-@@ -2283,16 +2282,49 @@ __rmqueue(struct zone *zone, unsigned int order, int migratetype,
- 		}
- 	}
- 
--	page = __rmqueue_smallest(zone, order, migratetype);
--	if (unlikely(!page)) {
--		if (alloc_flags & ALLOC_CMA)
-+	/*
-+	 * First try the freelists of the requested migratetype, then try
-+	 * fallbacks modes with increasing levels of fragmentation risk.
-+	 *
-+	 * The fallback logic is expensive and rmqueue_bulk() calls in
-+	 * a loop with the zone->lock held, meaning the freelists are
-+	 * not subject to any outside changes. Remember in *mode where
-+	 * we found pay dirt, to save us the search on the next call.
-+	 */
-+       switch (*mode) {
-+       case RMQUEUE_NORMAL:
-+               page = __rmqueue_smallest(zone, order, migratetype);
-+               if (page)
-+                       return page;
-+               fallthrough;
-+       case RMQUEUE_CMA:
-+               if (alloc_flags & ALLOC_CMA) {
- 			page = __rmqueue_cma_fallback(zone, order);
--
--		if (!page)
--			page = __rmqueue_fallback(zone, order, migratetype,
--						  alloc_flags);
--	}
--	return page;
-+			if (page) {
-+				*mode = RMQUEUE_CMA;
-+				return page;
-+			}
-+	       }
-+	       fallthrough;
-+       case RMQUEUE_CLAIM:
-+	       page = __rmqueue_claim(zone, order, migratetype, alloc_flags);
-+	       if (page) {
-+                       /* Replenished preferred freelist, back to normal mode. */
-+                       *mode = RMQUEUE_NORMAL;
-+                       return page;
-+               }
-+               fallthrough;
-+       case RMQUEUE_STEAL:
-+               if (!(alloc_flags & ALLOC_NOFRAGMENT)) {
-+                       page = __rmqueue_steal(zone, order, migratetype);
-+                       if (page) {
-+                               *mode = RMQUEUE_STEAL;
-+                               return page;
-+                       }
-+               }
-+       }
-+
-+       return NULL;
- }
- 
- /*
-@@ -2304,13 +2336,14 @@ static int rmqueue_bulk(struct zone *zone, unsigned int order,
- 			unsigned long count, struct list_head *list,
- 			int migratetype, unsigned int alloc_flags)
- {
-+	enum rmqueue_mode rmqm = RMQUEUE_NORMAL;
- 	unsigned long flags;
- 	int i;
- 
- 	spin_lock_irqsave(&zone->lock, flags);
- 	for (i = 0; i < count; ++i) {
- 		struct page *page = __rmqueue(zone, order, migratetype,
--								alloc_flags);
-+					      alloc_flags, &rmqm);
- 		if (unlikely(page == NULL))
- 			break;
- 
-@@ -2911,7 +2944,9 @@ struct page *rmqueue_buddy(struct zone *preferred_zone, struct zone *zone,
- 		if (alloc_flags & ALLOC_HIGHATOMIC)
- 			page = __rmqueue_smallest(zone, order, MIGRATE_HIGHATOMIC);
- 		if (!page) {
--			page = __rmqueue(zone, order, migratetype, alloc_flags);
-+			enum rmqueue_mode rmqm = RMQUEUE_NORMAL;
-+
-+			page = __rmqueue(zone, order, migratetype, alloc_flags, &rmqm);
- 
- 			/*
- 			 * If the allocation fails, allow OOM handling and
--- 
-2.49.0
-
-
-From d99d9d9d88f045edc2205e146f81577701779591 Mon Sep 17 00:00:00 2001
+From 03271a45005abccc6545ff3bccd5077bf7a5070a Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 19 Feb 2025 17:37:46 +0800
-Subject: [PATCH 19/23] sched/uclamp: Always using uclamp_is_used()
+Subject: [PATCH 17/23] sched/uclamp: Always using uclamp_is_used()
 
 Now, we have the uclamp_is_used() func to judge the uclamp enabled,
 so replace the static_branch_unlikely(&sched_uclamp_used) with it.
@@ -2310,10 +1927,10 @@ index 1aa65a0ac586..e48eae83e689 100644
 2.49.0
 
 
-From a7d114a6f2a4117402ae7fc18abc6f68b022db08 Mon Sep 17 00:00:00 2001
+From 943267b0ae55aa643eef6ae0a4ced1becb252e6f Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 19 Feb 2025 17:37:47 +0800
-Subject: [PATCH 20/23] sched/uclamp: Add uclamp_is_used() check before enable
+Subject: [PATCH 18/23] sched/uclamp: Add uclamp_is_used() check before enable
  it
 
 Because the static_branch_enable() would get the cpus_read_lock(),
@@ -2410,10 +2027,10 @@ index 456d339be98f..9100a77e9d79 100644
 2.49.0
 
 
-From 9a99158f52ffa5fca1494913857e5adb532e5cce Mon Sep 17 00:00:00 2001
+From e1e9d900d58a0ddf9a7f9f788698a4f343b56d44 Mon Sep 17 00:00:00 2001
 From: tip-bot2 for Mathieu Desnoyers <tip-bot2@linutronix.de>
 Date: Thu, 3 Apr 2025 11:26:32 +0000
-Subject: [PATCH 21/23] rseq: Eliminate useless task_work on execve
+Subject: [PATCH 19/23] rseq: Eliminate useless task_work on execve
 
 The following commit has been merged into the sched/urgent branch of tip:
 
@@ -2492,10 +2109,10 @@ index 3fd7a13e8d2a..81f5369f5260 100644
 2.49.0
 
 
-From 215bbf2947fc9f431b38dabcf91c420623834b28 Mon Sep 17 00:00:00 2001
+From 2a1cc6f7448fb95e404fe4e8ff70fa9a93368183 Mon Sep 17 00:00:00 2001
 From: Waiman Long <longman@redhat.com>
 Date: Thu, 8 May 2025 15:24:13 -0400
-Subject: [PATCH 22/23] cgroup/cpuset: Extend kthread_is_per_cpu() check to all
+Subject: [PATCH 20/23] cgroup/cpuset: Extend kthread_is_per_cpu() check to all
  PF_NO_SETAFFINITY tasks
 
 Commit ec5fbdfb99d1 ("cgroup/cpuset: Enable update_tasks_cpumask()
@@ -2541,10 +2158,10 @@ index 1287274ae1ce..6fbffdca0c74 100644
 2.49.0
 
 
-From b19450c6ccb6346de207f2dcdf134d679cb8e2aa Mon Sep 17 00:00:00 2001
+From 638064e8a90f3864681bb5f1291b3e6fcfc8e469 Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Tue, 6 May 2025 14:02:01 -0700
-Subject: [PATCH 23/23] kbuild: Disable -Wdefault-const-init-unsafe
+Subject: [PATCH 21/23] kbuild: Disable -Wdefault-const-init-unsafe
 
 A new on by default warning in clang [1] aims to flags instances where
 const variables without static or thread local storage or const members
@@ -2647,6 +2264,96 @@ index dc081cf46d21..686197407c3c 100644
  else
  
  # gcc inanely warns about local variables called 'main'
+-- 
+2.49.0
+
+
+From 7a02cbcc434adcac8e0aec81eeea834b6f020ecb Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees@kernel.org>
+Date: Thu, 15 May 2025 14:42:15 -0700
+Subject: [PATCH 22/23] mm: vmalloc: Actually use the in-place vrealloc region
+
+The refactoring to not build a new vmalloc region only actually worked
+when shrinking. Actually return the resized area when it grows. Ugh.
+
+Reported-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+Closes: https://lore.kernel.org/all/20250515-bpf-verifier-slowdown-vwo2meju4cgp2su5ckj@6gi6ssxbnfqg
+Tested-by: Eduard Zingerman <eddyz87@gmail.com>
+Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
+Signed-off-by: Kees Cook <kees@kernel.org>
+Reviewed-by: Danilo Krummrich <dakr@kernel.org>
+Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+---
+ mm/vmalloc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 8aa7eea9b26f..837899a4eaaf 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -4115,6 +4115,7 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 		if (want_init_on_alloc(flags))
+ 			memset((void *)p + old_size, 0, size - old_size);
+ 		vm->requested_size = size;
++		return (void *)p;
+ 	}
+ 
+ 	/* TODO: Grow the vm_area, i.e. allocate and map additional pages. */
+-- 
+2.49.0
+
+
+From 71c7dbb97e47a175f4b6a0c1a20adbd1195f16e8 Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees@kernel.org>
+Date: Thu, 15 May 2025 14:42:16 -0700
+Subject: [PATCH 23/23] mm: vmalloc: Only zero-init on vrealloc shrink
+
+The common case is to grow reallocations, and since init_on_alloc will
+have already zeroed the whole allocation, we only need to zero when
+shrinking the allocation.
+
+Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
+Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Signed-off-by: Kees Cook <kees@kernel.org>
+Reviewed-by: Danilo Krummrich <dakr@kernel.org>
+Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+---
+ mm/vmalloc.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 837899a4eaaf..ae7e419be29d 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -4097,8 +4097,8 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 	 * would be a good heuristic for when to shrink the vm_area?
+ 	 */
+ 	if (size <= old_size) {
+-		/* Zero out "freed" memory. */
+-		if (want_init_on_free())
++		/* Zero out "freed" memory, potentially for future realloc. */
++		if (want_init_on_free() || want_init_on_alloc(flags))
+ 			memset((void *)p + size, 0, old_size - size);
+ 		vm->requested_size = size;
+ 		kasan_poison_vmalloc(p + size, old_size - size);
+@@ -4111,9 +4111,11 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 	if (size <= alloced_size) {
+ 		kasan_unpoison_vmalloc(p + old_size, size - old_size,
+ 				       KASAN_VMALLOC_PROT_NORMAL);
+-		/* Zero out "alloced" memory. */
+-		if (want_init_on_alloc(flags))
+-			memset((void *)p + old_size, 0, size - old_size);
++		/*
++		 * No need to zero memory here, as unused memory will have
++		 * already been zeroed at initial allocation time or during
++		 * realloc shrink time.
++		 */
+ 		vm->requested_size = size;
+ 		return (void *)p;
+ 	}
 -- 
 2.49.0
 
