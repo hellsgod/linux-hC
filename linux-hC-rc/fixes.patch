@@ -1,7 +1,7 @@
-From 6d08bc8cdeaa12c0b949be2935e7be02b3a9b194 Mon Sep 17 00:00:00 2001
+From 7ef930a9eafba973ca04af0bec5651af3e9bcf06 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/6] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 1/8] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -37,10 +37,10 @@ index b0adb665041f..eea830cc90a7 100644
 2.49.0
 
 
-From 2900294ff42693d91006d31050ae358a0cb3f6ff Mon Sep 17 00:00:00 2001
+From 6e3639a28c96b0e49ac80386d134738d8376c12b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/6] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 2/8] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,10 +72,10 @@ index 452374d63c24..08f80d7c5df0 100644
 2.49.0
 
 
-From 98cc9a44845049fbcc75c499081dbfa1c5c917a4 Mon Sep 17 00:00:00 2001
+From b9b2572bd116a326517cf2071d82ddd48f82ac33 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 3/6] driver/base: Optimize memory block registration to reduce
+Subject: [PATCH 3/8] driver/base: Optimize memory block registration to reduce
  boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -180,7 +180,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 47 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index 8f3a41d9bfaa..720c5906f65d 100644
+index 19469e7f88c2..7f1d266ae593 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
 @@ -60,7 +60,7 @@ static inline unsigned long pfn_to_block_id(unsigned long pfn)
@@ -312,10 +312,10 @@ index 2b7517892230..93beefe8f179 100644
 2.49.0
 
 
-From db342d443c49d0e4cc1d49059c3ea4f845eb64b4 Mon Sep 17 00:00:00 2001
+From 72fd950bd491fa0a246d87c103d3939ebb3f1161 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 4/6] driver/base: remove register_mem_block_under_node_early()
+Subject: [PATCH 4/8] driver/base: remove register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
 as register_memory_blocks_under_node_early() now handles memory block
@@ -418,10 +418,10 @@ index 0f8a4645b26c..948392b477ea 100644
 2.49.0
 
 
-From 0830b7fed16951b041680940979e7f11020b3e0f Mon Sep 17 00:00:00 2001
+From 3cf2d14d87ffe31611aad7f6c82d85b40c01a881 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 5/6] drivers/base : Rename register_memory_blocks_under_node()
+Subject: [PATCH 5/8] drivers/base : Rename register_memory_blocks_under_node()
  and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -501,10 +501,10 @@ index 8305483de38b..e3e83ae90c7c 100644
 2.49.0
 
 
-From 0ec25d57fdef79acc2a2cc7bf16952784c1ef5b3 Mon Sep 17 00:00:00 2001
+From bd767a0123d03762d08bd5b4a3f2ed07ee72c82e Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 6/6] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 6/8] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -541,6 +541,96 @@ index 7da531b1cf6b..0eaf3522abe9 100644
  		return 0;
  
  	CLASS(fd, f)(fd);
+-- 
+2.49.0
+
+
+From d0be6b7630a13d1fa14b2a8b605e85b39bc24edc Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees@kernel.org>
+Date: Thu, 15 May 2025 14:42:15 -0700
+Subject: [PATCH 7/8] mm: vmalloc: Actually use the in-place vrealloc region
+
+The refactoring to not build a new vmalloc region only actually worked
+when shrinking. Actually return the resized area when it grows. Ugh.
+
+Reported-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+Closes: https://lore.kernel.org/all/20250515-bpf-verifier-slowdown-vwo2meju4cgp2su5ckj@6gi6ssxbnfqg
+Tested-by: Eduard Zingerman <eddyz87@gmail.com>
+Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
+Signed-off-by: Kees Cook <kees@kernel.org>
+Reviewed-by: Danilo Krummrich <dakr@kernel.org>
+Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+---
+ mm/vmalloc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 2d7511654831..74bd00fd734d 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -4111,6 +4111,7 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 		if (want_init_on_alloc(flags))
+ 			memset((void *)p + old_size, 0, size - old_size);
+ 		vm->requested_size = size;
++		return (void *)p;
+ 	}
+ 
+ 	/* TODO: Grow the vm_area, i.e. allocate and map additional pages. */
+-- 
+2.49.0
+
+
+From b7aa03ce88a27ea8a7a2221647d0d79b595e87a4 Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees@kernel.org>
+Date: Thu, 15 May 2025 14:42:16 -0700
+Subject: [PATCH 8/8] mm: vmalloc: Only zero-init on vrealloc shrink
+
+The common case is to grow reallocations, and since init_on_alloc will
+have already zeroed the whole allocation, we only need to zero when
+shrinking the allocation.
+
+Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
+Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Signed-off-by: Kees Cook <kees@kernel.org>
+Reviewed-by: Danilo Krummrich <dakr@kernel.org>
+Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+---
+ mm/vmalloc.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 74bd00fd734d..00cf1b575c89 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -4093,8 +4093,8 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 	 * would be a good heuristic for when to shrink the vm_area?
+ 	 */
+ 	if (size <= old_size) {
+-		/* Zero out "freed" memory. */
+-		if (want_init_on_free())
++		/* Zero out "freed" memory, potentially for future realloc. */
++		if (want_init_on_free() || want_init_on_alloc(flags))
+ 			memset((void *)p + size, 0, old_size - size);
+ 		vm->requested_size = size;
+ 		kasan_poison_vmalloc(p + size, old_size - size);
+@@ -4107,9 +4107,11 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 	if (size <= alloced_size) {
+ 		kasan_unpoison_vmalloc(p + old_size, size - old_size,
+ 				       KASAN_VMALLOC_PROT_NORMAL);
+-		/* Zero out "alloced" memory. */
+-		if (want_init_on_alloc(flags))
+-			memset((void *)p + old_size, 0, size - old_size);
++		/*
++		 * No need to zero memory here, as unused memory will have
++		 * already been zeroed at initial allocation time or during
++		 * realloc shrink time.
++		 */
+ 		vm->requested_size = size;
+ 		return (void *)p;
+ 	}
 -- 
 2.49.0
 
