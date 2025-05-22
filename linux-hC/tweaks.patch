@@ -1,45 +1,129 @@
-From 5400955eb4ef05b8e6c39632c2b4b25e5bb7d6a9 Mon Sep 17 00:00:00 2001
-From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
-Date: Mon, 16 Sep 2019 04:53:20 +0200
-Subject: [PATCH 01/29] ZEN: Add sysctl and CONFIG to disallow unprivileged
- CLONE_NEWUSER
+From b70329fdc5fa3ca083fad5d73b89da01a45a0e4d Mon Sep 17 00:00:00 2001
+From: Serge Hallyn <serge.hallyn@canonical.com>
+Date: Fri, 31 May 2013 19:12:12 +0100
+Subject: [PATCH 01/30] add sysctl to disallow unprivileged CLONE_NEWUSER by
+ default
 
-Our default behavior continues to match the vanilla kernel.
+This is a short-term patch.  Unprivileged use of CLONE_NEWUSER
+is certainly an intended feature of user namespaces.  However
+for at least saucy we want to make sure that, if any security
+issues are found, we have a fail-safe.
+
+Signed-off-by: Serge Hallyn <serge.hallyn@ubuntu.com>
+[bwh: Remove unneeded binary sysctl bits]
+[bwh: Keep this sysctl, but change the default to enabled]
 ---
- include/linux/user_namespace.h |  4 ++++
- init/Kconfig                   | 16 ++++++++++++++++
- kernel/fork.c                  | 14 ++++++++++++++
- kernel/sysctl.c                | 12 ++++++++++++
- kernel/user_namespace.c        |  7 +++++++
- 5 files changed, 53 insertions(+)
+ kernel/fork.c           | 16 ++++++++++++++++
+ kernel/sysctl.c         | 13 +++++++++++++
+ kernel/user_namespace.c |  3 +++
+ 3 files changed, 32 insertions(+)
 
-diff --git a/include/linux/user_namespace.h b/include/linux/user_namespace.h
-index 7183e5aca282..56573371a2f8 100644
---- a/include/linux/user_namespace.h
-+++ b/include/linux/user_namespace.h
-@@ -159,6 +159,8 @@ static inline void set_userns_rlimit_max(struct user_namespace *ns,
+diff --git a/kernel/fork.c b/kernel/fork.c
+index ca2ca3884f76..d9591a8a6ead 100644
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -119,6 +119,12 @@
  
- #ifdef CONFIG_USER_NS
+ #include <kunit/visibility.h>
  
++#ifdef CONFIG_USER_NS
 +extern int unprivileged_userns_clone;
-+
- static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
- {
- 	if (ns)
-@@ -192,6 +194,8 @@ extern bool current_in_userns(const struct user_namespace *target_ns);
- struct ns_common *ns_get_owner(struct ns_common *ns);
- #else
- 
++#else
 +#define unprivileged_userns_clone 0
++#endif
 +
- static inline struct user_namespace *get_user_ns(struct user_namespace *ns)
- {
- 	return &init_user_ns;
+ /*
+  * Minimum number of threads to boot the kernel
+  */
+@@ -2171,6 +2177,10 @@ __latent_entropy struct task_struct *copy_process(
+ 	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
+ 		return ERR_PTR(-EINVAL);
+ 
++	if ((clone_flags & CLONE_NEWUSER) && !unprivileged_userns_clone)
++		if (!capable(CAP_SYS_ADMIN))
++			return ERR_PTR(-EPERM);
++
+ 	/*
+ 	 * Thread groups must share signals as well, and detached threads
+ 	 * can only be started up within the thread group.
+@@ -3324,6 +3334,12 @@ int ksys_unshare(unsigned long unshare_flags)
+ 	if (unshare_flags & CLONE_NEWNS)
+ 		unshare_flags |= CLONE_FS;
+ 
++	if ((unshare_flags & CLONE_NEWUSER) && !unprivileged_userns_clone) {
++		err = -EPERM;
++		if (!capable(CAP_SYS_ADMIN))
++			goto bad_unshare_out;
++	}
++
+ 	err = check_unshare_flags(unshare_flags);
+ 	if (err)
+ 		goto bad_unshare_out;
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index cb57da499ebb..0caad937facf 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -100,6 +100,10 @@ static const int six_hundred_forty_kb = 640 * 1024;
+ static const int ngroups_max = NGROUPS_MAX;
+ static const int cap_last_cap = CAP_LAST_CAP;
+ 
++#ifdef CONFIG_USER_NS
++extern int unprivileged_userns_clone;
++#endif
++
+ #ifdef CONFIG_PROC_SYSCTL
+ 
+ /**
+@@ -1617,6 +1621,15 @@ static const struct ctl_table kern_table[] = {
+ 		.mode		= 0644,
+ 		.proc_handler	= proc_dointvec,
+ 	},
++#ifdef CONFIG_USER_NS
++	{
++		.procname	= "unprivileged_userns_clone",
++		.data		= &unprivileged_userns_clone,
++		.maxlen		= sizeof(int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec,
++	},
++#endif
+ #ifdef CONFIG_PROC_SYSCTL
+ 	{
+ 		.procname	= "tainted",
+diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
+index aa0b2e47f2f2..222bb2b40b73 100644
+--- a/kernel/user_namespace.c
++++ b/kernel/user_namespace.c
+@@ -22,6 +22,9 @@
+ #include <linux/bsearch.h>
+ #include <linux/sort.h>
+ 
++/* sysctl */
++int unprivileged_userns_clone = 1;
++
+ static struct kmem_cache *user_ns_cachep __ro_after_init;
+ static DEFINE_MUTEX(userns_state_mutex);
+ 
+-- 
+2.49.0
+
+
+From 0c6de15a493dea4fe9a296dc78aac50e30a669df Mon Sep 17 00:00:00 2001
+From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
+Date: Thu, 22 May 2025 07:32:13 +0200
+Subject: [PATCH 02/30] ZEN: Add config for default of
+ unprivileged_userns_clone
+
+---
+ init/Kconfig            | 16 ++++++++++++++++
+ kernel/user_namespace.c |  4 ++++
+ 2 files changed, 20 insertions(+)
+
 diff --git a/init/Kconfig b/init/Kconfig
-index d0d021b3fa3b..f851b6c83a93 100644
+index 522fac29949a..bd13215722df 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1323,6 +1323,22 @@ config USER_NS
+@@ -1331,6 +1331,22 @@ config USER_NS
  
  	  If unsure, say N.
  
@@ -62,101 +146,30 @@ index d0d021b3fa3b..f851b6c83a93 100644
  config PID_NS
  	bool "PID Namespaces"
  	default y
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 735405a9c5f3..d9658b516bcb 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -106,6 +106,10 @@
- #include <linux/pidfs.h>
- #include <linux/tick.h>
- 
-+#ifdef CONFIG_USER_NS
-+#include <linux/user_namespace.h>
-+#endif
-+
- #include <asm/pgalloc.h>
- #include <linux/uaccess.h>
- #include <asm/mmu_context.h>
-@@ -2167,6 +2171,10 @@ __latent_entropy struct task_struct *copy_process(
- 	if ((clone_flags & (CLONE_NEWUSER|CLONE_FS)) == (CLONE_NEWUSER|CLONE_FS))
- 		return ERR_PTR(-EINVAL);
- 
-+	if ((clone_flags & CLONE_NEWUSER) && !unprivileged_userns_clone)
-+		if (!capable(CAP_SYS_ADMIN))
-+			return ERR_PTR(-EPERM);
-+
- 	/*
- 	 * Thread groups must share signals as well, and detached threads
- 	 * can only be started up within the thread group.
-@@ -3320,6 +3328,12 @@ int ksys_unshare(unsigned long unshare_flags)
- 	if (unshare_flags & CLONE_NEWNS)
- 		unshare_flags |= CLONE_FS;
- 
-+	if ((unshare_flags & CLONE_NEWUSER) && !unprivileged_userns_clone) {
-+		err = -EPERM;
-+		if (!capable(CAP_SYS_ADMIN))
-+			goto bad_unshare_out;
-+	}
-+
- 	err = check_unshare_flags(unshare_flags);
- 	if (err)
- 		goto bad_unshare_out;
-diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index cb57da499ebb..f7f1c25b30fe 100644
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -80,6 +80,9 @@
- #ifdef CONFIG_RT_MUTEXES
- #include <linux/rtmutex.h>
- #endif
-+#ifdef CONFIG_USER_NS
-+#include <linux/user_namespace.h>
-+#endif
- 
- /* shared constants to be used in various sysctls */
- const int sysctl_vals[] = { 0, 1, 2, 3, 4, 100, 200, 1000, 3000, INT_MAX, 65535, -1 };
-@@ -1617,6 +1620,15 @@ static const struct ctl_table kern_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= proc_dointvec,
- 	},
-+#ifdef CONFIG_USER_NS
-+	{
-+		.procname	= "unprivileged_userns_clone",
-+		.data		= &unprivileged_userns_clone,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec,
-+	},
-+#endif
- #ifdef CONFIG_PROC_SYSCTL
- 	{
- 		.procname	= "tainted",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index aa0b2e47f2f2..d74d857b1696 100644
+index 222bb2b40b73..d74d857b1696 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
-@@ -22,6 +22,13 @@
- #include <linux/bsearch.h>
+@@ -23,7 +23,11 @@
  #include <linux/sort.h>
  
-+/* sysctl */
+ /* sysctl */
 +#ifdef CONFIG_USER_NS_UNPRIVILEGED
-+int unprivileged_userns_clone = 1;
+ int unprivileged_userns_clone = 1;
 +#else
 +int unprivileged_userns_clone;
 +#endif
-+
+ 
  static struct kmem_cache *user_ns_cachep __ro_after_init;
  static DEFINE_MUTEX(userns_state_mutex);
- 
 -- 
-2.48.1
+2.49.0
 
 
-From 87255071cdd4a59f1a2bea8046abbd4c64a48b74 Mon Sep 17 00:00:00 2001
+From d2ac8382df626c15de4a937c2d149028a3bcf5ef Mon Sep 17 00:00:00 2001
 From: Javier Martinez Canillas <javierm@redhat.com>
 Date: Thu, 19 May 2022 14:40:07 +0200
-Subject: [PATCH 02/29] drivers/firmware: skip simpledrm if
+Subject: [PATCH 03/30] drivers/firmware: skip simpledrm if
  nvidia-drm.modeset=1 is set
 
 The Nvidia proprietary driver has some bugs that leads to issues if used
@@ -240,13 +253,13 @@ index 7c5c03f274b9..a60b0a4faf29 100644
  		if (!IS_ERR(pd))
  			goto put_device;
 -- 
-2.48.1
+2.49.0
 
 
-From ede3afefd791f886a5557aedb278335c6ad2b593 Mon Sep 17 00:00:00 2001
+From 57df961193dbebc9fad80e3c5b36ba7b952570b5 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
-Subject: [PATCH 03/29] ZEN: Initialize ata before graphics
+Subject: [PATCH 04/30] ZEN: Initialize ata before graphics
 
 ATA init is the long pole in the boot process, and its asynchronous.
 move the graphics init after it so that ata and graphics initialize
@@ -289,13 +302,13 @@ index 45d1c3e630f7..4f5ab2429a7f 100644
  obj-$(CONFIG_MTD)		+= mtd/
  obj-$(CONFIG_SPI)		+= spi/
 -- 
-2.48.1
+2.49.0
 
 
-From eba597ef1270f61f66e59ff4a465434936407762 Mon Sep 17 00:00:00 2001
+From dac3f0dc43c7a93dfead7aac33b9b83d4a628bfd Mon Sep 17 00:00:00 2001
 From: Kenny Levinsen <kl@kl.wtf>
 Date: Sun, 27 Dec 2020 14:43:13 +0000
-Subject: [PATCH 04/29] ZEN: Input: evdev - use call_rcu when detaching client
+Subject: [PATCH 05/30] ZEN: Input: evdev - use call_rcu when detaching client
 
 Significant time was spent on synchronize_rcu in evdev_detach_client
 when applications closed evdev devices. Switching VT away from a
@@ -400,13 +413,13 @@ index b5cbb57ee5f6..a0f7fa1518c6 100644
  }
  
 -- 
-2.48.1
+2.49.0
 
 
-From 30f5fab774945c83ef9bbce0c564d3b894d09266 Mon Sep 17 00:00:00 2001
+From 7971f134e67da9c9163fa2063ddb5d2e576df881 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 13 Dec 2018 01:00:49 +0000
-Subject: [PATCH 05/29] sched/wait: Do accept() in LIFO order for cache
+Subject: [PATCH 06/30] sched/wait: Do accept() in LIFO order for cache
  efficiency
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -492,13 +505,13 @@ index e4decfb270fa..38bff2d8a740 100644
  		release_sock(sk);
  		if (reqsk_queue_empty(&icsk->icsk_accept_queue))
 -- 
-2.48.1
+2.49.0
 
 
-From 88c271eed5be8e5c935c6edaf0c44de1acb0f578 Mon Sep 17 00:00:00 2001
+From 8a94db0bbbb6e12e98ee15a7967b554c4955b637 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
-Subject: [PATCH 06/29] XANMOD: dcache: cache_pressure = 50 decreases the rate
+Subject: [PATCH 07/30] XANMOD: dcache: cache_pressure = 50 decreases the rate
  at which VFS caches are reclaimed
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -507,7 +520,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 9cc0d47da321..be6c51189bc1 100644
+index e3634916ffb9..95ebc9a430c4 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -73,7 +73,7 @@
@@ -520,13 +533,13 @@ index 9cc0d47da321..be6c51189bc1 100644
  
  __cacheline_aligned_in_smp DEFINE_SEQLOCK(rename_lock);
 -- 
-2.48.1
+2.49.0
 
 
-From c6de8bcb942bcb5c158982605fdd35f3ac42a934 Mon Sep 17 00:00:00 2001
+From 408a000c36e1fcfd58dd2a3c65426e854e287c3c Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Sat, 21 May 2022 15:15:09 -0500
-Subject: [PATCH 07/29] ZEN: dm-crypt: Disable workqueues for crypto ops
+Subject: [PATCH 08/30] ZEN: dm-crypt: Disable workqueues for crypto ops
 
 Queueing in dm-crypt for crypto operations reduces performance on modern
 systems.  As discussed in an article from Cloudflare, they discovered
@@ -556,13 +569,13 @@ index 02a2919f4e5a..a6bdafcb4fbd 100644
  	if (ret < 0)
  		goto bad;
 -- 
-2.48.1
+2.49.0
 
 
-From a9725a412cdce0e11b7f84980871cf6aaf1c8c6b Mon Sep 17 00:00:00 2001
+From ea4ffa2dbd198a9fb4365db116b928474305ca9b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 5 May 2024 10:49:42 +0200
-Subject: [PATCH 08/29] Cachy: intel-pstate: Implement "enable" parameter
+Subject: [PATCH 09/30] Cachy: intel-pstate: Implement "enable" parameter
 
 If intel-pstate is compiled into the kernel, it will preempt the loading
 of acpi-cpufreq so you can take advantage of hardware p-states without
@@ -592,10 +605,10 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  2 files changed, 5 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index fb8752b42ec8..ce43ca0f9a84 100644
+index f9e11cebc598..fe130e83e4bc 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -2277,6 +2277,9 @@
+@@ -2294,6 +2294,9 @@
  			disable
  			  Do not enable intel_pstate as the default
  			  scaling driver for the supported processors
@@ -606,10 +619,10 @@ index fb8752b42ec8..ce43ca0f9a84 100644
                            Use intel_pstate driver to bypass the scaling
                            governors layer of cpufreq and provides it own
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index 9c4cc01fd51a..06a3c53e116e 100644
+index 43e847e9f741..8bc16e45a28e 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
-@@ -3827,6 +3827,8 @@ static int __init intel_pstate_setup(char *str)
+@@ -3830,6 +3830,8 @@ static int __init intel_pstate_setup(char *str)
  
  	if (!strcmp(str, "disable"))
  		no_load = 1;
@@ -619,23 +632,23 @@ index 9c4cc01fd51a..06a3c53e116e 100644
  		default_driver = &intel_pstate;
  	else if (!strcmp(str, "passive"))
 -- 
-2.48.1
+2.49.0
 
 
-From 92e0f1da73cc418196e7ce76f300a106840097aa Mon Sep 17 00:00:00 2001
+From 0eb3ecae715ddd0bf125fac98020268f1a062b43 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:13:21 +0100
-Subject: [PATCH 09/29] Add hells option for a few tweaks
+Subject: [PATCH 10/30] Add hells option for a few tweaks
 
 ---
  init/Kconfig | 6 ++++++
  1 file changed, 6 insertions(+)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index f851b6c83a93..cd3e9f447a6a 100644
+index bd13215722df..5e4ab2aa9a45 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -157,6 +157,12 @@ config THREAD_INFO_IN_TASK
+@@ -165,6 +165,12 @@ config THREAD_INFO_IN_TASK
  
  menu "General setup"
  
@@ -649,13 +662,13 @@ index f851b6c83a93..cd3e9f447a6a 100644
  	bool
  
 -- 
-2.48.1
+2.49.0
 
 
-From 1b4f6ebc1dacc0eda4925a3cbbf07771dcc95364 Mon Sep 17 00:00:00 2001
+From e3536cdc84fa7a569e9657c276c47b0e1b4b6922 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 27 Jan 2020 18:21:09 +0100
-Subject: [PATCH 10/29] hells: Enable background reclaim of hugepages
+Subject: [PATCH 11/30] hells: Enable background reclaim of hugepages
 
 Use [defer+madvise] as default khugepaged defrag strategy:
 
@@ -684,7 +697,7 @@ Reasoning and details in the original patch: https://lwn.net/Articles/711248/
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 3d3ebdc002d5..e9a9d4605c44 100644
+index 224925201ca2..24de54b10488 100644
 --- a/mm/huge_memory.c
 +++ b/mm/huge_memory.c
 @@ -64,7 +64,11 @@ unsigned long transparent_hugepage_flags __read_mostly =
@@ -700,13 +713,13 @@ index 3d3ebdc002d5..e9a9d4605c44 100644
  	(1<<TRANSPARENT_HUGEPAGE_USE_ZERO_PAGE_FLAG);
  
 -- 
-2.48.1
+2.49.0
 
 
-From 5687caf49ebf118aac61008e888552a73f76d81a Mon Sep 17 00:00:00 2001
+From 394e1d95b2d9e93cbc21debf982c1c9959590468 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 28 Mar 2020 13:06:28 -0700
-Subject: [PATCH 11/29] hells: Disable watermark boosting by default
+Subject: [PATCH 12/30] hells: Disable watermark boosting by default
 
 What watermark boosting does is preemptively fire up kswapd to free
 memory when there hasn't been an allocation failure. It does this by
@@ -736,7 +749,7 @@ Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 579789600a3c..85df6452f01e 100644
+index 74a996a3508e..8b939464326e 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -271,7 +271,11 @@ const char * const migratetype_names[MIGRATE_TYPES] = {
@@ -752,13 +765,13 @@ index 579789600a3c..85df6452f01e 100644
  
  /* movable_zone is the "real" zone pages in ZONE_MOVABLE are taken from */
 -- 
-2.48.1
+2.49.0
 
 
-From 945bbc40b098835984715214e58a65ccf5ec91f4 Mon Sep 17 00:00:00 2001
+From 1dac34e2c4dab8cd29c26a9a819a55e6791e61cc Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 24 Oct 2020 22:17:49 -0700
-Subject: [PATCH 12/29] hells: Disable proactive compaction by default
+Subject: [PATCH 13/30] hells: Disable proactive compaction by default
 
 On-demand compaction works fine assuming that you don't have a need to
 spam the page allocator nonstop for large order page allocations.
@@ -769,7 +782,7 @@ Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/compaction.c b/mm/compaction.c
-index 12ed8425fa17..fdb0250f61ba 100644
+index ae734de0038c..91ea975f5ed2 100644
 --- a/mm/compaction.c
 +++ b/mm/compaction.c
 @@ -1923,7 +1923,11 @@ static int sysctl_compact_unevictable_allowed __read_mostly = CONFIG_COMPACT_UNE
@@ -785,13 +798,13 @@ index 12ed8425fa17..fdb0250f61ba 100644
  static int __read_mostly sysctl_compact_memory;
  
 -- 
-2.48.1
+2.49.0
 
 
-From a92da798f3e18796657c9bad29205265fd8453b2 Mon Sep 17 00:00:00 2001
+From ed106ca0deff3e5c9375d36447bac81d1b5cf206 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:21:54 +0100
-Subject: [PATCH 13/29] hells: VM_READAHEAD_PAGES 8M
+Subject: [PATCH 14/30] hells: VM_READAHEAD_PAGES 8M
 
 ---
  include/linux/pagemap.h | 2 +-
@@ -811,13 +824,13 @@ index 47bfc6b1b632..435901dbc742 100644
  void page_cache_ra_unbounded(struct readahead_control *,
  		unsigned long nr_to_read, unsigned long lookahead_count);
 -- 
-2.48.1
+2.49.0
 
 
-From ae96d0ad7d6a7cedbe7ec3c6f1efc23bb2624a37 Mon Sep 17 00:00:00 2001
+From 11ded90c6696a4728e09ee7c69026ce48e4480da Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Sun, 18 Feb 2018 23:35:41 +0000
-Subject: [PATCH 14/29] locking: rwsem: spin faster
+Subject: [PATCH 15/30] locking: rwsem: spin faster
 
 tweak rwsem owner spinning a bit
 
@@ -849,13 +862,13 @@ index 2ddb827e3bea..464049c4af3f 100644
  
  	return state;
 -- 
-2.48.1
+2.49.0
 
 
-From e9676e85ee78d07d75c18e617a65b58eaedbb874 Mon Sep 17 00:00:00 2001
+From f7ba627c5eeedcbd42962fef33fb02c74f6ec00f Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sun, 19 Apr 2020 19:59:18 -0700
-Subject: [PATCH 15/29] ZEN: mm: Stop kswapd early when nothing's waiting for
+Subject: [PATCH 16/30] ZEN: mm: Stop kswapd early when nothing's waiting for
  it to free pages
 
 Contains:
@@ -896,10 +909,10 @@ Contains:
  3 files changed, 28 insertions(+), 9 deletions(-)
 
 diff --git a/mm/internal.h b/mm/internal.h
-index 109ef30fee11..b01ecdfe92c3 100644
+index ed34773efe3e..d1595f9192f9 100644
 --- a/mm/internal.h
 +++ b/mm/internal.h
-@@ -741,6 +741,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
+@@ -736,6 +736,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
  extern bool free_pages_prepare(struct page *page, unsigned int order);
  
  extern int user_min_free_kbytes;
@@ -908,7 +921,7 @@ index 109ef30fee11..b01ecdfe92c3 100644
  struct page *__alloc_frozen_pages_noprof(gfp_t, unsigned int order, int nid,
  		nodemask_t *);
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 85df6452f01e..023130466736 100644
+index 8b939464326e..226092f4f05f 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -88,6 +88,8 @@ typedef int __bitwise fpi_t;
@@ -920,7 +933,7 @@ index 85df6452f01e..023130466736 100644
  /* prevent >1 _updater_ of zone percpu pageset ->high and ->batch fields */
  static DEFINE_MUTEX(pcp_batch_high_lock);
  #define MIN_PERCPU_PAGELIST_HIGH_FRACTION (8)
-@@ -4224,6 +4226,7 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+@@ -4259,6 +4261,7 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
  	unsigned int cpuset_mems_cookie;
  	unsigned int zonelist_iter_cookie;
  	int reserve_flags;
@@ -928,7 +941,7 @@ index 85df6452f01e..023130466736 100644
  
  	if (unlikely(nofail)) {
  		/*
-@@ -4282,8 +4285,13 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+@@ -4318,8 +4321,13 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
  			goto nopage;
  	}
  
@@ -943,7 +956,7 @@ index 85df6452f01e..023130466736 100644
  
  	/*
  	 * The adjusted alloc_flags might result in immediate success, so try
-@@ -4485,9 +4493,12 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
+@@ -4521,9 +4529,12 @@ __alloc_pages_slowpath(gfp_t gfp_mask, unsigned int order,
  		goto retry;
  	}
  fail:
@@ -959,10 +972,10 @@ index 85df6452f01e..023130466736 100644
  }
  
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index c767d71c43d7..d481288280f9 100644
+index e9f3ae8158a6..a18714a60273 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
-@@ -6382,7 +6382,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
+@@ -6389,7 +6389,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
  	return 0;
  }
  
@@ -971,7 +984,7 @@ index c767d71c43d7..d481288280f9 100644
  {
  	struct zone *zone;
  	unsigned long pfmemalloc_reserve = 0;
-@@ -6411,6 +6411,10 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
+@@ -6418,6 +6418,10 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
  
  	wmark_ok = free_pages > pfmemalloc_reserve / 2;
  
@@ -982,7 +995,7 @@ index c767d71c43d7..d481288280f9 100644
  	/* kswapd must be awake if processes are being throttled */
  	if (!wmark_ok && waitqueue_active(&pgdat->kswapd_wait)) {
  		if (READ_ONCE(pgdat->kswapd_highest_zoneidx) > ZONE_NORMAL)
-@@ -6476,7 +6480,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+@@ -6483,7 +6487,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
  
  		/* Throttle based on the first usable node */
  		pgdat = zone->zone_pgdat;
@@ -991,7 +1004,7 @@ index c767d71c43d7..d481288280f9 100644
  			goto out;
  		break;
  	}
-@@ -6498,11 +6502,14 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+@@ -6505,11 +6509,14 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
  	 */
  	if (!(gfp_mask & __GFP_FS))
  		wait_event_interruptible_timeout(pgdat->pfmemalloc_wait,
@@ -1008,7 +1021,7 @@ index c767d71c43d7..d481288280f9 100644
  
  	if (fatal_signal_pending(current))
  		return true;
-@@ -7005,14 +7012,14 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
+@@ -7012,14 +7019,14 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
  		 * able to safely make forward progress. Wake them
  		 */
  		if (waitqueue_active(&pgdat->pfmemalloc_wait) &&
@@ -1026,13 +1039,13 @@ index c767d71c43d7..d481288280f9 100644
  
  		/*
 -- 
-2.48.1
+2.49.0
 
 
-From ece9ac4c62c8a210aefece6e406a77b2ce9d3194 Mon Sep 17 00:00:00 2001
+From cad9fd24ec01c05fdef50ecc97545b848a04c08b Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Fri, 20 Jan 2023 11:16:42 +0000
-Subject: [PATCH 16/29] initcall: only print non-zero initcall debug to speed
+Subject: [PATCH 17/30] initcall: only print non-zero initcall debug to speed
  up boot
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1072,13 +1085,13 @@ index 2a1757826397..334146c65fc7 100644
  
  static ktime_t initcall_calltime;
 -- 
-2.48.1
+2.49.0
 
 
-From 2607d22d3e1bd3e9beadc75f6b6acdb35c00547e Mon Sep 17 00:00:00 2001
+From 61b1f20011d64487db915b2ddd2bbcf6543c6bb8 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Wed, 11 Feb 2015 17:28:14 -0600
-Subject: [PATCH 17/29] smpboot: reuse timer calibration
+Subject: [PATCH 18/30] smpboot: reuse timer calibration
 
 NO point recalibrating for known-constant tsc ...
 saves 200ms+ of boot time.
@@ -1087,7 +1100,7 @@ saves 200ms+ of boot time.
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index 34dec0b72ea8..76a0d1c8e25f 100644
+index 88e5a4ed9db3..07f17d5ae6e5 100644
 --- a/arch/x86/kernel/tsc.c
 +++ b/arch/x86/kernel/tsc.c
 @@ -1596,6 +1596,9 @@ unsigned long calibrate_delay_is_known(void)
@@ -1101,13 +1114,13 @@ index 34dec0b72ea8..76a0d1c8e25f 100644
  	if (sibling < nr_cpu_ids)
  		return cpu_data(sibling).loops_per_jiffy;
 -- 
-2.48.1
+2.49.0
 
 
-From 6f68ee059ba2eeaea12d34158a9624a506d1ff6e Mon Sep 17 00:00:00 2001
+From ba1cc19dbf9ee1fdc5f70f0ae390c9dc3c22fce8 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 16 Nov 2021 17:39:25 +0000
-Subject: [PATCH 18/29] itmt_epb: use epb to scale itmt
+Subject: [PATCH 19/30] itmt_epb: use epb to scale itmt
 
 ---
  arch/x86/include/asm/topology.h |  1 +
@@ -1194,13 +1207,13 @@ index 9cea1fc36c18..81932842e1d2 100644
 +	}
 +}
 -- 
-2.48.1
+2.49.0
 
 
-From a1db0b3d52dfc4ec2df081b17d8e4c9c5918d26e Mon Sep 17 00:00:00 2001
+From e55b2dc75e5009d8dc44b453ea0fabab7415a499 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Thu, 18 Nov 2021 16:09:47 +0000
-Subject: [PATCH 19/29] itmt2 ADL fixes
+Subject: [PATCH 20/30] itmt2 ADL fixes
 
 On systems with overclocking enabled, CPPC Highest Performance can be
 hard coded to 0xff. In this case even if we have cores with different
@@ -1220,7 +1233,7 @@ Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index 06a3c53e116e..d015342e97b1 100644
+index 8bc16e45a28e..198fde46212a 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
 @@ -377,6 +377,13 @@ static void intel_pstate_set_itmt_prio(int cpu)
@@ -1238,13 +1251,13 @@ index 06a3c53e116e..d015342e97b1 100644
  	if (max_highest_perf <= min_highest_perf) {
  		if (cppc_perf.highest_perf > max_highest_perf)
 -- 
-2.48.1
+2.49.0
 
 
-From 599f30309ff9a153248a3ce33115507741dec34e Mon Sep 17 00:00:00 2001
+From 52c27b8bef39689d49bcc2aa6532f6288d3b9c97 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 23 Nov 2021 17:38:50 +0000
-Subject: [PATCH 20/29] add a per cpu minimum high watermark an tune batch size
+Subject: [PATCH 21/30] add a per cpu minimum high watermark an tune batch size
 
 make sure there's at least 1024 per cpu pages... a reasonably small
 amount for todays system
@@ -1253,10 +1266,10 @@ amount for todays system
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 023130466736..b33238cd5638 100644
+index 226092f4f05f..1c736992374e 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
-@@ -5399,11 +5399,11 @@ static int zone_batchsize(struct zone *zone)
+@@ -5435,11 +5435,11 @@ static int zone_batchsize(struct zone *zone)
  
  	/*
  	 * The number of pages to batch allocate is either ~0.1%
@@ -1271,13 +1284,13 @@ index 023130466736..b33238cd5638 100644
  	if (batch < 1)
  		batch = 1;
 -- 
-2.48.1
+2.49.0
 
 
-From 39b0123330977fb8de9d911c3d87a3b196a3a8f4 Mon Sep 17 00:00:00 2001
+From 1416fe806f0cf93b3d49107a7fc2b2b130433fdf Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Wed, 3 May 2023 17:31:05 +0100
-Subject: [PATCH 21/29] clocksource: only perform extended clocksource checks
+Subject: [PATCH 22/30] clocksource: only perform extended clocksource checks
  for AMD systems
 
 Signed-off-by: Colin Ian King <colin.king@intel.com>
@@ -1309,13 +1322,13 @@ index b4330a01a566..e41cd5c68855 100644
  		value1 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
  		for (i = 0; i < ACPI_PM_READ_CHECKS; i++) {
 -- 
-2.48.1
+2.49.0
 
 
-From 019980acf6883088b1917def24118b159aa7b765 Mon Sep 17 00:00:00 2001
+From 198c11386c3b47cd31cc2d1475f16614f2931efd Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Tue, 27 Jun 2023 14:12:27 +0100
-Subject: [PATCH 22/29] ACPI: align slab for improved memory performance
+Subject: [PATCH 23/30] ACPI: align slab for improved memory performance
 
 Enabling SLAB_HWCACHE_ALIGN for the ACPI object caches improves
 boot speed in the ACPICA core for object allocation and free'ing
@@ -1345,13 +1358,13 @@ index 5ff343096ece..229c2c6e51ab 100644
  		return AE_ERROR;
  	else
 -- 
-2.48.1
+2.49.0
 
 
-From fa73077430387382e4e08298184eb34d83eefc03 Mon Sep 17 00:00:00 2001
+From 5c37d6e213104f74a11d19498fb8fb8dc0c21d48 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:11:19 +0800
-Subject: [PATCH 23/29] clear: sched/fair: Tweak idle balance calculation
+Subject: [PATCH 24/30] clear: sched/fair: Tweak idle balance calculation
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1359,10 +1372,10 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index ce2e94ccad0c..2f9846151477 100644
+index 3d9b68a347b7..1188a8599181 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12801,7 +12801,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12844,7 +12844,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  		update_next_balance(sd, &next_balance);
  
@@ -1372,13 +1385,13 @@ index ce2e94ccad0c..2f9846151477 100644
  
  		if (sd->flags & SD_BALANCE_NEWIDLE) {
 -- 
-2.48.1
+2.49.0
 
 
-From 58b59ab87ef15934ba270f131c44facfd87a850c Mon Sep 17 00:00:00 2001
+From 650fe1c47d556103f59f0e06b59dc3b7987e5021 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:15:25 +0800
-Subject: [PATCH 24/29] clear: fs/binfmt_elf: Properly handle memory mapping
+Subject: [PATCH 25/30] clear: fs/binfmt_elf: Properly handle memory mapping
  for PIE binaries
 
 Place libraries right below the binary for PIE binaries, this helps code locality
@@ -1403,13 +1416,13 @@ index 8054f44d39cf..f7016bfb3e27 100644
  	mm->end_data = end_data;
  	mm->start_stack = bprm->p;
 -- 
-2.48.1
+2.49.0
 
 
-From 79a6a8fa48c8eb7b7908b1f8a4055ab7eb8f398f Mon Sep 17 00:00:00 2001
+From 2cb588cd873d7734bbbb314671fd5f3e565307a4 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@intel.com>
 Date: Wed, 24 Apr 2024 16:45:47 +0100
-Subject: [PATCH 25/29] net: sock: increase default number of _SK_MEM_PACKETS
+Subject: [PATCH 26/30] net: sock: increase default number of _SK_MEM_PACKETS
  to 1024
 
 scale these by a factor of 4 to improve socket performance
@@ -1420,10 +1433,10 @@ Signed-off-by: Colin Ian King <colin.i.king@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/net/sock.h b/include/net/sock.h
-index 8036b3b79cd8..81bc795c5eed 100644
+index 93587308c38a..3d9a2b2166de 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
-@@ -2849,7 +2849,7 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
+@@ -2886,7 +2886,7 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
   * platforms.  This makes socket queueing behavior and performance
   * not depend upon such differences.
   */
@@ -1433,13 +1446,13 @@ index 8036b3b79cd8..81bc795c5eed 100644
  #define SK_WMEM_MAX		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
  #define SK_RMEM_MAX		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
 -- 
-2.48.1
+2.49.0
 
 
-From 18ae8e02269c2a2d65f760200de0b11b08f44012 Mon Sep 17 00:00:00 2001
+From c239ef9f123f7fb7d5aac3fc03f8f3f7a1eff7fa Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:21:24 +0800
-Subject: [PATCH 26/29] clear: net/sock: Introduce 64KB reclaim threshold
+Subject: [PATCH 27/30] clear: net/sock: Introduce 64KB reclaim threshold
 
 Allows more efficient memory management by reclaiming only surplus memory beyond the threshold instead of
 always calling `sk_mem_reclaim`.
@@ -1450,10 +1463,10 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/include/net/sock.h b/include/net/sock.h
-index 81bc795c5eed..009f341291d1 100644
+index 3d9a2b2166de..18e8b9684314 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
-@@ -1586,10 +1586,17 @@ static inline void sk_mem_charge(struct sock *sk, int size)
+@@ -1592,10 +1592,17 @@ static inline void sk_mem_charge(struct sock *sk, int size)
  
  static inline void sk_mem_uncharge(struct sock *sk, int size)
  {
@@ -1471,15 +1484,15 @@ index 81bc795c5eed..009f341291d1 100644
 +	}
  }
  
- /*
+ #if IS_ENABLED(CONFIG_PROVE_LOCKING) && IS_ENABLED(CONFIG_MODULES)
 -- 
-2.48.1
+2.49.0
 
 
-From cf6b894d0aff88b7f246ecec17bfff895ae0a5e8 Mon Sep 17 00:00:00 2001
+From 9f089ee8dab8bc2d298ede514fdf7d33dabf8ef7 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:25:10 +0800
-Subject: [PATCH 27/29] clear: init/init_task: Tweak timer_slack value
+Subject: [PATCH 28/30] clear: init/init_task: Tweak timer_slack value
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1500,13 +1513,13 @@ index e557f622bd90..ca1ef66774b3 100644
  	.thread_node	= LIST_HEAD_INIT(init_signals.thread_head),
  #ifdef CONFIG_AUDIT
 -- 
-2.48.1
+2.49.0
 
 
-From 237a9c10ce5e03161997ac3a761435e20f7041a9 Mon Sep 17 00:00:00 2001
+From 93d33a50c0897ff1cbaa300bc22b6509756f1e7b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 28 Jul 2024 18:55:38 +0200
-Subject: [PATCH 28/29] cachy: move AMD_PRIVATE_COLOR to Kconfig
+Subject: [PATCH 29/30] cachy: move AMD_PRIVATE_COLOR to Kconfig
 
 Co-authored-by: PedroHLC <root@pedrohlc.com>
 Signed-off-by: Peter Jung <admin@ptr1337.dev>
@@ -1534,10 +1547,10 @@ index abd3b6564373..46937e6fa78d 100644
 +
  endmenu
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-index ac3fd81fecef..f0aa1640d72e 100644
+index 2dbd71fbae28..29d263ee048f 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-@@ -4582,7 +4582,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
+@@ -4659,7 +4659,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
  		return r;
  	}
  
@@ -1560,10 +1573,10 @@ index ebabfe3a512f..4d3ebcaacca1 100644
   *
   * AMD driver supports pre-defined mathematical functions for transferring
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-index 36a830a7440f..a8fc8bd52d51 100644
+index 87058271b00c..454545775eae 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-@@ -470,7 +470,7 @@ static int amdgpu_dm_crtc_late_register(struct drm_crtc *crtc)
+@@ -472,7 +472,7 @@ static int amdgpu_dm_crtc_late_register(struct drm_crtc *crtc)
  }
  #endif
  
@@ -1572,7 +1585,7 @@ index 36a830a7440f..a8fc8bd52d51 100644
  /**
   * dm_crtc_additional_color_mgmt - enable additional color properties
   * @crtc: DRM CRTC
-@@ -552,7 +552,7 @@ static const struct drm_crtc_funcs amdgpu_dm_crtc_funcs = {
+@@ -554,7 +554,7 @@ static const struct drm_crtc_funcs amdgpu_dm_crtc_funcs = {
  #if defined(CONFIG_DEBUG_FS)
  	.late_register = amdgpu_dm_crtc_late_register,
  #endif
@@ -1581,7 +1594,7 @@ index 36a830a7440f..a8fc8bd52d51 100644
  	.atomic_set_property = amdgpu_dm_atomic_crtc_set_property,
  	.atomic_get_property = amdgpu_dm_atomic_crtc_get_property,
  #endif
-@@ -731,7 +731,7 @@ int amdgpu_dm_crtc_init(struct amdgpu_display_manager *dm,
+@@ -733,7 +733,7 @@ int amdgpu_dm_crtc_init(struct amdgpu_display_manager *dm,
  
  	drm_mode_crtc_set_gamma_size(&acrtc->base, MAX_COLOR_LEGACY_LUT_ENTRIES);
  
@@ -1591,10 +1604,10 @@ index 36a830a7440f..a8fc8bd52d51 100644
  #endif
  	return 0;
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
-index 774cc3f4f3fd..d5066e407ad5 100644
+index 92472109f84a..d5f3e6d5aa7f 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
-@@ -1595,7 +1595,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
+@@ -1598,7 +1598,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
  	drm_atomic_helper_plane_destroy_state(plane, state);
  }
  
@@ -1603,7 +1616,7 @@ index 774cc3f4f3fd..d5066e407ad5 100644
  static void
  dm_atomic_plane_attach_color_mgmt_properties(struct amdgpu_display_manager *dm,
  					     struct drm_plane *plane)
-@@ -1786,7 +1786,7 @@ static const struct drm_plane_funcs dm_plane_funcs = {
+@@ -1789,7 +1789,7 @@ static const struct drm_plane_funcs dm_plane_funcs = {
  	.atomic_duplicate_state = amdgpu_dm_plane_drm_plane_duplicate_state,
  	.atomic_destroy_state = amdgpu_dm_plane_drm_plane_destroy_state,
  	.format_mod_supported = amdgpu_dm_plane_format_mod_supported,
@@ -1612,7 +1625,7 @@ index 774cc3f4f3fd..d5066e407ad5 100644
  	.atomic_set_property = dm_atomic_plane_set_property,
  	.atomic_get_property = dm_atomic_plane_get_property,
  #endif
-@@ -1882,7 +1882,7 @@ int amdgpu_dm_plane_init(struct amdgpu_display_manager *dm,
+@@ -1885,7 +1885,7 @@ int amdgpu_dm_plane_init(struct amdgpu_display_manager *dm,
  	else
  		drm_plane_helper_add(plane, &dm_plane_helper_funcs);
  
@@ -1622,13 +1635,13 @@ index 774cc3f4f3fd..d5066e407ad5 100644
  #endif
  	/* Create (reset) the plane state */
 -- 
-2.48.1
+2.49.0
 
 
-From 58e27a2d653099406ce2f1f6c3193aeededd7d96 Mon Sep 17 00:00:00 2001
+From 53253ecd31ee6d0e20fe41d97dcf1471b94484a8 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Fri, 15 Mar 2024 12:36:51 -0500
-Subject: [PATCH 29/29] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
+Subject: [PATCH 30/30] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
  with ignore_min_pcap
 
 ---
@@ -1639,7 +1652,7 @@ Subject: [PATCH 29/29] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
  4 files changed, 26 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu.h b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
-index 69895fccb474..5884de0f23bb 100644
+index 416d2611fbf1..7e0442447f6b 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 @@ -160,6 +160,7 @@ struct amdgpu_watchdog_timer {
@@ -1651,10 +1664,10 @@ index 69895fccb474..5884de0f23bb 100644
  extern int amdgpu_gart_size;
  extern int amdgpu_gtt_size;
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-index 817116e53d44..2b4a4eed2ae4 100644
+index bb8ab25ea76a..713192aa8ce6 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-@@ -137,6 +137,7 @@ enum AMDGPU_DEBUG_MASK {
+@@ -139,6 +139,7 @@ enum AMDGPU_DEBUG_MASK {
  };
  
  unsigned int amdgpu_vram_limit = UINT_MAX;
@@ -1662,7 +1675,7 @@ index 817116e53d44..2b4a4eed2ae4 100644
  int amdgpu_vis_vram_limit;
  int amdgpu_gart_size = -1; /* auto */
  int amdgpu_gtt_size = -1; /* auto */
-@@ -255,6 +256,15 @@ struct amdgpu_watchdog_timer amdgpu_watchdog_timer = {
+@@ -257,6 +258,15 @@ struct amdgpu_watchdog_timer amdgpu_watchdog_timer = {
  	.period = 0x0, /* default to 0x0 (timeout disable) */
  };
  
@@ -1679,10 +1692,10 @@ index 817116e53d44..2b4a4eed2ae4 100644
   * DOC: vramlimit (int)
   * Restrict the total amount of VRAM in MiB for testing.  The default is 0 (Use full VRAM).
 diff --git a/drivers/gpu/drm/amd/pm/amdgpu_pm.c b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-index e8ae7681bf0a..8a0d873983f3 100644
+index 77b1f061bbf0..89ffc9fd9463 100644
 --- a/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 +++ b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-@@ -3178,6 +3178,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
+@@ -3180,6 +3180,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
  					 struct device_attribute *attr,
  					 char *buf)
  {
@@ -1693,10 +1706,10 @@ index e8ae7681bf0a..8a0d873983f3 100644
  }
  
 diff --git a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-index 8ca793c222ff..8a06a6c35a4b 100644
+index ed9dac00ebfb..b3fd5e9df44c 100644
 --- a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 +++ b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-@@ -2822,7 +2822,10 @@ int smu_get_power_limit(void *handle,
+@@ -2823,7 +2823,10 @@ int smu_get_power_limit(void *handle,
  			*limit = smu->max_power_limit;
  			break;
  		case SMU_PPT_LIMIT_MIN:
@@ -1708,7 +1721,7 @@ index 8ca793c222ff..8a06a6c35a4b 100644
  			break;
  		default:
  			return -EINVAL;
-@@ -2846,7 +2849,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
+@@ -2847,7 +2850,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
  		if (smu->ppt_funcs->set_power_limit)
  			return smu->ppt_funcs->set_power_limit(smu, limit_type, limit);
  
@@ -1725,4 +1738,5 @@ index 8ca793c222ff..8a06a6c35a4b 100644
  			"New power limit (%d) is out of range [%d,%d]\n",
  			limit, smu->min_power_limit, smu->max_power_limit);
 -- 
-2.48.1
+2.49.0
+
