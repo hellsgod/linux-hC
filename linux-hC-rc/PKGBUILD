@@ -113,12 +113,12 @@
 
 # Builds the nvidia module and package it into a own base
 # This does replace the requirement of nvidia-dkms
-: "${_build_nvidia:=no}"
+: "${_build_nvidia:=yes}"
 
 # Builds the open nvidia module and package it into a own base
 # This does replace the requirement of nvidia-open-dkms
 # Use this only if you have Turing+ GPU
-: "${_build_nvidia_open:=yes}"
+: "${_build_nvidia_open:=no}"
 
 # Build a debug package with non-stripped vmlinux
 : "${_build_debug:=no}"
@@ -196,7 +196,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=570.144
+_nv_ver=570.153.02
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -249,19 +249,14 @@ fi
 # NVIDIA pre-build module support
 if [ "$_build_nvidia" = "yes" ]; then
     source+=("https://us.download.nvidia.com/XFree86/Linux-x86_64/${_nv_ver}/${_nv_pkg}.run"
-             "${_patchsource}/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch")
+             "${_patchsource}/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch"
+             "${_patchsource}/misc/nvidia/0003-Workaround-nv_vm_flags_-calling-GPL-only-code.patch")
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
              "${_patchsource}/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch"
-             "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch"
-             "${_patchsource}/misc/nvidia/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch"
-             "${_patchsource}/misc/nvidia/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch"
-             "${_patchsource}/misc/nvidia/0005-nvidia-uvm-Use-__iowrite64_hi_lo.patch"
-             "${_patchsource}/misc/nvidia/0006-nvidia-uvm-Use-page_pgmap.patch"
-             "${_patchsource}/misc/nvidia/0007-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch"
-             "${_patchsource}/misc/nvidia/0008-kbuild-Add-workaround-for-GCC-15-Compilation.patch")
+             "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -519,17 +514,12 @@ prepare() {
 
         # Use fbdev and modeset as default
         patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" -d "${srcdir}/${_nv_pkg}/kernel"
+        patch -Np1 -i "${srcdir}/0003-Workaround-nv_vm_flags_-calling-GPL-only-code.patch" -d "${srcdir}/${_nv_pkg}/kernel"
     fi
 
     if [ "$_build_nvidia_open" = "yes" ]; then
         patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" -d "${srcdir}/${_nv_open_pkg}/kernel-open"
         patch -Np1 -i "${srcdir}/0002-Add-IBT-support.patch" -d "${srcdir}/${_nv_open_pkg}/"
-        patch -Np1 -i "${srcdir}/0003-Kbuild-Convert-EXTRA_CFLAGS-to-ccflags-y.patch" -d"${srcdir}/${_nv_open_pkg}"
-        patch -Np1 -i "${srcdir}/0004-kernel-open-nvidia-Use-new-timer-functions-for-6.15.patch" -d"${srcdir}/${_nv_open_pkg}/"
-        patch -Np1 -i "${srcdir}/0005-nvidia-uvm-Use-__iowrite64_hi_lo.patch" -d "${srcdir}/${_nv_open_pkg}/"
-        patch -Np1 -i "${srcdir}/0006-nvidia-uvm-Use-page_pgmap.patch" -d "${srcdir}/${_nv_open_pkg}/"
-        patch -Np1 -i "${srcdir}/0007-nvidia-uvm-Convert-make_device_exclusive_range-to-ma.patch" -d "${srcdir}/${_nv_open_pkg}/"
-        patch -Np1 -i "${srcdir}/0008-kbuild-Add-workaround-for-GCC-15-Compilation.patch" -d "${srcdir}/${_nv_open_pkg}/"
     fi
 }
 
@@ -770,7 +760,7 @@ for _p in "${pkgname[@]}"; do
 done
 
 b2sums=('35f2f42ff7f345a2f2d7808ebb234237612ce5074c987f97f5a3f843152536e63038d22e61fc5e48cbd49997d7b0f0d59dfab78b26a4678d13cfcddf86711004'
-        '988732c59dcf38d279ea171315ce474331a29c2273284a09c62ca1b7b5549f6209b50b375f5b7337767acba162b2f9c9915b9a2b6669a2af956336fc0b29c085'
+        '3f01794838fc0e4ae820a3794662f291b0c5ccac3c0acc4b362eb671d9275652f9a056f3ad0be571ad1ee13501dd6fc44a1a2feeb1791a18aca991134d2524fd'
         '390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab'
         '8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c'
         'eb57fb07a2661760cdba725c8cba04db9d34d28bedb3c1a97dd0467dcba8924416d8f75595a48997daf18e991a1224380723bc7f1a3d138eca0296d3ce12a9db'
@@ -784,13 +774,7 @@ b2sums=('35f2f42ff7f345a2f2d7808ebb234237612ce5074c987f97f5a3f843152536e63038d22
         '980446f2b8f7d6cb1d0e31baeb1e96d94d77498e0e03e0979e3f2a25e2b38ba4f0c97a0e5f1188a2eafd063426960ba6745fd91ed796d2109b0efa393c834908'
         'fbce850f98bf8720bf13179a8737f7160681244e571b54124ed4be829ae8d7b08092fb38bfba625fa97e5d154857a226bd9371a8a22d45e16d9fa17a39bf5be3'
         'c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452'
-        'f6b1327f0bf73fd2f42ee3914964e68ba455292d38427525a84aa3209f2f2cf5a8509da77e92807274e494492e6eaf9448dc675157c5dabebab9564bd8876f3e'
+        '608facd79c913fdd58829e2639429e0834feacd52997980d1c143453346790cebaf8dd9295a4cd05947548821891e16bdddf291875e03736ffca7b5d1c9834c6'
         '05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b'
-        'bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f'
-        '8e812e90adcd4790e8a5a5563859e9c64e65424a504185e1a7d083bcc6a99560aea37c79ad9680af751da9f40e6bd60bb3e8a3bd431e0903afbd8eeba2c53ad3'
-        'f8f19bb7809d7d4434de910ad50dc8fb7beae5d7e4ee08c70b8aa1340aa4cd7b219606fb359959c3493ccddc193c30eaa50bb8bc46d96af47e5563d9d1b4e065'
-        'eac989cce78951f1a6a7afe520e8647997abe020d3d77d355af7d157f808a44c09dcd979bb9ff21f26d304c6902e8b318e06ce4d1398b3199e86137e159d475f'
-        '86f555ebaf8c65936cd7c1c7e60f9b4b306215591746f1675b568d3831522fa59ab1cc4ac8a270666c99fdb7941d3352b318e1548b7b7d22a7106403c7b0b71a'
-        'f8ff4770956db7a1bf62c7e408014484675043b6e6831437742bae88be7d958ce21c54eda8750f9822baad62ee0ddeb407ef2c0a9cf4acdff9511e827ba3b213'
-        '5c57770c4249c2e043c2689325d58aef79327517cf73ec1e7bada9db929555d2e5695c3f79eef3c8ed29c8c088f2047c7ce3d9e6ecbcd6a5230942b82e011f42'
+        '03996467969052d0584b92154a8a20eba5a40ccbdd1e14e439af2c0b785e6dfb5862bb4cfec7c897c1de2cc4a38a429188f83d26c909ddc767ecf0bbb6f241ee'
         'c2abf138377ec4737663b1010c9c0e0cdccf2478a3fc38125faf3dfff9fb5c889e68735dd8b7a178f2ac951c8b126567d6ab0bc63734a2175f96fc5ae5dd8398')
