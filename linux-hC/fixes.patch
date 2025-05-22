@@ -1,7 +1,7 @@
 From 2de2ed992275e552dc415d8034d2f6887f6c4fec Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/23] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/25] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index b8a4ff365582..9b087f9bb413 100644
 From 78119a5b1a66becbbaa99243c29a9ba9c88864f0 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/23] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/25] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -75,7 +75,7 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 From 4b5bcde991668bedecef870ac1281124bf979e2e Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 03/23] sched/fair: Refactor can_migrate_task() to elimate
+Subject: [PATCH 03/25] sched/fair: Refactor can_migrate_task() to elimate
  looping
 
 The function "can_migrate_task()" utilize "for_each_cpu_and" with a
@@ -137,7 +137,7 @@ From 862d8f511f87edd4300c4ba7989ea3fcd280007a Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 04/23] Kunit to check the longest symbol length
+Subject: [PATCH 04/25] Kunit to check the longest symbol length
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -325,7 +325,7 @@ index 000000000000..e3c28ff1807f
 From a8e6aabbde62af00b1e453b5f1b4edbcf37c2eaf Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 05/23] driver/base: Optimize memory block registration to
+Subject: [PATCH 05/25] driver/base: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -565,7 +565,7 @@ index 9a881c2208b3..02c27adc21ed 100644
 From 78c23db3e275746990b8ef76aac674c148bbe8a8 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 06/23] driver/base: remove
+Subject: [PATCH 06/25] driver/base: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -672,7 +672,7 @@ index 907b16275296..063915a9ff57 100644
 From bb746b0adaef0c3c82f520119175291d235b7b14 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 07/23] drivers/base : Rename
+Subject: [PATCH 07/25] drivers/base : Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -755,7 +755,7 @@ index 75401866fb76..27672fe645a9 100644
 From 7f515618d7af16c426e0778bc98e970cc2c40151 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 08/23] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 08/25] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -799,7 +799,7 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 From e8652469ba7701de998eabd1fca106a6972d1fa5 Mon Sep 17 00:00:00 2001
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Date: Wed, 26 Feb 2025 10:10:57 +0100
-Subject: [PATCH 09/23] futex: Use a hashmask instead of hashsize
+Subject: [PATCH 09/25] futex: Use a hashmask instead of hashsize
 
 The global hash uses futex_hashsize to save the amount of the hash
 buckets that have been allocated during system boot. On each
@@ -887,7 +887,7 @@ index 3db8567f5a44..cca15859a50b 100644
 From efd6ee6e622cdbc05360143c4b0cec983c3627dc Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 27 Jan 2025 14:45:23 -0800
-Subject: [PATCH 10/23] x86/fpu: make WARN_ON_FPU get fully optimized out
+Subject: [PATCH 10/25] x86/fpu: make WARN_ON_FPU get fully optimized out
 
 Currently WARN_ON_FPU evaluates its argument even if
 CONFIG_X86_DEBUG_FPU is disabled, which adds unnecessary instructions to
@@ -921,7 +921,7 @@ index dbdb31f55fc7..975de070c9c9 100644
 From d55f073d7f84b2c02f89dd14ec3dea972633ecd8 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 11/23] x86/mm: Simplify redundant overlap calculation
+Subject: [PATCH 11/25] x86/mm: Simplify redundant overlap calculation
 
 There have been a couple of reports that the two sides of the
 overlaps() calculation are redundant.  I spent way too much time
@@ -966,7 +966,7 @@ index b491d8190a6c..1c6db6bba56f 100644
 From 4fc2dcb6e1f056b988acd28f41c9f1c0c494bb4d Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Fri, 25 Apr 2025 12:57:55 -0700
-Subject: [PATCH 12/23] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 12/25] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -1051,7 +1051,7 @@ index 3c7c942c7c42..c413e12825d7 100644
 From d51fea92ada01d175aba1f91bb78105e760c0245 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 26 Feb 2025 19:43:01 +0800
-Subject: [PATCH 13/23] sched/fair: Prevent from cpufreq not being updated when
+Subject: [PATCH 13/25] sched/fair: Prevent from cpufreq not being updated when
  delayed-task is iowait
 
 Because the sched-delayed task maybe in io-wait state,
@@ -1099,7 +1099,7 @@ index 96ba0c1e2e44..a9f47d595427 100644
 From 0a2febfa2e8b80213dbece4c99ae2177907821e4 Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Sun, 9 Mar 2025 18:09:36 +0100
-Subject: [PATCH 14/23] x86/locking/atomic: Use asm_inline for atomic locking
+Subject: [PATCH 14/25] x86/locking/atomic: Use asm_inline for atomic locking
  insns
 
 According to:
@@ -1689,7 +1689,7 @@ index 363266cbcada..3821ee3fae35 100644
 From 9d81078a58f5848ede0afdd66bb2461622bdd17c Mon Sep 17 00:00:00 2001
 From: Yujun Dong <yujundong@pascal-lab.net>
 Date: Mon, 30 Dec 2024 22:16:24 +0800
-Subject: [PATCH 15/23] cpuidle, sched: Use smp_mb__after_atomic() in
+Subject: [PATCH 15/25] cpuidle, sched: Use smp_mb__after_atomic() in
  current_clr_polling()
 
 In architectures that use the polling bit, current_clr_polling() employs
@@ -1771,7 +1771,7 @@ index e670ac282333..439f6029d3b9 100644
 From d7375e4c9ad328b6d7b6e8af74324cc98ec7f50d Mon Sep 17 00:00:00 2001
 From: Max Kellermann <max.kellermann@ionos.com>
 Date: Tue, 29 Apr 2025 20:58:27 +0200
-Subject: [PATCH 16/23] fs/eventpoll: fix endless busy loop after timeout has
+Subject: [PATCH 16/25] fs/eventpoll: fix endless busy loop after timeout has
  expired
 
 After commit 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in
@@ -1834,7 +1834,7 @@ index c01234bbac49..9a6b924958e2 100644
 From 03271a45005abccc6545ff3bccd5077bf7a5070a Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 19 Feb 2025 17:37:46 +0800
-Subject: [PATCH 17/23] sched/uclamp: Always using uclamp_is_used()
+Subject: [PATCH 17/25] sched/uclamp: Always using uclamp_is_used()
 
 Now, we have the uclamp_is_used() func to judge the uclamp enabled,
 so replace the static_branch_unlikely(&sched_uclamp_used) with it.
@@ -1930,7 +1930,7 @@ index 1aa65a0ac586..e48eae83e689 100644
 From 943267b0ae55aa643eef6ae0a4ced1becb252e6f Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 19 Feb 2025 17:37:47 +0800
-Subject: [PATCH 18/23] sched/uclamp: Add uclamp_is_used() check before enable
+Subject: [PATCH 18/25] sched/uclamp: Add uclamp_is_used() check before enable
  it
 
 Because the static_branch_enable() would get the cpus_read_lock(),
@@ -2030,7 +2030,7 @@ index 456d339be98f..9100a77e9d79 100644
 From e1e9d900d58a0ddf9a7f9f788698a4f343b56d44 Mon Sep 17 00:00:00 2001
 From: tip-bot2 for Mathieu Desnoyers <tip-bot2@linutronix.de>
 Date: Thu, 3 Apr 2025 11:26:32 +0000
-Subject: [PATCH 19/23] rseq: Eliminate useless task_work on execve
+Subject: [PATCH 19/25] rseq: Eliminate useless task_work on execve
 
 The following commit has been merged into the sched/urgent branch of tip:
 
@@ -2112,7 +2112,7 @@ index 3fd7a13e8d2a..81f5369f5260 100644
 From 2a1cc6f7448fb95e404fe4e8ff70fa9a93368183 Mon Sep 17 00:00:00 2001
 From: Waiman Long <longman@redhat.com>
 Date: Thu, 8 May 2025 15:24:13 -0400
-Subject: [PATCH 20/23] cgroup/cpuset: Extend kthread_is_per_cpu() check to all
+Subject: [PATCH 20/25] cgroup/cpuset: Extend kthread_is_per_cpu() check to all
  PF_NO_SETAFFINITY tasks
 
 Commit ec5fbdfb99d1 ("cgroup/cpuset: Enable update_tasks_cpumask()
@@ -2161,7 +2161,7 @@ index 1287274ae1ce..6fbffdca0c74 100644
 From 638064e8a90f3864681bb5f1291b3e6fcfc8e469 Mon Sep 17 00:00:00 2001
 From: Nathan Chancellor <nathan@kernel.org>
 Date: Tue, 6 May 2025 14:02:01 -0700
-Subject: [PATCH 21/23] kbuild: Disable -Wdefault-const-init-unsafe
+Subject: [PATCH 21/25] kbuild: Disable -Wdefault-const-init-unsafe
 
 A new on by default warning in clang [1] aims to flags instances where
 const variables without static or thread local storage or const members
@@ -2271,7 +2271,7 @@ index dc081cf46d21..686197407c3c 100644
 From 7a02cbcc434adcac8e0aec81eeea834b6f020ecb Mon Sep 17 00:00:00 2001
 From: Kees Cook <kees@kernel.org>
 Date: Thu, 15 May 2025 14:42:15 -0700
-Subject: [PATCH 22/23] mm: vmalloc: Actually use the in-place vrealloc region
+Subject: [PATCH 22/25] mm: vmalloc: Actually use the in-place vrealloc region
 
 The refactoring to not build a new vmalloc region only actually worked
 when shrinking. Actually return the resized area when it grows. Ugh.
@@ -2308,7 +2308,7 @@ index 8aa7eea9b26f..837899a4eaaf 100644
 From 71c7dbb97e47a175f4b6a0c1a20adbd1195f16e8 Mon Sep 17 00:00:00 2001
 From: Kees Cook <kees@kernel.org>
 Date: Thu, 15 May 2025 14:42:16 -0700
-Subject: [PATCH 23/23] mm: vmalloc: Only zero-init on vrealloc shrink
+Subject: [PATCH 23/25] mm: vmalloc: Only zero-init on vrealloc shrink
 
 The common case is to grow reallocations, and since init_on_alloc will
 have already zeroed the whole allocation, we only need to zero when
@@ -2353,6 +2353,247 @@ index 837899a4eaaf..ae7e419be29d 100644
 +		 */
  		vm->requested_size = size;
  		return (void *)p;
+ 	}
+-- 
+2.49.0
+
+
+From 32e4cfc60318c91eb35b7876482298566f9e6b3e Mon Sep 17 00:00:00 2001
+From: Christoph Hellwig <hch@lst.de>
+Date: Tue, 20 May 2025 15:54:20 +0200
+Subject: [PATCH 24/25] loop: don't require ->write_iter for writable files in
+ loop_configure
+
+Block devices can be opened read-write even if they can't be written to
+for historic reasons.  Remove the check requiring file->f_op->write_iter
+when the block devices was opened in loop_configure. The call to
+loop_check_backing_file just below ensures the ->write_iter is present
+for backing files opened for writing, which is the only check that is
+actually needed.
+
+Fixes: f5c84eff634b ("loop: Add sanity check for read/write_iter")
+Reported-by: Christian Hesse <mail@eworm.de>
+Signed-off-by: Christoph Hellwig <hch@lst.de>
+Link: https://lore.kernel.org/r/20250520135420.1177312-1-hch@lst.de
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Cherry-picked-for: https://lore.kernel.org/r/20250519175640.2fcac001@leda.eworm.net
+---
+ drivers/block/loop.c | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/drivers/block/loop.c b/drivers/block/loop.c
+index b378d2aa49f0..34bc46d1f3f3 100644
+--- a/drivers/block/loop.c
++++ b/drivers/block/loop.c
+@@ -972,9 +972,6 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
+ 	if (!file)
+ 		return -EBADF;
+ 
+-	if ((mode & BLK_OPEN_WRITE) && !file->f_op->write_iter)
+-		return -EINVAL;
+-
+ 	error = loop_check_backing_file(file);
+ 	if (error)
+ 		return error;
+-- 
+2.49.0
+
+
+From 48cd0dee4e25cf674a09b39d9f8732274edddd40 Mon Sep 17 00:00:00 2001
+From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+Date: Wed, 30 Apr 2025 15:07:03 -0400
+Subject: [PATCH 25/25] Bluetooth: hci_event: Fix not using key encryption size
+ when its known
+
+This fixes the regression introduced by 50c1241e6a8a ("Bluetooth: l2cap:
+Check encryption key size on incoming connection") introduced a check for
+l2cap_check_enc_key_size which checks for hcon->enc_key_size which may
+not be initialized if HCI_OP_READ_ENC_KEY_SIZE is still pending.
+
+If the key encryption size is known, due previously reading it using
+HCI_OP_READ_ENC_KEY_SIZE, then store it as part of link_key/smp_ltk
+structures so the next time the encryption is changed their values are
+used as conn->enc_key_size thus avoiding the racing against
+HCI_OP_READ_ENC_KEY_SIZE.
+
+Now that the enc_size is stored as part of key the information the code
+then attempts to check that there is no downgrade of security if
+HCI_OP_READ_ENC_KEY_SIZE returns a value smaller than what has been
+previously stored.
+
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=220061
+Link: https://bugzilla.kernel.org/show_bug.cgi?id=220063
+Fixes: 522e9ed157e3 ("Bluetooth: l2cap: Check encryption key size on incoming connection")
+Signed-off-by: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
+---
+ include/net/bluetooth/hci_core.h |  1 +
+ net/bluetooth/hci_conn.c         | 24 +++++++++++
+ net/bluetooth/hci_event.c        | 73 ++++++++++++++++++--------------
+ 3 files changed, 67 insertions(+), 31 deletions(-)
+
+diff --git a/include/net/bluetooth/hci_core.h b/include/net/bluetooth/hci_core.h
+index 7d8bab892154..e21abd869ce7 100644
+--- a/include/net/bluetooth/hci_core.h
++++ b/include/net/bluetooth/hci_core.h
+@@ -1778,6 +1778,7 @@ struct hci_conn_params *hci_pend_le_action_lookup(struct list_head *list,
+ void hci_uuids_clear(struct hci_dev *hdev);
+ 
+ void hci_link_keys_clear(struct hci_dev *hdev);
++u8 *hci_conn_key_enc_size(struct hci_conn *conn);
+ struct link_key *hci_find_link_key(struct hci_dev *hdev, bdaddr_t *bdaddr);
+ struct link_key *hci_add_link_key(struct hci_dev *hdev, struct hci_conn *conn,
+ 				  bdaddr_t *bdaddr, u8 *val, u8 type,
+diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
+index ae66fa0a5fb5..a5cf428822fc 100644
+--- a/net/bluetooth/hci_conn.c
++++ b/net/bluetooth/hci_conn.c
+@@ -2897,3 +2897,27 @@ int hci_abort_conn(struct hci_conn *conn, u8 reason)
+ 	 */
+ 	return hci_cmd_sync_run_once(hdev, abort_conn_sync, conn, NULL);
+ }
++
++u8 *hci_conn_key_enc_size(struct hci_conn *conn)
++{
++	if (conn->type == ACL_LINK) {
++		struct link_key *key;
++
++		key = hci_find_link_key(conn->hdev, &conn->dst);
++		if (!key)
++			return NULL;
++
++		return &key->pin_len;
++	} else if (conn->type == LE_LINK) {
++		struct smp_ltk *ltk;
++
++		ltk = hci_find_ltk(conn->hdev, &conn->dst, conn->dst_type,
++				   conn->role);
++		if (!ltk)
++			return NULL;
++
++		return &ltk->enc_size;
++	}
++
++	return NULL;
++}
+diff --git a/net/bluetooth/hci_event.c b/net/bluetooth/hci_event.c
+index ab940ec698c0..a46929e33783 100644
+--- a/net/bluetooth/hci_event.c
++++ b/net/bluetooth/hci_event.c
+@@ -739,10 +739,17 @@ static u8 hci_cc_read_enc_key_size(struct hci_dev *hdev, void *data,
+ 			   handle);
+ 		conn->enc_key_size = 0;
+ 	} else {
++		u8 *key_enc_size = hci_conn_key_enc_size(conn);
++
+ 		conn->enc_key_size = rp->key_size;
+ 		status = 0;
+ 
+-		if (conn->enc_key_size < hdev->min_enc_key_size) {
++		/* Attempt to check if the key size is too small or if it has
++		 * been downgraded from the last time it was stored as part of
++		 * the link_key.
++		 */
++		if (conn->enc_key_size < hdev->min_enc_key_size ||
++		    (key_enc_size && conn->enc_key_size < *key_enc_size)) {
+ 			/* As slave role, the conn->state has been set to
+ 			 * BT_CONNECTED and l2cap conn req might not be received
+ 			 * yet, at this moment the l2cap layer almost does
+@@ -755,6 +762,10 @@ static u8 hci_cc_read_enc_key_size(struct hci_dev *hdev, void *data,
+ 			clear_bit(HCI_CONN_ENCRYPT, &conn->flags);
+ 			clear_bit(HCI_CONN_AES_CCM, &conn->flags);
+ 		}
++
++		/* Update the key encryption size with the connection one */
++		if (key_enc_size && *key_enc_size != conn->enc_key_size)
++			*key_enc_size = conn->enc_key_size;
+ 	}
+ 
+ 	hci_encrypt_cfm(conn, status);
+@@ -3062,6 +3073,34 @@ static void hci_inquiry_result_evt(struct hci_dev *hdev, void *edata,
+ 	hci_dev_unlock(hdev);
+ }
+ 
++static int hci_read_enc_key_size(struct hci_dev *hdev, struct hci_conn *conn)
++{
++	struct hci_cp_read_enc_key_size cp;
++	u8 *key_enc_size = hci_conn_key_enc_size(conn);
++
++	if (!read_key_size_capable(hdev)) {
++		conn->enc_key_size = HCI_LINK_KEY_SIZE;
++		return -EOPNOTSUPP;
++	}
++
++	bt_dev_dbg(hdev, "hcon %p", conn);
++
++	memset(&cp, 0, sizeof(cp));
++	cp.handle = cpu_to_le16(conn->handle);
++
++	/* If the key enc_size is already known, use it as conn->enc_key_size,
++	 * otherwise use hdev->min_enc_key_size so the likes of
++	 * l2cap_check_enc_key_size don't fail while waiting for
++	 * HCI_OP_READ_ENC_KEY_SIZE response.
++	 */
++	if (key_enc_size && *key_enc_size)
++		conn->enc_key_size = *key_enc_size;
++	else
++		conn->enc_key_size = hdev->min_enc_key_size;
++
++	return hci_send_cmd(hdev, HCI_OP_READ_ENC_KEY_SIZE, sizeof(cp), &cp);
++}
++
+ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
+ 				  struct sk_buff *skb)
+ {
+@@ -3154,23 +3193,11 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
+ 		if (ev->encr_mode == 1 && !test_bit(HCI_CONN_ENCRYPT, &conn->flags) &&
+ 		    ev->link_type == ACL_LINK) {
+ 			struct link_key *key;
+-			struct hci_cp_read_enc_key_size cp;
+ 
+ 			key = hci_find_link_key(hdev, &ev->bdaddr);
+ 			if (key) {
+ 				set_bit(HCI_CONN_ENCRYPT, &conn->flags);
+-
+-				if (!read_key_size_capable(hdev)) {
+-					conn->enc_key_size = HCI_LINK_KEY_SIZE;
+-				} else {
+-					cp.handle = cpu_to_le16(conn->handle);
+-					if (hci_send_cmd(hdev, HCI_OP_READ_ENC_KEY_SIZE,
+-							 sizeof(cp), &cp)) {
+-						bt_dev_err(hdev, "sending read key size failed");
+-						conn->enc_key_size = HCI_LINK_KEY_SIZE;
+-					}
+-				}
+-
++				hci_read_enc_key_size(hdev, conn);
+ 				hci_encrypt_cfm(conn, ev->status);
+ 			}
+ 		}
+@@ -3609,24 +3636,8 @@ static void hci_encrypt_change_evt(struct hci_dev *hdev, void *data,
+ 
+ 	/* Try reading the encryption key size for encrypted ACL links */
+ 	if (!ev->status && ev->encrypt && conn->type == ACL_LINK) {
+-		struct hci_cp_read_enc_key_size cp;
+-
+-		/* Only send HCI_Read_Encryption_Key_Size if the
+-		 * controller really supports it. If it doesn't, assume
+-		 * the default size (16).
+-		 */
+-		if (!read_key_size_capable(hdev)) {
+-			conn->enc_key_size = HCI_LINK_KEY_SIZE;
+-			goto notify;
+-		}
+-
+-		cp.handle = cpu_to_le16(conn->handle);
+-		if (hci_send_cmd(hdev, HCI_OP_READ_ENC_KEY_SIZE,
+-				 sizeof(cp), &cp)) {
+-			bt_dev_err(hdev, "sending read key size failed");
+-			conn->enc_key_size = HCI_LINK_KEY_SIZE;
++		if (hci_read_enc_key_size(hdev, conn))
+ 			goto notify;
+-		}
+ 
+ 		goto unlock;
  	}
 -- 
 2.49.0
