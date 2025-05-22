@@ -1,7 +1,7 @@
-From 2de2ed992275e552dc415d8034d2f6887f6c4fec Mon Sep 17 00:00:00 2001
+From 9a23f2cda81b1d0b4e9f6c6250a727cd6c1027ce Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/25] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/22] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -37,10 +37,10 @@ index b8a4ff365582..9b087f9bb413 100644
 2.49.0
 
 
-From 78119a5b1a66becbbaa99243c29a9ba9c88864f0 Mon Sep 17 00:00:00 2001
+From a6bfae2cd41a097f255369418f1ac958ce447449 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/25] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/22] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,10 +72,10 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 2.49.0
 
 
-From 4b5bcde991668bedecef870ac1281124bf979e2e Mon Sep 17 00:00:00 2001
+From 3ac14b8a4eefdcc95c33c0a461df8a6fd5fb65cc Mon Sep 17 00:00:00 2001
 From: I Hsin Cheng <richard120310@gmail.com>
 Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 03/25] sched/fair: Refactor can_migrate_task() to elimate
+Subject: [PATCH 03/22] sched/fair: Refactor can_migrate_task() to elimate
  looping
 
 The function "can_migrate_task()" utilize "for_each_cpu_and" with a
@@ -133,11 +133,11 @@ index 3d9b68a347b7..96ba0c1e2e44 100644
 2.49.0
 
 
-From 862d8f511f87edd4300c4ba7989ea3fcd280007a Mon Sep 17 00:00:00 2001
+From f886c6e88638cb3257095262d8e0649a1fa3dade Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
  <sergio.collado@gmail.com>
 Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 04/25] Kunit to check the longest symbol length
+Subject: [PATCH 04/22] Kunit to check the longest symbol length
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -322,10 +322,10 @@ index 000000000000..e3c28ff1807f
 2.49.0
 
 
-From a8e6aabbde62af00b1e453b5f1b4edbcf37c2eaf Mon Sep 17 00:00:00 2001
+From 557523eb0b0524654b35cef60ffeda0bcf3b1b50 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 05/25] driver/base: Optimize memory block registration to
+Subject: [PATCH 05/22] driver/base: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -562,10 +562,10 @@ index 9a881c2208b3..02c27adc21ed 100644
 2.49.0
 
 
-From 78c23db3e275746990b8ef76aac674c148bbe8a8 Mon Sep 17 00:00:00 2001
+From 308e40ae4b7545c18af9820f40dfa7eca2fb06f6 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 06/25] driver/base: remove
+Subject: [PATCH 06/22] driver/base: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -669,10 +669,10 @@ index 907b16275296..063915a9ff57 100644
 2.49.0
 
 
-From bb746b0adaef0c3c82f520119175291d235b7b14 Mon Sep 17 00:00:00 2001
+From ae80c4dee0c967b8231d804e2294c5d2e8117a0a Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 07/25] drivers/base : Rename
+Subject: [PATCH 07/22] drivers/base : Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -752,10 +752,10 @@ index 75401866fb76..27672fe645a9 100644
 2.49.0
 
 
-From 7f515618d7af16c426e0778bc98e970cc2c40151 Mon Sep 17 00:00:00 2001
+From 1699f3cdf2ddf008ee4f8478340c67ad1ae8c77e Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 08/25] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 08/22] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -796,10 +796,10 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 2.49.0
 
 
-From e8652469ba7701de998eabd1fca106a6972d1fa5 Mon Sep 17 00:00:00 2001
+From 7c144f60fc17e382b26ea1561634a8064af3e434 Mon Sep 17 00:00:00 2001
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Date: Wed, 26 Feb 2025 10:10:57 +0100
-Subject: [PATCH 09/25] futex: Use a hashmask instead of hashsize
+Subject: [PATCH 09/22] futex: Use a hashmask instead of hashsize
 
 The global hash uses futex_hashsize to save the amount of the hash
 buckets that have been allocated during system boot. On each
@@ -884,10 +884,10 @@ index 3db8567f5a44..cca15859a50b 100644
 2.49.0
 
 
-From efd6ee6e622cdbc05360143c4b0cec983c3627dc Mon Sep 17 00:00:00 2001
+From 36fb01b81d0aa4614db228329089ecd422ccdfff Mon Sep 17 00:00:00 2001
 From: Eric Biggers <ebiggers@google.com>
 Date: Mon, 27 Jan 2025 14:45:23 -0800
-Subject: [PATCH 10/25] x86/fpu: make WARN_ON_FPU get fully optimized out
+Subject: [PATCH 10/22] x86/fpu: make WARN_ON_FPU get fully optimized out
 
 Currently WARN_ON_FPU evaluates its argument even if
 CONFIG_X86_DEBUG_FPU is disabled, which adds unnecessary instructions to
@@ -918,10 +918,10 @@ index dbdb31f55fc7..975de070c9c9 100644
 2.49.0
 
 
-From d55f073d7f84b2c02f89dd14ec3dea972633ecd8 Mon Sep 17 00:00:00 2001
+From 73f58d3e11d181462b4e72ccd4d6fea275ca09c7 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 11/25] x86/mm: Simplify redundant overlap calculation
+Subject: [PATCH 11/22] x86/mm: Simplify redundant overlap calculation
 
 There have been a couple of reports that the two sides of the
 overlaps() calculation are redundant.  I spent way too much time
@@ -963,10 +963,10 @@ index b491d8190a6c..1c6db6bba56f 100644
 2.49.0
 
 
-From 4fc2dcb6e1f056b988acd28f41c9f1c0c494bb4d Mon Sep 17 00:00:00 2001
+From 76fec99f8f1608d692af158ee317145eef75797b Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Fri, 25 Apr 2025 12:57:55 -0700
-Subject: [PATCH 12/25] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 12/22] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -1048,10 +1048,10 @@ index 3c7c942c7c42..c413e12825d7 100644
 2.49.0
 
 
-From d51fea92ada01d175aba1f91bb78105e760c0245 Mon Sep 17 00:00:00 2001
+From ef06819602bc5c2da1be44175ebd5319e24e789a Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 26 Feb 2025 19:43:01 +0800
-Subject: [PATCH 13/25] sched/fair: Prevent from cpufreq not being updated when
+Subject: [PATCH 13/22] sched/fair: Prevent from cpufreq not being updated when
  delayed-task is iowait
 
 Because the sched-delayed task maybe in io-wait state,
@@ -1096,10 +1096,10 @@ index 96ba0c1e2e44..a9f47d595427 100644
 2.49.0
 
 
-From 0a2febfa2e8b80213dbece4c99ae2177907821e4 Mon Sep 17 00:00:00 2001
+From 9cb90a81eab63c25326429e8e52d970b9fa3bbbc Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Sun, 9 Mar 2025 18:09:36 +0100
-Subject: [PATCH 14/25] x86/locking/atomic: Use asm_inline for atomic locking
+Subject: [PATCH 14/22] x86/locking/atomic: Use asm_inline for atomic locking
  insns
 
 According to:
@@ -1686,10 +1686,10 @@ index 363266cbcada..3821ee3fae35 100644
 2.49.0
 
 
-From 9d81078a58f5848ede0afdd66bb2461622bdd17c Mon Sep 17 00:00:00 2001
+From e7bce75f7b3c6e69be594d6c143bc853b63dc7c2 Mon Sep 17 00:00:00 2001
 From: Yujun Dong <yujundong@pascal-lab.net>
 Date: Mon, 30 Dec 2024 22:16:24 +0800
-Subject: [PATCH 15/25] cpuidle, sched: Use smp_mb__after_atomic() in
+Subject: [PATCH 15/22] cpuidle, sched: Use smp_mb__after_atomic() in
  current_clr_polling()
 
 In architectures that use the polling bit, current_clr_polling() employs
@@ -1768,73 +1768,10 @@ index e670ac282333..439f6029d3b9 100644
 2.49.0
 
 
-From d7375e4c9ad328b6d7b6e8af74324cc98ec7f50d Mon Sep 17 00:00:00 2001
-From: Max Kellermann <max.kellermann@ionos.com>
-Date: Tue, 29 Apr 2025 20:58:27 +0200
-Subject: [PATCH 16/25] fs/eventpoll: fix endless busy loop after timeout has
- expired
-
-After commit 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in
-the future"), the following program would immediately enter a busy
-loop in the kernel:
-
-```
-int main() {
-  int e = epoll_create1(0);
-  struct epoll_event event = {.events = EPOLLIN};
-  epoll_ctl(e, EPOLL_CTL_ADD, 0, &event);
-  const struct timespec timeout = {.tv_nsec = 1};
-  epoll_pwait2(e, &event, 1, &timeout, 0);
-}
-```
-
-This happens because the given (non-zero) timeout of 1 nanosecond
-usually expires before ep_poll() is entered and then
-ep_schedule_timeout() returns false, but `timed_out` is never set
-because the code line that sets it is skipped.  This quickly turns
-into a soft lockup, RCU stalls and deadlocks, inflicting severe
-headaches to the whole system.
-
-When the timeout has expired, we don't need to schedule a hrtimer, but
-we should set the `timed_out` variable.  Therefore, I suggest moving
-the ep_schedule_timeout() check into the `timed_out` expression
-instead of skipping it.
-
-Fixes: 0a65bc27bd64 ("eventpoll: Set epoll timeout if it's in the future")
-Cc: Joe Damato <jdamato@fastly.com>
-Cc: stable@vger.kernel.org
-Signed-off-by: Max Kellermann <max.kellermann@ionos.com>
-Reviewed-by: Jan Kara <jack@suse.cz>
----
- fs/eventpoll.c | 7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-diff --git a/fs/eventpoll.c b/fs/eventpoll.c
-index c01234bbac49..9a6b924958e2 100644
---- a/fs/eventpoll.c
-+++ b/fs/eventpoll.c
-@@ -2111,9 +2111,10 @@ static int ep_poll(struct eventpoll *ep, struct epoll_event __user *events,
- 
- 		write_unlock_irq(&ep->lock);
- 
--		if (!eavail && ep_schedule_timeout(to))
--			timed_out = !schedule_hrtimeout_range(to, slack,
--							      HRTIMER_MODE_ABS);
-+		if (!eavail)
-+			timed_out = !ep_schedule_timeout(to) ||
-+				!schedule_hrtimeout_range(to, slack,
-+							  HRTIMER_MODE_ABS);
- 		__set_current_state(TASK_RUNNING);
- 
- 		/*
--- 
-2.49.0
-
-
-From 03271a45005abccc6545ff3bccd5077bf7a5070a Mon Sep 17 00:00:00 2001
+From 5b4a3c363a6caff6fb344e72cffaa8e846293580 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 19 Feb 2025 17:37:46 +0800
-Subject: [PATCH 17/25] sched/uclamp: Always using uclamp_is_used()
+Subject: [PATCH 16/22] sched/uclamp: Always using uclamp_is_used()
 
 Now, we have the uclamp_is_used() func to judge the uclamp enabled,
 so replace the static_branch_unlikely(&sched_uclamp_used) with it.
@@ -1927,10 +1864,10 @@ index 1aa65a0ac586..e48eae83e689 100644
 2.49.0
 
 
-From 943267b0ae55aa643eef6ae0a4ced1becb252e6f Mon Sep 17 00:00:00 2001
+From 127649269b20778b6275590bc2818352e1ff453c Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Wed, 19 Feb 2025 17:37:47 +0800
-Subject: [PATCH 18/25] sched/uclamp: Add uclamp_is_used() check before enable
+Subject: [PATCH 17/22] sched/uclamp: Add uclamp_is_used() check before enable
  it
 
 Because the static_branch_enable() would get the cpus_read_lock(),
@@ -2027,10 +1964,10 @@ index 456d339be98f..9100a77e9d79 100644
 2.49.0
 
 
-From e1e9d900d58a0ddf9a7f9f788698a4f343b56d44 Mon Sep 17 00:00:00 2001
+From 513fa4289b86367efa3cab70aeedcf1ec47910d1 Mon Sep 17 00:00:00 2001
 From: tip-bot2 for Mathieu Desnoyers <tip-bot2@linutronix.de>
 Date: Thu, 3 Apr 2025 11:26:32 +0000
-Subject: [PATCH 19/25] rseq: Eliminate useless task_work on execve
+Subject: [PATCH 18/22] rseq: Eliminate useless task_work on execve
 
 The following commit has been merged into the sched/urgent branch of tip:
 
@@ -2109,169 +2046,10 @@ index 3fd7a13e8d2a..81f5369f5260 100644
 2.49.0
 
 
-From 2a1cc6f7448fb95e404fe4e8ff70fa9a93368183 Mon Sep 17 00:00:00 2001
-From: Waiman Long <longman@redhat.com>
-Date: Thu, 8 May 2025 15:24:13 -0400
-Subject: [PATCH 20/25] cgroup/cpuset: Extend kthread_is_per_cpu() check to all
- PF_NO_SETAFFINITY tasks
-
-Commit ec5fbdfb99d1 ("cgroup/cpuset: Enable update_tasks_cpumask()
-on top_cpuset") enabled us to pull CPUs dedicated to child partitions
-from tasks in top_cpuset by ignoring per cpu kthreads. However, there
-can be other kthreads that are not per cpu but have PF_NO_SETAFFINITY
-flag set to indicate that we shouldn't mess with their CPU affinity.
-For other kthreads, their affinity will be changed to skip CPUs dedicated
-to child partitions whether it is an isolating or a scheduling one.
-
-As all the per cpu kthreads have PF_NO_SETAFFINITY set, the
-PF_NO_SETAFFINITY tasks are essentially a superset of per cpu kthreads.
-Fix this issue by dropping the kthread_is_per_cpu() check and checking
-the PF_NO_SETAFFINITY flag instead.
-
-Fixes: ec5fbdfb99d1 ("cgroup/cpuset: Enable update_tasks_cpumask() on top_cpuset")
-Signed-off-by: Waiman Long <longman@redhat.com>
-Acked-by: Frederic Weisbecker <frederic@kernel.org>
-Signed-off-by: Tejun Heo <tj@kernel.org>
----
- kernel/cgroup/cpuset.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/cgroup/cpuset.c b/kernel/cgroup/cpuset.c
-index 1287274ae1ce..6fbffdca0c74 100644
---- a/kernel/cgroup/cpuset.c
-+++ b/kernel/cgroup/cpuset.c
-@@ -1116,9 +1116,11 @@ void cpuset_update_tasks_cpumask(struct cpuset *cs, struct cpumask *new_cpus)
- 
- 		if (top_cs) {
- 			/*
--			 * Percpu kthreads in top_cpuset are ignored
-+			 * PF_NO_SETAFFINITY tasks are ignored.
-+			 * All per cpu kthreads should have PF_NO_SETAFFINITY
-+			 * flag set, see kthread_set_per_cpu().
- 			 */
--			if (kthread_is_per_cpu(task))
-+			if (task->flags & PF_NO_SETAFFINITY)
- 				continue;
- 			cpumask_andnot(new_cpus, possible_mask, subpartitions_cpus);
- 		} else {
--- 
-2.49.0
-
-
-From 638064e8a90f3864681bb5f1291b3e6fcfc8e469 Mon Sep 17 00:00:00 2001
-From: Nathan Chancellor <nathan@kernel.org>
-Date: Tue, 6 May 2025 14:02:01 -0700
-Subject: [PATCH 21/25] kbuild: Disable -Wdefault-const-init-unsafe
-
-A new on by default warning in clang [1] aims to flags instances where
-const variables without static or thread local storage or const members
-in aggregate types are not initialized because it can lead to an
-indeterminate value. This is quite noisy for the kernel due to
-instances originating from header files such as:
-
-  drivers/gpu/drm/i915/gt/intel_ring.h:62:2: error: default initialization of an object of type 'typeof (ring->size)' (aka 'const unsigned int') leaves the object uninitialized [-Werror,-Wdefault-const-init-var-unsafe]
-     62 |         typecheck(typeof(ring->size), next);
-        |         ^
-  include/linux/typecheck.h:10:9: note: expanded from macro 'typecheck'
-     10 | ({      type __dummy; \
-        |              ^
-
-  include/net/ip.h:478:14: error: default initialization of an object of type 'typeof (rt->dst.expires)' (aka 'const unsigned long') leaves the object uninitialized [-Werror,-Wdefault-const-init-var-unsafe]
-    478 |                 if (mtu && time_before(jiffies, rt->dst.expires))
-        |                            ^
-  include/linux/jiffies.h:138:26: note: expanded from macro 'time_before'
-    138 | #define time_before(a,b)        time_after(b,a)
-        |                                 ^
-  include/linux/jiffies.h:128:3: note: expanded from macro 'time_after'
-    128 |         (typecheck(unsigned long, a) && \
-        |          ^
-  include/linux/typecheck.h:11:12: note: expanded from macro 'typecheck'
-     11 |         typeof(x) __dummy2; \
-        |                   ^
-
-  include/linux/list.h:409:27: warning: default initialization of an object of type 'union (unnamed union at include/linux/list.h:409:27)' with const member leaves the object uninitialized [-Wdefault-const-init-field-unsafe]
-    409 |         struct list_head *next = smp_load_acquire(&head->next);
-        |                                  ^
-  include/asm-generic/barrier.h:176:29: note: expanded from macro 'smp_load_acquire'
-    176 | #define smp_load_acquire(p) __smp_load_acquire(p)
-        |                             ^
-  arch/arm64/include/asm/barrier.h:164:59: note: expanded from macro '__smp_load_acquire'
-    164 |         union { __unqual_scalar_typeof(*p) __val; char __c[1]; } __u;   \
-        |                                                                  ^
-  include/linux/list.h:409:27: note: member '__val' declared 'const' here
-
-  crypto/scatterwalk.c:66:22: error: default initialization of an object of type 'struct scatter_walk' with const member leaves the object uninitialized [-Werror,-Wdefault-const-init-field-unsafe]
-     66 |         struct scatter_walk walk;
-        |                             ^
-  include/crypto/algapi.h:112:15: note: member 'addr' declared 'const' here
-    112 |                 void *const addr;
-        |                             ^
-
-  fs/hugetlbfs/inode.c:733:24: error: default initialization of an object of type 'struct vm_area_struct' with const member leaves the object uninitialized [-Werror,-Wdefault-const-init-field-unsafe]
-    733 |         struct vm_area_struct pseudo_vma;
-        |                               ^
-  include/linux/mm_types.h:803:20: note: member 'vm_flags' declared 'const' here
-    803 |                 const vm_flags_t vm_flags;
-        |                                  ^
-
-Silencing the instances from typecheck.h is difficult because '= {}' is
-not available in older but supported compilers and '= {0}' would cause
-warnings about a literal 0 being treated as NULL. While it might be
-possible to come up with a local hack to silence the warning for
-clang-21+, it may not be worth it since -Wuninitialized will still
-trigger if an uninitialized const variable is actually used.
-
-In all audited cases of the "field" variant of the warning, the members
-are either not used in the particular call path, modified through other
-means such as memset() / memcpy() because the containing object is not
-const, or are within a union with other non-const members.
-
-Since this warning does not appear to have a high signal to noise ratio,
-just disable it.
-
-Cc: stable@vger.kernel.org
-Link: https://github.com/llvm/llvm-project/commit/576161cb6069e2c7656a8ef530727a0f4aefff30 [1]
-Reported-by: Linux Kernel Functional Testing <lkft@linaro.org>
-Closes: https://lore.kernel.org/CA+G9fYuNjKcxFKS_MKPRuga32XbndkLGcY-PVuoSwzv6VWbY=w@mail.gmail.com/
-Reported-by: Marcus Seyfarth <m.seyfarth@gmail.com>
-Closes: https://github.com/ClangBuiltLinux/linux/issues/2088
-Signed-off-by: Nathan Chancellor <nathan@kernel.org>
-Signed-off-by: Masahiro Yamada <masahiroy@kernel.org>
----
- scripts/Makefile.extrawarn | 12 ++++++++++++
- 1 file changed, 12 insertions(+)
-
-diff --git a/scripts/Makefile.extrawarn b/scripts/Makefile.extrawarn
-index dc081cf46d21..686197407c3c 100644
---- a/scripts/Makefile.extrawarn
-+++ b/scripts/Makefile.extrawarn
-@@ -36,6 +36,18 @@ KBUILD_CFLAGS += -Wno-gnu
- # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111219
- KBUILD_CFLAGS += $(call cc-disable-warning, format-overflow-non-kprintf)
- KBUILD_CFLAGS += $(call cc-disable-warning, format-truncation-non-kprintf)
-+
-+# Clang may emit a warning when a const variable, such as the dummy variables
-+# in typecheck(), or const member of an aggregate type are not initialized,
-+# which can result in unexpected behavior. However, in many audited cases of
-+# the "field" variant of the warning, this is intentional because the field is
-+# never used within a particular call path, the field is within a union with
-+# other non-const members, or the containing object is not const so the field
-+# can be modified via memcpy() / memset(). While the variable warning also gets
-+# disabled with this same switch, there should not be too much coverage lost
-+# because -Wuninitialized will still flag when an uninitialized const variable
-+# is used.
-+KBUILD_CFLAGS += $(call cc-disable-warning, default-const-init-unsafe)
- else
- 
- # gcc inanely warns about local variables called 'main'
--- 
-2.49.0
-
-
-From 7a02cbcc434adcac8e0aec81eeea834b6f020ecb Mon Sep 17 00:00:00 2001
+From 8f0a3725130a114cfc5ade0bac1094a75fca921b Mon Sep 17 00:00:00 2001
 From: Kees Cook <kees@kernel.org>
 Date: Thu, 15 May 2025 14:42:15 -0700
-Subject: [PATCH 22/25] mm: vmalloc: Actually use the in-place vrealloc region
+Subject: [PATCH 19/22] mm: vmalloc: Actually use the in-place vrealloc region
 
 The refactoring to not build a new vmalloc region only actually worked
 when shrinking. Actually return the resized area when it grows. Ugh.
@@ -2305,10 +2083,10 @@ index 8aa7eea9b26f..837899a4eaaf 100644
 2.49.0
 
 
-From 71c7dbb97e47a175f4b6a0c1a20adbd1195f16e8 Mon Sep 17 00:00:00 2001
+From 4e8bea7a204f1956bdb6b223a3397d0a5ed7fcb1 Mon Sep 17 00:00:00 2001
 From: Kees Cook <kees@kernel.org>
 Date: Thu, 15 May 2025 14:42:16 -0700
-Subject: [PATCH 23/25] mm: vmalloc: Only zero-init on vrealloc shrink
+Subject: [PATCH 20/22] mm: vmalloc: Only zero-init on vrealloc shrink
 
 The common case is to grow reallocations, and since init_on_alloc will
 have already zeroed the whole allocation, we only need to zero when
@@ -2358,10 +2136,10 @@ index 837899a4eaaf..ae7e419be29d 100644
 2.49.0
 
 
-From 32e4cfc60318c91eb35b7876482298566f9e6b3e Mon Sep 17 00:00:00 2001
+From e522babbd44cd68f784946b7102eea7c45c623f3 Mon Sep 17 00:00:00 2001
 From: Christoph Hellwig <hch@lst.de>
 Date: Tue, 20 May 2025 15:54:20 +0200
-Subject: [PATCH 24/25] loop: don't require ->write_iter for writable files in
+Subject: [PATCH 21/22] loop: don't require ->write_iter for writable files in
  loop_configure
 
 Block devices can be opened read-write even if they can't be written to
@@ -2399,10 +2177,10 @@ index b378d2aa49f0..34bc46d1f3f3 100644
 2.49.0
 
 
-From 48cd0dee4e25cf674a09b39d9f8732274edddd40 Mon Sep 17 00:00:00 2001
+From 3cbd03d2869fe365499535310818462e1c465033 Mon Sep 17 00:00:00 2001
 From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
 Date: Wed, 30 Apr 2025 15:07:03 -0400
-Subject: [PATCH 25/25] Bluetooth: hci_event: Fix not using key encryption size
+Subject: [PATCH 22/22] Bluetooth: hci_event: Fix not using key encryption size
  when its known
 
 This fixes the regression introduced by 50c1241e6a8a ("Bluetooth: l2cap:
