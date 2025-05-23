@@ -1,7 +1,7 @@
 From b70329fdc5fa3ca083fad5d73b89da01a45a0e4d Mon Sep 17 00:00:00 2001
 From: Serge Hallyn <serge.hallyn@canonical.com>
 Date: Fri, 31 May 2013 19:12:12 +0100
-Subject: [PATCH 01/30] add sysctl to disallow unprivileged CLONE_NEWUSER by
+Subject: [PATCH 01/32] add sysctl to disallow unprivileged CLONE_NEWUSER by
  default
 
 This is a short-term patch.  Unprivileged use of CLONE_NEWUSER
@@ -111,7 +111,7 @@ index aa0b2e47f2f2..222bb2b40b73 100644
 From 0c6de15a493dea4fe9a296dc78aac50e30a669df Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Thu, 22 May 2025 07:32:13 +0200
-Subject: [PATCH 02/30] ZEN: Add config for default of
+Subject: [PATCH 02/32] ZEN: Add config for default of
  unprivileged_userns_clone
 
 ---
@@ -169,7 +169,7 @@ index 222bb2b40b73..d74d857b1696 100644
 From d2ac8382df626c15de4a937c2d149028a3bcf5ef Mon Sep 17 00:00:00 2001
 From: Javier Martinez Canillas <javierm@redhat.com>
 Date: Thu, 19 May 2022 14:40:07 +0200
-Subject: [PATCH 03/30] drivers/firmware: skip simpledrm if
+Subject: [PATCH 03/32] drivers/firmware: skip simpledrm if
  nvidia-drm.modeset=1 is set
 
 The Nvidia proprietary driver has some bugs that leads to issues if used
@@ -259,7 +259,7 @@ index 7c5c03f274b9..a60b0a4faf29 100644
 From 57df961193dbebc9fad80e3c5b36ba7b952570b5 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
-Subject: [PATCH 04/30] ZEN: Initialize ata before graphics
+Subject: [PATCH 04/32] ZEN: Initialize ata before graphics
 
 ATA init is the long pole in the boot process, and its asynchronous.
 move the graphics init after it so that ata and graphics initialize
@@ -308,7 +308,7 @@ index 45d1c3e630f7..4f5ab2429a7f 100644
 From dac3f0dc43c7a93dfead7aac33b9b83d4a628bfd Mon Sep 17 00:00:00 2001
 From: Kenny Levinsen <kl@kl.wtf>
 Date: Sun, 27 Dec 2020 14:43:13 +0000
-Subject: [PATCH 05/30] ZEN: Input: evdev - use call_rcu when detaching client
+Subject: [PATCH 05/32] ZEN: Input: evdev - use call_rcu when detaching client
 
 Significant time was spent on synchronize_rcu in evdev_detach_client
 when applications closed evdev devices. Switching VT away from a
@@ -419,7 +419,7 @@ index b5cbb57ee5f6..a0f7fa1518c6 100644
 From 7971f134e67da9c9163fa2063ddb5d2e576df881 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 13 Dec 2018 01:00:49 +0000
-Subject: [PATCH 06/30] sched/wait: Do accept() in LIFO order for cache
+Subject: [PATCH 06/32] sched/wait: Do accept() in LIFO order for cache
  efficiency
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -511,7 +511,7 @@ index e4decfb270fa..38bff2d8a740 100644
 From 8a94db0bbbb6e12e98ee15a7967b554c4955b637 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
-Subject: [PATCH 07/30] XANMOD: dcache: cache_pressure = 50 decreases the rate
+Subject: [PATCH 07/32] XANMOD: dcache: cache_pressure = 50 decreases the rate
  at which VFS caches are reclaimed
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -539,7 +539,7 @@ index e3634916ffb9..95ebc9a430c4 100644
 From 408a000c36e1fcfd58dd2a3c65426e854e287c3c Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Sat, 21 May 2022 15:15:09 -0500
-Subject: [PATCH 08/30] ZEN: dm-crypt: Disable workqueues for crypto ops
+Subject: [PATCH 08/32] ZEN: dm-crypt: Disable workqueues for crypto ops
 
 Queueing in dm-crypt for crypto operations reduces performance on modern
 systems.  As discussed in an article from Cloudflare, they discovered
@@ -575,7 +575,7 @@ index 02a2919f4e5a..a6bdafcb4fbd 100644
 From ea4ffa2dbd198a9fb4365db116b928474305ca9b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 5 May 2024 10:49:42 +0200
-Subject: [PATCH 09/30] Cachy: intel-pstate: Implement "enable" parameter
+Subject: [PATCH 09/32] Cachy: intel-pstate: Implement "enable" parameter
 
 If intel-pstate is compiled into the kernel, it will preempt the loading
 of acpi-cpufreq so you can take advantage of hardware p-states without
@@ -638,7 +638,7 @@ index 43e847e9f741..8bc16e45a28e 100644
 From 0eb3ecae715ddd0bf125fac98020268f1a062b43 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:13:21 +0100
-Subject: [PATCH 10/30] Add hells option for a few tweaks
+Subject: [PATCH 10/32] Add hells option for a few tweaks
 
 ---
  init/Kconfig | 6 ++++++
@@ -668,7 +668,7 @@ index bd13215722df..5e4ab2aa9a45 100644
 From e3536cdc84fa7a569e9657c276c47b0e1b4b6922 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 27 Jan 2020 18:21:09 +0100
-Subject: [PATCH 11/30] hells: Enable background reclaim of hugepages
+Subject: [PATCH 11/32] hells: Enable background reclaim of hugepages
 
 Use [defer+madvise] as default khugepaged defrag strategy:
 
@@ -719,7 +719,7 @@ index 224925201ca2..24de54b10488 100644
 From 394e1d95b2d9e93cbc21debf982c1c9959590468 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 28 Mar 2020 13:06:28 -0700
-Subject: [PATCH 12/30] hells: Disable watermark boosting by default
+Subject: [PATCH 12/32] hells: Disable watermark boosting by default
 
 What watermark boosting does is preemptively fire up kswapd to free
 memory when there hasn't been an allocation failure. It does this by
@@ -771,7 +771,7 @@ index 74a996a3508e..8b939464326e 100644
 From 1dac34e2c4dab8cd29c26a9a819a55e6791e61cc Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 24 Oct 2020 22:17:49 -0700
-Subject: [PATCH 13/30] hells: Disable proactive compaction by default
+Subject: [PATCH 13/32] hells: Disable proactive compaction by default
 
 On-demand compaction works fine assuming that you don't have a need to
 spam the page allocator nonstop for large order page allocations.
@@ -804,7 +804,7 @@ index ae734de0038c..91ea975f5ed2 100644
 From ed106ca0deff3e5c9375d36447bac81d1b5cf206 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:21:54 +0100
-Subject: [PATCH 14/30] hells: VM_READAHEAD_PAGES 8M
+Subject: [PATCH 14/32] hells: VM_READAHEAD_PAGES 8M
 
 ---
  include/linux/pagemap.h | 2 +-
@@ -830,7 +830,7 @@ index 47bfc6b1b632..435901dbc742 100644
 From 11ded90c6696a4728e09ee7c69026ce48e4480da Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Sun, 18 Feb 2018 23:35:41 +0000
-Subject: [PATCH 15/30] locking: rwsem: spin faster
+Subject: [PATCH 15/32] locking: rwsem: spin faster
 
 tweak rwsem owner spinning a bit
 
@@ -868,7 +868,7 @@ index 2ddb827e3bea..464049c4af3f 100644
 From f7ba627c5eeedcbd42962fef33fb02c74f6ec00f Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sun, 19 Apr 2020 19:59:18 -0700
-Subject: [PATCH 16/30] ZEN: mm: Stop kswapd early when nothing's waiting for
+Subject: [PATCH 16/32] ZEN: mm: Stop kswapd early when nothing's waiting for
  it to free pages
 
 Contains:
@@ -1045,7 +1045,7 @@ index e9f3ae8158a6..a18714a60273 100644
 From cad9fd24ec01c05fdef50ecc97545b848a04c08b Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Fri, 20 Jan 2023 11:16:42 +0000
-Subject: [PATCH 17/30] initcall: only print non-zero initcall debug to speed
+Subject: [PATCH 17/32] initcall: only print non-zero initcall debug to speed
  up boot
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1091,7 +1091,7 @@ index 2a1757826397..334146c65fc7 100644
 From 61b1f20011d64487db915b2ddd2bbcf6543c6bb8 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Wed, 11 Feb 2015 17:28:14 -0600
-Subject: [PATCH 18/30] smpboot: reuse timer calibration
+Subject: [PATCH 18/32] smpboot: reuse timer calibration
 
 NO point recalibrating for known-constant tsc ...
 saves 200ms+ of boot time.
@@ -1120,7 +1120,7 @@ index 88e5a4ed9db3..07f17d5ae6e5 100644
 From ba1cc19dbf9ee1fdc5f70f0ae390c9dc3c22fce8 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 16 Nov 2021 17:39:25 +0000
-Subject: [PATCH 19/30] itmt_epb: use epb to scale itmt
+Subject: [PATCH 19/32] itmt_epb: use epb to scale itmt
 
 ---
  arch/x86/include/asm/topology.h |  1 +
@@ -1213,7 +1213,7 @@ index 9cea1fc36c18..81932842e1d2 100644
 From e55b2dc75e5009d8dc44b453ea0fabab7415a499 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Thu, 18 Nov 2021 16:09:47 +0000
-Subject: [PATCH 20/30] itmt2 ADL fixes
+Subject: [PATCH 20/32] itmt2 ADL fixes
 
 On systems with overclocking enabled, CPPC Highest Performance can be
 hard coded to 0xff. In this case even if we have cores with different
@@ -1257,7 +1257,7 @@ index 8bc16e45a28e..198fde46212a 100644
 From 52c27b8bef39689d49bcc2aa6532f6288d3b9c97 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 23 Nov 2021 17:38:50 +0000
-Subject: [PATCH 21/30] add a per cpu minimum high watermark an tune batch size
+Subject: [PATCH 21/32] add a per cpu minimum high watermark an tune batch size
 
 make sure there's at least 1024 per cpu pages... a reasonably small
 amount for todays system
@@ -1290,7 +1290,7 @@ index 226092f4f05f..1c736992374e 100644
 From 1416fe806f0cf93b3d49107a7fc2b2b130433fdf Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Wed, 3 May 2023 17:31:05 +0100
-Subject: [PATCH 22/30] clocksource: only perform extended clocksource checks
+Subject: [PATCH 22/32] clocksource: only perform extended clocksource checks
  for AMD systems
 
 Signed-off-by: Colin Ian King <colin.king@intel.com>
@@ -1328,7 +1328,7 @@ index b4330a01a566..e41cd5c68855 100644
 From 198c11386c3b47cd31cc2d1475f16614f2931efd Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Tue, 27 Jun 2023 14:12:27 +0100
-Subject: [PATCH 23/30] ACPI: align slab for improved memory performance
+Subject: [PATCH 23/32] ACPI: align slab for improved memory performance
 
 Enabling SLAB_HWCACHE_ALIGN for the ACPI object caches improves
 boot speed in the ACPICA core for object allocation and free'ing
@@ -1364,7 +1364,7 @@ index 5ff343096ece..229c2c6e51ab 100644
 From 5c37d6e213104f74a11d19498fb8fb8dc0c21d48 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:11:19 +0800
-Subject: [PATCH 24/30] clear: sched/fair: Tweak idle balance calculation
+Subject: [PATCH 24/32] clear: sched/fair: Tweak idle balance calculation
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1391,7 +1391,7 @@ index 3d9b68a347b7..1188a8599181 100644
 From 650fe1c47d556103f59f0e06b59dc3b7987e5021 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:15:25 +0800
-Subject: [PATCH 25/30] clear: fs/binfmt_elf: Properly handle memory mapping
+Subject: [PATCH 25/32] clear: fs/binfmt_elf: Properly handle memory mapping
  for PIE binaries
 
 Place libraries right below the binary for PIE binaries, this helps code locality
@@ -1422,7 +1422,7 @@ index 8054f44d39cf..f7016bfb3e27 100644
 From 2cb588cd873d7734bbbb314671fd5f3e565307a4 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@intel.com>
 Date: Wed, 24 Apr 2024 16:45:47 +0100
-Subject: [PATCH 26/30] net: sock: increase default number of _SK_MEM_PACKETS
+Subject: [PATCH 26/32] net: sock: increase default number of _SK_MEM_PACKETS
  to 1024
 
 scale these by a factor of 4 to improve socket performance
@@ -1452,7 +1452,7 @@ index 93587308c38a..3d9a2b2166de 100644
 From c239ef9f123f7fb7d5aac3fc03f8f3f7a1eff7fa Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:21:24 +0800
-Subject: [PATCH 27/30] clear: net/sock: Introduce 64KB reclaim threshold
+Subject: [PATCH 27/32] clear: net/sock: Introduce 64KB reclaim threshold
 
 Allows more efficient memory management by reclaiming only surplus memory beyond the threshold instead of
 always calling `sk_mem_reclaim`.
@@ -1492,7 +1492,7 @@ index 3d9a2b2166de..18e8b9684314 100644
 From 9f089ee8dab8bc2d298ede514fdf7d33dabf8ef7 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:25:10 +0800
-Subject: [PATCH 28/30] clear: init/init_task: Tweak timer_slack value
+Subject: [PATCH 28/32] clear: init/init_task: Tweak timer_slack value
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1519,7 +1519,7 @@ index e557f622bd90..ca1ef66774b3 100644
 From 93d33a50c0897ff1cbaa300bc22b6509756f1e7b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 28 Jul 2024 18:55:38 +0200
-Subject: [PATCH 29/30] cachy: move AMD_PRIVATE_COLOR to Kconfig
+Subject: [PATCH 29/32] cachy: move AMD_PRIVATE_COLOR to Kconfig
 
 Co-authored-by: PedroHLC <root@pedrohlc.com>
 Signed-off-by: Peter Jung <admin@ptr1337.dev>
@@ -1641,7 +1641,7 @@ index 92472109f84a..d5f3e6d5aa7f 100644
 From 53253ecd31ee6d0e20fe41d97dcf1471b94484a8 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Fri, 15 Mar 2024 12:36:51 -0500
-Subject: [PATCH 30/30] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
+Subject: [PATCH 30/32] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
  with ignore_min_pcap
 
 ---
@@ -1737,6 +1737,172 @@ index ed9dac00ebfb..b3fd5e9df44c 100644
  		dev_err(smu->adev->dev,
  			"New power limit (%d) is out of range [%d,%d]\n",
  			limit, smu->min_power_limit, smu->max_power_limit);
+-- 
+2.49.0
+
+
+From 0c4986443a55f1d585b5afdbd8154d6870510451 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Wed, 5 Oct 2022 03:46:34 +0000
+Subject: [PATCH 31/32] XANMOD: rcu: Change sched_setscheduler_nocheck() calls
+ to SCHED_RR policy
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ Documentation/admin-guide/kernel-parameters.txt | 2 +-
+ kernel/rcu/Kconfig                              | 4 ++--
+ kernel/rcu/rcutorture.c                         | 2 +-
+ kernel/rcu/tree.c                               | 6 +++---
+ kernel/rcu/tree_nocb.h                          | 4 ++--
+ kernel/rcu/tree_plugin.h                        | 4 ++--
+ 6 files changed, 11 insertions(+), 11 deletions(-)
+
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index fe130e83e4bc..589c1cf082af 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -5263,7 +5263,7 @@
+ 			overwritten.
+ 
+ 	rcutree.kthread_prio= 	 [KNL,BOOT]
+-			Set the SCHED_FIFO priority of the RCU per-CPU
++			Set the SCHED_RR priority of the RCU per-CPU
+ 			kthreads (rcuc/N). This value is also used for
+ 			the priority of the RCU boost threads (rcub/N)
+ 			and for the RCU grace-period kthreads (rcu_bh,
+diff --git a/kernel/rcu/Kconfig b/kernel/rcu/Kconfig
+index b9b6bc55185d..fb13d5ae8930 100644
+--- a/kernel/rcu/Kconfig
++++ b/kernel/rcu/Kconfig
+@@ -289,9 +289,9 @@ config RCU_NOCB_CPU_CB_BOOST
+ 	depends on RCU_NOCB_CPU && RCU_BOOST
+ 	default y if PREEMPT_RT
+ 	help
+-	  Use this option to invoke offloaded callbacks as SCHED_FIFO
++	  Use this option to invoke offloaded callbacks as SCHED_RR
+ 	  to avoid starvation by heavy SCHED_OTHER background load.
+-	  Of course, running as SCHED_FIFO during callback floods will
++	  Of course, running as SCHED_RR during callback floods will
+ 	  cause the rcuo[ps] kthreads to monopolize the CPU for hundreds
+ 	  of milliseconds or more.  Therefore, when enabling this option,
+ 	  it is your responsibility to ensure that latency-sensitive
+diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+index d26fb1d33ed9..002eed78e460 100644
+--- a/kernel/rcu/rcutorture.c
++++ b/kernel/rcu/rcutorture.c
+@@ -2572,7 +2572,7 @@ static int rcutorture_booster_init(unsigned int cpu)
+ 		t = per_cpu(ksoftirqd, cpu);
+ 		WARN_ON_ONCE(!t);
+ 		sp.sched_priority = 2;
+-		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++		sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ #ifdef CONFIG_IRQ_FORCED_THREADING
+ 		if (force_irqthreads()) {
+ 			t = per_cpu(ktimerd, cpu);
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index 475f31deed14..3f1aefb669c9 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -4108,7 +4108,7 @@ static void rcu_spawn_exp_par_gp_kworker(struct rcu_node *rnp)
+ 	WRITE_ONCE(rnp->exp_kworker, kworker);
+ 
+ 	if (IS_ENABLED(CONFIG_RCU_EXP_KTHREAD))
+-		sched_setscheduler_nocheck(kworker->task, SCHED_FIFO, &param);
++		sched_setscheduler_nocheck(kworker->task, SCHED_RR, &param);
+ 
+ 	rcu_thread_affine_rnp(kworker->task, rnp);
+ 	wake_up_process(kworker->task);
+@@ -4127,7 +4127,7 @@ static void __init rcu_start_exp_gp_kworker(void)
+ 	}
+ 
+ 	if (IS_ENABLED(CONFIG_RCU_EXP_KTHREAD))
+-		sched_setscheduler_nocheck(rcu_exp_gp_kworker->task, SCHED_FIFO, &param);
++		sched_setscheduler_nocheck(rcu_exp_gp_kworker->task, SCHED_RR, &param);
+ }
+ 
+ static void rcu_spawn_rnp_kthreads(struct rcu_node *rnp)
+@@ -4487,7 +4487,7 @@ static int __init rcu_spawn_gp_kthread(void)
+ 		return 0;
+ 	if (kthread_prio) {
+ 		sp.sched_priority = kthread_prio;
+-		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++		sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ 	}
+ 	rnp = rcu_get_root();
+ 	raw_spin_lock_irqsave_rcu_node(rnp, flags);
+diff --git a/kernel/rcu/tree_nocb.h b/kernel/rcu/tree_nocb.h
+index 2605dd234a13..1913a4f17b65 100644
+--- a/kernel/rcu/tree_nocb.h
++++ b/kernel/rcu/tree_nocb.h
+@@ -1404,7 +1404,7 @@ static void rcu_spawn_cpu_nocb_kthread(int cpu)
+ 		}
+ 		WRITE_ONCE(rdp_gp->nocb_gp_kthread, t);
+ 		if (kthread_prio)
+-			sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++			sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ 	}
+ 	mutex_unlock(&rdp_gp->nocb_gp_kthread_mutex);
+ 
+@@ -1420,7 +1420,7 @@ static void rcu_spawn_cpu_nocb_kthread(int cpu)
+ 		kthread_park(t);
+ 
+ 	if (IS_ENABLED(CONFIG_RCU_NOCB_CPU_CB_BOOST) && kthread_prio)
+-		sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++		sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ 
+ 	WRITE_ONCE(rdp->nocb_cb_kthread, t);
+ 	WRITE_ONCE(rdp->nocb_gp_kthread, rdp_gp->nocb_gp_kthread);
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index 3600152b858e..3f77af66b819 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -1021,7 +1021,7 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
+ 	struct sched_param sp;
+ 
+ 	sp.sched_priority = kthread_prio;
+-	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
++	sched_setscheduler_nocheck(current, SCHED_RR, &sp);
+ #endif /* #ifdef CONFIG_RCU_BOOST */
+ 
+ 	WRITE_ONCE(rdp->rcuc_activity, jiffies);
+@@ -1220,7 +1220,7 @@ static void rcu_spawn_one_boost_kthread(struct rcu_node *rnp)
+ 	raw_spin_unlock_irqrestore_rcu_node(rnp, flags);
+ 
+ 	sp.sched_priority = kthread_prio;
+-	sched_setscheduler_nocheck(t, SCHED_FIFO, &sp);
++	sched_setscheduler_nocheck(t, SCHED_RR, &sp);
+ 	rcu_thread_affine_rnp(t, rnp);
+ 	wake_up_process(t); /* get to TASK_INTERRUPTIBLE quickly. */
+ }
+-- 
+2.49.0
+
+
+From 553f2e8873330e5d3f3645398d0bb3256bb06727 Mon Sep 17 00:00:00 2001
+From: Alexandre Frade <kernel@xanmod.org>
+Date: Mon, 16 Sep 2024 15:36:01 +0000
+Subject: [PATCH 32/32] XANMOD: block: Set rq_affinity to force complete I/O
+ requests on same CPU
+
+Signed-off-by: Alexandre Frade <kernel@xanmod.org>
+---
+ include/linux/blkdev.h | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 0fec27d6b986..ab6760aef380 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -626,7 +626,8 @@ enum {
+ 	QUEUE_FLAG_MAX
+ };
+ 
+-#define QUEUE_FLAG_MQ_DEFAULT	(1UL << QUEUE_FLAG_SAME_COMP)
++#define QUEUE_FLAG_MQ_DEFAULT	((1UL << QUEUE_FLAG_SAME_COMP) |		\
++				 (1UL << QUEUE_FLAG_SAME_FORCE))
+ 
+ void blk_queue_flag_set(unsigned int flag, struct request_queue *q);
+ void blk_queue_flag_clear(unsigned int flag, struct request_queue *q);
 -- 
 2.49.0
 
