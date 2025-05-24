@@ -69,18 +69,11 @@
 # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/performance_tuning_guide/sect-red_hat_enterprise_linux-performance_tuning_guide-configuring_transparent_huge_pages
 : "${_hugepage:=always}"
 
-# CPU compiler optimizations - Defaults to prompt at kernel config if left empty
-# AMD CPUs : "k8" "k8sse3" "k10" "barcelona" "bobcat" "jaguar" "bulldozer" "piledriver" "steamroller" "excavator" "zen" "zen2" "zen3" "zen4"
-# Intel CPUs : "mpsc"(P4 & older Netburst based Xeon) "atom" "core2" "nehalem" "westmere" "silvermont" "sandybridge" "ivybridge" "haswell" "broadwell" "skylake" "skylakex" "cannonlake" "icelake" "goldmont" "goldmontplus" "cascadelake" "cooperlake" "tigerlake" "sapphirerapids" "rocketlake" "alderlake"
-# Other options :
-# - "native_amd" (use compiler autodetection - Selecting your arch manually in the list above is recommended instead of this option)
-# - "native_intel" (use compiler autodetection and will prompt for P6_NOPS - Selecting your arch manually in the list above is recommended instead of this option)
+# CPU compiler optimizations - Defaults to native if left empty
+# - "native" (use compiler autodetection)
+# - "zen4" (Use znver4 compiler optimizations)
 # - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
-#
 : "${_processor_opt:=zen4}"
-
-# This does automatically detect your supported CPU and optimizes for it
-: "${_use_auto_optimization:=no}"
 
 # Clang LTO mode, only available with the "llvm" compiler - options are "none", "full" or "thin".
 # ATTENTION - one of three predefined values should be selected!
@@ -202,7 +195,6 @@ _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
     "https://github.com/torvalds/linux/archive/refs/tags/v${_major}-${_rcver}.tar.gz"
     "config"
-    "auto-cpu-optimization.sh"
     "0001-linux6.15.y-le9uo-1.15.patch"
     "0002-sched-fair-Prefer-full-idle-SMT-cores.patch"
     "amd-pstate.patch"
@@ -314,20 +306,14 @@ prepare() {
     if [ -n "$_processor_opt" ]; then
         MARCH="${_processor_opt^^}"
 
-        if [ "$MARCH" != "GENERIC" ]; then
-            if [[ "$MARCH" =~ GENERIC_V[1-4] ]]; then
-                X86_64_LEVEL="${MARCH//GENERIC_V}"
-                scripts/config --set-val X86_64_VERSION "${X86_64_LEVEL}"
-            else
-                scripts/config -k -d CONFIG_GENERIC_CPU
-                scripts/config -k -e "CONFIG_M${MARCH}"
-            fi
-        fi
-    fi
-
-    ### Use autooptimization
-    if [ "$_use_auto_optimization" = "yes" ]; then
-        "${srcdir}"/auto-cpu-optimization.sh
+        case "$MARCH" in
+            GENERIC_V[1-4]) scripts/config -e GENERIC_CPU -d MZEN4 -d X86_NATIVE_CPU \
+                --set-val X86_64_VERSION "${MARCH//GENERIC_V}";;
+            ZEN4) scripts/config -d GENERIC_CPU -e MZEN4 -d X86_NATIVE_CPU;;
+            NATIVE) scripts/config -d GENERIC_CPU -d MZEN4 -e X86_NATIVE_CPU;;
+        esac
+    else
+        scripts/config -d GENERIC_CPU -d MZEN4 -e X86_NATIVE_CPU
     fi
 
     ### Selecting hells config
@@ -759,7 +745,6 @@ done
 
 b2sums=('35f2f42ff7f345a2f2d7808ebb234237612ce5074c987f97f5a3f843152536e63038d22e61fc5e48cbd49997d7b0f0d59dfab78b26a4678d13cfcddf86711004'
         '3f01794838fc0e4ae820a3794662f291b0c5ccac3c0acc4b362eb671d9275652f9a056f3ad0be571ad1ee13501dd6fc44a1a2feeb1791a18aca991134d2524fd'
-        '390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab'
         '8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c'
         'eb57fb07a2661760cdba725c8cba04db9d34d28bedb3c1a97dd0467dcba8924416d8f75595a48997daf18e991a1224380723bc7f1a3d138eca0296d3ce12a9db'
         'e0ecec93536ce98c2e31d3820fa8dc882c26487c0addf8759e0035c52719157ff118d6d421675daa67b87280911eb2b1e4e34aa7cf8c74327950ed040b457f7e'

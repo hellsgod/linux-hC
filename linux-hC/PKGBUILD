@@ -69,18 +69,10 @@
 # https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/performance_tuning_guide/sect-red_hat_enterprise_linux-performance_tuning_guide-configuring_transparent_huge_pages
 : "${_hugepage:=always}"
 
-# CPU compiler optimizations - Defaults to prompt at kernel config if left empty
-# AMD CPUs : "k8" "k8sse3" "k10" "barcelona" "bobcat" "jaguar" "bulldozer" "piledriver" "steamroller" "excavator" "zen" "zen2" "zen3" "zen4"
-# Intel CPUs : "mpsc"(P4 & older Netburst based Xeon) "atom" "core2" "nehalem" "westmere" "silvermont" "sandybridge" "ivybridge" "haswell" "broadwell" "skylake" "skylakex" "cannonlake" "icelake" "goldmont" "goldmontplus" "cascadelake" "cooperlake" "tigerlake" "sapphirerapids" "rocketlake" "alderlake"
-# Other options :
-# - "native_amd" (use compiler autodetection - Selecting your arch manually in the list above is recommended instead of this option)
-# - "native_intel" (use compiler autodetection and will prompt for P6_NOPS - Selecting your arch manually in the list above is recommended instead of this option)
-# - "generic" (kernel's default - to share the package between machines with different CPU µarch as long as they are x86-64)
-#
+# CPU compiler optimizations - Defaults to native if left empty
+# - "native" (use compiler autodetection)
+# - "zen4" (Use znver4 compiler optimizations)
 : "${_processor_opt:=zen4}"
-
-# This does automatically detect your supported CPU and optimizes for it
-: "${_use_auto_optimization:=no}"
 
 # Clang LTO mode, only available with the "llvm" compiler - options are "none", "full" or "thin".
 # ATTENTION - one of three predefined values should be selected!
@@ -203,7 +195,6 @@ _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
     "config"
-    "auto-cpu-optimization.sh"
     "https://raw.githubusercontent.com/graysky2/kernel_compiler_patch/refs/heads/master/more-ISA-levels-and-uarches-for-kernel-6.1.79%2B.patch"
     "0001-linux6.14.y-le9uo-1.15.patch"
     "0002-sched-fair-Prefer-full-idle-SMT-cores.patch"
@@ -320,20 +311,14 @@ prepare() {
     if [ -n "$_processor_opt" ]; then
         MARCH="${_processor_opt^^}"
 
-        if [ "$MARCH" != "GENERIC" ]; then
-            if [[ "$MARCH" =~ GENERIC_V[1-4] ]]; then
-                X86_64_LEVEL="${MARCH//GENERIC_V}"
-                scripts/config --set-val X86_64_VERSION "${X86_64_LEVEL}"
-            else
-                scripts/config -k -d CONFIG_GENERIC_CPU
-                scripts/config -k -e "CONFIG_M${MARCH}"
-            fi
-        fi
-    fi
-
-    ### Use autooptimization
-    if [ "$_use_auto_optimization" = "yes" ]; then
-        "${srcdir}"/auto-cpu-optimization.sh
+        case "$MARCH" in
+            GENERIC_V[1-4]) scripts/config -e GENERIC_CPU -d MZEN4 -d X86_NATIVE_CPU \
+                --set-val X86_64_VERSION "${MARCH//GENERIC_V}";;
+            ZEN4) scripts/config -d GENERIC_CPU -e MZEN4 -d X86_NATIVE_CPU;;
+            NATIVE) scripts/config -d GENERIC_CPU -d MZEN4 -e X86_NATIVE_CPU;;
+        esac
+    else
+        scripts/config -d GENERIC_CPU -d MZEN4 -e X86_NATIVE_CPU
     fi
 
     ### Selecting hells config
@@ -762,7 +747,6 @@ done
 
 b2sums=('7a9336a015011fd502f31f17fff4ee6826724b4401650092fabaa93a68df14bc0dbd6e43c03f85cdac622ea28c4cd57d6ab1bcb808ce0b9ddf0ec03179f1b3e2'
         '76df9a9911b2c6c0664d8ff417edffa835439ff36eb984d7998bee8de3ab4b4b37ff61e99d55f1fcd2551de3101e1a9d86e816edf2ef2275d42c1616695666a2'
-        '390c7b80608e9017f752b18660cc18ad1ec69f0aab41a2edfcfc26621dcccf5c7051c9d233d9bdf1df63d5f1589549ee0ba3a30e43148509d27dafa9102c19ab'
         '61f2477534ba03ef50a81a861057ff53ec5d9825014caaf9b48fe32df62b402729729debf6fff7c282b514b9942194feb12ab9c28434751351a6c54c6c8dbd57'
         '3bea2e1907d103830470c7738f1f9d1609677e91f812397c0d6b048664bb4b6841fa30c9ba540a2ac002049b3798e11fd26eac97155f38252b4b6506ac112a50'
         'eb57fb07a2661760cdba725c8cba04db9d34d28bedb3c1a97dd0467dcba8924416d8f75595a48997daf18e991a1224380723bc7f1a3d138eca0296d3ce12a9db'
