@@ -1,7 +1,7 @@
-From 7ef930a9eafba973ca04af0bec5651af3e9bcf06 Mon Sep 17 00:00:00 2001
+From 4808de92d4f89974eaa1efd616e283c612aa5e27 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/15] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/12] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -12,7 +12,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index b0adb665041f..eea830cc90a7 100644
+index b0adb665041f1..eea830cc90a77 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
@@ -37,10 +37,10 @@ index b0adb665041f..eea830cc90a7 100644
 2.49.0
 
 
-From 6e3639a28c96b0e49ac80386d134738d8376c12b Mon Sep 17 00:00:00 2001
+From 31642b0c4e7e318bcd815b66cb8c98ee8571aaa0 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/15] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/12] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -53,7 +53,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -72,10 +72,10 @@ index 452374d63c24..08f80d7c5df0 100644
 2.49.0
 
 
-From b9b2572bd116a326517cf2071d82ddd48f82ac33 Mon Sep 17 00:00:00 2001
+From ab3bbccee8fc78fd89398e625ab6670256807343 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 03/15] driver/base: Optimize memory block registration to
+Subject: [PATCH 03/12] driver/base: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -180,7 +180,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 47 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index 19469e7f88c2..7f1d266ae593 100644
+index 19469e7f88c25..7f1d266ae593a 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
 @@ -60,7 +60,7 @@ static inline unsigned long pfn_to_block_id(unsigned long pfn)
@@ -202,7 +202,7 @@ index 19469e7f88c2..7f1d266ae593 100644
  	struct memory_block *mem;
  
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index cd13ef287011..0f8a4645b26c 100644
+index cd13ef2870119..0f8a4645b26cc 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -20,6 +20,7 @@
@@ -258,7 +258,7 @@ index cd13ef287011..0f8a4645b26c 100644
  				       unsigned long end_pfn,
  				       enum meminit_context context)
 diff --git a/include/linux/memory.h b/include/linux/memory.h
-index 12daa6ec7d09..cb8579226536 100644
+index 12daa6ec7d09f..cb8579226536a 100644
 --- a/include/linux/memory.h
 +++ b/include/linux/memory.h
 @@ -171,6 +171,8 @@ struct memory_group *memory_group_find_by_id(int mgid);
@@ -271,7 +271,7 @@ index 12daa6ec7d09..cb8579226536 100644
  	static __meminitdata struct notifier_block fn##_mem_nb =\
  		{ .notifier_call = fn, .priority = pri };\
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 2b7517892230..93beefe8f179 100644
+index 2b75178922301..93beefe8f1793 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -114,12 +114,16 @@ extern struct node *node_devices[];
@@ -312,10 +312,10 @@ index 2b7517892230..93beefe8f179 100644
 2.49.0
 
 
-From 72fd950bd491fa0a246d87c103d3939ebb3f1161 Mon Sep 17 00:00:00 2001
+From 16ab4da84a16d7fa78b475eb8c3b1d3ac1be012c Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 04/15] driver/base: remove
+Subject: [PATCH 04/12] driver/base: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -332,7 +332,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 57 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 0f8a4645b26c..948392b477ea 100644
+index 0f8a4645b26cc..948392b477ea7 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -748,15 +748,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
@@ -419,10 +419,10 @@ index 0f8a4645b26c..948392b477ea 100644
 2.49.0
 
 
-From 3cf2d14d87ffe31611aad7f6c82d85b40c01a881 Mon Sep 17 00:00:00 2001
+From be0b335b3fbc5e1e209cb7b59ebc2bf25a6bafa3 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 05/15] drivers/base : Rename
+Subject: [PATCH 05/12] drivers/base : Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -443,7 +443,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  3 files changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 948392b477ea..206944c83849 100644
+index 948392b477ea7..206944c838492 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -839,9 +839,8 @@ void register_memory_blocks_under_node_early(int nid)
@@ -459,7 +459,7 @@ index 948392b477ea..206944c83849 100644
  	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
  			   (void *)&nid, register_mem_block_under_node_hotplug);
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 93beefe8f179..ac233c302d1d 100644
+index 93beefe8f1793..ac233c302d1d5 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -111,14 +111,13 @@ struct memory_block;
@@ -483,7 +483,7 @@ index 93beefe8f179..ac233c302d1d 100644
  }
  static inline void register_memory_blocks_under_node_early(int nid)
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index 8305483de38b..e3e83ae90c7c 100644
+index 8305483de38bb..e3e83ae90c7cb 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -502,10 +502,10 @@ index 8305483de38b..e3e83ae90c7c 100644
 2.49.0
 
 
-From bd767a0123d03762d08bd5b4a3f2ed07ee72c82e Mon Sep 17 00:00:00 2001
+From 56136093f5a383f8f5e641d5b698da55aa091e9c Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 06/15] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 06/12] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -530,7 +530,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 7da531b1cf6b..0eaf3522abe9 100644
+index 7da531b1cf6be..0eaf3522abe9a 100644
 --- a/fs/select.c
 +++ b/fs/select.c
 @@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
@@ -546,139 +546,10 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 2.49.0
 
 
-From d0be6b7630a13d1fa14b2a8b605e85b39bc24edc Mon Sep 17 00:00:00 2001
-From: Kees Cook <kees@kernel.org>
-Date: Thu, 15 May 2025 14:42:15 -0700
-Subject: [PATCH 07/15] mm: vmalloc: Actually use the in-place vrealloc region
-
-The refactoring to not build a new vmalloc region only actually worked
-when shrinking. Actually return the resized area when it grows. Ugh.
-
-Reported-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
-Closes: https://lore.kernel.org/all/20250515-bpf-verifier-slowdown-vwo2meju4cgp2su5ckj@6gi6ssxbnfqg
-Tested-by: Eduard Zingerman <eddyz87@gmail.com>
-Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
-Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
-Signed-off-by: Kees Cook <kees@kernel.org>
-Reviewed-by: Danilo Krummrich <dakr@kernel.org>
-Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
-Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
----
- mm/vmalloc.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 2d7511654831..74bd00fd734d 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -4111,6 +4111,7 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
- 		if (want_init_on_alloc(flags))
- 			memset((void *)p + old_size, 0, size - old_size);
- 		vm->requested_size = size;
-+		return (void *)p;
- 	}
- 
- 	/* TODO: Grow the vm_area, i.e. allocate and map additional pages. */
--- 
-2.49.0
-
-
-From b7aa03ce88a27ea8a7a2221647d0d79b595e87a4 Mon Sep 17 00:00:00 2001
-From: Kees Cook <kees@kernel.org>
-Date: Thu, 15 May 2025 14:42:16 -0700
-Subject: [PATCH 08/15] mm: vmalloc: Only zero-init on vrealloc shrink
-
-The common case is to grow reallocations, and since init_on_alloc will
-have already zeroed the whole allocation, we only need to zero when
-shrinking the allocation.
-
-Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
-Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
-Signed-off-by: Kees Cook <kees@kernel.org>
-Reviewed-by: Danilo Krummrich <dakr@kernel.org>
-Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
-Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
----
- mm/vmalloc.c | 12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
-
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 74bd00fd734d..00cf1b575c89 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -4093,8 +4093,8 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
- 	 * would be a good heuristic for when to shrink the vm_area?
- 	 */
- 	if (size <= old_size) {
--		/* Zero out "freed" memory. */
--		if (want_init_on_free())
-+		/* Zero out "freed" memory, potentially for future realloc. */
-+		if (want_init_on_free() || want_init_on_alloc(flags))
- 			memset((void *)p + size, 0, old_size - size);
- 		vm->requested_size = size;
- 		kasan_poison_vmalloc(p + size, old_size - size);
-@@ -4107,9 +4107,11 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
- 	if (size <= alloced_size) {
- 		kasan_unpoison_vmalloc(p + old_size, size - old_size,
- 				       KASAN_VMALLOC_PROT_NORMAL);
--		/* Zero out "alloced" memory. */
--		if (want_init_on_alloc(flags))
--			memset((void *)p + old_size, 0, size - old_size);
-+		/*
-+		 * No need to zero memory here, as unused memory will have
-+		 * already been zeroed at initial allocation time or during
-+		 * realloc shrink time.
-+		 */
- 		vm->requested_size = size;
- 		return (void *)p;
- 	}
--- 
-2.49.0
-
-
-From a993dafba420dc6c101cacc8b827ada45ebd782b Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Thu, 22 May 2025 09:13:28 -0500
-Subject: [PATCH 09/15] Revert "drm/amd: Keep display off while going into S4"
-
-commit 68bfdc8dc0a1a ("drm/amd: Keep display off while going into S4")
-attempted to keep displays off during the S4 sequence by not resuming
-display IP.  This however leads to hangs because DRM clients such as the
-console can try to access registers and cause a hang.
-
-Cc: stable@vger.kernel.org
-Closes: https://gitlab.freedesktop.org/drm/amd/-/issues/4155
-Fixes: 68bfdc8dc0a1a ("drm/amd: Keep display off while going into S4")
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
-Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
----
- drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c | 5 -----
- 1 file changed, 5 deletions(-)
-
-diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-index cc01b9c68b47..a187cdb43e7e 100644
---- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-+++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-@@ -3469,11 +3469,6 @@ static int dm_resume(struct amdgpu_ip_block *ip_block)
- 
- 		return 0;
- 	}
--
--	/* leave display off for S4 sequence */
--	if (adev->in_s4)
--		return 0;
--
- 	/* Recreate dc_state - DC invalidates it when setting power state to S3. */
- 	dc_state_release(dm_state->context);
- 	dm_state->context = dc_state_create(dm->dc, NULL);
--- 
-2.49.0
-
-
-From 9332aa07dc0e5c2fbee65ed5c9b17ee9627b3375 Mon Sep 17 00:00:00 2001
+From c5d22e062b4393a7fe8d8aff3c0dd09f5d754d55 Mon Sep 17 00:00:00 2001
 From: Pierre Gondois <pierre.gondois@arm.com>
 Date: Tue, 25 Mar 2025 16:05:41 +0100
-Subject: [PATCH 10/15] sched/fair: Allow decaying util_est when util_avg > CPU
+Subject: [PATCH 07/12] sched/fair: Allow decaying util_est when util_avg > CPU
  capa
 
 commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
@@ -728,7 +599,7 @@ Link: https://lore.kernel.org/r/20250325150542.1077344-1-pierre.gondois@arm.com
  1 file changed, 7 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 0fb9bf995a47..a351a1b8bfe4 100644
+index 0fb9bf995a479..a351a1b8bfe45 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -4932,13 +4932,6 @@ static inline void util_est_update(struct cfs_rq *cfs_rq,
@@ -749,10 +620,10 @@ index 0fb9bf995a47..a351a1b8bfe4 100644
 2.49.0
 
 
-From 506a1f5bbc22544e743755c3cce7e8630103bf81 Mon Sep 17 00:00:00 2001
+From 97766775abdf7025613395d2751f606d71019c95 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 28 Jan 2025 15:39:49 +0100
-Subject: [PATCH 11/15] sched/fair: Adhere to place_entity() constraints
+Subject: [PATCH 08/12] sched/fair: Adhere to place_entity() constraints
 
 Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
 placement bug causing scheduling lag") relies on commit 4423af84b297
@@ -789,7 +660,7 @@ Link: https://lore.kernel.org/r/c216eb4ef0e0e0029c600aefc69d56681cee5581.camel@g
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index a351a1b8bfe4..e3f673643b7e 100644
+index a351a1b8bfe45..e3f673643b7e3 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -3795,6 +3795,7 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
@@ -817,10 +688,10 @@ index a351a1b8bfe4..e3f673643b7e 100644
 2.49.0
 
 
-From e92aa6c3dada3fa32207fa17fe716aa3f8fcec62 Mon Sep 17 00:00:00 2001
+From ce38c45c90ed7af2d93b6ad92a9996bb518fef5c Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Tue, 29 Apr 2025 08:07:26 -0700
-Subject: [PATCH 12/15] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 09/12] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -858,7 +729,7 @@ Link: https://lkml.kernel.org/r/20250429150736.3778580-1-jstultz@google.com
  1 file changed, 6 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index c81cf642dba0..b986cd2fb19b 100644
+index c81cf642dba05..b986cd2fb19b7 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -2283,6 +2283,12 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
@@ -878,10 +749,10 @@ index c81cf642dba0..b986cd2fb19b 100644
 2.49.0
 
 
-From 7b80ab44f3ad514dc4d7cb37153fbe6fe969bd07 Mon Sep 17 00:00:00 2001
+From c1580e0f8ae7e02f08620b3dd4c9c31cadc651ad Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Mon, 3 Mar 2025 18:52:39 +0800
-Subject: [PATCH 13/15] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
+Subject: [PATCH 10/12] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
 Delayed dequeued feature keeps a sleeping task enqueued until its
 lag has elapsed. As a result, it stays also visible in rq->nr_running.
@@ -901,7 +772,7 @@ Link: https://lore.kernel.org/r/20250303105241.17251-2-xuewen.yan@unisoc.com
  1 file changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e3f673643b7e..305b0a5a5864 100644
+index e3f673643b7e3..305b0a5a58649 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -7191,6 +7191,11 @@ static bool dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
@@ -935,10 +806,10 @@ index e3f673643b7e..305b0a5a5864 100644
 2.49.0
 
 
-From 4498bd8ae61ebca62d1f4018ddeae8970909e210 Mon Sep 17 00:00:00 2001
+From e7a257052a2772de8cd874ef2b8f185fcaa230be Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:56 +0800
-Subject: [PATCH 14/15] sched/util_est: Simplify condition for
+Subject: [PATCH 11/12] sched/util_est: Simplify condition for
  util_est_{en,de}queue()
 
 To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
@@ -978,7 +849,7 @@ Link: https://lore.kernel.org/r/20250417043457.10632-2-xuewen.yan@unisoc.com
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 305b0a5a5864..b647c19f253e 100644
+index 305b0a5a58649..b647c19f253ef 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -6936,7 +6936,7 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
@@ -1003,10 +874,10 @@ index 305b0a5a5864..b647c19f253e 100644
 2.49.0
 
 
-From e43ced76d13bbc41aebefb8f49b9944089c47a33 Mon Sep 17 00:00:00 2001
+From a17678251771311e064d7861b278f46468f5cc8f Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:57 +0800
-Subject: [PATCH 15/15] sched/uclamp: Align uclamp and util_est and call before
+Subject: [PATCH 12/12] sched/uclamp: Align uclamp and util_est and call before
  freq update
 
 The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
@@ -1037,7 +908,7 @@ Link: https://lore.kernel.org/r/20250417043457.10632-3-xuewen.yan@unisoc.com
  1 file changed, 10 insertions(+), 7 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b986cd2fb19b..a87be58d0709 100644
+index b986cd2fb19b7..a87be58d07095 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -1752,7 +1752,7 @@ static inline void uclamp_rq_dec_id(struct rq *rq, struct task_struct *p,
