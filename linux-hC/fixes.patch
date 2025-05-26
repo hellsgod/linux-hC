@@ -1,7 +1,7 @@
-From 9a23f2cda81b1d0b4e9f6c6250a727cd6c1027ce Mon Sep 17 00:00:00 2001
+From 7ef930a9eafba973ca04af0bec5651af3e9bcf06 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/22] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/15] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -12,7 +12,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index b8a4ff365582..9b087f9bb413 100644
+index b0adb665041f..eea830cc90a7 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
@@ -37,10 +37,10 @@ index b8a4ff365582..9b087f9bb413 100644
 2.49.0
 
 
-From a6bfae2cd41a097f255369418f1ac958ce447449 Mon Sep 17 00:00:00 2001
+From 6e3639a28c96b0e49ac80386d134738d8376c12b Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/22] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/15] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -53,7 +53,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 0cf3a55b05e1..a27d4344a4e8 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -72,260 +72,10 @@ index 0cf3a55b05e1..a27d4344a4e8 100644
 2.49.0
 
 
-From 3ac14b8a4eefdcc95c33c0a461df8a6fd5fb65cc Mon Sep 17 00:00:00 2001
-From: I Hsin Cheng <richard120310@gmail.com>
-Date: Mon, 10 Feb 2025 18:30:18 +0800
-Subject: [PATCH 03/22] sched/fair: Refactor can_migrate_task() to elimate
- looping
-
-The function "can_migrate_task()" utilize "for_each_cpu_and" with a
-"if" statement inside to find the destination cpu. It's the same logic
-to find the first set bit of the result of the bitwise-AND of
-"env->dst_grpmask", "env->cpus" and "p->cpus_ptr".
-
-Refactor it by using "cpumask_first_and_and()" to perform bitwise-AND
-for "env->dst_grpmask", "env->cpus" and "p->cpus_ptr" and pick the
-first cpu within the intersection as the destination cpu, so we can
-elimate the need of looping and multiple times of branch.
-
-After the refactoring this part of the code can speed up from ~115ns
-to ~54ns, according to the test below.
-
-Ran the test for 5 times and the result is showned in the following
-table, and the test script is paste in next section.
-
-  -------------------------------------------------------
-  |Old method|  130|  118|  115|  109|  106|  avg ~115ns|
-  -------------------------------------------------------
-  |New method|   58|   55|   54|   48|   55|  avg  ~54ns|
-  -------------------------------------------------------
-
-Signed-off-by: I Hsin Cheng <richard120310@gmail.com>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Link: https://lkml.kernel.org/r/20250210103019.283824-1-richard120310@gmail.com
----
- kernel/sched/fair.c | 11 +++++------
- 1 file changed, 5 insertions(+), 6 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3d9b68a347b7..96ba0c1e2e44 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9439,12 +9439,11 @@ int can_migrate_task(struct task_struct *p, struct lb_env *env)
- 			return 0;
- 
- 		/* Prevent to re-select dst_cpu via env's CPUs: */
--		for_each_cpu_and(cpu, env->dst_grpmask, env->cpus) {
--			if (cpumask_test_cpu(cpu, p->cpus_ptr)) {
--				env->flags |= LBF_DST_PINNED;
--				env->new_dst_cpu = cpu;
--				break;
--			}
-+		cpu = cpumask_first_and_and(env->dst_grpmask, env->cpus, p->cpus_ptr);
-+
-+		if (cpu < nr_cpu_ids) {
-+			env->flags |= LBF_DST_PINNED;
-+			env->new_dst_cpu = cpu;
- 		}
- 
- 		return 0;
--- 
-2.49.0
-
-
-From f886c6e88638cb3257095262d8e0649a1fa3dade Mon Sep 17 00:00:00 2001
-From: =?UTF-8?q?Sergio=20Gonz=C3=A1lez=20Collado?=
- <sergio.collado@gmail.com>
-Date: Sun, 2 Mar 2025 23:15:18 +0100
-Subject: [PATCH 04/22] Kunit to check the longest symbol length
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-The longest length of a symbol (KSYM_NAME_LEN) was increased to 512
-in the reference [1]. This patch adds kunit test suite to check the longest
-symbol length. These tests verify that the longest symbol length defined
-is supported.
-
-This test can also help other efforts for longer symbol length,
-like [2].
-
-The test suite defines one symbol with the longest possible length.
-
-The first test verify that functions with names of the created
-symbol, can be called or not.
-
-The second test, verify that the symbols are created (or
-not) in the kernel symbol table.
-
-[1] https://lore.kernel.org/lkml/20220802015052.10452-6-ojeda@kernel.org/
-[2] https://lore.kernel.org/lkml/20240605032120.3179157-1-song@kernel.org/
-
-Tested-by: Martin Rodriguez Reboredo <yakoyoku@gmail.com>
-Reviewed-by: Shuah Khan <skhan@linuxfoundation.org>
-Reviewed-by: Rae Moar <rmoar@google.com>
-Signed-off-by: Sergio González Collado <sergio.collado@gmail.com>
-Link: https://github.com/Rust-for-Linux/linux/issues/504
-Source: https://lore.kernel.org/rust-for-linux/20250302221518.76874-1-sergio.collado@gmail.com/
-Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/63
----
- arch/x86/tools/insn_decoder_test.c |  3 +-
- lib/Kconfig.debug                  |  9 ++++
- lib/Makefile                       |  2 +
- lib/longest_symbol_kunit.c         | 82 ++++++++++++++++++++++++++++++
- 4 files changed, 95 insertions(+), 1 deletion(-)
- create mode 100644 lib/longest_symbol_kunit.c
-
-diff --git a/arch/x86/tools/insn_decoder_test.c b/arch/x86/tools/insn_decoder_test.c
-index 472540aeabc2..6c2986d2ad11 100644
---- a/arch/x86/tools/insn_decoder_test.c
-+++ b/arch/x86/tools/insn_decoder_test.c
-@@ -10,6 +10,7 @@
- #include <assert.h>
- #include <unistd.h>
- #include <stdarg.h>
-+#include <linux/kallsyms.h>
- 
- #define unlikely(cond) (cond)
- 
-@@ -106,7 +107,7 @@ static void parse_args(int argc, char **argv)
- 	}
- }
- 
--#define BUFSIZE 256
-+#define BUFSIZE (256 + KSYM_NAME_LEN)
- 
- int main(int argc, char **argv)
- {
-diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-index 35796c290ca3..a6da7f4411f4 100644
---- a/lib/Kconfig.debug
-+++ b/lib/Kconfig.debug
-@@ -2838,6 +2838,15 @@ config FORTIFY_KUNIT_TEST
- 	  by the str*() and mem*() family of functions. For testing runtime
- 	  traps of FORTIFY_SOURCE, see LKDTM's "FORTIFY_*" tests.
- 
-+config LONGEST_SYM_KUNIT_TEST
-+	tristate "Test the longest symbol possible" if !KUNIT_ALL_TESTS
-+	depends on KUNIT && KPROBES
-+	default KUNIT_ALL_TESTS
-+	help
-+	  Tests the longest symbol possible
-+
-+	  If unsure, say N.
-+
- config HW_BREAKPOINT_KUNIT_TEST
- 	bool "Test hw_breakpoint constraints accounting" if !KUNIT_ALL_TESTS
- 	depends on HAVE_HW_BREAKPOINT
-diff --git a/lib/Makefile b/lib/Makefile
-index 4f3d00a2fd65..9a54526008d0 100644
---- a/lib/Makefile
-+++ b/lib/Makefile
-@@ -398,6 +398,8 @@ obj-$(CONFIG_FORTIFY_KUNIT_TEST) += fortify_kunit.o
- obj-$(CONFIG_CRC_KUNIT_TEST) += crc_kunit.o
- obj-$(CONFIG_SIPHASH_KUNIT_TEST) += siphash_kunit.o
- obj-$(CONFIG_USERCOPY_KUNIT_TEST) += usercopy_kunit.o
-+obj-$(CONFIG_LONGEST_SYM_KUNIT_TEST) += longest_symbol_kunit.o
-+CFLAGS_longest_symbol_kunit.o += $(call cc-disable-warning, missing-prototypes)
- 
- obj-$(CONFIG_GENERIC_LIB_DEVMEM_IS_ALLOWED) += devmem_is_allowed.o
- 
-diff --git a/lib/longest_symbol_kunit.c b/lib/longest_symbol_kunit.c
-new file mode 100644
-index 000000000000..e3c28ff1807f
---- /dev/null
-+++ b/lib/longest_symbol_kunit.c
-@@ -0,0 +1,82 @@
-+// SPDX-License-Identifier: GPL-2.0
-+/*
-+ * Test the longest symbol length. Execute with:
-+ *  ./tools/testing/kunit/kunit.py run longest-symbol
-+ *  --arch=x86_64 --kconfig_add CONFIG_KPROBES=y --kconfig_add CONFIG_MODULES=y
-+ *  --kconfig_add CONFIG_RETPOLINE=n --kconfig_add CONFIG_CFI_CLANG=n
-+ *  --kconfig_add CONFIG_MITIGATION_RETPOLINE=n
-+ */
-+
-+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-+
-+#include <kunit/test.h>
-+#include <linux/stringify.h>
-+#include <linux/kprobes.h>
-+#include <linux/kallsyms.h>
-+
-+#define DI(name) s##name##name
-+#define DDI(name) DI(n##name##name)
-+#define DDDI(name) DDI(n##name##name)
-+#define DDDDI(name) DDDI(n##name##name)
-+#define DDDDDI(name) DDDDI(n##name##name)
-+
-+/*Generate a symbol whose name length is 511 */
-+#define LONGEST_SYM_NAME  DDDDDI(g1h2i3j4k5l6m7n)
-+
-+#define RETURN_LONGEST_SYM 0xAAAAA
-+
-+noinline int LONGEST_SYM_NAME(void);
-+noinline int LONGEST_SYM_NAME(void)
-+{
-+	return RETURN_LONGEST_SYM;
-+}
-+
-+_Static_assert(sizeof(__stringify(LONGEST_SYM_NAME)) == KSYM_NAME_LEN,
-+"Incorrect symbol length found. Expected KSYM_NAME_LEN: "
-+__stringify(KSYM_NAME_LEN) ", but found: "
-+__stringify(sizeof(LONGEST_SYM_NAME)));
-+
-+static void test_longest_symbol(struct kunit *test)
-+{
-+	KUNIT_EXPECT_EQ(test, RETURN_LONGEST_SYM, LONGEST_SYM_NAME());
-+};
-+
-+static void test_longest_symbol_kallsyms(struct kunit *test)
-+{
-+	unsigned long (*kallsyms_lookup_name)(const char *name);
-+	static int (*longest_sym)(void);
-+
-+	struct kprobe kp = {
-+		.symbol_name = "kallsyms_lookup_name",
-+	};
-+
-+	if (register_kprobe(&kp) < 0) {
-+		pr_info("%s: kprobe not registered", __func__);
-+		KUNIT_FAIL(test, "test_longest_symbol kallsyms: kprobe not registered\n");
-+		return;
-+	}
-+
-+	kunit_warn(test, "test_longest_symbol kallsyms: kprobe registered\n");
-+	kallsyms_lookup_name = (unsigned long (*)(const char *name))kp.addr;
-+	unregister_kprobe(&kp);
-+
-+	longest_sym =
-+		(void *) kallsyms_lookup_name(__stringify(LONGEST_SYM_NAME));
-+	KUNIT_EXPECT_EQ(test, RETURN_LONGEST_SYM, longest_sym());
-+};
-+
-+static struct kunit_case longest_symbol_test_cases[] = {
-+	KUNIT_CASE(test_longest_symbol),
-+	KUNIT_CASE(test_longest_symbol_kallsyms),
-+	{}
-+};
-+
-+static struct kunit_suite longest_symbol_test_suite = {
-+	.name = "longest-symbol",
-+	.test_cases = longest_symbol_test_cases,
-+};
-+kunit_test_suite(longest_symbol_test_suite);
-+
-+MODULE_LICENSE("GPL");
-+MODULE_DESCRIPTION("Test the longest symbol length");
-+MODULE_AUTHOR("Sergio González Collado");
--- 
-2.49.0
-
-
-From 557523eb0b0524654b35cef60ffeda0bcf3b1b50 Mon Sep 17 00:00:00 2001
+From b9b2572bd116a326517cf2071d82ddd48f82ac33 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 05/22] driver/base: Optimize memory block registration to
+Subject: [PATCH 03/15] driver/base: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -430,7 +180,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 47 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index 348c5dbbfa68..7632da6a2961 100644
+index 19469e7f88c2..7f1d266ae593 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
 @@ -60,7 +60,7 @@ static inline unsigned long pfn_to_block_id(unsigned long pfn)
@@ -442,7 +192,7 @@ index 348c5dbbfa68..7632da6a2961 100644
  {
  	return pfn_to_block_id(PFN_DOWN(phys));
  }
-@@ -636,7 +636,7 @@ int __weak arch_get_memory_phys_device(unsigned long start_pfn)
+@@ -632,7 +632,7 @@ int __weak arch_get_memory_phys_device(unsigned long start_pfn)
   *
   * Called under device_hotplug_lock.
   */
@@ -452,7 +202,7 @@ index 348c5dbbfa68..7632da6a2961 100644
  	struct memory_block *mem;
  
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 0ea653fa3433..907b16275296 100644
+index cd13ef287011..0f8a4645b26c 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -20,6 +20,7 @@
@@ -463,7 +213,7 @@ index 0ea653fa3433..907b16275296 100644
  
  static const struct bus_type node_subsys = {
  	.name = "node",
-@@ -848,6 +849,43 @@ void unregister_memory_block_under_nodes(struct memory_block *mem_blk)
+@@ -850,6 +851,43 @@ void unregister_memory_block_under_nodes(struct memory_block *mem_blk)
  			  kobject_name(&node_devices[mem_blk->nid]->dev.kobj));
  }
  
@@ -508,7 +258,7 @@ index 0ea653fa3433..907b16275296 100644
  				       unsigned long end_pfn,
  				       enum meminit_context context)
 diff --git a/include/linux/memory.h b/include/linux/memory.h
-index c0afee5d126e..c94d44893699 100644
+index 12daa6ec7d09..cb8579226536 100644
 --- a/include/linux/memory.h
 +++ b/include/linux/memory.h
 @@ -171,6 +171,8 @@ struct memory_group *memory_group_find_by_id(int mgid);
@@ -521,10 +271,10 @@ index c0afee5d126e..c94d44893699 100644
  	static __meminitdata struct notifier_block fn##_mem_nb =\
  		{ .notifier_call = fn, .priority = pri };\
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 9a881c2208b3..02c27adc21ed 100644
+index 2b7517892230..93beefe8f179 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
-@@ -107,12 +107,16 @@ extern struct node *node_devices[];
+@@ -114,12 +114,16 @@ extern struct node *node_devices[];
  void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
  				       unsigned long end_pfn,
  				       enum meminit_context context);
@@ -541,7 +291,7 @@ index 9a881c2208b3..02c27adc21ed 100644
  #endif
  
  extern void unregister_node(struct node *node);
-@@ -127,15 +131,10 @@ static inline int register_one_node(int nid)
+@@ -134,15 +138,10 @@ static inline int register_one_node(int nid)
  	int error = 0;
  
  	if (node_online(nid)) {
@@ -562,10 +312,10 @@ index 9a881c2208b3..02c27adc21ed 100644
 2.49.0
 
 
-From 308e40ae4b7545c18af9820f40dfa7eca2fb06f6 Mon Sep 17 00:00:00 2001
+From 72fd950bd491fa0a246d87c103d3939ebb3f1161 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 06/22] driver/base: remove
+Subject: [PATCH 04/15] driver/base: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -582,10 +332,10 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 57 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 907b16275296..063915a9ff57 100644
+index 0f8a4645b26c..948392b477ea 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
-@@ -746,15 +746,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
+@@ -748,15 +748,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
  }
  
  #ifdef CONFIG_MEMORY_HOTPLUG
@@ -601,7 +351,7 @@ index 907b16275296..063915a9ff57 100644
  static void do_register_memory_block_under_node(int nid,
  						struct memory_block *mem_blk,
  						enum meminit_context context)
-@@ -781,46 +772,6 @@ static void do_register_memory_block_under_node(int nid,
+@@ -783,46 +774,6 @@ static void do_register_memory_block_under_node(int nid,
  				    ret);
  }
  
@@ -648,7 +398,7 @@ index 907b16275296..063915a9ff57 100644
  /*
   * During hotplug we know that all pages in the memory block belong to the same
   * node.
-@@ -890,15 +841,8 @@ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+@@ -892,15 +843,8 @@ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
  				       unsigned long end_pfn,
  				       enum meminit_context context)
  {
@@ -669,10 +419,10 @@ index 907b16275296..063915a9ff57 100644
 2.49.0
 
 
-From ae80c4dee0c967b8231d804e2294c5d2e8117a0a Mon Sep 17 00:00:00 2001
+From 3cf2d14d87ffe31611aad7f6c82d85b40c01a881 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 07/22] drivers/base : Rename
+Subject: [PATCH 05/15] drivers/base : Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -693,10 +443,10 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  3 files changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 063915a9ff57..7056c85b7496 100644
+index 948392b477ea..206944c83849 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
-@@ -837,9 +837,8 @@ void register_memory_blocks_under_node_early(int nid)
+@@ -839,9 +839,8 @@ void register_memory_blocks_under_node_early(int nid)
  	}
  }
  
@@ -709,10 +459,10 @@ index 063915a9ff57..7056c85b7496 100644
  	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
  			   (void *)&nid, register_mem_block_under_node_hotplug);
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 02c27adc21ed..83e4b4e1de97 100644
+index 93beefe8f179..ac233c302d1d 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
-@@ -104,14 +104,13 @@ struct memory_block;
+@@ -111,14 +111,13 @@ struct memory_block;
  extern struct node *node_devices[];
  
  #if defined(CONFIG_MEMORY_HOTPLUG) && defined(CONFIG_NUMA)
@@ -733,7 +483,7 @@ index 02c27adc21ed..83e4b4e1de97 100644
  }
  static inline void register_memory_blocks_under_node_early(int nid)
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index 75401866fb76..27672fe645a9 100644
+index 8305483de38b..e3e83ae90c7c 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -752,10 +502,10 @@ index 75401866fb76..27672fe645a9 100644
 2.49.0
 
 
-From 1699f3cdf2ddf008ee4f8478340c67ad1ae8c77e Mon Sep 17 00:00:00 2001
+From bd767a0123d03762d08bd5b4a3f2ed07ee72c82e Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 08/22] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 06/15] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -796,177 +546,281 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 2.49.0
 
 
-From 7c144f60fc17e382b26ea1561634a8064af3e434 Mon Sep 17 00:00:00 2001
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date: Wed, 26 Feb 2025 10:10:57 +0100
-Subject: [PATCH 09/22] futex: Use a hashmask instead of hashsize
+From d0be6b7630a13d1fa14b2a8b605e85b39bc24edc Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees@kernel.org>
+Date: Thu, 15 May 2025 14:42:15 -0700
+Subject: [PATCH 07/15] mm: vmalloc: Actually use the in-place vrealloc region
 
-The global hash uses futex_hashsize to save the amount of the hash
-buckets that have been allocated during system boot. On each
-futex_hash() invocation this number is substracted by one to get the
-mask. This can be optimized by saving directly the mask avoiding the
-substraction on each futex_hash() invocation.
+The refactoring to not build a new vmalloc region only actually worked
+when shrinking. Actually return the resized area when it grows. Ugh.
 
-Rename futex_hashsize to futex_hashmask and save the mask of the
-allocated hash map.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Waiman Long <longman@redhat.com>
-Link: https://lore.kernel.org/all/20250226091057.bX8vObR4@linutronix.de
+Reported-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
+Closes: https://lore.kernel.org/all/20250515-bpf-verifier-slowdown-vwo2meju4cgp2su5ckj@6gi6ssxbnfqg
+Tested-by: Eduard Zingerman <eddyz87@gmail.com>
+Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
+Signed-off-by: Kees Cook <kees@kernel.org>
+Reviewed-by: Danilo Krummrich <dakr@kernel.org>
+Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
 ---
- kernel/futex/core.c | 21 +++++++++++----------
- 1 file changed, 11 insertions(+), 10 deletions(-)
+ mm/vmalloc.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/kernel/futex/core.c b/kernel/futex/core.c
-index 3db8567f5a44..cca15859a50b 100644
---- a/kernel/futex/core.c
-+++ b/kernel/futex/core.c
-@@ -50,10 +50,10 @@
-  */
- static struct {
- 	struct futex_hash_bucket *queues;
--	unsigned long            hashsize;
-+	unsigned long            hashmask;
- } __futex_data __read_mostly __aligned(2*sizeof(long));
- #define futex_queues   (__futex_data.queues)
--#define futex_hashsize (__futex_data.hashsize)
-+#define futex_hashmask (__futex_data.hashmask)
- 
- 
- /*
-@@ -119,7 +119,7 @@ struct futex_hash_bucket *futex_hash(union futex_key *key)
- 	u32 hash = jhash2((u32 *)key, offsetof(typeof(*key), both.offset) / 4,
- 			  key->both.offset);
- 
--	return &futex_queues[hash & (futex_hashsize - 1)];
-+	return &futex_queues[hash & futex_hashmask];
- }
- 
- 
-@@ -1127,27 +1127,28 @@ void futex_exit_release(struct task_struct *tsk)
- 
- static int __init futex_init(void)
- {
-+	unsigned long hashsize, i;
- 	unsigned int futex_shift;
--	unsigned long i;
- 
- #ifdef CONFIG_BASE_SMALL
--	futex_hashsize = 16;
-+	hashsize = 16;
- #else
--	futex_hashsize = roundup_pow_of_two(256 * num_possible_cpus());
-+	hashsize = roundup_pow_of_two(256 * num_possible_cpus());
- #endif
- 
- 	futex_queues = alloc_large_system_hash("futex", sizeof(*futex_queues),
--					       futex_hashsize, 0, 0,
-+					       hashsize, 0, 0,
- 					       &futex_shift, NULL,
--					       futex_hashsize, futex_hashsize);
--	futex_hashsize = 1UL << futex_shift;
-+					       hashsize, hashsize);
-+	hashsize = 1UL << futex_shift;
- 
--	for (i = 0; i < futex_hashsize; i++) {
-+	for (i = 0; i < hashsize; i++) {
- 		atomic_set(&futex_queues[i].waiters, 0);
- 		plist_head_init(&futex_queues[i].chain);
- 		spin_lock_init(&futex_queues[i].lock);
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 2d7511654831..74bd00fd734d 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -4111,6 +4111,7 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 		if (want_init_on_alloc(flags))
+ 			memset((void *)p + old_size, 0, size - old_size);
+ 		vm->requested_size = size;
++		return (void *)p;
  	}
  
-+	futex_hashmask = hashsize - 1;
- 	return 0;
- }
- core_initcall(futex_init);
+ 	/* TODO: Grow the vm_area, i.e. allocate and map additional pages. */
 -- 
 2.49.0
 
 
-From 36fb01b81d0aa4614db228329089ecd422ccdfff Mon Sep 17 00:00:00 2001
-From: Eric Biggers <ebiggers@google.com>
-Date: Mon, 27 Jan 2025 14:45:23 -0800
-Subject: [PATCH 10/22] x86/fpu: make WARN_ON_FPU get fully optimized out
+From b7aa03ce88a27ea8a7a2221647d0d79b595e87a4 Mon Sep 17 00:00:00 2001
+From: Kees Cook <kees@kernel.org>
+Date: Thu, 15 May 2025 14:42:16 -0700
+Subject: [PATCH 08/15] mm: vmalloc: Only zero-init on vrealloc shrink
 
-Currently WARN_ON_FPU evaluates its argument even if
-CONFIG_X86_DEBUG_FPU is disabled, which adds unnecessary instructions to
-several functions, for example kernel_fpu_begin().  Fix this by using
-BUILD_BUG_ON_INVALID(x) in the no-debug case rather than (void)(x).
+The common case is to grow reallocations, and since init_on_alloc will
+have already zeroed the whole allocation, we only need to zero when
+shrinking the allocation.
 
-Fixes: 83242c515881 ("x86/fpu: Make WARN_ON_FPU() more robust in the !CONFIG_X86_DEBUG_FPU case")
-Suggested-by: Sean Christopherson <seanjc@google.com>
-Signed-off-by: Eric Biggers <ebiggers@google.com>
+Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
+Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
+Signed-off-by: Kees Cook <kees@kernel.org>
+Reviewed-by: Danilo Krummrich <dakr@kernel.org>
+Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
+Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
 ---
- arch/x86/kernel/fpu/internal.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ mm/vmalloc.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/arch/x86/kernel/fpu/internal.h b/arch/x86/kernel/fpu/internal.h
-index dbdb31f55fc7..975de070c9c9 100644
---- a/arch/x86/kernel/fpu/internal.h
-+++ b/arch/x86/kernel/fpu/internal.h
-@@ -18,7 +18,7 @@ static __always_inline __pure bool use_fxsr(void)
- #ifdef CONFIG_X86_DEBUG_FPU
- # define WARN_ON_FPU(x) WARN_ON_ONCE(x)
- #else
--# define WARN_ON_FPU(x) ({ (void)(x); 0; })
-+# define WARN_ON_FPU(x) ({ BUILD_BUG_ON_INVALID(x); 0; })
- #endif
- 
- /* Used in init.c */
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index 74bd00fd734d..00cf1b575c89 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -4093,8 +4093,8 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 	 * would be a good heuristic for when to shrink the vm_area?
+ 	 */
+ 	if (size <= old_size) {
+-		/* Zero out "freed" memory. */
+-		if (want_init_on_free())
++		/* Zero out "freed" memory, potentially for future realloc. */
++		if (want_init_on_free() || want_init_on_alloc(flags))
+ 			memset((void *)p + size, 0, old_size - size);
+ 		vm->requested_size = size;
+ 		kasan_poison_vmalloc(p + size, old_size - size);
+@@ -4107,9 +4107,11 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
+ 	if (size <= alloced_size) {
+ 		kasan_unpoison_vmalloc(p + old_size, size - old_size,
+ 				       KASAN_VMALLOC_PROT_NORMAL);
+-		/* Zero out "alloced" memory. */
+-		if (want_init_on_alloc(flags))
+-			memset((void *)p + old_size, 0, size - old_size);
++		/*
++		 * No need to zero memory here, as unused memory will have
++		 * already been zeroed at initial allocation time or during
++		 * realloc shrink time.
++		 */
+ 		vm->requested_size = size;
+ 		return (void *)p;
+ 	}
 -- 
 2.49.0
 
 
-From 73f58d3e11d181462b4e72ccd4d6fea275ca09c7 Mon Sep 17 00:00:00 2001
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 11/22] x86/mm: Simplify redundant overlap calculation
+From a993dafba420dc6c101cacc8b827ada45ebd782b Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Thu, 22 May 2025 09:13:28 -0500
+Subject: [PATCH 09/15] Revert "drm/amd: Keep display off while going into S4"
 
-There have been a couple of reports that the two sides of the
-overlaps() calculation are redundant.  I spent way too much time
-looking at this, but I became convinced that they are redundant
-when a little test program of mine produced identical disassembly
-for both versions of the check.
+commit 68bfdc8dc0a1a ("drm/amd: Keep display off while going into S4")
+attempted to keep displays off during the S4 sequence by not resuming
+display IP.  This however leads to hangs because DRM clients such as the
+console can try to access registers and cause a hang.
 
-Remove the second condition.  It is exactly the same as the first.
-
-Fixes: 91ee8f5c1f50 ("x86/mm/cpa: Allow range check for static protections")
-Reported-by: David Binderman <dcb314@hotmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: x86@kernel.org
-Reviewed-by: Sohil Mehta <sohil.mehta@intel.com>
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
+Cc: stable@vger.kernel.org
+Closes: https://gitlab.freedesktop.org/drm/amd/-/issues/4155
+Fixes: 68bfdc8dc0a1a ("drm/amd: Keep display off while going into S4")
+Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
+Reviewed-by: Alex Deucher <alexander.deucher@amd.com>
 ---
- arch/x86/mm/pat/set_memory.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c | 5 -----
+ 1 file changed, 5 deletions(-)
 
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index b491d8190a6c..1c6db6bba56f 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -433,8 +433,7 @@ static void cpa_flush(struct cpa_data *data, int cache)
- static bool overlaps(unsigned long r1_start, unsigned long r1_end,
- 		     unsigned long r2_start, unsigned long r2_end)
- {
--	return (r1_start <= r2_end && r1_end >= r2_start) ||
--		(r2_start <= r1_end && r2_end >= r1_start);
-+	return (r1_start <= r2_end && r1_end >= r2_start);
- }
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+index cc01b9c68b47..a187cdb43e7e 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+@@ -3469,11 +3469,6 @@ static int dm_resume(struct amdgpu_ip_block *ip_block)
  
- #ifdef CONFIG_PCI_BIOS
+ 		return 0;
+ 	}
+-
+-	/* leave display off for S4 sequence */
+-	if (adev->in_s4)
+-		return 0;
+-
+ 	/* Recreate dc_state - DC invalidates it when setting power state to S3. */
+ 	dc_state_release(dm_state->context);
+ 	dm_state->context = dc_state_create(dm->dc, NULL);
 -- 
 2.49.0
 
 
-From 76fec99f8f1608d692af158ee317145eef75797b Mon Sep 17 00:00:00 2001
+From 9332aa07dc0e5c2fbee65ed5c9b17ee9627b3375 Mon Sep 17 00:00:00 2001
+From: Pierre Gondois <pierre.gondois@arm.com>
+Date: Tue, 25 Mar 2025 16:05:41 +0100
+Subject: [PATCH 10/15] sched/fair: Allow decaying util_est when util_avg > CPU
+ capa
+
+commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
+utilization is higher than CPU's capacity")
+prevents util_est from being updated if util_avg is higher than the
+underlying CPU capacity to avoid overestimating the task when the CPU
+is capped (due to thermal issue for instance). In this scenario, the
+task will miss its deadlines and start overlapping its wake-up events
+for instance. The task will appear as always running when the CPU is
+just not powerful enough to allow having a good estimation of the
+task.
+
+commit b8c96361402a ("sched/fair/util_est: Implement faster ramp-up
+EWMA on utilization increases")
+sets ewma to util_avg when ewma > util_avg, allowing ewma to quickly
+grow instead of slowly converge to the new util_avg value when a task
+profile changes from small to big.
+
+However, the 2 conditions:
+- Check util_avg against max CPU capacity
+- Check whether util_est > util_avg
+are placed in an order such as it is possible to set util_est to a
+value higher than the CPU capacity if util_est > util_avg, but
+util_est is prevented to decay as long as:
+CPU capacity < util_avg < util_est.
+
+Just remove the check as either:
+1.
+There is idle time on the CPU. In that case the util_avg value of the
+task is actually correct. It is possible that the task missed a
+deadline and appears bigger, but this is also the case when the
+util_avg of the task is lower than the maximum CPU capacity.
+2.
+There is no idle time. In that case, the util_avg value might aswell
+be an under estimation of the size of the task.
+It is possible that undesired frequency spikes will appear when the
+task is later enqueued with an inflated util_est value, but the
+frequency spike might aswell be deserved. The absence of idle time
+prevents from drawing any conclusion.
+
+Signed-off-by: Pierre Gondois <pierre.gondois@arm.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Vincent Guittot <vincent.guittot@linaro.rog>
+Link: https://lore.kernel.org/r/20250325150542.1077344-1-pierre.gondois@arm.com
+---
+ kernel/sched/fair.c | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 0fb9bf995a47..a351a1b8bfe4 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -4932,13 +4932,6 @@ static inline void util_est_update(struct cfs_rq *cfs_rq,
+ 	if (last_ewma_diff < UTIL_EST_MARGIN)
+ 		goto done;
+ 
+-	/*
+-	 * To avoid overestimation of actual task utilization, skip updates if
+-	 * we cannot grant there is idle time in this CPU.
+-	 */
+-	if (dequeued > arch_scale_cpu_capacity(cpu_of(rq_of(cfs_rq))))
+-		return;
+-
+ 	/*
+ 	 * To avoid underestimate of task utilization, skip updates of EWMA if
+ 	 * we cannot grant that thread got all CPU time it wanted.
+-- 
+2.49.0
+
+
+From 506a1f5bbc22544e743755c3cce7e8630103bf81 Mon Sep 17 00:00:00 2001
+From: Peter Zijlstra <peterz@infradead.org>
+Date: Tue, 28 Jan 2025 15:39:49 +0100
+Subject: [PATCH 11/15] sched/fair: Adhere to place_entity() constraints
+
+Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
+placement bug causing scheduling lag") relies on commit 4423af84b297
+("sched/fair: optimize the PLACE_LAG when se->vlag is zero") to not
+trip a WARN in place_entity().
+
+What happens is that the lag of the very last entity is 0 per
+definition -- the average of one element matches the value of that
+element. Therefore place_entity() will match the condition skipping
+the lag adjustment:
+
+  if (sched_feat(PLACE_LAG) && cfs_rq->nr_queued && se->vlag) {
+
+Without the 'se->vlag' condition -- it will attempt to adjust the zero
+lag even though we're inserting into an empty tree.
+
+Notably, we should have failed the 'cfs_rq->nr_queued' condition, but
+don't because they didn't get updated.
+
+Additionally, move update_load_add() after placement() as is
+consistent with other place_entity() users -- this change is
+non-functional, place_entity() does not use cfs_rq->load.
+
+Fixes: 6d71a9c61604 ("sched/fair: Fix EEVDF entity placement bug causing scheduling lag")
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reported-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: "Peter Zijlstra (Intel)" <peterz@infradead.org>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: stable@vger.kernel.org
+Link: https://lore.kernel.org/r/c216eb4ef0e0e0029c600aefc69d56681cee5581.camel@gmx.de
+---
+ kernel/sched/fair.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index a351a1b8bfe4..e3f673643b7e 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -3795,6 +3795,7 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
+ 		update_entity_lag(cfs_rq, se);
+ 		se->deadline -= se->vruntime;
+ 		se->rel_deadline = 1;
++		cfs_rq->nr_queued--;
+ 		if (!curr)
+ 			__dequeue_entity(cfs_rq, se);
+ 		update_load_sub(&cfs_rq->load, se->load.weight);
+@@ -3821,10 +3822,11 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
+ 
+ 	enqueue_load_avg(cfs_rq, se);
+ 	if (se->on_rq) {
+-		update_load_add(&cfs_rq->load, se->load.weight);
+ 		place_entity(cfs_rq, se, 0);
++		update_load_add(&cfs_rq->load, se->load.weight);
+ 		if (!curr)
+ 			__enqueue_entity(cfs_rq, se);
++		cfs_rq->nr_queued++;
+ 
+ 		/*
+ 		 * The entity's vruntime has been adjusted, so let's check
+-- 
+2.49.0
+
+
+From e92aa6c3dada3fa32207fa17fe716aa3f8fcec62 Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
-Date: Fri, 25 Apr 2025 12:57:55 -0700
-Subject: [PATCH 12/22] sched/core: Tweak wait_task_inactive() to force dequeue
+Date: Tue, 29 Apr 2025 08:07:26 -0700
+Subject: [PATCH 12/15] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -993,45 +847,21 @@ p->se.sched_delayed, manually dequeue the sched_delayed task
 with DEQUEUE_DELAYED, so we don't have to constantly wait a
 tick.
 
-This seems to work, but I've only lightly tested it, so I'd love
-close review and feedback in case I've missed something in
-wait_task_inactive(), or if there is a simpler alternative
-approach.
-
-NOTE: Peter did highlight[1] his general distaste for the
-kthread_bind() through wait_task_inactive() functions, which
-suggests a deeper rework might be better, but I'm not familiar
-enough with all its users to have a sense of how that might be
-done, and this fix seems to address the problem and be more
-easily backported to 6.12-stable, so I wanted to submit it
-again, as a potentially more short-term solution.
-
-[1]: https://lore.kernel.org/lkml/20250422085628.GA14170@noisy.programming.kicks-ass.net/
-
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Juri Lelli <juri.lelli@redhat.com>
-Cc: Vincent Guittot <vincent.guittot@linaro.org>
-Cc: Dietmar Eggemann <dietmar.eggemann@arm.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Ben Segall <bsegall@google.com>
-Cc: Mel Gorman <mgorman@suse.de>
-Cc: Valentin Schneider <vschneid@redhat.com>
-Cc: K Prateek Nayak <kprateek.nayak@amd.com>
-Cc: kernel-team@android.com
+Fixes: 152e11f6df29 ("sched/fair: Implement delayed dequeue")
 Reported-by: peter-yc.chang@mediatek.com
 Signed-off-by: John Stultz <jstultz@google.com>
-Fixes: 152e11f6df29 ("sched/fair: Implement delayed dequeue")
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 Tested-by: K Prateek Nayak <kprateek.nayak@amd.com>
+Link: https://lkml.kernel.org/r/20250429150736.3778580-1-jstultz@google.com
 ---
  kernel/sched/core.c | 6 ++++++
  1 file changed, 6 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3c7c942c7c42..c413e12825d7 100644
+index c81cf642dba0..b986cd2fb19b 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -2278,6 +2278,12 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
+@@ -2283,6 +2283,12 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
  		 * just go back and repeat.
  		 */
  		rq = task_rq_lock(p, &rf);
@@ -1048,1331 +878,215 @@ index 3c7c942c7c42..c413e12825d7 100644
 2.49.0
 
 
-From ef06819602bc5c2da1be44175ebd5319e24e789a Mon Sep 17 00:00:00 2001
+From 7b80ab44f3ad514dc4d7cb37153fbe6fe969bd07 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
-Date: Wed, 26 Feb 2025 19:43:01 +0800
-Subject: [PATCH 13/22] sched/fair: Prevent from cpufreq not being updated when
- delayed-task is iowait
+Date: Mon, 3 Mar 2025 18:52:39 +0800
+Subject: [PATCH 13/15] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
-Because the sched-delayed task maybe in io-wait state,
-so we should place the requeue_delayed_entity() after the
-cpufreq_update_util(), to prevent not boosting iowait cpufreq
-before return.
+Delayed dequeued feature keeps a sleeping task enqueued until its
+lag has elapsed. As a result, it stays also visible in rq->nr_running.
+So when in wake_affine_idle(), we should use the real running-tasks
+in rq to check whether we should place the wake-up task to
+current cpu.
+On the other hand, add a helper function to return the nr-delayed.
 
+Fixes: 152e11f6df29 ("sched/fair: Implement delayed dequeue")
 Signed-off-by: Xuewen Yan <xuewen.yan@unisoc.com>
+Reviewed-and-tested-by: Tianchen Ding <dtcccc@linux.alibaba.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
+Link: https://lore.kernel.org/r/20250303105241.17251-2-xuewen.yan@unisoc.com
 ---
- kernel/sched/fair.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
+ kernel/sched/fair.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 96ba0c1e2e44..a9f47d595427 100644
+index e3f673643b7e..305b0a5a5864 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -6946,11 +6946,6 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
- 	if (!(p->se.sched_delayed && (task_on_rq_migrating(p) || (flags & ENQUEUE_RESTORE))))
+@@ -7191,6 +7191,11 @@ static bool dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+ 	return true;
+ }
+ 
++static inline unsigned int cfs_h_nr_delayed(struct rq *rq)
++{
++	return (rq->cfs.h_nr_queued - rq->cfs.h_nr_runnable);
++}
++
+ #ifdef CONFIG_SMP
+ 
+ /* Working cpumask for: sched_balance_rq(), sched_balance_newidle(). */
+@@ -7352,8 +7357,12 @@ wake_affine_idle(int this_cpu, int prev_cpu, int sync)
+ 	if (available_idle_cpu(this_cpu) && cpus_share_cache(this_cpu, prev_cpu))
+ 		return available_idle_cpu(prev_cpu) ? prev_cpu : this_cpu;
+ 
+-	if (sync && cpu_rq(this_cpu)->nr_running == 1)
+-		return this_cpu;
++	if (sync) {
++		struct rq *rq = cpu_rq(this_cpu);
++
++		if ((rq->nr_running - cfs_h_nr_delayed(rq)) == 1)
++			return this_cpu;
++	}
+ 
+ 	if (available_idle_cpu(prev_cpu))
+ 		return prev_cpu;
+-- 
+2.49.0
+
+
+From 4498bd8ae61ebca62d1f4018ddeae8970909e210 Mon Sep 17 00:00:00 2001
+From: Xuewen Yan <xuewen.yan@unisoc.com>
+Date: Thu, 17 Apr 2025 12:34:56 +0800
+Subject: [PATCH 14/15] sched/util_est: Simplify condition for
+ util_est_{en,de}queue()
+
+To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
+commit 729288bc6856 ("kernel/sched: Fix util_est accounting for DELAY_DEQUEUE")
+added the corresponding check. This check excludes double en/dequeue during
+task migration and priority changes.
+
+In fact, these conditions can be simplified.
+
+For util_est_dequeue, we know that sched_delayed flag is set in dequeue_entity.
+When the task is sleeping, we need to call util_est_dequeue to subtract
+util-est from the cfs_rq. At this point, sched_delayed has not yet been set.
+If we find that sched_delayed is already set, it indicates that this task
+has already called dequeue_task_fair once. In this case, there is no need to
+call util_est_dequeue again. Therefore, simply checking the sched_delayed flag
+should be sufficient to prevent unnecessary util_est updates during the dequeue.
+
+For util_est_enqueue, our goal is to add the util_est to the cfs_rq
+when task enqueue. However, we don't want to add the util_est of a
+sched_delayed task to the cfs_rq because the task is sleeping.
+Therefore, we can exclude the util_est_enqueue for sched_delayed tasks
+by checking the sched_delayed flag. However, when waking up a delayed task,
+the sched_delayed flag is cleared after util_est_enqueue. As a result,
+if we only check the sched_delayed flag, we would miss the util_est_enqueue.
+Since waking up a sched_delayed task calls enqueue_task with the ENQUEUE_DELAYED flag,
+we can determine whether to call util_est_enqueue by checking if the
+enqueue_flag contains ENQUEUE_DELAYED.
+
+Signed-off-by: Xuewen Yan <xuewen.yan@unisoc.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
+Reviewed-by: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Tested-by: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Link: https://lore.kernel.org/r/20250417043457.10632-2-xuewen.yan@unisoc.com
+---
+ kernel/sched/fair.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 305b0a5a5864..b647c19f253e 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -6936,7 +6936,7 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+ 	 * Let's add the task's estimated utilization to the cfs_rq's
+ 	 * estimated utilization, before we update schedutil.
+ 	 */
+-	if (!(p->se.sched_delayed && (task_on_rq_migrating(p) || (flags & ENQUEUE_RESTORE))))
++	if (!p->se.sched_delayed || (flags & ENQUEUE_DELAYED))
  		util_est_enqueue(&rq->cfs, p);
  
--	if (flags & ENQUEUE_DELAYED) {
--		requeue_delayed_entity(se);
--		return;
--	}
--
+ 	if (flags & ENQUEUE_DELAYED) {
+@@ -7176,7 +7176,7 @@ static int dequeue_entities(struct rq *rq, struct sched_entity *se, int flags)
+  */
+ static bool dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+ {
+-	if (!(p->se.sched_delayed && (task_on_rq_migrating(p) || (flags & DEQUEUE_SAVE))))
++	if (!p->se.sched_delayed)
+ 		util_est_dequeue(&rq->cfs, p);
+ 
+ 	util_est_update(&rq->cfs, p, flags & DEQUEUE_SLEEP);
+-- 
+2.49.0
+
+
+From e43ced76d13bbc41aebefb8f49b9944089c47a33 Mon Sep 17 00:00:00 2001
+From: Xuewen Yan <xuewen.yan@unisoc.com>
+Date: Thu, 17 Apr 2025 12:34:57 +0800
+Subject: [PATCH 15/15] sched/uclamp: Align uclamp and util_est and call before
+ freq update
+
+The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
+has add the sched_delayed check to prevent double uclamp_dec/inc.
+However, it put the uclamp_rq_inc() after enqueue_task().
+This may lead to the following issues:
+When a task with uclamp goes through enqueue_task() and could trigger
+cpufreq update, its uclamp won't even be considered in the cpufreq
+update. It is only after enqueue will the uclamp be added to rq
+buckets, and cpufreq will only pick it up at the next update.
+This could cause a delay in frequency updating. It may affect
+the performance(uclamp_min > 0) or power(uclamp_max < 1024).
+
+So, just like util_est, put the uclamp_rq_inc() before enqueue_task().
+And as for the sched_delayed_task, same as util_est, using the
+sched_delayed flag to prevent inc the sched_delayed_task's uclamp,
+using the ENQUEUE_DELAYED flag to allow inc the sched_delayed_task's uclamp
+which is being woken up.
+
+Signed-off-by: Xuewen Yan <xuewen.yan@unisoc.com>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
+Reviewed-by: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Tested-by: Dietmar Eggemann <dietmar.eggemann@arm.com>
+Link: https://lore.kernel.org/r/20250417043457.10632-3-xuewen.yan@unisoc.com
+---
+ kernel/sched/core.c | 17 ++++++++++-------
+ 1 file changed, 10 insertions(+), 7 deletions(-)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index b986cd2fb19b..a87be58d0709 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1752,7 +1752,7 @@ static inline void uclamp_rq_dec_id(struct rq *rq, struct task_struct *p,
+ 	}
+ }
+ 
+-static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
++static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p, int flags)
+ {
+ 	enum uclamp_id clamp_id;
+ 
+@@ -1768,7 +1768,8 @@ static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
+ 	if (unlikely(!p->sched_class->uclamp_enabled))
+ 		return;
+ 
+-	if (p->se.sched_delayed)
++	/* Only inc the delayed task which being woken up. */
++	if (p->se.sched_delayed && !(flags & ENQUEUE_DELAYED))
+ 		return;
+ 
+ 	for_each_clamp_id(clamp_id)
+@@ -2036,7 +2037,7 @@ static void __init init_uclamp(void)
+ }
+ 
+ #else /* !CONFIG_UCLAMP_TASK */
+-static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p) { }
++static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p, int flags) { }
+ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p) { }
+ static inline void uclamp_fork(struct task_struct *p) { }
+ static inline void uclamp_post_fork(struct task_struct *p) { }
+@@ -2072,12 +2073,14 @@ void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
+ 	if (!(flags & ENQUEUE_NOCLOCK))
+ 		update_rq_clock(rq);
+ 
+-	p->sched_class->enqueue_task(rq, p, flags);
  	/*
- 	 * If in_iowait is set, the code below may not trigger any cpufreq
- 	 * utilization updates, so do it here explicitly with the IOWAIT flag
-@@ -6959,6 +6954,11 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
- 	if (p->in_iowait)
- 		cpufreq_update_util(rq, SCHED_CPUFREQ_IOWAIT);
- 
-+	if (flags & ENQUEUE_DELAYED) {
-+		requeue_delayed_entity(se);
-+		return;
-+	}
-+
- 	if (task_new && se->sched_delayed)
- 		h_nr_runnable = 0;
- 
--- 
-2.49.0
-
-
-From 9cb90a81eab63c25326429e8e52d970b9fa3bbbc Mon Sep 17 00:00:00 2001
-From: Uros Bizjak <ubizjak@gmail.com>
-Date: Sun, 9 Mar 2025 18:09:36 +0100
-Subject: [PATCH 14/22] x86/locking/atomic: Use asm_inline for atomic locking
- insns
-
-According to:
-
-  https://gcc.gnu.org/onlinedocs/gcc/Size-of-an-asm.html
-
-the usage of asm pseudo directives in the asm template can confuse
-the compiler to wrongly estimate the size of the generated
-code.
-
-The LOCK_PREFIX macro expands to several asm pseudo directives, so
-its usage in atomic locking insns causes instruction length estimates
-to fail significantly (the specially instrumented compiler reports
-the estimated length of these asm templates to be 6 instructions long).
-
-This incorrect estimate further causes unoptimal inlining decisions,
-un-optimal instruction scheduling and un-optimal code block alignments
-for functions that use these locking primitives.
-
-Use asm_inline instead:
-
-  https://gcc.gnu.org/pipermail/gcc-patches/2018-December/512349.html
-
-which is a feature that makes GCC pretend some inline assembler code
-is tiny (while it would think it is huge), instead of just asm.
-
-For code size estimation, the size of the asm is then taken as
-the minimum size of one instruction, ignoring how many instructions
-compiler thinks it is.
-
-bloat-o-meter reports the following code size increase
-(x86_64 defconfig, gcc-14.2.1):
-
-add/remove: 82/283 grow/shrink: 870/372 up/down: 76272/-43618 (32654)
-Total: Before=22770320, After=22802974, chg +0.14%
-
-with top grows (>500 bytes):
-
-Function                                     old     new   delta
-copy_process                                6465   10191   +3726
-balance_dirty_pages_ratelimited_flags        237    2949   +2712
-icl_plane_update_noarm                      5800    7969   +2169
-samsung_input_mapping                       3375    5170   +1795
-ext4_do_update_inode.isra                      -    1526   +1526
-__schedule                                  2416    3472   +1056
-__i915_vma_resource_unhold                     -     946    +946
-sched_mm_cid_after_execve                    175    1097    +922
-__do_sys_membarrier                            -     862    +862
-filemap_fault                               2666    3462    +796
-nl80211_send_wiphy                         11185   11874    +689
-samsung_input_mapping.cold                   900    1500    +600
-virtio_gpu_queue_fenced_ctrl_buffer          839    1410    +571
-ilk_update_pipe_csc                         1201    1735    +534
-enable_step                                    -     525    +525
-icl_color_commit_noarm                      1334    1847    +513
-tg3_read_bc_ver                                -     501    +501
-
-and top shrinks (>500 bytes):
-
-nl80211_send_iftype_data                     580       -    -580
-samsung_gamepad_input_mapping.isra.cold      604       -    -604
-virtio_gpu_queue_ctrl_sgs                    724       -    -724
-tg3_get_invariants                          9218    8376    -842
-__i915_vma_resource_unhold.part              899       -    -899
-ext4_mark_iloc_dirty                        1735     106   -1629
-samsung_gamepad_input_mapping.isra          2046       -   -2046
-icl_program_input_csc                       2203       -   -2203
-copy_mm                                     2242       -   -2242
-balance_dirty_pages                         2657       -   -2657
-
-These code size changes can be grouped into 4 groups:
-
-a) some functions now include once-called functions in full or
-in part. These are:
-
-copy_process                                6465   10191   +3726
-balance_dirty_pages_ratelimited_flags        237    2949   +2712
-icl_plane_update_noarm                      5800    7969   +2169
-samsung_input_mapping                       3375    5170   +1795
-ext4_do_update_inode.isra                      -    1526   +1526
-
-that now include:
-
-copy_mm                                     2242       -   -2242
-balance_dirty_pages                         2657       -   -2657
-icl_program_input_csc                       2203       -   -2203
-samsung_gamepad_input_mapping.isra          2046       -   -2046
-ext4_mark_iloc_dirty                        1735     106   -1629
-
-b) ISRA [interprocedural scalar replacement of aggregates,
-interprocedural pass that removes unused function return values
-(turning functions returning a value which is never used into void
-functions) and removes unused function parameters.  It can also
-replace an aggregate parameter by a set of other parameters
-representing part of the original, turning those passed by reference
-into new ones which pass the value directly.]
-
-Top grows and shrinks of this group are listed below:
-
-ext4_do_update_inode.isra                      -    1526   +1526
-nfs4_begin_drain_session.isra                  -     249    +249
-nfs4_end_drain_session.isra                    -     168    +168
-__guc_action_register_multi_lrc_v70.isra     335     500    +165
-__i915_gem_free_objects.isra                   -     144    +144
-...
-membarrier_register_private_expedited.isra     108       -    -108
-syncobj_eventfd_entry_func.isra              445     314    -131
-__ext4_sb_bread_gfp.isra                     140       -    -140
-class_preempt_notrace_destructor.isra        145       -    -145
-p9_fid_put.isra                              151       -    -151
-__mm_cid_try_get.isra                        238       -    -238
-membarrier_global_expedited.isra             294       -    -294
-mm_cid_get.isra                              295       -    -295
-samsung_gamepad_input_mapping.isra.cold      604       -    -604
-samsung_gamepad_input_mapping.isra          2046       -   -2046
-
-c) different split points of hot/cold split that just move code around:
-
-Top grows and shrinks of this group are listed below:
-
-samsung_input_mapping.cold                   900    1500    +600
-__i915_request_reset.cold                    311     389     +78
-nfs_update_inode.cold                         77     153     +76
-__do_sys_swapon.cold                         404     455     +51
-copy_process.cold                              -      45     +45
-tg3_get_invariants.cold                       73     115     +42
-...
-hibernate.cold                               671     643     -28
-copy_mm.cold                                  31       -     -31
-software_resume.cold                         249     207     -42
-io_poll_wake.cold                            106      54     -52
-samsung_gamepad_input_mapping.isra.cold      604       -    -604
-
-c) full inline of small functions with locking insn (~150 cases).
-These bring in most of the code size increase because the removed
-function code is now inlined in multiple places. E.g.:
-
-0000000000a50e10 <release_devnum>:
-  a50e10:    48 63 07                 movslq (%rdi),%rax
-  a50e13:    85 c0                    test   %eax,%eax
-  a50e15:    7e 10                    jle    a50e27 <release_devnum+0x17>
-  a50e17:    48 8b 4f 50              mov    0x50(%rdi),%rcx
-  a50e1b:    f0 48 0f b3 41 50        lock btr %rax,0x50(%rcx)
-  a50e21:    c7 07 ff ff ff ff        movl   $0xffffffff,(%rdi)
-  a50e27:    e9 00 00 00 00           jmp    a50e2c <release_devnum+0x1c>
-            a50e28: R_X86_64_PLT32    __x86_return_thunk-0x4
-  a50e2c:    0f 1f 40 00              nopl   0x0(%rax)
-
-is now fully inlined into the caller function. This is desirable due
-to the per function overhead of CPU bug mitigations like retpolines.
-
-FTR a) with -Os (where generated code size really matters) x86_64
-defconfig object file decreases by 24.388 kbytes, representing 0.1%
-code size decrease:
-
-  text    data     bss     dec     hex filename
-23883860        4617284  814212 29315356        1bf511c vmlinux-old.o
-23859472        4615404  814212 29289088        1beea80 vmlinux-new.o
-
-FTR b) clang recognizes "asm inline", but there was no difference in
-code sizes:
-
-  text    data     bss     dec     hex filename
-27577163        4503078  807732 32887973        1f5d4a5 vmlinux-clang-patched.o
-27577181        4503078  807732 32887991        1f5d4b7 vmlinux-clang-unpatched.o
-
-The performance impact of the patch was assessed by recompiling
-fedora-41 6.13.5 kernel and running lmbench with old and new kernel.
-The most noticeable improvements were:
-
-Process fork+exit: 270.0952 microseconds
-Process fork+execve: 2620.3333 microseconds
-Process fork+/bin/sh -c: 6781.0000 microseconds
-File /usr/tmp/XXX write bandwidth: 1780350 KB/sec
-Pagefaults on /usr/tmp/XXX: 0.3875 microseconds
-
-to:
-
-Process fork+exit: 298.6842 microseconds
-Process fork+execve: 1662.7500 microseconds
-Process fork+/bin/sh -c: 2127.6667 microseconds
-File /usr/tmp/XXX write bandwidth: 1950077 KB/sec
-Pagefaults on /usr/tmp/XXX: 0.1958 microseconds
-
-and from:
-
-Socket bandwidth using localhost
-0.000001 2.52 MB/sec
-0.000064 163.02 MB/sec
-0.000128 321.70 MB/sec
-0.000256 630.06 MB/sec
-0.000512 1207.07 MB/sec
-0.001024 2004.06 MB/sec
-0.001437 2475.43 MB/sec
-10.000000 5817.34 MB/sec
-
-Avg xfer: 3.2KB, 41.8KB in 1.2230 millisecs, 34.15 MB/sec
-AF_UNIX sock stream bandwidth: 9850.01 MB/sec
-Pipe bandwidth: 4631.28 MB/sec
-
-to:
-
-Socket bandwidth using localhost
-0.000001 3.13 MB/sec
-0.000064 187.08 MB/sec
-0.000128 324.12 MB/sec
-0.000256 618.51 MB/sec
-0.000512 1137.13 MB/sec
-0.001024 1962.95 MB/sec
-0.001437 2458.27 MB/sec
-10.000000 6168.08 MB/sec
-
-Avg xfer: 3.2KB, 41.8KB in 1.0060 millisecs, 41.52 MB/sec
-AF_UNIX sock stream bandwidth: 9921.68 MB/sec
-Pipe bandwidth: 4649.96 MB/sec
-
-Signed-off-by: Uros Bizjak <ubizjak@gmail.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@kernel.org>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Dave Hansen <dave.hansen@linux.intel.com>
-Cc: H. Peter Anvin <hpa@zytor.com>
-Cc: Linus Torvalds <torvalds@linuxfoundation.org>
-Cc: David Laight <david.laight.linux@gmail.com>
----
- arch/x86/include/asm/atomic.h      | 14 +++++++-------
- arch/x86/include/asm/atomic64_64.h | 14 +++++++-------
- arch/x86/include/asm/bitops.h      | 14 +++++++-------
- arch/x86/include/asm/cmpxchg.h     | 24 ++++++++++++------------
- arch/x86/include/asm/cmpxchg_32.h  |  4 ++--
- arch/x86/include/asm/cmpxchg_64.h  |  4 ++--
- arch/x86/include/asm/rmwcc.h       |  2 +-
- 7 files changed, 38 insertions(+), 38 deletions(-)
-
-diff --git a/arch/x86/include/asm/atomic.h b/arch/x86/include/asm/atomic.h
-index 55b4d24356ea..75743f1dfd4e 100644
---- a/arch/x86/include/asm/atomic.h
-+++ b/arch/x86/include/asm/atomic.h
-@@ -30,14 +30,14 @@ static __always_inline void arch_atomic_set(atomic_t *v, int i)
- 
- static __always_inline void arch_atomic_add(int i, atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "addl %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "addl %1, %0"
- 		     : "+m" (v->counter)
- 		     : "ir" (i) : "memory");
- }
- 
- static __always_inline void arch_atomic_sub(int i, atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "subl %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "subl %1, %0"
- 		     : "+m" (v->counter)
- 		     : "ir" (i) : "memory");
- }
-@@ -50,14 +50,14 @@ static __always_inline bool arch_atomic_sub_and_test(int i, atomic_t *v)
- 
- static __always_inline void arch_atomic_inc(atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "incl %0"
-+	asm_inline volatile(LOCK_PREFIX "incl %0"
- 		     : "+m" (v->counter) :: "memory");
- }
- #define arch_atomic_inc arch_atomic_inc
- 
- static __always_inline void arch_atomic_dec(atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "decl %0"
-+	asm_inline volatile(LOCK_PREFIX "decl %0"
- 		     : "+m" (v->counter) :: "memory");
- }
- #define arch_atomic_dec arch_atomic_dec
-@@ -116,7 +116,7 @@ static __always_inline int arch_atomic_xchg(atomic_t *v, int new)
- 
- static __always_inline void arch_atomic_and(int i, atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "andl %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "andl %1, %0"
- 			: "+m" (v->counter)
- 			: "ir" (i)
- 			: "memory");
-@@ -134,7 +134,7 @@ static __always_inline int arch_atomic_fetch_and(int i, atomic_t *v)
- 
- static __always_inline void arch_atomic_or(int i, atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "orl %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "orl %1, %0"
- 			: "+m" (v->counter)
- 			: "ir" (i)
- 			: "memory");
-@@ -152,7 +152,7 @@ static __always_inline int arch_atomic_fetch_or(int i, atomic_t *v)
- 
- static __always_inline void arch_atomic_xor(int i, atomic_t *v)
- {
--	asm volatile(LOCK_PREFIX "xorl %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "xorl %1, %0"
- 			: "+m" (v->counter)
- 			: "ir" (i)
- 			: "memory");
-diff --git a/arch/x86/include/asm/atomic64_64.h b/arch/x86/include/asm/atomic64_64.h
-index ae12acae5b06..87b496325b5b 100644
---- a/arch/x86/include/asm/atomic64_64.h
-+++ b/arch/x86/include/asm/atomic64_64.h
-@@ -22,14 +22,14 @@ static __always_inline void arch_atomic64_set(atomic64_t *v, s64 i)
- 
- static __always_inline void arch_atomic64_add(s64 i, atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "addq %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "addq %1, %0"
- 		     : "=m" (v->counter)
- 		     : "er" (i), "m" (v->counter) : "memory");
- }
- 
- static __always_inline void arch_atomic64_sub(s64 i, atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "subq %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "subq %1, %0"
- 		     : "=m" (v->counter)
- 		     : "er" (i), "m" (v->counter) : "memory");
- }
-@@ -42,7 +42,7 @@ static __always_inline bool arch_atomic64_sub_and_test(s64 i, atomic64_t *v)
- 
- static __always_inline void arch_atomic64_inc(atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "incq %0"
-+	asm_inline volatile(LOCK_PREFIX "incq %0"
- 		     : "=m" (v->counter)
- 		     : "m" (v->counter) : "memory");
- }
-@@ -50,7 +50,7 @@ static __always_inline void arch_atomic64_inc(atomic64_t *v)
- 
- static __always_inline void arch_atomic64_dec(atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "decq %0"
-+	asm_inline volatile(LOCK_PREFIX "decq %0"
- 		     : "=m" (v->counter)
- 		     : "m" (v->counter) : "memory");
- }
-@@ -110,7 +110,7 @@ static __always_inline s64 arch_atomic64_xchg(atomic64_t *v, s64 new)
- 
- static __always_inline void arch_atomic64_and(s64 i, atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "andq %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "andq %1, %0"
- 			: "+m" (v->counter)
- 			: "er" (i)
- 			: "memory");
-@@ -128,7 +128,7 @@ static __always_inline s64 arch_atomic64_fetch_and(s64 i, atomic64_t *v)
- 
- static __always_inline void arch_atomic64_or(s64 i, atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "orq %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "orq %1, %0"
- 			: "+m" (v->counter)
- 			: "er" (i)
- 			: "memory");
-@@ -146,7 +146,7 @@ static __always_inline s64 arch_atomic64_fetch_or(s64 i, atomic64_t *v)
- 
- static __always_inline void arch_atomic64_xor(s64 i, atomic64_t *v)
- {
--	asm volatile(LOCK_PREFIX "xorq %1,%0"
-+	asm_inline volatile(LOCK_PREFIX "xorq %1, %0"
- 			: "+m" (v->counter)
- 			: "er" (i)
- 			: "memory");
-diff --git a/arch/x86/include/asm/bitops.h b/arch/x86/include/asm/bitops.h
-index b96d45944c59..100413aff640 100644
---- a/arch/x86/include/asm/bitops.h
-+++ b/arch/x86/include/asm/bitops.h
-@@ -52,12 +52,12 @@ static __always_inline void
- arch_set_bit(long nr, volatile unsigned long *addr)
- {
- 	if (__builtin_constant_p(nr)) {
--		asm volatile(LOCK_PREFIX "orb %b1,%0"
-+		asm_inline volatile(LOCK_PREFIX "orb %b1,%0"
- 			: CONST_MASK_ADDR(nr, addr)
- 			: "iq" (CONST_MASK(nr))
- 			: "memory");
- 	} else {
--		asm volatile(LOCK_PREFIX __ASM_SIZE(bts) " %1,%0"
-+		asm_inline volatile(LOCK_PREFIX __ASM_SIZE(bts) " %1,%0"
- 			: : RLONG_ADDR(addr), "Ir" (nr) : "memory");
- 	}
- }
-@@ -72,11 +72,11 @@ static __always_inline void
- arch_clear_bit(long nr, volatile unsigned long *addr)
- {
- 	if (__builtin_constant_p(nr)) {
--		asm volatile(LOCK_PREFIX "andb %b1,%0"
-+		asm_inline volatile(LOCK_PREFIX "andb %b1,%0"
- 			: CONST_MASK_ADDR(nr, addr)
- 			: "iq" (~CONST_MASK(nr)));
- 	} else {
--		asm volatile(LOCK_PREFIX __ASM_SIZE(btr) " %1,%0"
-+		asm_inline volatile(LOCK_PREFIX __ASM_SIZE(btr) " %1,%0"
- 			: : RLONG_ADDR(addr), "Ir" (nr) : "memory");
- 	}
- }
-@@ -98,7 +98,7 @@ static __always_inline bool arch_xor_unlock_is_negative_byte(unsigned long mask,
- 		volatile unsigned long *addr)
- {
- 	bool negative;
--	asm volatile(LOCK_PREFIX "xorb %2,%1"
-+	asm_inline volatile(LOCK_PREFIX "xorb %2,%1"
- 		CC_SET(s)
- 		: CC_OUT(s) (negative), WBYTE_ADDR(addr)
- 		: "iq" ((char)mask) : "memory");
-@@ -122,11 +122,11 @@ static __always_inline void
- arch_change_bit(long nr, volatile unsigned long *addr)
- {
- 	if (__builtin_constant_p(nr)) {
--		asm volatile(LOCK_PREFIX "xorb %b1,%0"
-+		asm_inline volatile(LOCK_PREFIX "xorb %b1,%0"
- 			: CONST_MASK_ADDR(nr, addr)
- 			: "iq" (CONST_MASK(nr)));
- 	} else {
--		asm volatile(LOCK_PREFIX __ASM_SIZE(btc) " %1,%0"
-+		asm_inline volatile(LOCK_PREFIX __ASM_SIZE(btc) " %1,%0"
- 			: : RLONG_ADDR(addr), "Ir" (nr) : "memory");
- 	}
- }
-diff --git a/arch/x86/include/asm/cmpxchg.h b/arch/x86/include/asm/cmpxchg.h
-index 5612648b0202..5a9acaa6a56b 100644
---- a/arch/x86/include/asm/cmpxchg.h
-+++ b/arch/x86/include/asm/cmpxchg.h
-@@ -44,22 +44,22 @@ extern void __add_wrong_size(void)
- 	        __typeof__ (*(ptr)) __ret = (arg);			\
- 		switch (sizeof(*(ptr))) {				\
- 		case __X86_CASE_B:					\
--			asm volatile (lock #op "b %b0, %1\n"		\
-+			asm_inline volatile (lock #op "b %b0, %1"	\
- 				      : "+q" (__ret), "+m" (*(ptr))	\
- 				      : : "memory", "cc");		\
- 			break;						\
- 		case __X86_CASE_W:					\
--			asm volatile (lock #op "w %w0, %1\n"		\
-+			asm_inline volatile (lock #op "w %w0, %1"	\
- 				      : "+r" (__ret), "+m" (*(ptr))	\
- 				      : : "memory", "cc");		\
- 			break;						\
- 		case __X86_CASE_L:					\
--			asm volatile (lock #op "l %0, %1\n"		\
-+			asm_inline volatile (lock #op "l %0, %1"	\
- 				      : "+r" (__ret), "+m" (*(ptr))	\
- 				      : : "memory", "cc");		\
- 			break;						\
- 		case __X86_CASE_Q:					\
--			asm volatile (lock #op "q %q0, %1\n"		\
-+			asm_inline volatile (lock #op "q %q0, %1"	\
- 				      : "+r" (__ret), "+m" (*(ptr))	\
- 				      : : "memory", "cc");		\
- 			break;						\
-@@ -91,7 +91,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_B:						\
- 	{								\
- 		volatile u8 *__ptr = (volatile u8 *)(ptr);		\
--		asm volatile(lock "cmpxchgb %2,%1"			\
-+		asm_inline volatile(lock "cmpxchgb %2, %1"		\
- 			     : "=a" (__ret), "+m" (*__ptr)		\
- 			     : "q" (__new), "0" (__old)			\
- 			     : "memory");				\
-@@ -100,7 +100,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_W:						\
- 	{								\
- 		volatile u16 *__ptr = (volatile u16 *)(ptr);		\
--		asm volatile(lock "cmpxchgw %2,%1"			\
-+		asm_inline volatile(lock "cmpxchgw %2, %1"		\
- 			     : "=a" (__ret), "+m" (*__ptr)		\
- 			     : "r" (__new), "0" (__old)			\
- 			     : "memory");				\
-@@ -109,7 +109,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_L:						\
- 	{								\
- 		volatile u32 *__ptr = (volatile u32 *)(ptr);		\
--		asm volatile(lock "cmpxchgl %2,%1"			\
-+		asm_inline volatile(lock "cmpxchgl %2, %1"		\
- 			     : "=a" (__ret), "+m" (*__ptr)		\
- 			     : "r" (__new), "0" (__old)			\
- 			     : "memory");				\
-@@ -118,7 +118,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_Q:						\
- 	{								\
- 		volatile u64 *__ptr = (volatile u64 *)(ptr);		\
--		asm volatile(lock "cmpxchgq %2,%1"			\
-+		asm_inline volatile(lock "cmpxchgq %2, %1"		\
- 			     : "=a" (__ret), "+m" (*__ptr)		\
- 			     : "r" (__new), "0" (__old)			\
- 			     : "memory");				\
-@@ -165,7 +165,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_B:						\
- 	{								\
- 		volatile u8 *__ptr = (volatile u8 *)(_ptr);		\
--		asm volatile(lock "cmpxchgb %[new], %[ptr]"		\
-+		asm_inline volatile(lock "cmpxchgb %[new], %[ptr]"	\
- 			     CC_SET(z)					\
- 			     : CC_OUT(z) (success),			\
- 			       [ptr] "+m" (*__ptr),			\
-@@ -177,7 +177,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_W:						\
- 	{								\
- 		volatile u16 *__ptr = (volatile u16 *)(_ptr);		\
--		asm volatile(lock "cmpxchgw %[new], %[ptr]"		\
-+		asm_inline volatile(lock "cmpxchgw %[new], %[ptr]"	\
- 			     CC_SET(z)					\
- 			     : CC_OUT(z) (success),			\
- 			       [ptr] "+m" (*__ptr),			\
-@@ -189,7 +189,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_L:						\
- 	{								\
- 		volatile u32 *__ptr = (volatile u32 *)(_ptr);		\
--		asm volatile(lock "cmpxchgl %[new], %[ptr]"		\
-+		asm_inline volatile(lock "cmpxchgl %[new], %[ptr]"	\
- 			     CC_SET(z)					\
- 			     : CC_OUT(z) (success),			\
- 			       [ptr] "+m" (*__ptr),			\
-@@ -201,7 +201,7 @@ extern void __add_wrong_size(void)
- 	case __X86_CASE_Q:						\
- 	{								\
- 		volatile u64 *__ptr = (volatile u64 *)(_ptr);		\
--		asm volatile(lock "cmpxchgq %[new], %[ptr]"		\
-+		asm_inline volatile(lock "cmpxchgq %[new], %[ptr]"	\
- 			     CC_SET(z)					\
- 			     : CC_OUT(z) (success),			\
- 			       [ptr] "+m" (*__ptr),			\
-diff --git a/arch/x86/include/asm/cmpxchg_32.h b/arch/x86/include/asm/cmpxchg_32.h
-index fd1282a783dd..db08a4bd898a 100644
---- a/arch/x86/include/asm/cmpxchg_32.h
-+++ b/arch/x86/include/asm/cmpxchg_32.h
-@@ -19,7 +19,7 @@ union __u64_halves {
- 	union __u64_halves o = { .full = (_old), },			\
- 			   n = { .full = (_new), };			\
- 									\
--	asm volatile(_lock "cmpxchg8b %[ptr]"				\
-+	asm_inline volatile(_lock "cmpxchg8b %[ptr]"			\
- 		     : [ptr] "+m" (*(_ptr)),				\
- 		       "+a" (o.low), "+d" (o.high)			\
- 		     : "b" (n.low), "c" (n.high)			\
-@@ -45,7 +45,7 @@ static __always_inline u64 __cmpxchg64_local(volatile u64 *ptr, u64 old, u64 new
- 			   n = { .full = (_new), };			\
- 	bool ret;							\
- 									\
--	asm volatile(_lock "cmpxchg8b %[ptr]"				\
-+	asm_inline volatile(_lock "cmpxchg8b %[ptr]"			\
- 		     CC_SET(e)						\
- 		     : CC_OUT(e) (ret),					\
- 		       [ptr] "+m" (*(_ptr)),				\
-diff --git a/arch/x86/include/asm/cmpxchg_64.h b/arch/x86/include/asm/cmpxchg_64.h
-index 5e241306db26..71d1e72ed879 100644
---- a/arch/x86/include/asm/cmpxchg_64.h
-+++ b/arch/x86/include/asm/cmpxchg_64.h
-@@ -38,7 +38,7 @@ union __u128_halves {
- 	union __u128_halves o = { .full = (_old), },			\
- 			    n = { .full = (_new), };			\
- 									\
--	asm volatile(_lock "cmpxchg16b %[ptr]"				\
-+	asm_inline volatile(_lock "cmpxchg16b %[ptr]"			\
- 		     : [ptr] "+m" (*(_ptr)),				\
- 		       "+a" (o.low), "+d" (o.high)			\
- 		     : "b" (n.low), "c" (n.high)			\
-@@ -65,7 +65,7 @@ static __always_inline u128 arch_cmpxchg128_local(volatile u128 *ptr, u128 old,
- 			    n = { .full = (_new), };			\
- 	bool ret;							\
- 									\
--	asm volatile(_lock "cmpxchg16b %[ptr]"				\
-+	asm_inline volatile(_lock "cmpxchg16b %[ptr]"			\
- 		     CC_SET(e)						\
- 		     : CC_OUT(e) (ret),					\
- 		       [ptr] "+m" (*(_ptr)),				\
-diff --git a/arch/x86/include/asm/rmwcc.h b/arch/x86/include/asm/rmwcc.h
-index 363266cbcada..3821ee3fae35 100644
---- a/arch/x86/include/asm/rmwcc.h
-+++ b/arch/x86/include/asm/rmwcc.h
-@@ -29,7 +29,7 @@ cc_label:	c = true;						\
- #define __GEN_RMWcc(fullop, _var, cc, clobbers, ...)			\
- ({									\
- 	bool c;								\
--	asm volatile (fullop CC_SET(cc)					\
-+	asm_inline volatile (fullop CC_SET(cc)				\
- 			: [var] "+m" (_var), CC_OUT(cc) (c)		\
- 			: __VA_ARGS__ : clobbers);			\
- 	c;								\
--- 
-2.49.0
-
-
-From e7bce75f7b3c6e69be594d6c143bc853b63dc7c2 Mon Sep 17 00:00:00 2001
-From: Yujun Dong <yujundong@pascal-lab.net>
-Date: Mon, 30 Dec 2024 22:16:24 +0800
-Subject: [PATCH 15/22] cpuidle, sched: Use smp_mb__after_atomic() in
- current_clr_polling()
-
-In architectures that use the polling bit, current_clr_polling() employs
-smp_mb() to ensure that the clearing of the polling bit is visible to
-other cores before checking TIF_NEED_RESCHED.
-
-However, smp_mb() can be costly. Given that clear_bit() is an atomic
-operation, replacing smp_mb() with smp_mb__after_atomic() is appropriate.
-
-Many architectures implement smp_mb__after_atomic() as a lighter-weight
-barrier compared to smp_mb(), leading to performance improvements.
-For instance, on x86, smp_mb__after_atomic() is a no-op. This change
-eliminates a smp_mb() instruction in the cpuidle wake-up path, saving
-several CPU cycles and thereby reducing wake-up latency.
-
-Architectures that do not use the polling bit will retain the original
-smp_mb() behavior to ensure that existing dependencies remain unaffected.
-
-Signed-off-by: Yujun Dong <yujundong@pascal-lab.net>
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Link: https://lore.kernel.org/r/20241230141624.155356-1-yujundong@pascal-lab.net
----
- include/linux/sched/idle.h | 23 ++++++++++++++++-------
- 1 file changed, 16 insertions(+), 7 deletions(-)
-
-diff --git a/include/linux/sched/idle.h b/include/linux/sched/idle.h
-index e670ac282333..439f6029d3b9 100644
---- a/include/linux/sched/idle.h
-+++ b/include/linux/sched/idle.h
-@@ -79,6 +79,21 @@ static __always_inline bool __must_check current_clr_polling_and_test(void)
- 	return unlikely(tif_need_resched());
- }
- 
-+static __always_inline void current_clr_polling(void)
-+{
-+	__current_clr_polling();
-+
-+	/*
-+	 * Ensure we check TIF_NEED_RESCHED after we clear the polling bit.
-+	 * Once the bit is cleared, we'll get IPIs with every new
-+	 * TIF_NEED_RESCHED and the IPI handler, scheduler_ipi(), will also
-+	 * fold.
-+	 */
-+	smp_mb__after_atomic(); /* paired with resched_curr() */
-+
-+	preempt_fold_need_resched();
-+}
-+
- #else
- static inline void __current_set_polling(void) { }
- static inline void __current_clr_polling(void) { }
-@@ -91,21 +106,15 @@ static inline bool __must_check current_clr_polling_and_test(void)
- {
- 	return unlikely(tif_need_resched());
- }
--#endif
- 
- static __always_inline void current_clr_polling(void)
- {
- 	__current_clr_polling();
- 
--	/*
--	 * Ensure we check TIF_NEED_RESCHED after we clear the polling bit.
--	 * Once the bit is cleared, we'll get IPIs with every new
--	 * TIF_NEED_RESCHED and the IPI handler, scheduler_ipi(), will also
--	 * fold.
--	 */
- 	smp_mb(); /* paired with resched_curr() */
- 
- 	preempt_fold_need_resched();
- }
-+#endif
- 
- #endif /* _LINUX_SCHED_IDLE_H */
--- 
-2.49.0
-
-
-From 5b4a3c363a6caff6fb344e72cffaa8e846293580 Mon Sep 17 00:00:00 2001
-From: Xuewen Yan <xuewen.yan@unisoc.com>
-Date: Wed, 19 Feb 2025 17:37:46 +0800
-Subject: [PATCH 16/22] sched/uclamp: Always using uclamp_is_used()
-
-Now, we have the uclamp_is_used() func to judge the uclamp enabled,
-so replace the static_branch_unlikely(&sched_uclamp_used) with it.
-
-Signed-off-by: Xuewen Yan <xuewen.yan@unisoc.com>
-Reviewed-by: Hongyan Xia <hongyan.xia2@arm.com>
-Reviewed-by: Christian Loehle <christian.loehle@arm.com>
-Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
----
- kernel/sched/core.c  |  4 ++--
- kernel/sched/sched.h | 28 ++++++++++++++--------------
- 2 files changed, 16 insertions(+), 16 deletions(-)
-
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index c413e12825d7..719abc66a193 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1757,7 +1757,7 @@ static inline void uclamp_rq_inc(struct rq *rq, struct task_struct *p)
- 	 * The condition is constructed such that a NOP is generated when
- 	 * sched_uclamp_used is disabled.
+-	 * Must be after ->enqueue_task() because ENQUEUE_DELAYED can clear
+-	 * ->sched_delayed.
++	 * Can be before ->enqueue_task() because uclamp considers the
++	 * ENQUEUE_DELAYED task before its ->sched_delayed gets cleared
++	 * in ->enqueue_task().
  	 */
--	if (!static_branch_unlikely(&sched_uclamp_used))
-+	if (!uclamp_is_used())
- 		return;
- 
- 	if (unlikely(!p->sched_class->uclamp_enabled))
-@@ -1784,7 +1784,7 @@ static inline void uclamp_rq_dec(struct rq *rq, struct task_struct *p)
- 	 * The condition is constructed such that a NOP is generated when
- 	 * sched_uclamp_used is disabled.
- 	 */
--	if (!static_branch_unlikely(&sched_uclamp_used))
-+	if (!uclamp_is_used())
- 		return;
- 
- 	if (unlikely(!p->sched_class->uclamp_enabled))
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 1aa65a0ac586..e48eae83e689 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -3394,6 +3394,19 @@ static inline bool update_other_load_avgs(struct rq *rq) { return false; }
- 
- unsigned long uclamp_eff_value(struct task_struct *p, enum uclamp_id clamp_id);
- 
-+/*
-+ * When uclamp is compiled in, the aggregation at rq level is 'turned off'
-+ * by default in the fast path and only gets turned on once userspace performs
-+ * an operation that requires it.
-+ *
-+ * Returns true if userspace opted-in to use uclamp and aggregation at rq level
-+ * hence is active.
-+ */
-+static inline bool uclamp_is_used(void)
-+{
-+	return static_branch_likely(&sched_uclamp_used);
-+}
+-	uclamp_rq_inc(rq, p);
++	uclamp_rq_inc(rq, p, flags);
 +
- static inline unsigned long uclamp_rq_get(struct rq *rq,
- 					  enum uclamp_id clamp_id)
- {
-@@ -3417,7 +3430,7 @@ static inline bool uclamp_rq_is_capped(struct rq *rq)
- 	unsigned long rq_util;
- 	unsigned long max_util;
++	p->sched_class->enqueue_task(rq, p, flags);
  
--	if (!static_branch_likely(&sched_uclamp_used))
-+	if (!uclamp_is_used())
- 		return false;
+ 	psi_enqueue(p, flags);
  
- 	rq_util = cpu_util_cfs(cpu_of(rq)) + cpu_util_rt(rq);
-@@ -3426,19 +3439,6 @@ static inline bool uclamp_rq_is_capped(struct rq *rq)
- 	return max_util != SCHED_CAPACITY_SCALE && rq_util >= max_util;
- }
- 
--/*
-- * When uclamp is compiled in, the aggregation at rq level is 'turned off'
-- * by default in the fast path and only gets turned on once userspace performs
-- * an operation that requires it.
-- *
-- * Returns true if userspace opted-in to use uclamp and aggregation at rq level
-- * hence is active.
-- */
--static inline bool uclamp_is_used(void)
--{
--	return static_branch_likely(&sched_uclamp_used);
--}
--
- #define for_each_clamp_id(clamp_id) \
- 	for ((clamp_id) = 0; (clamp_id) < UCLAMP_CNT; (clamp_id)++)
- 
--- 
-2.49.0
-
-
-From 127649269b20778b6275590bc2818352e1ff453c Mon Sep 17 00:00:00 2001
-From: Xuewen Yan <xuewen.yan@unisoc.com>
-Date: Wed, 19 Feb 2025 17:37:47 +0800
-Subject: [PATCH 17/22] sched/uclamp: Add uclamp_is_used() check before enable
- it
-
-Because the static_branch_enable() would get the cpus_read_lock(),
-and sometimes users may frequently set the uclamp value of tasks,
-and this operation would call the static_branch_enable()
-frequently, so add the uclamp_is_used() check to prevent calling
-the cpus_read_lock() frequently.
-And to make the code more concise, add a helper function to encapsulate
-this and use it everywhere we enable sched_uclamp_used.
-
-Signed-off-by: Xuewen Yan <xuewen.yan@unisoc.com>
-Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
-Reviewed-by: Christian Loehle <christian.loehle@arm.com>
----
- kernel/sched/core.c     |  6 +++---
- kernel/sched/sched.h    | 14 ++++++++++++++
- kernel/sched/syscalls.c |  2 +-
- 3 files changed, 18 insertions(+), 4 deletions(-)
-
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 719abc66a193..3fd7a13e8d2a 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1942,12 +1942,12 @@ static int sysctl_sched_uclamp_handler(const struct ctl_table *table, int write,
- 	}
- 
- 	if (update_root_tg) {
--		static_branch_enable(&sched_uclamp_used);
-+		sched_uclamp_enable();
- 		uclamp_update_root_tg();
- 	}
- 
- 	if (old_min_rt != sysctl_sched_uclamp_util_min_rt_default) {
--		static_branch_enable(&sched_uclamp_used);
-+		sched_uclamp_enable();
- 		uclamp_sync_util_min_rt_default();
- 	}
- 
-@@ -9286,7 +9286,7 @@ static ssize_t cpu_uclamp_write(struct kernfs_open_file *of, char *buf,
- 	if (req.ret)
- 		return req.ret;
- 
--	static_branch_enable(&sched_uclamp_used);
-+	sched_uclamp_enable();
- 
- 	guard(mutex)(&uclamp_mutex);
- 	guard(rcu)();
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index e48eae83e689..fd4d25165cf8 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -3407,6 +3407,18 @@ static inline bool uclamp_is_used(void)
- 	return static_branch_likely(&sched_uclamp_used);
- }
- 
-+/*
-+ * Enabling static branches would get the cpus_read_lock(),
-+ * check whether uclamp_is_used before enable it to avoid always
-+ * calling cpus_read_lock(). Because we never disable this
-+ * static key once enable it.
-+ */
-+static inline void sched_uclamp_enable(void)
-+{
-+	if (!uclamp_is_used())
-+		static_branch_enable(&sched_uclamp_used);
-+}
-+
- static inline unsigned long uclamp_rq_get(struct rq *rq,
- 					  enum uclamp_id clamp_id)
- {
-@@ -3486,6 +3498,8 @@ static inline bool uclamp_is_used(void)
- 	return false;
- }
- 
-+static inline void sched_uclamp_enable(void) {}
-+
- static inline unsigned long
- uclamp_rq_get(struct rq *rq, enum uclamp_id clamp_id)
- {
-diff --git a/kernel/sched/syscalls.c b/kernel/sched/syscalls.c
-index 456d339be98f..9100a77e9d79 100644
---- a/kernel/sched/syscalls.c
-+++ b/kernel/sched/syscalls.c
-@@ -368,7 +368,7 @@ static int uclamp_validate(struct task_struct *p,
- 	 * blocking operation which obviously cannot be done while holding
- 	 * scheduler locks.
- 	 */
--	static_branch_enable(&sched_uclamp_used);
-+	sched_uclamp_enable();
- 
- 	return 0;
- }
--- 
-2.49.0
-
-
-From 513fa4289b86367efa3cab70aeedcf1ec47910d1 Mon Sep 17 00:00:00 2001
-From: tip-bot2 for Mathieu Desnoyers <tip-bot2@linutronix.de>
-Date: Thu, 3 Apr 2025 11:26:32 +0000
-Subject: [PATCH 18/22] rseq: Eliminate useless task_work on execve
-
-The following commit has been merged into the sched/urgent branch of tip:
-
-Commit-ID:     169eae7711ea4b745e2d33d53e7b88689b10e1a0
-Gitweb:        https://git.kernel.org/tip/169eae7711ea4b745e2d33d53e7b88689b10e1a0
-Author:        Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-AuthorDate:    Thu, 27 Mar 2025 09:29:45 -04:00
-Committer:     Ingo Molnar <mingo@kernel.org>
-CommitterDate: Thu, 03 Apr 2025 13:10:47 +02:00
-
-rseq: Eliminate useless task_work on execve
-
-Eliminate a useless task_work on execve by moving the call to
-rseq_set_notify_resume() from sched_mm_cid_after_execve() to the error
-path of bprm_execve().
-
-The call to rseq_set_notify_resume() from sched_mm_cid_after_execve() is
-pointless in the success case, because rseq_execve() will clear the rseq
-pointer before returning to userspace.
-
-sched_mm_cid_after_execve() is called from both the success and error
-paths of bprm_execve(). The call to rseq_set_notify_resume() is needed
-on error because the mm_cid may have changed.
-
-Also move the rseq_execve() to right after sched_mm_cid_after_execve()
-in bprm_execve().
-
-[ mingo: Merged to a recent upstream kernel, extended the changelog. ]
-
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Cc: Oleg Nesterov <oleg@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Link: https://lore.kernel.org/r/20250327132945.1558783-1-mathieu.desnoyers@efficios.com
----
- fs/exec.c           | 3 ++-
- kernel/sched/core.c | 1 -
- 2 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/fs/exec.c b/fs/exec.c
-index 17047210be46..288f7ea20aba 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -1866,9 +1866,9 @@ static int bprm_execve(struct linux_binprm *bprm)
- 		goto out;
- 
- 	sched_mm_cid_after_execve(current);
-+	rseq_execve(current);
- 	/* execve succeeded */
- 	current->in_execve = 0;
--	rseq_execve(current);
- 	user_events_execve(current);
- 	acct_update_integrals(current);
- 	task_numa_free(current, false);
-@@ -1885,6 +1885,7 @@ static int bprm_execve(struct linux_binprm *bprm)
- 		force_fatal_sig(SIGSEGV);
- 
- 	sched_mm_cid_after_execve(current);
-+	rseq_set_notify_resume(current);
- 	current->in_execve = 0;
- 
- 	return retval;
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3fd7a13e8d2a..81f5369f5260 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -10658,7 +10658,6 @@ void sched_mm_cid_after_execve(struct task_struct *t)
- 		smp_mb();
- 		t->last_mm_cid = t->mm_cid = mm_cid_get(rq, t, mm);
- 	}
--	rseq_set_notify_resume(t);
- }
- 
- void sched_mm_cid_fork(struct task_struct *t)
--- 
-2.49.0
-
-
-From 8f0a3725130a114cfc5ade0bac1094a75fca921b Mon Sep 17 00:00:00 2001
-From: Kees Cook <kees@kernel.org>
-Date: Thu, 15 May 2025 14:42:15 -0700
-Subject: [PATCH 19/22] mm: vmalloc: Actually use the in-place vrealloc region
-
-The refactoring to not build a new vmalloc region only actually worked
-when shrinking. Actually return the resized area when it grows. Ugh.
-
-Reported-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
-Closes: https://lore.kernel.org/all/20250515-bpf-verifier-slowdown-vwo2meju4cgp2su5ckj@6gi6ssxbnfqg
-Tested-by: Eduard Zingerman <eddyz87@gmail.com>
-Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
-Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
-Signed-off-by: Kees Cook <kees@kernel.org>
-Reviewed-by: Danilo Krummrich <dakr@kernel.org>
-Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
-Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
----
- mm/vmalloc.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 8aa7eea9b26f..837899a4eaaf 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -4115,6 +4115,7 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
- 		if (want_init_on_alloc(flags))
- 			memset((void *)p + old_size, 0, size - old_size);
- 		vm->requested_size = size;
-+		return (void *)p;
- 	}
- 
- 	/* TODO: Grow the vm_area, i.e. allocate and map additional pages. */
--- 
-2.49.0
-
-
-From 4e8bea7a204f1956bdb6b223a3397d0a5ed7fcb1 Mon Sep 17 00:00:00 2001
-From: Kees Cook <kees@kernel.org>
-Date: Thu, 15 May 2025 14:42:16 -0700
-Subject: [PATCH 20/22] mm: vmalloc: Only zero-init on vrealloc shrink
-
-The common case is to grow reallocations, and since init_on_alloc will
-have already zeroed the whole allocation, we only need to zero when
-shrinking the allocation.
-
-Fixes: a0309faf1cb0 ("mm: vmalloc: support more granular vrealloc() sizing")
-Tested-by: Pawan Gupta <pawan.kumar.gupta@linux.intel.com>
-Signed-off-by: Kees Cook <kees@kernel.org>
-Reviewed-by: Danilo Krummrich <dakr@kernel.org>
-Reviewed-by: Uladzislau Rezki (Sony) <urezki@gmail.com>
-Tested-by: Shung-Hsi Yu <shung-hsi.yu@suse.com>
----
- mm/vmalloc.c | 12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
-
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index 837899a4eaaf..ae7e419be29d 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -4097,8 +4097,8 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
- 	 * would be a good heuristic for when to shrink the vm_area?
- 	 */
- 	if (size <= old_size) {
--		/* Zero out "freed" memory. */
--		if (want_init_on_free())
-+		/* Zero out "freed" memory, potentially for future realloc. */
-+		if (want_init_on_free() || want_init_on_alloc(flags))
- 			memset((void *)p + size, 0, old_size - size);
- 		vm->requested_size = size;
- 		kasan_poison_vmalloc(p + size, old_size - size);
-@@ -4111,9 +4111,11 @@ void *vrealloc_noprof(const void *p, size_t size, gfp_t flags)
- 	if (size <= alloced_size) {
- 		kasan_unpoison_vmalloc(p + old_size, size - old_size,
- 				       KASAN_VMALLOC_PROT_NORMAL);
--		/* Zero out "alloced" memory. */
--		if (want_init_on_alloc(flags))
--			memset((void *)p + old_size, 0, size - old_size);
-+		/*
-+		 * No need to zero memory here, as unused memory will have
-+		 * already been zeroed at initial allocation time or during
-+		 * realloc shrink time.
-+		 */
- 		vm->requested_size = size;
- 		return (void *)p;
- 	}
--- 
-2.49.0
-
-
-From e522babbd44cd68f784946b7102eea7c45c623f3 Mon Sep 17 00:00:00 2001
-From: Christoph Hellwig <hch@lst.de>
-Date: Tue, 20 May 2025 15:54:20 +0200
-Subject: [PATCH 21/22] loop: don't require ->write_iter for writable files in
- loop_configure
-
-Block devices can be opened read-write even if they can't be written to
-for historic reasons.  Remove the check requiring file->f_op->write_iter
-when the block devices was opened in loop_configure. The call to
-loop_check_backing_file just below ensures the ->write_iter is present
-for backing files opened for writing, which is the only check that is
-actually needed.
-
-Fixes: f5c84eff634b ("loop: Add sanity check for read/write_iter")
-Reported-by: Christian Hesse <mail@eworm.de>
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-Link: https://lore.kernel.org/r/20250520135420.1177312-1-hch@lst.de
-Signed-off-by: Jens Axboe <axboe@kernel.dk>
-Cherry-picked-for: https://lore.kernel.org/r/20250519175640.2fcac001@leda.eworm.net
----
- drivers/block/loop.c | 3 ---
- 1 file changed, 3 deletions(-)
-
-diff --git a/drivers/block/loop.c b/drivers/block/loop.c
-index b378d2aa49f0..34bc46d1f3f3 100644
---- a/drivers/block/loop.c
-+++ b/drivers/block/loop.c
-@@ -972,9 +972,6 @@ static int loop_configure(struct loop_device *lo, blk_mode_t mode,
- 	if (!file)
- 		return -EBADF;
- 
--	if ((mode & BLK_OPEN_WRITE) && !file->f_op->write_iter)
--		return -EINVAL;
--
- 	error = loop_check_backing_file(file);
- 	if (error)
- 		return error;
--- 
-2.49.0
-
-
-From 3cbd03d2869fe365499535310818462e1c465033 Mon Sep 17 00:00:00 2001
-From: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
-Date: Wed, 30 Apr 2025 15:07:03 -0400
-Subject: [PATCH 22/22] Bluetooth: hci_event: Fix not using key encryption size
- when its known
-
-This fixes the regression introduced by 50c1241e6a8a ("Bluetooth: l2cap:
-Check encryption key size on incoming connection") introduced a check for
-l2cap_check_enc_key_size which checks for hcon->enc_key_size which may
-not be initialized if HCI_OP_READ_ENC_KEY_SIZE is still pending.
-
-If the key encryption size is known, due previously reading it using
-HCI_OP_READ_ENC_KEY_SIZE, then store it as part of link_key/smp_ltk
-structures so the next time the encryption is changed their values are
-used as conn->enc_key_size thus avoiding the racing against
-HCI_OP_READ_ENC_KEY_SIZE.
-
-Now that the enc_size is stored as part of key the information the code
-then attempts to check that there is no downgrade of security if
-HCI_OP_READ_ENC_KEY_SIZE returns a value smaller than what has been
-previously stored.
-
-Link: https://bugzilla.kernel.org/show_bug.cgi?id=220061
-Link: https://bugzilla.kernel.org/show_bug.cgi?id=220063
-Fixes: 522e9ed157e3 ("Bluetooth: l2cap: Check encryption key size on incoming connection")
-Signed-off-by: Luiz Augusto von Dentz <luiz.von.dentz@intel.com>
----
- include/net/bluetooth/hci_core.h |  1 +
- net/bluetooth/hci_conn.c         | 24 +++++++++++
- net/bluetooth/hci_event.c        | 73 ++++++++++++++++++--------------
- 3 files changed, 67 insertions(+), 31 deletions(-)
-
-diff --git a/include/net/bluetooth/hci_core.h b/include/net/bluetooth/hci_core.h
-index 7d8bab892154..e21abd869ce7 100644
---- a/include/net/bluetooth/hci_core.h
-+++ b/include/net/bluetooth/hci_core.h
-@@ -1778,6 +1778,7 @@ struct hci_conn_params *hci_pend_le_action_lookup(struct list_head *list,
- void hci_uuids_clear(struct hci_dev *hdev);
- 
- void hci_link_keys_clear(struct hci_dev *hdev);
-+u8 *hci_conn_key_enc_size(struct hci_conn *conn);
- struct link_key *hci_find_link_key(struct hci_dev *hdev, bdaddr_t *bdaddr);
- struct link_key *hci_add_link_key(struct hci_dev *hdev, struct hci_conn *conn,
- 				  bdaddr_t *bdaddr, u8 *val, u8 type,
-diff --git a/net/bluetooth/hci_conn.c b/net/bluetooth/hci_conn.c
-index ae66fa0a5fb5..a5cf428822fc 100644
---- a/net/bluetooth/hci_conn.c
-+++ b/net/bluetooth/hci_conn.c
-@@ -2897,3 +2897,27 @@ int hci_abort_conn(struct hci_conn *conn, u8 reason)
- 	 */
- 	return hci_cmd_sync_run_once(hdev, abort_conn_sync, conn, NULL);
- }
-+
-+u8 *hci_conn_key_enc_size(struct hci_conn *conn)
-+{
-+	if (conn->type == ACL_LINK) {
-+		struct link_key *key;
-+
-+		key = hci_find_link_key(conn->hdev, &conn->dst);
-+		if (!key)
-+			return NULL;
-+
-+		return &key->pin_len;
-+	} else if (conn->type == LE_LINK) {
-+		struct smp_ltk *ltk;
-+
-+		ltk = hci_find_ltk(conn->hdev, &conn->dst, conn->dst_type,
-+				   conn->role);
-+		if (!ltk)
-+			return NULL;
-+
-+		return &ltk->enc_size;
-+	}
-+
-+	return NULL;
-+}
-diff --git a/net/bluetooth/hci_event.c b/net/bluetooth/hci_event.c
-index ab940ec698c0..a46929e33783 100644
---- a/net/bluetooth/hci_event.c
-+++ b/net/bluetooth/hci_event.c
-@@ -739,10 +739,17 @@ static u8 hci_cc_read_enc_key_size(struct hci_dev *hdev, void *data,
- 			   handle);
- 		conn->enc_key_size = 0;
- 	} else {
-+		u8 *key_enc_size = hci_conn_key_enc_size(conn);
-+
- 		conn->enc_key_size = rp->key_size;
- 		status = 0;
- 
--		if (conn->enc_key_size < hdev->min_enc_key_size) {
-+		/* Attempt to check if the key size is too small or if it has
-+		 * been downgraded from the last time it was stored as part of
-+		 * the link_key.
-+		 */
-+		if (conn->enc_key_size < hdev->min_enc_key_size ||
-+		    (key_enc_size && conn->enc_key_size < *key_enc_size)) {
- 			/* As slave role, the conn->state has been set to
- 			 * BT_CONNECTED and l2cap conn req might not be received
- 			 * yet, at this moment the l2cap layer almost does
-@@ -755,6 +762,10 @@ static u8 hci_cc_read_enc_key_size(struct hci_dev *hdev, void *data,
- 			clear_bit(HCI_CONN_ENCRYPT, &conn->flags);
- 			clear_bit(HCI_CONN_AES_CCM, &conn->flags);
- 		}
-+
-+		/* Update the key encryption size with the connection one */
-+		if (key_enc_size && *key_enc_size != conn->enc_key_size)
-+			*key_enc_size = conn->enc_key_size;
- 	}
- 
- 	hci_encrypt_cfm(conn, status);
-@@ -3062,6 +3073,34 @@ static void hci_inquiry_result_evt(struct hci_dev *hdev, void *edata,
- 	hci_dev_unlock(hdev);
- }
- 
-+static int hci_read_enc_key_size(struct hci_dev *hdev, struct hci_conn *conn)
-+{
-+	struct hci_cp_read_enc_key_size cp;
-+	u8 *key_enc_size = hci_conn_key_enc_size(conn);
-+
-+	if (!read_key_size_capable(hdev)) {
-+		conn->enc_key_size = HCI_LINK_KEY_SIZE;
-+		return -EOPNOTSUPP;
-+	}
-+
-+	bt_dev_dbg(hdev, "hcon %p", conn);
-+
-+	memset(&cp, 0, sizeof(cp));
-+	cp.handle = cpu_to_le16(conn->handle);
-+
-+	/* If the key enc_size is already known, use it as conn->enc_key_size,
-+	 * otherwise use hdev->min_enc_key_size so the likes of
-+	 * l2cap_check_enc_key_size don't fail while waiting for
-+	 * HCI_OP_READ_ENC_KEY_SIZE response.
-+	 */
-+	if (key_enc_size && *key_enc_size)
-+		conn->enc_key_size = *key_enc_size;
-+	else
-+		conn->enc_key_size = hdev->min_enc_key_size;
-+
-+	return hci_send_cmd(hdev, HCI_OP_READ_ENC_KEY_SIZE, sizeof(cp), &cp);
-+}
-+
- static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
- 				  struct sk_buff *skb)
- {
-@@ -3154,23 +3193,11 @@ static void hci_conn_complete_evt(struct hci_dev *hdev, void *data,
- 		if (ev->encr_mode == 1 && !test_bit(HCI_CONN_ENCRYPT, &conn->flags) &&
- 		    ev->link_type == ACL_LINK) {
- 			struct link_key *key;
--			struct hci_cp_read_enc_key_size cp;
- 
- 			key = hci_find_link_key(hdev, &ev->bdaddr);
- 			if (key) {
- 				set_bit(HCI_CONN_ENCRYPT, &conn->flags);
--
--				if (!read_key_size_capable(hdev)) {
--					conn->enc_key_size = HCI_LINK_KEY_SIZE;
--				} else {
--					cp.handle = cpu_to_le16(conn->handle);
--					if (hci_send_cmd(hdev, HCI_OP_READ_ENC_KEY_SIZE,
--							 sizeof(cp), &cp)) {
--						bt_dev_err(hdev, "sending read key size failed");
--						conn->enc_key_size = HCI_LINK_KEY_SIZE;
--					}
--				}
--
-+				hci_read_enc_key_size(hdev, conn);
- 				hci_encrypt_cfm(conn, ev->status);
- 			}
- 		}
-@@ -3609,24 +3636,8 @@ static void hci_encrypt_change_evt(struct hci_dev *hdev, void *data,
- 
- 	/* Try reading the encryption key size for encrypted ACL links */
- 	if (!ev->status && ev->encrypt && conn->type == ACL_LINK) {
--		struct hci_cp_read_enc_key_size cp;
--
--		/* Only send HCI_Read_Encryption_Key_Size if the
--		 * controller really supports it. If it doesn't, assume
--		 * the default size (16).
--		 */
--		if (!read_key_size_capable(hdev)) {
--			conn->enc_key_size = HCI_LINK_KEY_SIZE;
--			goto notify;
--		}
--
--		cp.handle = cpu_to_le16(conn->handle);
--		if (hci_send_cmd(hdev, HCI_OP_READ_ENC_KEY_SIZE,
--				 sizeof(cp), &cp)) {
--			bt_dev_err(hdev, "sending read key size failed");
--			conn->enc_key_size = HCI_LINK_KEY_SIZE;
-+		if (hci_read_enc_key_size(hdev, conn))
- 			goto notify;
--		}
- 
- 		goto unlock;
- 	}
 -- 
 2.49.0
 

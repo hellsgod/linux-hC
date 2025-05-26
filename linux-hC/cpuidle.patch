@@ -1,4 +1,4 @@
-From c361198bf6f0cf3f14eb431e67892017171fa200 Mon Sep 17 00:00:00 2001
+From e088963bc941f5474cae1779695f86388f38591b Mon Sep 17 00:00:00 2001
 From: Christian Loehle <christian.loehle@arm.com>
 Date: Thu, 5 Sep 2024 10:26:39 +0100
 Subject: [PATCH 1/3] cpuidle: Prefer teo over menu governor
@@ -37,10 +37,10 @@ index cac5997dca50..ae67a464025a 100644
  	bool "Haltpoll governor (for virtualized systems)"
  	depends on KVM_GUEST
 diff --git a/drivers/cpuidle/governors/menu.c b/drivers/cpuidle/governors/menu.c
-index 28363bfa3e4c..c0ae5e98d6f1 100644
+index 39aa0aea61c6..9e40c5f64c5e 100644
 --- a/drivers/cpuidle/governors/menu.c
 +++ b/drivers/cpuidle/governors/menu.c
-@@ -508,7 +508,7 @@ static int menu_enable_device(struct cpuidle_driver *drv,
+@@ -513,7 +513,7 @@ static int menu_enable_device(struct cpuidle_driver *drv,
  
  static struct cpuidle_governor menu_governor = {
  	.name =		"menu",
@@ -66,7 +66,7 @@ index 8fe5e1b47ef9..a871e004efa5 100644
 2.49.0
 
 
-From 49bf28f9cc9d8903fcd15f797e47b14d5f815294 Mon Sep 17 00:00:00 2001
+From 4c15565fb123c5f63c1b3e474ff83e1da3a8e415 Mon Sep 17 00:00:00 2001
 From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
 Date: Thu, 3 Apr 2025 21:16:47 +0200
 Subject: [PATCH 2/3] cpuidle: teo: Move candidate state lookup to separate
@@ -226,7 +226,7 @@ index a871e004efa5..6c9fdd73835f 100644
 2.49.0
 
 
-From 155347ce01f6bcdf7f9a8b19986e781d1c3e2eb2 Mon Sep 17 00:00:00 2001
+From df6239ca9dd1a5479d03f8aa4804945686ddc06a Mon Sep 17 00:00:00 2001
 From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
 Date: Thu, 3 Apr 2025 21:18:38 +0200
 Subject: [PATCH 3/3] cpuidle: teo: Refine handling of short idle intervals
