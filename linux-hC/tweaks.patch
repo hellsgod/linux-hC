@@ -1,7 +1,7 @@
 From b9567527d02e0b2d6ca7a74393396f9da7973178 Mon Sep 17 00:00:00 2001
 From: Serge Hallyn <serge.hallyn@canonical.com>
 Date: Fri, 31 May 2013 19:12:12 +0100
-Subject: [PATCH 01/32] add sysctl to disallow unprivileged CLONE_NEWUSER by
+Subject: [PATCH 01/33] add sysctl to disallow unprivileged CLONE_NEWUSER by
  default
 
 This is a short-term patch.  Unprivileged use of CLONE_NEWUSER
@@ -19,7 +19,7 @@ Signed-off-by: Serge Hallyn <serge.hallyn@ubuntu.com>
  3 files changed, 32 insertions(+)
 
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 168681fc4b25..74abab2c65c1 100644
+index 168681fc4b25a..74abab2c65c1a 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -119,6 +119,12 @@
@@ -60,7 +60,7 @@ index 168681fc4b25..74abab2c65c1 100644
  	if (err)
  		goto bad_unshare_out;
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index 3b7a7308e35b..cb4bab6a39bf 100644
+index 3b7a7308e35b0..cb4bab6a39bf5 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
 @@ -84,6 +84,10 @@ EXPORT_SYMBOL_GPL(sysctl_long_vals);
@@ -91,7 +91,7 @@ index 3b7a7308e35b..cb4bab6a39bf 100644
  	{
  		.procname	= "tainted",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 682f40d5632d..bf265ad528f9 100644
+index 682f40d5632d4..bf265ad528f9e 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
 @@ -22,6 +22,9 @@
@@ -111,7 +111,7 @@ index 682f40d5632d..bf265ad528f9 100644
 From 796f395fea95e60e1d1afd1bb77f22ec2810d713 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Thu, 22 May 2025 07:32:13 +0200
-Subject: [PATCH 02/32] ZEN: Add config for default of
+Subject: [PATCH 02/33] ZEN: Add config for default of
  unprivileged_userns_clone
 
 ---
@@ -120,7 +120,7 @@ Subject: [PATCH 02/32] ZEN: Add config for default of
  2 files changed, 20 insertions(+)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index bf3a920064be..312219efb53c 100644
+index bf3a920064bec..312219efb53c5 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -1330,6 +1330,22 @@ config USER_NS
@@ -147,7 +147,7 @@ index bf3a920064be..312219efb53c 100644
  	bool "PID Namespaces"
  	default y
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index bf265ad528f9..434a25f7b2ed 100644
+index bf265ad528f9e..434a25f7b2edb 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
 @@ -23,7 +23,11 @@
@@ -169,7 +169,7 @@ index bf265ad528f9..434a25f7b2ed 100644
 From ca64ca14685b6ceb410b7b1fdae2790e13567e02 Mon Sep 17 00:00:00 2001
 From: Javier Martinez Canillas <javierm@redhat.com>
 Date: Thu, 19 May 2022 14:40:07 +0200
-Subject: [PATCH 03/32] drivers/firmware: skip simpledrm if
+Subject: [PATCH 03/33] drivers/firmware: skip simpledrm if
  nvidia-drm.modeset=1 is set
 
 The Nvidia proprietary driver has some bugs that leads to issues if used
@@ -217,7 +217,7 @@ Cherry-picked-for: https://bugs.archlinux.org/task/73720
  1 file changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/firmware/sysfb.c b/drivers/firmware/sysfb.c
-index 7c5c03f274b9..a60b0a4faf29 100644
+index 7c5c03f274b95..a60b0a4faf29e 100644
 --- a/drivers/firmware/sysfb.c
 +++ b/drivers/firmware/sysfb.c
 @@ -35,6 +35,22 @@
@@ -259,7 +259,7 @@ index 7c5c03f274b9..a60b0a4faf29 100644
 From 6b757622114789c1aa0ed51b569c308e6c7fc32c Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 2 Jun 2016 23:36:32 -0500
-Subject: [PATCH 04/32] ZEN: Initialize ata before graphics
+Subject: [PATCH 04/33] ZEN: Initialize ata before graphics
 
 ATA init is the long pole in the boot process, and its asynchronous.
 move the graphics init after it so that ata and graphics initialize
@@ -269,7 +269,7 @@ in parallel
  1 file changed, 7 insertions(+), 6 deletions(-)
 
 diff --git a/drivers/Makefile b/drivers/Makefile
-index b5749cf67044..5beba9f57254 100644
+index b5749cf67044c..5beba9f57254c 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -64,14 +64,8 @@ obj-y				+= char/
@@ -308,7 +308,7 @@ index b5749cf67044..5beba9f57254 100644
 From b2b245b1e880df7547da1110371797ba7372d112 Mon Sep 17 00:00:00 2001
 From: Kenny Levinsen <kl@kl.wtf>
 Date: Sun, 27 Dec 2020 14:43:13 +0000
-Subject: [PATCH 05/32] ZEN: Input: evdev - use call_rcu when detaching client
+Subject: [PATCH 05/33] ZEN: Input: evdev - use call_rcu when detaching client
 
 Significant time was spent on synchronize_rcu in evdev_detach_client
 when applications closed evdev devices. Switching VT away from a
@@ -349,7 +349,7 @@ Signed-off-by: Kenny Levinsen <kl@kl.wtf>
  1 file changed, 11 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
-index b5cbb57ee5f6..a0f7fa1518c6 100644
+index b5cbb57ee5f60..a0f7fa1518c66 100644
 --- a/drivers/input/evdev.c
 +++ b/drivers/input/evdev.c
 @@ -46,6 +46,7 @@ struct evdev_client {
@@ -419,7 +419,7 @@ index b5cbb57ee5f6..a0f7fa1518c6 100644
 From 13f85311ee5190844f9de13ce7e91fbb592a99e5 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Thu, 13 Dec 2018 01:00:49 +0000
-Subject: [PATCH 06/32] sched/wait: Do accept() in LIFO order for cache
+Subject: [PATCH 06/33] sched/wait: Do accept() in LIFO order for cache
  efficiency
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -430,7 +430,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  3 files changed, 27 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 965a19809c7e..3d442267a256 100644
+index 965a19809c7e5..3d442267a2565 100644
 --- a/include/linux/wait.h
 +++ b/include/linux/wait.h
 @@ -163,6 +163,7 @@ static inline bool wq_has_sleeper(struct wait_queue_head *wq_head)
@@ -450,7 +450,7 @@ index 965a19809c7e..3d442267a256 100644
  void finish_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
  long wait_woken(struct wait_queue_entry *wq_entry, unsigned mode, long timeout);
 diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index 51e38f5f4701..c5cc616484ba 100644
+index 51e38f5f47018..c5cc616484bad 100644
 --- a/kernel/sched/wait.c
 +++ b/kernel/sched/wait.c
 @@ -47,6 +47,17 @@ void add_wait_queue_priority(struct wait_queue_head *wq_head, struct wait_queue_
@@ -492,7 +492,7 @@ index 51e38f5f4701..c5cc616484ba 100644
  {
  	wq_entry->flags = flags;
 diff --git a/net/ipv4/inet_connection_sock.c b/net/ipv4/inet_connection_sock.c
-index dd5cf8914a28..b216088a6abd 100644
+index dd5cf8914a28d..b216088a6abd3 100644
 --- a/net/ipv4/inet_connection_sock.c
 +++ b/net/ipv4/inet_connection_sock.c
 @@ -632,7 +632,7 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
@@ -511,7 +511,7 @@ index dd5cf8914a28..b216088a6abd 100644
 From 35fd99084d2131cbcf44b6e1a153753ccc4ac9e4 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 29 Jan 2018 16:59:22 +0000
-Subject: [PATCH 07/32] XANMOD: dcache: cache_pressure = 50 decreases the rate
+Subject: [PATCH 07/33] XANMOD: dcache: cache_pressure = 50 decreases the rate
  at which VFS caches are reclaimed
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -520,7 +520,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/dcache.c b/fs/dcache.c
-index bd5aa136153a..7e9ce8835d77 100644
+index bd5aa136153ac..7e9ce8835d77a 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -73,7 +73,7 @@
@@ -539,7 +539,7 @@ index bd5aa136153a..7e9ce8835d77 100644
 From 223fddc9aa94ebf40d3a7f9eb118b2999ca75a4a Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Sat, 21 May 2022 15:15:09 -0500
-Subject: [PATCH 08/32] ZEN: dm-crypt: Disable workqueues for crypto ops
+Subject: [PATCH 08/33] ZEN: dm-crypt: Disable workqueues for crypto ops
 
 Queueing in dm-crypt for crypto operations reduces performance on modern
 systems.  As discussed in an article from Cloudflare, they discovered
@@ -555,7 +555,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 3 insertions(+)
 
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 9dfdb63220d7..1ef66e377c46 100644
+index 9dfdb63220d74..1ef66e377c463 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
 @@ -3284,6 +3284,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
@@ -575,7 +575,7 @@ index 9dfdb63220d7..1ef66e377c46 100644
 From 78f26043ec106368d71a09b7b7409c2660e316f4 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 5 May 2024 10:49:42 +0200
-Subject: [PATCH 09/32] Cachy: intel-pstate: Implement "enable" parameter
+Subject: [PATCH 09/33] Cachy: intel-pstate: Implement "enable" parameter
 
 If intel-pstate is compiled into the kernel, it will preempt the loading
 of acpi-cpufreq so you can take advantage of hardware p-states without
@@ -605,7 +605,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  2 files changed, 5 insertions(+)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 8f75ec177399..1a9c6212bff4 100644
+index 8f75ec1773994..1a9c6212bff4a 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
 @@ -2318,6 +2318,9 @@
@@ -619,7 +619,7 @@ index 8f75ec177399..1a9c6212bff4 100644
                            Use intel_pstate driver to bypass the scaling
                            governors layer of cpufreq and provides it own
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index ba9bf06f1c77..b8ceac594acd 100644
+index ba9bf06f1c773..b8ceac594acd7 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
 @@ -3828,6 +3828,8 @@ static int __init intel_pstate_setup(char *str)
@@ -638,14 +638,14 @@ index ba9bf06f1c77..b8ceac594acd 100644
 From 6f7c03da40b2270a08b0b369c72a98800fed6bee Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:13:21 +0100
-Subject: [PATCH 10/32] Add hells option for a few tweaks
+Subject: [PATCH 10/33] Add hells option for a few tweaks
 
 ---
  init/Kconfig | 6 ++++++
  1 file changed, 6 insertions(+)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index 312219efb53c..73d810375888 100644
+index 312219efb53c5..73d8103758881 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -163,6 +163,12 @@ config THREAD_INFO_IN_TASK
@@ -668,7 +668,7 @@ index 312219efb53c..73d810375888 100644
 From 43bbd232eb113c506907f2e4c47386dcd6c5ff8b Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <jan.steffens@gmail.com>
 Date: Mon, 27 Jan 2020 18:21:09 +0100
-Subject: [PATCH 11/32] hells: Enable background reclaim of hugepages
+Subject: [PATCH 11/33] hells: Enable background reclaim of hugepages
 
 Use [defer+madvise] as default khugepaged defrag strategy:
 
@@ -697,7 +697,7 @@ Reasoning and details in the original patch: https://lwn.net/Articles/711248/
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 47d76d03ce30..359ef25ef18c 100644
+index 47d76d03ce30b..359ef25ef18c7 100644
 --- a/mm/huge_memory.c
 +++ b/mm/huge_memory.c
 @@ -64,7 +64,11 @@ unsigned long transparent_hugepage_flags __read_mostly =
@@ -719,7 +719,7 @@ index 47d76d03ce30..359ef25ef18c 100644
 From 7aecd4502af3a4eb19af769f05b8449dd2131042 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 28 Mar 2020 13:06:28 -0700
-Subject: [PATCH 12/32] hells: Disable watermark boosting by default
+Subject: [PATCH 12/33] hells: Disable watermark boosting by default
 
 What watermark boosting does is preemptively fire up kswapd to free
 memory when there hasn't been an allocation failure. It does this by
@@ -749,7 +749,7 @@ Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 8258349e49ac..32ead5f6c920 100644
+index 8258349e49acb..32ead5f6c9208 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -274,7 +274,11 @@ const char * const migratetype_names[MIGRATE_TYPES] = {
@@ -771,7 +771,7 @@ index 8258349e49ac..32ead5f6c920 100644
 From b3e5a1226d67de6710945a9bb91a1c457ebd39a5 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sat, 24 Oct 2020 22:17:49 -0700
-Subject: [PATCH 13/32] hells: Disable proactive compaction by default
+Subject: [PATCH 13/33] hells: Disable proactive compaction by default
 
 On-demand compaction works fine assuming that you don't have a need to
 spam the page allocator nonstop for large order page allocations.
@@ -782,7 +782,7 @@ Signed-off-by: Sultan Alsawaf <sultan@kerneltoast.com>
  1 file changed, 4 insertions(+)
 
 diff --git a/mm/compaction.c b/mm/compaction.c
-index ca71fd3c3181..22a9f5952c1e 100644
+index ca71fd3c31815..22a9f5952c1ea 100644
 --- a/mm/compaction.c
 +++ b/mm/compaction.c
 @@ -1923,7 +1923,11 @@ static int sysctl_compact_unevictable_allowed __read_mostly = CONFIG_COMPACT_UNE
@@ -804,14 +804,14 @@ index ca71fd3c3181..22a9f5952c1e 100644
 From fad53a1e4e253026819ee1db3dd1a7237c5b2305 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
 Date: Mon, 3 Feb 2025 13:21:54 +0100
-Subject: [PATCH 14/32] hells: VM_READAHEAD_PAGES 8M
+Subject: [PATCH 14/33] hells: VM_READAHEAD_PAGES 8M
 
 ---
  include/linux/pagemap.h | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 26baa78f1ca7..8fa2ff2682bc 100644
+index 26baa78f1ca7d..8fa2ff2682bce 100644
 --- a/include/linux/pagemap.h
 +++ b/include/linux/pagemap.h
 @@ -1341,7 +1341,7 @@ struct readahead_control {
@@ -830,7 +830,7 @@ index 26baa78f1ca7..8fa2ff2682bc 100644
 From 41c092ac2d621ba3ee65bdbacf86beceadc6c4f0 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Sun, 18 Feb 2018 23:35:41 +0000
-Subject: [PATCH 15/32] locking: rwsem: spin faster
+Subject: [PATCH 15/33] locking: rwsem: spin faster
 
 tweak rwsem owner spinning a bit
 
@@ -840,7 +840,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/locking/rwsem.c b/kernel/locking/rwsem.c
-index 2ddb827e3bea..464049c4af3f 100644
+index 2ddb827e3bea0..464049c4af3f4 100644
 --- a/kernel/locking/rwsem.c
 +++ b/kernel/locking/rwsem.c
 @@ -747,6 +747,7 @@ rwsem_spin_on_owner(struct rw_semaphore *sem)
@@ -868,7 +868,7 @@ index 2ddb827e3bea..464049c4af3f 100644
 From d971cbff722a088e7541fa659c0ce21fcbd17ba1 Mon Sep 17 00:00:00 2001
 From: Sultan Alsawaf <sultan@kerneltoast.com>
 Date: Sun, 19 Apr 2020 19:59:18 -0700
-Subject: [PATCH 16/32] ZEN: mm: Stop kswapd early when nothing's waiting for
+Subject: [PATCH 16/33] ZEN: mm: Stop kswapd early when nothing's waiting for
  it to free pages
 
 Contains:
@@ -909,7 +909,7 @@ Contains:
  3 files changed, 28 insertions(+), 9 deletions(-)
 
 diff --git a/mm/internal.h b/mm/internal.h
-index 5c7a2b43ad76..90c36a782db6 100644
+index 5c7a2b43ad762..90c36a782db63 100644
 --- a/mm/internal.h
 +++ b/mm/internal.h
 @@ -788,6 +788,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
@@ -921,7 +921,7 @@ index 5c7a2b43ad76..90c36a782db6 100644
  struct page *__alloc_frozen_pages_noprof(gfp_t, unsigned int order, int nid,
  		nodemask_t *);
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 32ead5f6c920..5f93cbf504ee 100644
+index 32ead5f6c9208..5f93cbf504ee9 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -91,6 +91,8 @@ typedef int __bitwise fpi_t;
@@ -972,7 +972,7 @@ index 32ead5f6c920..5f93cbf504ee 100644
  }
  
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 3783e45bfc92..0141aaa02638 100644
+index 3783e45bfc92e..0141aaa026383 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -6419,7 +6419,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
@@ -1045,7 +1045,7 @@ index 3783e45bfc92..0141aaa02638 100644
 From 6016502d5c7652816d1b992e379fc6c00f0a09b3 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Fri, 20 Jan 2023 11:16:42 +0000
-Subject: [PATCH 17/32] initcall: only print non-zero initcall debug to speed
+Subject: [PATCH 17/33] initcall: only print non-zero initcall debug to speed
  up boot
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1065,7 +1065,7 @@ Signed-off-by: Simão Gomes Viana <devel@superboring.dev>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/init/main.c b/init/main.c
-index 7f0a2a3dbd29..d628df2f8e23 100644
+index 7f0a2a3dbd290..d628df2f8e23b 100644
 --- a/init/main.c
 +++ b/init/main.c
 @@ -1208,10 +1208,13 @@ static __init_or_module void
@@ -1091,7 +1091,7 @@ index 7f0a2a3dbd29..d628df2f8e23 100644
 From bad2005f7fc7decb1a08d37aad5e62a26ac93b94 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan@linux.intel.com>
 Date: Wed, 11 Feb 2015 17:28:14 -0600
-Subject: [PATCH 18/32] smpboot: reuse timer calibration
+Subject: [PATCH 18/33] smpboot: reuse timer calibration
 
 NO point recalibrating for known-constant tsc ...
 saves 200ms+ of boot time.
@@ -1100,7 +1100,7 @@ saves 200ms+ of boot time.
  1 file changed, 3 insertions(+)
 
 diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index 88e5a4ed9db3..07f17d5ae6e5 100644
+index 88e5a4ed9db3a..07f17d5ae6e52 100644
 --- a/arch/x86/kernel/tsc.c
 +++ b/arch/x86/kernel/tsc.c
 @@ -1596,6 +1596,9 @@ unsigned long calibrate_delay_is_known(void)
@@ -1120,7 +1120,7 @@ index 88e5a4ed9db3..07f17d5ae6e5 100644
 From da0215ba29faef98a896e3f218a657988cba6a5a Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 16 Nov 2021 17:39:25 +0000
-Subject: [PATCH 19/32] itmt_epb: use epb to scale itmt
+Subject: [PATCH 19/33] itmt_epb: use epb to scale itmt
 
 ---
  arch/x86/include/asm/topology.h |  1 +
@@ -1129,7 +1129,7 @@ Subject: [PATCH 19/32] itmt_epb: use epb to scale itmt
  3 files changed, 33 insertions(+), 1 deletion(-)
 
 diff --git a/arch/x86/include/asm/topology.h b/arch/x86/include/asm/topology.h
-index 6c79ee7c0957..ecd2a7d80fbe 100644
+index 6c79ee7c0957a..ecd2a7d80fbe3 100644
 --- a/arch/x86/include/asm/topology.h
 +++ b/arch/x86/include/asm/topology.h
 @@ -255,6 +255,7 @@ extern bool __read_mostly sysctl_sched_itmt_enabled;
@@ -1141,7 +1141,7 @@ index 6c79ee7c0957..ecd2a7d80fbe 100644
  /* Interface to notify scheduler that system supports ITMT */
  int sched_set_itmt_support(void);
 diff --git a/arch/x86/kernel/cpu/intel_epb.c b/arch/x86/kernel/cpu/intel_epb.c
-index 30b1d63b97f3..fe0f6e2bb297 100644
+index 30b1d63b97f3a..fe0f6e2bb2976 100644
 --- a/arch/x86/kernel/cpu/intel_epb.c
 +++ b/arch/x86/kernel/cpu/intel_epb.c
 @@ -166,6 +166,10 @@ static ssize_t energy_perf_bias_store(struct device *dev,
@@ -1156,7 +1156,7 @@ index 30b1d63b97f3..fe0f6e2bb297 100644
  }
  
 diff --git a/arch/x86/kernel/itmt.c b/arch/x86/kernel/itmt.c
-index 9cea1fc36c18..81932842e1d2 100644
+index 9cea1fc36c18f..81932842e1d21 100644
 --- a/arch/x86/kernel/itmt.c
 +++ b/arch/x86/kernel/itmt.c
 @@ -26,6 +26,7 @@
@@ -1213,7 +1213,7 @@ index 9cea1fc36c18..81932842e1d2 100644
 From ad4635aef1c0259a90869376b31ed3ebaaa13c44 Mon Sep 17 00:00:00 2001
 From: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
 Date: Thu, 18 Nov 2021 16:09:47 +0000
-Subject: [PATCH 20/32] itmt2 ADL fixes
+Subject: [PATCH 20/33] itmt2 ADL fixes
 
 On systems with overclocking enabled, CPPC Highest Performance can be
 hard coded to 0xff. In this case even if we have cores with different
@@ -1233,7 +1233,7 @@ Signed-off-by: Srinivas Pandruvada <srinivas.pandruvada@linux.intel.com>
  1 file changed, 7 insertions(+)
 
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index b8ceac594acd..c5de19242217 100644
+index b8ceac594acd7..c5de192422177 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
 @@ -377,6 +377,13 @@ static void intel_pstate_set_itmt_prio(int cpu)
@@ -1257,7 +1257,7 @@ index b8ceac594acd..c5de19242217 100644
 From 6d83e492bc5957336e385935eed2d5ad9ca3da17 Mon Sep 17 00:00:00 2001
 From: Arjan van de Ven <arjan.van.de.ven@intel.com>
 Date: Tue, 23 Nov 2021 17:38:50 +0000
-Subject: [PATCH 21/32] add a per cpu minimum high watermark an tune batch size
+Subject: [PATCH 21/33] add a per cpu minimum high watermark an tune batch size
 
 make sure there's at least 1024 per cpu pages... a reasonably small
 amount for todays system
@@ -1266,7 +1266,7 @@ amount for todays system
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 5f93cbf504ee..8842cb99023a 100644
+index 5f93cbf504ee9..8842cb99023a1 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -5643,11 +5643,11 @@ static int zone_batchsize(struct zone *zone)
@@ -1290,7 +1290,7 @@ index 5f93cbf504ee..8842cb99023a 100644
 From e2b3bb475eaff471d19f410eba5203e57adcdb5e Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Wed, 3 May 2023 17:31:05 +0100
-Subject: [PATCH 22/32] clocksource: only perform extended clocksource checks
+Subject: [PATCH 22/33] clocksource: only perform extended clocksource checks
  for AMD systems
 
 Signed-off-by: Colin Ian King <colin.king@intel.com>
@@ -1299,7 +1299,7 @@ Signed-off-by: Colin Ian King <colin.king@intel.com>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/clocksource/acpi_pm.c b/drivers/clocksource/acpi_pm.c
-index b4330a01a566..e41cd5c68855 100644
+index b4330a01a566b..e41cd5c688553 100644
 --- a/drivers/clocksource/acpi_pm.c
 +++ b/drivers/clocksource/acpi_pm.c
 @@ -208,13 +208,16 @@ static int verify_pmtmr_rate(void)
@@ -1328,7 +1328,7 @@ index b4330a01a566..e41cd5c68855 100644
 From 77432efd97531604f1febe3c60a6062112f19d37 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.king@intel.com>
 Date: Tue, 27 Jun 2023 14:12:27 +0100
-Subject: [PATCH 23/32] ACPI: align slab for improved memory performance
+Subject: [PATCH 23/33] ACPI: align slab for improved memory performance
 
 Enabling SLAB_HWCACHE_ALIGN for the ACPI object caches improves
 boot speed in the ACPICA core for object allocation and free'ing
@@ -1345,7 +1345,7 @@ Signed-off-by: Colin Ian King <colin.king@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/acpi/osl.c b/drivers/acpi/osl.c
-index 5ff343096ece..229c2c6e51ab 100644
+index 5ff343096ece0..229c2c6e51ab3 100644
 --- a/drivers/acpi/osl.c
 +++ b/drivers/acpi/osl.c
 @@ -1581,7 +1581,7 @@ void acpi_os_release_lock(acpi_spinlock lockp, acpi_cpu_flags not_used)
@@ -1364,7 +1364,7 @@ index 5ff343096ece..229c2c6e51ab 100644
 From 21ffe09784b01f8d4c5e87f6c47aa6a08fa176eb Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:11:19 +0800
-Subject: [PATCH 24/32] clear: sched/fair: Tweak idle balance calculation
+Subject: [PATCH 24/33] clear: sched/fair: Tweak idle balance calculation
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1372,7 +1372,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 0fb9bf995a47..d5676bd40d1a 100644
+index 0fb9bf995a479..d5676bd40d1af 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -12841,7 +12841,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
@@ -1391,7 +1391,7 @@ index 0fb9bf995a47..d5676bd40d1a 100644
 From 3ef74d07218608105b643e0134d2f70e4777f5ed Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:15:25 +0800
-Subject: [PATCH 25/32] clear: fs/binfmt_elf: Properly handle memory mapping
+Subject: [PATCH 25/33] clear: fs/binfmt_elf: Properly handle memory mapping
  for PIE binaries
 
 Place libraries right below the binary for PIE binaries, this helps code locality
@@ -1403,7 +1403,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 4c1ea6b52a53..41427a9147c1 100644
+index 4c1ea6b52a53d..41427a9147c11 100644
 --- a/fs/binfmt_elf.c
 +++ b/fs/binfmt_elf.c
 @@ -1293,6 +1293,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
@@ -1422,7 +1422,7 @@ index 4c1ea6b52a53..41427a9147c1 100644
 From 87ec43eacd1b0f0d0428b980a5e35347ba70c511 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@intel.com>
 Date: Wed, 24 Apr 2024 16:45:47 +0100
-Subject: [PATCH 26/32] net: sock: increase default number of _SK_MEM_PACKETS
+Subject: [PATCH 26/33] net: sock: increase default number of _SK_MEM_PACKETS
  to 1024
 
 scale these by a factor of 4 to improve socket performance
@@ -1433,7 +1433,7 @@ Signed-off-by: Colin Ian King <colin.i.king@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/net/sock.h b/include/net/sock.h
-index 694f954258d4..a39c3bf22feb 100644
+index 694f954258d43..a39c3bf22feb9 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
 @@ -2880,7 +2880,7 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
@@ -1452,7 +1452,7 @@ index 694f954258d4..a39c3bf22feb 100644
 From 6c79c4c38c010e328465b729d777ef623be41e1a Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:21:24 +0800
-Subject: [PATCH 27/32] clear: net/sock: Introduce 64KB reclaim threshold
+Subject: [PATCH 27/33] clear: net/sock: Introduce 64KB reclaim threshold
 
 Allows more efficient memory management by reclaiming only surplus memory beyond the threshold instead of
 always calling `sk_mem_reclaim`.
@@ -1463,7 +1463,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 8 insertions(+), 1 deletion(-)
 
 diff --git a/include/net/sock.h b/include/net/sock.h
-index a39c3bf22feb..658e7408584a 100644
+index a39c3bf22feb9..658e7408584ac 100644
 --- a/include/net/sock.h
 +++ b/include/net/sock.h
 @@ -1583,10 +1583,17 @@ static inline void sk_mem_charge(struct sock *sk, int size)
@@ -1492,7 +1492,7 @@ index a39c3bf22feb..658e7408584a 100644
 From b80553686466434b21b513f53200756d5b634782 Mon Sep 17 00:00:00 2001
 From: Eric Naim <dnaim@cachyos.org>
 Date: Sun, 20 Oct 2024 17:25:10 +0800
-Subject: [PATCH 28/32] clear: init/init_task: Tweak timer_slack value
+Subject: [PATCH 28/33] clear: init/init_task: Tweak timer_slack value
 
 Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
@@ -1500,7 +1500,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init/init_task.c b/init/init_task.c
-index e557f622bd90..ca1ef66774b3 100644
+index e557f622bd906..ca1ef66774b31 100644
 --- a/init/init_task.c
 +++ b/init/init_task.c
 @@ -140,7 +140,7 @@ struct task_struct init_task __aligned(L1_CACHE_BYTES) = {
@@ -1519,7 +1519,7 @@ index e557f622bd90..ca1ef66774b3 100644
 From cfcdce61ff5b4b5205b90d9e6977293a899cad3e Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sun, 28 Jul 2024 18:55:38 +0200
-Subject: [PATCH 29/32] cachy: move AMD_PRIVATE_COLOR to Kconfig
+Subject: [PATCH 29/33] cachy: move AMD_PRIVATE_COLOR to Kconfig
 
 Co-authored-by: PedroHLC <root@pedrohlc.com>
 Signed-off-by: Peter Jung <admin@ptr1337.dev>
@@ -1532,7 +1532,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  5 files changed, 14 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/gpu/drm/amd/display/Kconfig b/drivers/gpu/drm/amd/display/Kconfig
-index abd3b6564373..46937e6fa78d 100644
+index abd3b6564373a..46937e6fa78d4 100644
 --- a/drivers/gpu/drm/amd/display/Kconfig
 +++ b/drivers/gpu/drm/amd/display/Kconfig
 @@ -56,4 +56,10 @@ config DRM_AMD_SECURE_DISPLAY
@@ -1547,7 +1547,7 @@ index abd3b6564373..46937e6fa78d 100644
 +
  endmenu
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-index cc01b9c68b47..809a09ea7854 100644
+index cc01b9c68b479..809a09ea78547 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 @@ -4731,7 +4731,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
@@ -1560,7 +1560,7 @@ index cc01b9c68b47..809a09ea7854 100644
  		dc_state_release(state->context);
  		kfree(state);
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
-index ebabfe3a512f..4d3ebcaacca1 100644
+index ebabfe3a512f4..4d3ebcaacca1b 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
 @@ -97,7 +97,7 @@ static inline struct fixed31_32 amdgpu_dm_fixpt_from_s3132(__u64 x)
@@ -1573,7 +1573,7 @@ index ebabfe3a512f..4d3ebcaacca1 100644
   *
   * AMD driver supports pre-defined mathematical functions for transferring
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-index e8bdd7f0c460..b4aafe6103bc 100644
+index e8bdd7f0c4607..b4aafe6103bc4 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
 @@ -481,7 +481,7 @@ static int amdgpu_dm_crtc_late_register(struct drm_crtc *crtc)
@@ -1604,7 +1604,7 @@ index e8bdd7f0c460..b4aafe6103bc 100644
  #endif
  	return 0;
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
-index 3e0f45f1711c..f645cb7831a0 100644
+index 3e0f45f1711c1..f645cb7831a0a 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
 @@ -1601,7 +1601,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
@@ -1641,7 +1641,7 @@ index 3e0f45f1711c..f645cb7831a0 100644
 From 31a33a6f61859a4fd005104ee4a4345afae618d2 Mon Sep 17 00:00:00 2001
 From: Steven Barrett <steven@liquorix.net>
 Date: Fri, 15 Mar 2024 12:36:51 -0500
-Subject: [PATCH 30/32] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
+Subject: [PATCH 30/33] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
  with ignore_min_pcap
 
 ---
@@ -1652,7 +1652,7 @@ Subject: [PATCH 30/32] Cachy: drm/amdgpu/pm: Allow override of min_power_limit
  4 files changed, 26 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu.h b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
-index c3641331d4de..ce1072fe4921 100644
+index c3641331d4de7..ce1072fe49218 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 @@ -161,6 +161,7 @@ struct amdgpu_watchdog_timer {
@@ -1664,7 +1664,7 @@ index c3641331d4de..ce1072fe4921 100644
  extern int amdgpu_gart_size;
  extern int amdgpu_gtt_size;
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-index 72c807f5822e..6ef3fedc1233 100644
+index 72c807f5822e3..6ef3fedc12332 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 @@ -143,6 +143,7 @@ enum AMDGPU_DEBUG_MASK {
@@ -1692,7 +1692,7 @@ index 72c807f5822e..6ef3fedc1233 100644
   * DOC: vramlimit (int)
   * Restrict the total amount of VRAM in MiB for testing.  The default is 0 (Use full VRAM).
 diff --git a/drivers/gpu/drm/amd/pm/amdgpu_pm.c b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-index 922def51685b..da76611edb10 100644
+index 922def51685b0..da76611edb107 100644
 --- a/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 +++ b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 @@ -3055,6 +3055,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
@@ -1706,7 +1706,7 @@ index 922def51685b..da76611edb10 100644
  }
  
 diff --git a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-index 46cce1d2aaf3..e3adb7aea969 100644
+index 46cce1d2aaf35..e3adb7aea969d 100644
 --- a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 +++ b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 @@ -2854,7 +2854,10 @@ int smu_get_power_limit(void *handle,
@@ -1744,7 +1744,7 @@ index 46cce1d2aaf3..e3adb7aea969 100644
 From c9b4ad3d0d40ffa5cdf6615d3475c29197610f1d Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Wed, 5 Oct 2022 03:46:34 +0000
-Subject: [PATCH 31/32] XANMOD: rcu: Change sched_setscheduler_nocheck() calls
+Subject: [PATCH 31/33] XANMOD: rcu: Change sched_setscheduler_nocheck() calls
  to SCHED_RR policy
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -1758,7 +1758,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  6 files changed, 11 insertions(+), 11 deletions(-)
 
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 1a9c6212bff4..b71b77ab20fa 100644
+index 1a9c6212bff4a..b71b77ab20fa3 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
 @@ -5298,7 +5298,7 @@
@@ -1771,7 +1771,7 @@ index 1a9c6212bff4..b71b77ab20fa 100644
  			the priority of the RCU boost threads (rcub/N)
  			and for the RCU grace-period kthreads (rcu_bh,
 diff --git a/kernel/rcu/Kconfig b/kernel/rcu/Kconfig
-index 4d9b21f69eaa..67bc1753adc1 100644
+index 4d9b21f69eaae..67bc1753adc1e 100644
 --- a/kernel/rcu/Kconfig
 +++ b/kernel/rcu/Kconfig
 @@ -302,9 +302,9 @@ config RCU_NOCB_CPU_CB_BOOST
@@ -1787,7 +1787,7 @@ index 4d9b21f69eaa..67bc1753adc1 100644
  	  of milliseconds or more.  Therefore, when enabling this option,
  	  it is your responsibility to ensure that latency-sensitive
 diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index 4fa7772be183..b324e06f2ca5 100644
+index 4fa7772be1831..b324e06f2ca5b 100644
 --- a/kernel/rcu/rcutorture.c
 +++ b/kernel/rcu/rcutorture.c
 @@ -2633,7 +2633,7 @@ static int rcutorture_booster_init(unsigned int cpu)
@@ -1800,7 +1800,7 @@ index 4fa7772be183..b324e06f2ca5 100644
  		if (force_irqthreads()) {
  			t = per_cpu(ktimerd, cpu);
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 659f83e71048..64b426c7ab40 100644
+index 659f83e710486..64b426c7ab40f 100644
 --- a/kernel/rcu/tree.c
 +++ b/kernel/rcu/tree.c
 @@ -4141,7 +4141,7 @@ static void rcu_spawn_exp_par_gp_kworker(struct rcu_node *rnp)
@@ -1831,7 +1831,7 @@ index 659f83e71048..64b426c7ab40 100644
  	rnp = rcu_get_root();
  	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 diff --git a/kernel/rcu/tree_nocb.h b/kernel/rcu/tree_nocb.h
-index fa269d34167a..5724cbc6469b 100644
+index fa269d34167a9..5724cbc6469b9 100644
 --- a/kernel/rcu/tree_nocb.h
 +++ b/kernel/rcu/tree_nocb.h
 @@ -1404,7 +1404,7 @@ static void rcu_spawn_cpu_nocb_kthread(int cpu)
@@ -1853,7 +1853,7 @@ index fa269d34167a..5724cbc6469b 100644
  	WRITE_ONCE(rdp->nocb_cb_kthread, t);
  	WRITE_ONCE(rdp->nocb_gp_kthread, rdp_gp->nocb_gp_kthread);
 diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index 3c0bbbbb686f..5541ecdf8b67 100644
+index 3c0bbbbb686fe..5541ecdf8b670 100644
 --- a/kernel/rcu/tree_plugin.h
 +++ b/kernel/rcu/tree_plugin.h
 @@ -1033,7 +1033,7 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
@@ -1881,7 +1881,7 @@ index 3c0bbbbb686f..5541ecdf8b67 100644
 From 87663c08831c89292c5fce52f047339915acf127 Mon Sep 17 00:00:00 2001
 From: Alexandre Frade <kernel@xanmod.org>
 Date: Mon, 16 Sep 2024 15:36:01 +0000
-Subject: [PATCH 32/32] XANMOD: block: Set rq_affinity to force complete I/O
+Subject: [PATCH 32/33] XANMOD: block: Set rq_affinity to force complete I/O
  requests on same CPU
 
 Signed-off-by: Alexandre Frade <kernel@xanmod.org>
@@ -1890,7 +1890,7 @@ Signed-off-by: Alexandre Frade <kernel@xanmod.org>
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 9a1f0ee40b56..e0dc23a234ce 100644
+index 9a1f0ee40b566..e0dc23a234ce3 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
 @@ -647,7 +647,8 @@ enum {
@@ -1903,6 +1903,40 @@ index 9a1f0ee40b56..e0dc23a234ce 100644
  
  void blk_queue_flag_set(unsigned int flag, struct request_queue *q);
  void blk_queue_flag_clear(unsigned int flag, struct request_queue *q);
+-- 
+2.49.0
+
+
+From f890fa4aac45510dcc45827ad36083ef6cf6fa89 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@intel.com>
+Date: Thu, 22 May 2025 15:23:07 +0100
+Subject: [PATCH 33/33] memcg: increase MEMCG_CHARGE_BATCH to 128
+
+MEMCG_CHARGE_BATCH was last changed to 64 back in 2022, systems have
+grown in memory and speed and it's useful to increase this to 128.
+
+Benchmarking the stress-ng mmap stressor shows a performance improvement
+of ~7.4% and malloc stressor by 2.8%, tested on an Ultra 9 285K with
+turbo disabled to avoid test result jitter.
+
+Signed-off-by: Colin Ian King <colin.i.king@intel.com>
+---
+ include/linux/memcontrol.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/memcontrol.h b/include/linux/memcontrol.h
+index 53364526d8775..3163290c11e5f 100644
+--- a/include/linux/memcontrol.h
++++ b/include/linux/memcontrol.h
+@@ -316,7 +316,7 @@ struct mem_cgroup {
+  * TODO: maybe necessary to use big numbers in big irons or dynamic based of the
+  * workload.
+  */
+-#define MEMCG_CHARGE_BATCH 64U
++#define MEMCG_CHARGE_BATCH 128U
+ 
+ extern struct mem_cgroup *root_mem_cgroup;
+ 
 -- 
 2.49.0
 
