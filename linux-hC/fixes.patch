@@ -1,7 +1,7 @@
-From 4808de92d4f89974eaa1efd616e283c612aa5e27 Mon Sep 17 00:00:00 2001
+From 029daaebe0e9875efb872257ca68c49f82019f20 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/12] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/16] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -37,10 +37,10 @@ index b0adb665041f1..eea830cc90a77 100644
 2.49.0
 
 
-From 31642b0c4e7e318bcd815b66cb8c98ee8571aaa0 Mon Sep 17 00:00:00 2001
+From 2a80b791d124e4f7cdc5aaafb8ab6fefb861e23c Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/12] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/16] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,11 +72,11 @@ index 452374d63c244..08f80d7c5df05 100644
 2.49.0
 
 
-From ab3bbccee8fc78fd89398e625ab6670256807343 Mon Sep 17 00:00:00 2001
+From 7d0d096ce450065b30434e73bcb53b9919f6cb7e Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
-Date: Sat, 3 May 2025 11:10:12 +0530
-Subject: [PATCH 03/12] driver/base: Optimize memory block registration to
- reduce boot time
+Date: Wed, 28 May 2025 12:18:00 -0500
+Subject: [PATCH 03/16] drivers/base/node: Optimize memory block registration
+ to reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -134,19 +134,17 @@ In this patch, we iterate over `memblock region` to identify the
 are contiguous memory ranges, each associated with a single NUMA node, and
 they do not span across multiple nodes.
 
-for_each_online_node(nid):
-  for_each_memory_region(r): // r => region
-    if (r->nid != nid):
-      continue;
-    else
-      for_each_memory_block_between(r->base, r->base + r->size - 1):
-        do_register_memory_block_under_node(nid, mem_blk, MEMINIT_EARLY);
+for_each_memory_region(r): // r => region
+  if (!node_online(r->nid)):
+    continue;
+  else
+    for_each_memory_block_between(r->base, r->base + r->size - 1):
+      do_register_memory_block_under_node(r->nid, mem_blk, MEMINIT_EARLY);
 
-We iterate over all `memblock regions` and identify those that belong to
-the current NUMA node. For each `memblock region` associated with the
-current node, we calculate the start and end `memory blocks` based on the
-region's start and end PFNs. We then register all `memory blocks` within
-that range under the current node.
+We iterate over all memblock regions, and if the node associated with the
+region is online, we calculate the start and end memory blocks based on the
+region's start and end PFNs. We then register all the memory blocks within
+that range under the region node.
 
 Test Results on My system with 32TB RAM
 =======================================
@@ -171,28 +169,55 @@ With this patch
 Startup finished in 15.621s (kernel) - 46% Improvement
 
 Acked-by: David Hildenbrand <david@redhat.com>
+Acked-by: Oscar Salvador <osalvador@suse.de>
+Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
+Acked-by: Zi Yan <ziy@nvidia.com>
 Signed-off-by: Donet Tom <donettom@linux.ibm.com>
 ---
- drivers/base/memory.c  |  4 ++--
- drivers/base/node.c    | 38 ++++++++++++++++++++++++++++++++++++++
- include/linux/memory.h |  2 ++
- include/linux/node.h   | 11 +++++------
- 4 files changed, 47 insertions(+), 8 deletions(-)
+ drivers/base/memory.c  | 21 ++++-----------------
+ drivers/base/node.c    | 35 +++++++++++++++++++++++++++++++++--
+ include/linux/memory.h | 19 ++++++++++++++++++-
+ include/linux/node.h   |  3 +++
+ 4 files changed, 58 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index 19469e7f88c25..7f1d266ae593a 100644
+index 19469e7f88c25..39fcc075a36f2 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
-@@ -60,7 +60,7 @@ static inline unsigned long pfn_to_block_id(unsigned long pfn)
- 	return memory_block_id(pfn_to_section_nr(pfn));
- }
+@@ -22,6 +22,7 @@
+ #include <linux/stat.h>
+ #include <linux/slab.h>
+ #include <linux/xarray.h>
++#include <linux/export.h>
  
+ #include <linux/atomic.h>
+ #include <linux/uaccess.h>
+@@ -48,22 +49,8 @@ int mhp_online_type_from_str(const char *str)
+ 
+ #define to_memory_block(dev) container_of(dev, struct memory_block, dev)
+ 
+-static int sections_per_block;
+-
+-static inline unsigned long memory_block_id(unsigned long section_nr)
+-{
+-	return section_nr / sections_per_block;
+-}
+-
+-static inline unsigned long pfn_to_block_id(unsigned long pfn)
+-{
+-	return memory_block_id(pfn_to_section_nr(pfn));
+-}
+-
 -static inline unsigned long phys_to_block_id(unsigned long phys)
-+unsigned long phys_to_block_id(unsigned long phys)
- {
- 	return pfn_to_block_id(PFN_DOWN(phys));
- }
-@@ -632,7 +632,7 @@ int __weak arch_get_memory_phys_device(unsigned long start_pfn)
+-{
+-	return pfn_to_block_id(PFN_DOWN(phys));
+-}
++int sections_per_block;
++EXPORT_SYMBOL(sections_per_block);
+ 
+ static int memory_subsys_online(struct device *dev);
+ static int memory_subsys_offline(struct device *dev);
+@@ -632,7 +619,7 @@ int __weak arch_get_memory_phys_device(unsigned long start_pfn)
   *
   * Called under device_hotplug_lock.
   */
@@ -202,7 +227,7 @@ index 19469e7f88c25..7f1d266ae593a 100644
  	struct memory_block *mem;
  
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index cd13ef2870119..0f8a4645b26cc 100644
+index cd13ef2870119..a8e087d9b0aea 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -20,6 +20,7 @@
@@ -213,32 +238,23 @@ index cd13ef2870119..0f8a4645b26cc 100644
  
  static const struct bus_type node_subsys = {
  	.name = "node",
-@@ -850,6 +851,43 @@ void unregister_memory_block_under_nodes(struct memory_block *mem_blk)
+@@ -850,6 +851,34 @@ void unregister_memory_block_under_nodes(struct memory_block *mem_blk)
  			  kobject_name(&node_devices[mem_blk->nid]->dev.kobj));
  }
  
-+/*
-+ * register_memory_blocks_under_node_early : Register the memory
-+ *		  blocks under the current node.
-+ * @nid : Current node under registration
-+ *
-+ * This function iterates over all memblock regions and identifies the regions
-+ * that belong to the current node. For each region which belongs to current
-+ * node, it calculates the start and end memory blocks based on the region's
-+ * start and end PFNs. It then registers all memory blocks within that range
-+ * under the current node.
-+ */
-+void register_memory_blocks_under_node_early(int nid)
++/* register all memory blocks under the corresponding nodes */
++static void register_memory_blocks_under_nodes(void)
 +{
 +	struct memblock_region *r;
 +
 +	for_each_mem_region(r) {
-+		if (r->nid != nid)
-+			continue;
-+
 +		const unsigned long start_block_id = phys_to_block_id(r->base);
 +		const unsigned long end_block_id = phys_to_block_id(r->base + r->size - 1);
++		const int nid = memblock_get_region_node(r);
 +		unsigned long block_id;
++
++		if (!node_online(nid))
++			continue;
 +
 +		for (block_id = start_block_id; block_id <= end_block_id; block_id++) {
 +			struct memory_block *mem;
@@ -257,65 +273,85 @@ index cd13ef2870119..0f8a4645b26cc 100644
  void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
  				       unsigned long end_pfn,
  				       enum meminit_context context)
+@@ -971,11 +1000,13 @@ void __init node_dev_init(void)
+ 
+ 	/*
+ 	 * Create all node devices, which will properly link the node
+-	 * to applicable memory block devices and already created cpu devices.
++	 * to already created cpu devices.
+ 	 */
+ 	for_each_online_node(i) {
+-		ret = register_one_node(i);
++		ret =  __register_one_node(i);
+ 		if (ret)
+ 			panic("%s() failed to add node: %d\n", __func__, ret);
+ 	}
++
++	register_memory_blocks_under_nodes();
+ }
 diff --git a/include/linux/memory.h b/include/linux/memory.h
-index 12daa6ec7d09f..cb8579226536a 100644
+index 12daa6ec7d09f..2a61088e17ad0 100644
 --- a/include/linux/memory.h
 +++ b/include/linux/memory.h
-@@ -171,6 +171,8 @@ struct memory_group *memory_group_find_by_id(int mgid);
+@@ -171,12 +171,30 @@ struct memory_group *memory_group_find_by_id(int mgid);
  typedef int (*walk_memory_groups_func_t)(struct memory_group *, void *);
  int walk_dynamic_memory_groups(int nid, walk_memory_groups_func_t func,
  			       struct memory_group *excluded, void *arg);
-+unsigned long phys_to_block_id(unsigned long phys);
 +struct memory_block *find_memory_block_by_id(unsigned long block_id);
  #define hotplug_memory_notifier(fn, pri) ({		\
  	static __meminitdata struct notifier_block fn##_mem_nb =\
  		{ .notifier_call = fn, .priority = pri };\
+ 	register_memory_notifier(&fn##_mem_nb);			\
+ })
+ 
++extern int sections_per_block;
++
++static inline unsigned long memory_block_id(unsigned long section_nr)
++{
++	return section_nr / sections_per_block;
++}
++
++static inline unsigned long pfn_to_block_id(unsigned long pfn)
++{
++	return memory_block_id(pfn_to_section_nr(pfn));
++}
++
++static inline unsigned long phys_to_block_id(unsigned long phys)
++{
++	return pfn_to_block_id(PFN_DOWN(phys));
++}
++
+ #ifdef CONFIG_NUMA
+ void memory_block_add_nid(struct memory_block *mem, int nid,
+ 			  enum meminit_context context);
+@@ -188,5 +206,4 @@ void memory_block_add_nid(struct memory_block *mem, int nid,
+  * can sleep.
+  */
+ extern struct mutex text_mutex;
+-
+ #endif /* _LINUX_MEMORY_H_ */
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 2b75178922301..93beefe8f1793 100644
+index 2b75178922301..485370f3bc177 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
-@@ -114,12 +114,16 @@ extern struct node *node_devices[];
- void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
- 				       unsigned long end_pfn,
- 				       enum meminit_context context);
-+void register_memory_blocks_under_node_early(int nid);
- #else
- static inline void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
- 						     unsigned long end_pfn,
+@@ -120,6 +120,9 @@ static inline void register_memory_blocks_under_node(int nid, unsigned long star
  						     enum meminit_context context)
  {
  }
-+static inline void register_memory_blocks_under_node_early(int nid)
++static inline void register_memory_blocks_under_nodes(void)
 +{
 +}
  #endif
  
  extern void unregister_node(struct node *node);
-@@ -134,15 +138,10 @@ static inline int register_one_node(int nid)
- 	int error = 0;
- 
- 	if (node_online(nid)) {
--		struct pglist_data *pgdat = NODE_DATA(nid);
--		unsigned long start_pfn = pgdat->node_start_pfn;
--		unsigned long end_pfn = start_pfn + pgdat->node_spanned_pages;
--
- 		error = __register_one_node(nid);
- 		if (error)
- 			return error;
--		register_memory_blocks_under_node(nid, start_pfn, end_pfn,
--						  MEMINIT_EARLY);
-+		register_memory_blocks_under_node_early(nid);
- 	}
- 
- 	return error;
 -- 
 2.49.0
 
 
-From 16ab4da84a16d7fa78b475eb8c3b1d3ac1be012c Mon Sep 17 00:00:00 2001
+From 6678868f3e28b60b89226b7d11d45a33b426122c Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
-Date: Sat, 3 May 2025 11:10:13 +0530
-Subject: [PATCH 04/12] driver/base: remove
+Date: Wed, 28 May 2025 12:18:01 -0500
+Subject: [PATCH 04/16] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -325,14 +361,17 @@ registration during early boot.
 Removed register_mem_block_under_node_early() and get_nid_for_pfn(),
 the latter was only used by the former.
 
+Acked-by: Oscar Salvador <osalvador@suse.de>
+Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
 Acked-by: David Hildenbrand <david@redhat.com>
+Acked-by: Zi Yan <ziy@nvidia.com>
 Signed-off-by: Donet Tom <donettom@linux.ibm.com>
 ---
  drivers/base/node.c | 58 +--------------------------------------------
  1 file changed, 1 insertion(+), 57 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 0f8a4645b26cc..948392b477ea7 100644
+index a8e087d9b0aea..07709cb1d9d8a 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -748,15 +748,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
@@ -398,7 +437,7 @@ index 0f8a4645b26cc..948392b477ea7 100644
  /*
   * During hotplug we know that all pages in the memory block belong to the same
   * node.
-@@ -892,15 +843,8 @@ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
+@@ -883,15 +834,8 @@ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
  				       unsigned long end_pfn,
  				       enum meminit_context context)
  {
@@ -419,10 +458,68 @@ index 0f8a4645b26cc..948392b477ea7 100644
 2.49.0
 
 
-From be0b335b3fbc5e1e209cb7b59ebc2bf25a6bafa3 Mon Sep 17 00:00:00 2001
+From c94f8d3e23f1ea0edd769c852a1b994bd1134ab1 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
-Date: Sat, 3 May 2025 11:10:14 +0530
-Subject: [PATCH 05/12] drivers/base : Rename
+Date: Wed, 28 May 2025 12:18:02 -0500
+Subject: [PATCH 05/16] drivers/base/node: Remove
+ register_memory_blocks_under_node() function call from register_one_node
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+register_one_node() is now only called via cpu_up() → __try_online_node()
+during CPU hotplug operations to online a node.
+
+At this stage, the node has not yet had any memory added. As a result,
+there are no memory blocks to walk or register, so calling
+register_memory_blocks_under_node() is unnecessary.
+
+Therefore, the call to register_memory_blocks_under_node()
+has been removed from register_one_node().
+
+Acked-by: Oscar Salvador <osalvador@suse.de>
+Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
+Acked-by: David Hildenbrand <david@redhat.com>
+Signed-off-by: Donet Tom <donettom@linux.ibm.com>
+---
+ include/linux/node.h | 16 +---------------
+ 1 file changed, 1 insertion(+), 15 deletions(-)
+
+diff --git a/include/linux/node.h b/include/linux/node.h
+index 485370f3bc177..b15de78e04087 100644
+--- a/include/linux/node.h
++++ b/include/linux/node.h
+@@ -134,21 +134,7 @@ extern int __register_one_node(int nid);
+ /* Registers an online node */
+ static inline int register_one_node(int nid)
+ {
+-	int error = 0;
+-
+-	if (node_online(nid)) {
+-		struct pglist_data *pgdat = NODE_DATA(nid);
+-		unsigned long start_pfn = pgdat->node_start_pfn;
+-		unsigned long end_pfn = start_pfn + pgdat->node_spanned_pages;
+-
+-		error = __register_one_node(nid);
+-		if (error)
+-			return error;
+-		register_memory_blocks_under_node(nid, start_pfn, end_pfn,
+-						  MEMINIT_EARLY);
+-	}
+-
+-	return error;
++	return __register_one_node(nid);
+ }
+ 
+ extern void unregister_one_node(int nid);
+-- 
+2.49.0
+
+
+From 905cf274ef5a0a0dd91421e3f8936900734c6dd3 Mon Sep 17 00:00:00 2001
+From: Donet Tom <donettom@linux.ibm.com>
+Date: Wed, 28 May 2025 12:18:03 -0500
+Subject: [PATCH 06/16] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -435,6 +532,10 @@ Since the function is only called from the hotplug path, we renamed
 register_memory_blocks_under_node() to
 register_memory_blocks_under_node_hotplug()
 
+Acked-by: Oscar Salvador <osalvador@suse.de>
+Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
+Acked-by: David Hildenbrand <david@redhat.com>
+Acked-by: Zi Yan <ziy@nvidia.com>
 Signed-off-by: Donet Tom <donettom@linux.ibm.com>
 ---
  drivers/base/node.c  |  5 ++---
@@ -443,10 +544,10 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  3 files changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 948392b477ea7..206944c838492 100644
+index 07709cb1d9d8a..f4f70432c9dc9 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
-@@ -839,9 +839,8 @@ void register_memory_blocks_under_node_early(int nid)
+@@ -830,9 +830,8 @@ static void register_memory_blocks_under_nodes(void)
  	}
  }
  
@@ -459,10 +560,10 @@ index 948392b477ea7..206944c838492 100644
  	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
  			   (void *)&nid, register_mem_block_under_node_hotplug);
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 93beefe8f1793..ac233c302d1d5 100644
+index b15de78e04087..75b036a100d2c 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
-@@ -111,14 +111,13 @@ struct memory_block;
+@@ -111,13 +111,12 @@ struct memory_block;
  extern struct node *node_devices[];
  
  #if defined(CONFIG_MEMORY_HOTPLUG) && defined(CONFIG_NUMA)
@@ -471,7 +572,6 @@ index 93beefe8f1793..ac233c302d1d5 100644
 -				       enum meminit_context context);
 +void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
 +					       unsigned long end_pfn);
- void register_memory_blocks_under_node_early(int nid);
  #else
 -static inline void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
 -						     unsigned long end_pfn,
@@ -481,9 +581,9 @@ index 93beefe8f1793..ac233c302d1d5 100644
 +							     unsigned long end_pfn)
  {
  }
- static inline void register_memory_blocks_under_node_early(int nid)
+ static inline void register_memory_blocks_under_nodes(void)
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index 8305483de38bb..e3e83ae90c7cb 100644
+index 8305483de38bb..f734cc924b51b 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -494,7 +594,7 @@ index 8305483de38bb..e3e83ae90c7cb 100644
 -					  PFN_UP(start + size - 1),
 -					  MEMINIT_HOTPLUG);
 +	register_memory_blocks_under_node_hotplug(nid, PFN_DOWN(start),
-+						  PFN_UP(start + size - 1));
++					  PFN_UP(start + size - 1));
  
  	/* create new memmap entry */
  	if (!strcmp(res->name, "System RAM"))
@@ -502,54 +602,113 @@ index 8305483de38bb..e3e83ae90c7cb 100644
 2.49.0
 
 
-From 56136093f5a383f8f5e641d5b698da55aa091e9c Mon Sep 17 00:00:00 2001
-From: Colin Ian King <colin.i.king@gmail.com>
-Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 06/12] select: do_pollfd: add unlikely branch hint return path
+From 77c9cfecc681203586c0b12af540d7a9cd5f0307 Mon Sep 17 00:00:00 2001
+From: Donet Tom <donettom@linux.ibm.com>
+Date: Wed, 28 May 2025 12:18:04 -0500
+Subject: [PATCH 07/16] drivers/base/node: Rename __register_one_node() to
+ register_one_node()
 
-Adding an unlikely() hint on the fd < 0 comparison return path improves
-run-time performance of the poll() system call. gcov based coverage
-analysis based on running stress-ng and a kernel build shows that this
-path return path is highly unlikely.
+The register_one_node() function was a simple wrapper around
+__register_one_node(). To simplify the code, register_one_node()
+has been removed, and __register_one_node() has been renamed to
+register_one_node().
 
-Benchmarking on an Debian based Intel(R) Core(TM) Ultra 9 285K with
-a 6.15-rc1 kernel and a poll of 1024 file descriptors with zero timeout
-shows an call reduction from 32818 ns down to 32635 ns, which is a ~0.5%
-performance improvement.
-
-Results based on running 25 tests with turbo disabled (to reduce clock
-freq turbo changes), with 30 second run per test and comparing the number
-of poll() calls per second. The % standard deviation of the 25 tests
-was 0.08%, so results are reliable.
-
-Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
-Link: https://lore.kernel.org/20250409155510.577490-1-colin.i.king@gmail.com
-Signed-off-by: Christian Brauner <brauner@kernel.org>
+Acked-by: David Hildenbrand <david@redhat.com>
+Signed-off-by: Donet Tom <donettom@linux.ibm.com>
 ---
- fs/select.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/powerpc/platforms/pseries/pci_dlpar.c |  2 +-
+ drivers/base/node.c                        |  4 ++--
+ include/linux/node.h                       | 13 +------------
+ mm/memory_hotplug.c                        |  2 +-
+ 4 files changed, 5 insertions(+), 16 deletions(-)
 
-diff --git a/fs/select.c b/fs/select.c
-index 7da531b1cf6be..0eaf3522abe9a 100644
---- a/fs/select.c
-+++ b/fs/select.c
-@@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
- 	int fd = pollfd->fd;
- 	__poll_t mask, filter;
+diff --git a/arch/powerpc/platforms/pseries/pci_dlpar.c b/arch/powerpc/platforms/pseries/pci_dlpar.c
+index 52e2623a741de..aeb8633a3d00f 100644
+--- a/arch/powerpc/platforms/pseries/pci_dlpar.c
++++ b/arch/powerpc/platforms/pseries/pci_dlpar.c
+@@ -29,7 +29,7 @@ struct pci_controller *init_phb_dynamic(struct device_node *dn)
+ 	nid = of_node_to_nid(dn);
+ 	if (likely((nid) >= 0)) {
+ 		if (!node_online(nid)) {
+-			if (__register_one_node(nid)) {
++			if (register_one_node(nid)) {
+ 				pr_err("PCI: Failed to register node %d\n", nid);
+ 			} else {
+ 				update_numa_distance(dn);
+diff --git a/drivers/base/node.c b/drivers/base/node.c
+index f4f70432c9dc9..d724af8eeafff 100644
+--- a/drivers/base/node.c
++++ b/drivers/base/node.c
+@@ -839,7 +839,7 @@ void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
+ }
+ #endif /* CONFIG_MEMORY_HOTPLUG */
  
--	if (fd < 0)
-+	if (unlikely(fd < 0))
- 		return 0;
+-int __register_one_node(int nid)
++int register_one_node(int nid)
+ {
+ 	int error;
+ 	int cpu;
+@@ -946,7 +946,7 @@ void __init node_dev_init(void)
+ 	 * to already created cpu devices.
+ 	 */
+ 	for_each_online_node(i) {
+-		ret =  __register_one_node(i);
++		ret =  register_one_node(i);
+ 		if (ret)
+ 			panic("%s() failed to add node: %d\n", __func__, ret);
+ 	}
+diff --git a/include/linux/node.h b/include/linux/node.h
+index 75b036a100d2c..88bceebcbfa54 100644
+--- a/include/linux/node.h
++++ b/include/linux/node.h
+@@ -128,14 +128,7 @@ extern void unregister_node(struct node *node);
+ #ifdef CONFIG_NUMA
+ extern void node_dev_init(void);
+ /* Core of the node registration - only memory hotplug should use this */
+-extern int __register_one_node(int nid);
+-
+-/* Registers an online node */
+-static inline int register_one_node(int nid)
+-{
+-	return __register_one_node(nid);
+-}
+-
++extern int register_one_node(int nid);
+ extern void unregister_one_node(int nid);
+ extern int register_cpu_under_node(unsigned int cpu, unsigned int nid);
+ extern int unregister_cpu_under_node(unsigned int cpu, unsigned int nid);
+@@ -148,10 +141,6 @@ extern int register_memory_node_under_compute_node(unsigned int mem_nid,
+ static inline void node_dev_init(void)
+ {
+ }
+-static inline int __register_one_node(int nid)
+-{
+-	return 0;
+-}
+ static inline int register_one_node(int nid)
+ {
+ 	return 0;
+diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
+index f734cc924b51b..4dadd156f8362 100644
+--- a/mm/memory_hotplug.c
++++ b/mm/memory_hotplug.c
+@@ -1571,7 +1571,7 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
+ 		 * We online node here. We can't roll back from here.
+ 		 */
+ 		node_set_online(nid);
+-		ret = __register_one_node(nid);
++		ret = register_one_node(nid);
+ 		BUG_ON(ret);
+ 	}
  
- 	CLASS(fd, f)(fd);
 -- 
 2.49.0
 
 
-From c5d22e062b4393a7fe8d8aff3c0dd09f5d754d55 Mon Sep 17 00:00:00 2001
+From 661a1fbd689f5b5501bda84ddca835f5f000e29b Mon Sep 17 00:00:00 2001
 From: Pierre Gondois <pierre.gondois@arm.com>
 Date: Tue, 25 Mar 2025 16:05:41 +0100
-Subject: [PATCH 07/12] sched/fair: Allow decaying util_est when util_avg > CPU
+Subject: [PATCH 08/16] sched/fair: Allow decaying util_est when util_avg > CPU
  capa
 
 commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
@@ -620,10 +779,10 @@ index 0fb9bf995a479..a351a1b8bfe45 100644
 2.49.0
 
 
-From 97766775abdf7025613395d2751f606d71019c95 Mon Sep 17 00:00:00 2001
+From b14f42f4a03804180342ab384e33553b41c97450 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 28 Jan 2025 15:39:49 +0100
-Subject: [PATCH 08/12] sched/fair: Adhere to place_entity() constraints
+Subject: [PATCH 09/16] sched/fair: Adhere to place_entity() constraints
 
 Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
 placement bug causing scheduling lag") relies on commit 4423af84b297
@@ -688,10 +847,10 @@ index a351a1b8bfe45..e3f673643b7e3 100644
 2.49.0
 
 
-From ce38c45c90ed7af2d93b6ad92a9996bb518fef5c Mon Sep 17 00:00:00 2001
+From f7ea5b403b4137a627a56773245bb3fccf766f11 Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Tue, 29 Apr 2025 08:07:26 -0700
-Subject: [PATCH 09/12] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 10/16] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -749,10 +908,10 @@ index c81cf642dba05..b986cd2fb19b7 100644
 2.49.0
 
 
-From c1580e0f8ae7e02f08620b3dd4c9c31cadc651ad Mon Sep 17 00:00:00 2001
+From 1a06a43356380cf6e33c20f22ba093ea27161835 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Mon, 3 Mar 2025 18:52:39 +0800
-Subject: [PATCH 10/12] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
+Subject: [PATCH 11/16] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
 Delayed dequeued feature keeps a sleeping task enqueued until its
 lag has elapsed. As a result, it stays also visible in rq->nr_running.
@@ -806,10 +965,10 @@ index e3f673643b7e3..305b0a5a58649 100644
 2.49.0
 
 
-From e7a257052a2772de8cd874ef2b8f185fcaa230be Mon Sep 17 00:00:00 2001
+From c01ae3138c7392d57645ff3b9c974293b03177b4 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:56 +0800
-Subject: [PATCH 11/12] sched/util_est: Simplify condition for
+Subject: [PATCH 12/16] sched/util_est: Simplify condition for
  util_est_{en,de}queue()
 
 To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
@@ -874,10 +1033,10 @@ index 305b0a5a58649..b647c19f253ef 100644
 2.49.0
 
 
-From a17678251771311e064d7861b278f46468f5cc8f Mon Sep 17 00:00:00 2001
+From 705cb0e70cc118fa70061780d8ce1d867a0cb0b4 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:57 +0800
-Subject: [PATCH 12/12] sched/uclamp: Align uclamp and util_est and call before
+Subject: [PATCH 13/16] sched/uclamp: Align uclamp and util_est and call before
  freq update
 
 The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
@@ -958,6 +1117,134 @@ index b986cd2fb19b7..a87be58d07095 100644
  
  	psi_enqueue(p, flags);
  
+-- 
+2.49.0
+
+
+From 5c9e50358a73b2b2c19c4eca2f31ed276134dcf6 Mon Sep 17 00:00:00 2001
+From: Di Shen <di.shen@unisoc.com>
+Date: Tue, 20 May 2025 13:49:43 +0800
+Subject: [PATCH 14/16] Revert "bpf: remove unnecessary
+ rcu_read_{lock,unlock}() in multi-uprobe attach logic"
+
+This reverts commit 4a8f635a60540888dab3804992e86410360339c8.
+
+Althought get_pid_task() internally already calls rcu_read_lock() and
+rcu_read_unlock(), the find_vpid() was not.
+
+The documentation for find_vpid() clearly states:
+
+  "Must be called with the tasklist_lock or rcu_read_lock() held."
+
+Add proper rcu_read_lock/unlock() to protect the find_vpid().
+
+Reported-by: Xuewen Yan <xuewen.yan@unisoc.com>
+Signed-off-by: Di Shen <di.shen@unisoc.com>
+Acked-by: Andrii Nakryiko <andrii@kernel.org>
+---
+ kernel/trace/bpf_trace.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
+index 187dc37d61d4a..0c4b6af106017 100644
+--- a/kernel/trace/bpf_trace.c
++++ b/kernel/trace/bpf_trace.c
+@@ -3417,7 +3417,9 @@ int bpf_uprobe_multi_link_attach(const union bpf_attr *attr, struct bpf_prog *pr
+ 	}
+ 
+ 	if (pid) {
++		rcu_read_lock();
+ 		task = get_pid_task(find_vpid(pid), PIDTYPE_TGID);
++		rcu_read_unlock();
+ 		if (!task) {
+ 			err = -ESRCH;
+ 			goto error_path_put;
+-- 
+2.49.0
+
+
+From 921150855524369667132be69eef34e631215556 Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Wed, 9 Apr 2025 16:55:10 +0100
+Subject: [PATCH 15/16] select: do_pollfd: add unlikely branch hint return path
+
+Adding an unlikely() hint on the fd < 0 comparison return path improves
+run-time performance of the poll() system call. gcov based coverage
+analysis based on running stress-ng and a kernel build shows that this
+path return path is highly unlikely.
+
+Benchmarking on an Debian based Intel(R) Core(TM) Ultra 9 285K with
+a 6.15-rc1 kernel and a poll of 1024 file descriptors with zero timeout
+shows an call reduction from 32818 ns down to 32635 ns, which is a ~0.5%
+performance improvement.
+
+Results based on running 25 tests with turbo disabled (to reduce clock
+freq turbo changes), with 30 second run per test and comparing the number
+of poll() calls per second. The % standard deviation of the 25 tests
+was 0.08%, so results are reliable.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+Link: https://lore.kernel.org/20250409155510.577490-1-colin.i.king@gmail.com
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/select.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/select.c b/fs/select.c
+index 7da531b1cf6be..0eaf3522abe9a 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
+ 	int fd = pollfd->fd;
+ 	__poll_t mask, filter;
+ 
+-	if (fd < 0)
++	if (unlikely(fd < 0))
+ 		return 0;
+ 
+ 	CLASS(fd, f)(fd);
+-- 
+2.49.0
+
+
+From d3c47f742ab8dc1cc5d539f936cf9785eb12b84e Mon Sep 17 00:00:00 2001
+From: Colin Ian King <colin.i.king@gmail.com>
+Date: Mon, 14 Apr 2025 09:45:43 +0100
+Subject: [PATCH 16/16] select: core_sys_select add unlikely branch hint on
+ return path
+
+Adding an unlikely() hint on the n < 0 comparison return path improves
+run-time performance of the select() system call, the negative
+value of n is very uncommon in normal select usage.
+
+Benchmarking on an Debian based Intel(R) Core(TM) Ultra 9 285K with
+a 6.15-rc1 kernel built with 14.2.0 using a select of 1000 file
+descriptors with zero timeout shows a consistent call reduction from
+258 ns down to 254 ns, which is a ~1.5% performance improvement.
+
+Results based on running 25 tests with turbo disabled (to reduce clock
+freq turbo changes), with 30 second run per test and comparing the number
+of select() calls per second. The % standard deviation of the 25 tests
+was 0.24%, so results are reliable.
+
+Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
+---
+ fs/select.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/select.c b/fs/select.c
+index 0eaf3522abe9a..9fb650d03d52e 100644
+--- a/fs/select.c
++++ b/fs/select.c
+@@ -630,7 +630,7 @@ int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
+ 	long stack_fds[SELECT_STACK_ALLOC/sizeof(long)];
+ 
+ 	ret = -EINVAL;
+-	if (n < 0)
++	if (unlikely(n < 0))
+ 		goto out_nofds;
+ 
+ 	/* max_fds can increase, so grab it once to avoid race */
 -- 
 2.49.0
 
