@@ -19,8 +19,6 @@ I modified it slightly for my personal use and I use patches from ZEN/Cachy/Clea
 - Default built with Clang 21 and thinLTO
 - Default built with a custom set of Compiler Optimization Flags
 - AMD P-State Preferred Core / amd-pstate Enhancements and Fixes
-- Patches to improve performance of CRC32 and AES128 crypto
-- Latest & improved ZSTD 1.5.7 patch-set
 - Memory management tweaks from zen-kernel (compaction, watermark)
 - Cherry-picked fixes and patches from Clear-linux, ZEN, CachyOS and pf-kernel
 - le9uo working set protection: [Repository](https://github.com/firelzrd/le9uo)
