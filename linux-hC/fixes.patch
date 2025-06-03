@@ -1,7 +1,7 @@
 From 029daaebe0e9875efb872257ca68c49f82019f20 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/39] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/49] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -40,7 +40,7 @@ index b0adb665041f..eea830cc90a7 100644
 From 2a80b791d124e4f7cdc5aaafb8ab6fefb861e23c Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/39] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/49] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -75,7 +75,7 @@ index 452374d63c24..08f80d7c5df0 100644
 From 7d0d096ce450065b30434e73bcb53b9919f6cb7e Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 03/39] drivers/base/node: Optimize memory block registration
+Subject: [PATCH 03/49] drivers/base/node: Optimize memory block registration
  to reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -351,7 +351,7 @@ index 2b7517892230..485370f3bc17 100644
 From 6678868f3e28b60b89226b7d11d45a33b426122c Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 04/39] drivers/base/node: remove
+Subject: [PATCH 04/49] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -461,7 +461,7 @@ index a8e087d9b0ae..07709cb1d9d8 100644
 From c94f8d3e23f1ea0edd769c852a1b994bd1134ab1 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 05/39] drivers/base/node: Remove
+Subject: [PATCH 05/49] drivers/base/node: Remove
  register_memory_blocks_under_node() function call from register_one_node
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -519,7 +519,7 @@ index 485370f3bc17..b15de78e0408 100644
 From 905cf274ef5a0a0dd91421e3f8936900734c6dd3 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 06/39] drivers/base/node: Rename
+Subject: [PATCH 06/49] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -605,7 +605,7 @@ index 8305483de38b..f734cc924b51 100644
 From 77c9cfecc681203586c0b12af540d7a9cd5f0307 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 07/39] drivers/base/node: Rename __register_one_node() to
+Subject: [PATCH 07/49] drivers/base/node: Rename __register_one_node() to
  register_one_node()
 
 The register_one_node() function was a simple wrapper around
@@ -708,7 +708,7 @@ index f734cc924b51..4dadd156f836 100644
 From 661a1fbd689f5b5501bda84ddca835f5f000e29b Mon Sep 17 00:00:00 2001
 From: Pierre Gondois <pierre.gondois@arm.com>
 Date: Tue, 25 Mar 2025 16:05:41 +0100
-Subject: [PATCH 08/39] sched/fair: Allow decaying util_est when util_avg > CPU
+Subject: [PATCH 08/49] sched/fair: Allow decaying util_est when util_avg > CPU
  capa
 
 commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
@@ -782,7 +782,7 @@ index 0fb9bf995a47..a351a1b8bfe4 100644
 From b14f42f4a03804180342ab384e33553b41c97450 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 28 Jan 2025 15:39:49 +0100
-Subject: [PATCH 09/39] sched/fair: Adhere to place_entity() constraints
+Subject: [PATCH 09/49] sched/fair: Adhere to place_entity() constraints
 
 Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
 placement bug causing scheduling lag") relies on commit 4423af84b297
@@ -850,7 +850,7 @@ index a351a1b8bfe4..e3f673643b7e 100644
 From f7ea5b403b4137a627a56773245bb3fccf766f11 Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Tue, 29 Apr 2025 08:07:26 -0700
-Subject: [PATCH 10/39] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 10/49] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -911,7 +911,7 @@ index c81cf642dba0..b986cd2fb19b 100644
 From 1a06a43356380cf6e33c20f22ba093ea27161835 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Mon, 3 Mar 2025 18:52:39 +0800
-Subject: [PATCH 11/39] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
+Subject: [PATCH 11/49] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
 Delayed dequeued feature keeps a sleeping task enqueued until its
 lag has elapsed. As a result, it stays also visible in rq->nr_running.
@@ -968,7 +968,7 @@ index e3f673643b7e..305b0a5a5864 100644
 From c01ae3138c7392d57645ff3b9c974293b03177b4 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:56 +0800
-Subject: [PATCH 12/39] sched/util_est: Simplify condition for
+Subject: [PATCH 12/49] sched/util_est: Simplify condition for
  util_est_{en,de}queue()
 
 To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
@@ -1036,7 +1036,7 @@ index 305b0a5a5864..b647c19f253e 100644
 From 705cb0e70cc118fa70061780d8ce1d867a0cb0b4 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:57 +0800
-Subject: [PATCH 13/39] sched/uclamp: Align uclamp and util_est and call before
+Subject: [PATCH 13/49] sched/uclamp: Align uclamp and util_est and call before
  freq update
 
 The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
@@ -1124,7 +1124,7 @@ index b986cd2fb19b..a87be58d0709 100644
 From 5c9e50358a73b2b2c19c4eca2f31ed276134dcf6 Mon Sep 17 00:00:00 2001
 From: Di Shen <di.shen@unisoc.com>
 Date: Tue, 20 May 2025 13:49:43 +0800
-Subject: [PATCH 14/39] Revert "bpf: remove unnecessary
+Subject: [PATCH 14/49] Revert "bpf: remove unnecessary
  rcu_read_{lock,unlock}() in multi-uprobe attach logic"
 
 This reverts commit 4a8f635a60540888dab3804992e86410360339c8.
@@ -1166,7 +1166,7 @@ index 187dc37d61d4..0c4b6af10601 100644
 From 921150855524369667132be69eef34e631215556 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 15/39] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 15/49] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -1210,7 +1210,7 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 From d3c47f742ab8dc1cc5d539f936cf9785eb12b84e Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Mon, 14 Apr 2025 09:45:43 +0100
-Subject: [PATCH 16/39] select: core_sys_select add unlikely branch hint on
+Subject: [PATCH 16/49] select: core_sys_select add unlikely branch hint on
  return path
 
 Adding an unlikely() hint on the n < 0 comparison return path improves
@@ -1252,7 +1252,7 @@ index 0eaf3522abe9..9fb650d03d52 100644
 From 6636f0435ca8f4dff1cd7b9101d02ec2e41c31a0 Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:35:51 -0700
-Subject: [PATCH 17/39] Make 'cc-option' work correctly for the -Wno-xyzzy
+Subject: [PATCH 17/49] Make 'cc-option' work correctly for the -Wno-xyzzy
  pattern
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1317,7 +1317,7 @@ index f4fcc1eaaeae..65cfa72e376b 100644
 From cfc0b163bcbc0d11e516f695b77c5df37c70ef01 Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:40:30 -0700
-Subject: [PATCH 18/39] Remove legacy 'cc-disable-warning' use from the generic
+Subject: [PATCH 18/49] Remove legacy 'cc-disable-warning' use from the generic
  build scripts
 
 This just converts the 'cc-disable-warning' uses in the generic makefile
@@ -1432,7 +1432,7 @@ index fd649c68e198..540f3db5cd86 100644
 From 555f475a5d37d79f6aeef0b82bc26f37537be9c7 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:51 -0400
-Subject: [PATCH 19/39] btrfs: exit after state insertion failure at
+Subject: [PATCH 19/49] btrfs: exit after state insertion failure at
  btrfs_convert_extent_bit()
 
 [ Upstream commit 3bf179e36da917c5d9bec71c714573ed1649b7c1 ]
@@ -1474,7 +1474,7 @@ index 13de6af279e5..92cfde37b1d3 100644
 From 26a9aeb901f909d407acf8fc0a985b1ea89b3541 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 28 May 2025 17:55:52 -0400
-Subject: [PATCH 20/39] fs/filesystems: Fix potential unsigned integer
+Subject: [PATCH 20/49] fs/filesystems: Fix potential unsigned integer
  underflow in fs_name()
 
 [ Upstream commit 1363c134ade81e425873b410566e957fecebb261 ]
@@ -1529,7 +1529,7 @@ index 58b9067b2391..95e5256821a5 100644
 From 22f02edcf3ea18ce05d8e9562da8f16c037e2e80 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:53 -0400
-Subject: [PATCH 21/39] btrfs: fix fsync of files with no hard links not
+Subject: [PATCH 21/49] btrfs: fix fsync of files with no hard links not
  persisting deletion
 
 [ Upstream commit 5e85262e542d6da8898bb8563a724ad98f6fc936 ]
@@ -1677,7 +1677,7 @@ index 90dc094cfa5e..f5af11565b87 100644
 From c6eee6afab6b7eb1162a28d2aceac95799052fed Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Wed, 28 May 2025 17:55:54 -0400
-Subject: [PATCH 22/39] gfs2: pass through holder from the VFS for freeze/thaw
+Subject: [PATCH 22/49] gfs2: pass through holder from the VFS for freeze/thaw
 
 [ Upstream commit 62a2175ddf7e72941868f164b7c1f92e00f213bd ]
 
@@ -1773,7 +1773,7 @@ index 44e5658b896c..a3fe95e519cb 100644
 From 748a3d6ecb4c3d076161773d4413e8576eba7278 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:55 -0400
-Subject: [PATCH 23/39] btrfs: exit after state split error at set_extent_bit()
+Subject: [PATCH 23/49] btrfs: exit after state split error at set_extent_bit()
 
 [ Upstream commit 41d69d4d78d8b179bf3bcdfc56d28a12b3a608d2 ]
 
@@ -1819,7 +1819,7 @@ index 92cfde37b1d3..b5b44ea91f99 100644
 From 3d5b7c4bd8ee15659283442da1c99738bb48e17e Mon Sep 17 00:00:00 2001
 From: Daniel Wagner <wagi@kernel.org>
 Date: Wed, 28 May 2025 17:55:56 -0400
-Subject: [PATCH 24/39] nvmet-fcloop: access fcpreq only when holding reqlock
+Subject: [PATCH 24/49] nvmet-fcloop: access fcpreq only when holding reqlock
 
 [ Upstream commit 47a827cd7929d0550c3496d70b417fcb5649b27b ]
 
@@ -1914,7 +1914,7 @@ index 641201e62c1b..20becea1ad96 100644
 From 38e0e3596623692a87ab3d24b8961193a2274b6c Mon Sep 17 00:00:00 2001
 From: Pavel Begunkov <asml.silence@gmail.com>
 Date: Wed, 28 May 2025 17:55:57 -0400
-Subject: [PATCH 25/39] io_uring: fix spurious drain flushing
+Subject: [PATCH 25/49] io_uring: fix spurious drain flushing
 
 [ Upstream commit fde04c7e2775feb0746301e0ef86a04d3598c3fe ]
 
@@ -1980,7 +1980,7 @@ index edda31a15c6e..9266d4f2016a 100644
 From 4f498715047739af528b5cd8241050cca69c79de Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Wed, 28 May 2025 17:55:58 -0400
-Subject: [PATCH 26/39] perf: Ensure bpf_perf_link path is properly serialized
+Subject: [PATCH 26/49] perf: Ensure bpf_perf_link path is properly serialized
 
 [ Upstream commit 7ed9138a72829d2035ecbd8dbd35b1bc3c137c40 ]
 
@@ -2077,7 +2077,7 @@ index 95e703891b24..eaa9588eb968 100644
 From 54bfd215385038069f8e2dc325ea36c8b00841e5 Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 28 May 2025 17:55:59 -0400
-Subject: [PATCH 27/39] block: use q->elevator with ->elevator_lock held in
+Subject: [PATCH 27/49] block: use q->elevator with ->elevator_lock held in
  elv_iosched_show()
 
 [ Upstream commit 94209d27d14104ed828ca88cd5403a99162fe51a ]
@@ -2125,7 +2125,7 @@ index b4d08026b02c..dc4cadef728e 100644
 From a656e02f20587f50b82a62d48e8a0d7a820a0247 Mon Sep 17 00:00:00 2001
 From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
 Date: Thu, 29 May 2025 15:40:43 +0200
-Subject: [PATCH 28/39] Revert "x86/smp: Eliminate
+Subject: [PATCH 28/49] Revert "x86/smp: Eliminate
  mwait_play_dead_cpuid_hint()"
 
 Revert commit 96040f7273e2 ("x86/smp: Eliminate mwait_play_dead_cpuid_hint()")
@@ -2250,7 +2250,7 @@ index d6cf1e23c2a3..96355ab9aed9 100644
 From 24f8c243b08fe573d139b4cc69b6669345cfc803 Mon Sep 17 00:00:00 2001
 From: "Gautham R. Shenoy" <gautham.shenoy@amd.com>
 Date: Thu, 29 May 2025 14:21:43 +0530
-Subject: [PATCH 29/39] acpi-cpufreq: Fix nominal_freq units to KHz in
+Subject: [PATCH 29/49] acpi-cpufreq: Fix nominal_freq units to KHz in
  get_max_boost_ratio()
 
 commit 083466754596 ("cpufreq: ACPI: Fix max-frequency computation")
@@ -2297,7 +2297,7 @@ index d26b610e4f24..76768fe213a9 100644
 From d53ac68ad10f14179d036c656ea1f0946c0529b5 Mon Sep 17 00:00:00 2001
 From: Jinliang Zheng <alexjlzheng@tencent.com>
 Date: Tue, 15 Apr 2025 17:02:32 +0800
-Subject: [PATCH 30/39] mm: fix ratelimit_pages update error in
+Subject: [PATCH 30/49] mm: fix ratelimit_pages update error in
  dirty_ratio_handler()
 
 In dirty_ratio_handler(), vm_dirty_bytes must be set to zero before
@@ -2374,7 +2374,7 @@ index c81624bc3969..20e1d76f1eba 100644
 From 09043302859eb3b890452a20e6313e5bb61fc677 Mon Sep 17 00:00:00 2001
 From: GONG Ruiqi <gongruiqi1@huawei.com>
 Date: Sun, 27 Apr 2025 10:53:03 +0800
-Subject: [PATCH 31/39] vgacon: Add check for vc_origin address range in
+Subject: [PATCH 31/49] vgacon: Add check for vc_origin address range in
  vgacon_scroll()
 
 Our in-house Syzkaller reported the following BUG (twice), which we
@@ -2560,7 +2560,7 @@ index 37bd18730fe0..f9cdbf8c53e3 100644
 From 1c1c177040411033777c44bf2ce876d7cde4422f Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:06 +0300
-Subject: [PATCH 32/39] fbdev: Fix do_register_framebuffer to prevent
+Subject: [PATCH 32/49] fbdev: Fix do_register_framebuffer to prevent
  null-ptr-deref in fb_videomode_to_var
 
 If fb_add_videomode() in do_register_framebuffer() fails to allocate
@@ -2668,7 +2668,7 @@ index 3c568cff2913..e1557d80768f 100644
 From 35b18af520d0823849b6e5a8e240a55c36ff0f91 Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:07 +0300
-Subject: [PATCH 33/39] fbdev: Fix fb_set_var to prevent null-ptr-deref in
+Subject: [PATCH 33/49] fbdev: Fix fb_set_var to prevent null-ptr-deref in
  fb_videomode_to_var
 
 If fb_add_videomode() in fb_set_var() fails to allocate memory for
@@ -2739,7 +2739,7 @@ index e1557d80768f..eca2498f2436 100644
 From 0d0e02e543747e1b6b1cee9d2ab393d3cf376d56 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:15 +0200
-Subject: [PATCH 34/39] anon_inode: use a proper mode internally
+Subject: [PATCH 34/49] anon_inode: use a proper mode internally
 
 This allows the VFS to not trip over anonymous inodes and we can add
 asserts based on the mode into the vfs. When we report it to userspace
@@ -2861,7 +2861,7 @@ index 6393d7c49ee6..e1146620346e 100644
 From 62ae437d9f1ca6424ff7b89563adf7f7e21eede5 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:17 +0200
-Subject: [PATCH 35/39] anon_inode: explicitly block ->setattr()
+Subject: [PATCH 35/49] anon_inode: explicitly block ->setattr()
 
 It is currently possible to change the mode and owner of the single
 anonymous inode in the kernel:
@@ -2949,7 +2949,7 @@ index 717dc9eb6185..f545400ce607 100644
 From feb1932afd923cf9908d6284f6e502f3bd5b348c Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:19 +0200
-Subject: [PATCH 36/39] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
+Subject: [PATCH 36/49] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
 
 It isn't possible to execute anonymous inodes because they cannot be
 opened in any way after they have been created. This includes execution:
@@ -2994,7 +2994,7 @@ index cb51a90bece0..e51e7d88980a 100644
 From 178f424070c3548b5bc9e0dbdb2daca510e7b812 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 21 Apr 2025 10:27:40 +0200
-Subject: [PATCH 37/39] fs: add S_ANON_INODE
+Subject: [PATCH 37/49] fs: add S_ANON_INODE
 
 This makes it easy to detect proper anonymous inodes and to ensure that
 we can detect them in codepaths such as readahead().
@@ -3144,7 +3144,7 @@ index 6a4e96b69702..20d36d6b055e 100644
 From c92a1957c401ab6c7e81c8b2e6f58d0b92a10226 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 7 May 2025 19:50:26 +0800
-Subject: [PATCH 38/39] configfs: Do not override creating attribute file
+Subject: [PATCH 38/49] configfs: Do not override creating attribute file
  failure in populate_attrs()
 
 populate_attrs() may override failure for creating attribute files
@@ -3185,7 +3185,7 @@ index 5568cb74b322..f43be44bff62 100644
 From e797cd228ae2f81f12ae53f9004b044af2ff6e1e Mon Sep 17 00:00:00 2001
 From: Al Viro <viro@zeniv.linux.org.uk>
 Date: Fri, 23 May 2025 19:20:36 -0400
-Subject: [PATCH 39/39] Don't propagate mounts into detached trees
+Subject: [PATCH 39/49] Don't propagate mounts into detached trees
 
 All versions up to 6.14 did not propagate mount events into detached
 tree.  Shortly after 6.14 a merge of vfs-6.15-rc1.mount.namespace
@@ -3292,6 +3292,844 @@ index fb77427df39e..ffd429b760d5 100644
  		return 0;
  
  	if (peers(m, last_dest)) {
+-- 
+2.49.0
+
+
+From 8fe94fb370865eade1541ac5dcb2d8eaedf1bc12 Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Mon, 14 Apr 2025 15:55:05 +0200
+Subject: [PATCH 40/49] pidfs: move O_RDWR into pidfs_alloc_file()
+
+Since all pidfds must be O_RDWR currently enfore that directly in the
+file allocation function itself instead of letting callers specify it.
+
+Link: https://lore.kernel.org/20250414-work-coredump-v2-1-685bf231f828@kernel.org
+Tested-by: Luca Boccassi <luca.boccassi@gmail.com>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/pidfs.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/fs/pidfs.c b/fs/pidfs.c
+index 0ab9523f6778..860a8043d052 100644
+--- a/fs/pidfs.c
++++ b/fs/pidfs.c
+@@ -888,6 +888,7 @@ struct file *pidfs_alloc_file(struct pid *pid, unsigned int flags)
+ 		return ERR_PTR(-ESRCH);
+ 
+ 	flags &= ~PIDFD_CLONE;
++	flags |= O_RDWR;
+ 	pidfd_file = dentry_open(&path, flags, current_cred());
+ 	/* Raise PIDFD_THREAD explicitly as do_dentry_open() strips it. */
+ 	if (!IS_ERR(pidfd_file))
+-- 
+2.49.0
+
+
+From 399897cc00b3cfc92c2d025e8bee7be0ac39f50a Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Mon, 14 Apr 2025 15:55:06 +0200
+Subject: [PATCH 41/49] coredump: fix error handling for replace_fd()
+
+The replace_fd() helper returns the file descriptor number on success
+and a negative error code on failure. The current error handling in
+umh_pipe_setup() only works because the file descriptor that is replaced
+is zero but that's pretty volatile. Explicitly check for a negative
+error code.
+
+Link: https://lore.kernel.org/20250414-work-coredump-v2-2-685bf231f828@kernel.org
+Tested-by: Luca Boccassi <luca.boccassi@gmail.com>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/coredump.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/fs/coredump.c b/fs/coredump.c
+index c33c177a701b..9da592aa8f16 100644
+--- a/fs/coredump.c
++++ b/fs/coredump.c
+@@ -507,7 +507,9 @@ static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
+ {
+ 	struct file *files[2];
+ 	struct coredump_params *cp = (struct coredump_params *)info->data;
+-	int err = create_pipe_files(files, 0);
++	int err;
++
++	err = create_pipe_files(files, 0);
+ 	if (err)
+ 		return err;
+ 
+@@ -515,10 +517,13 @@ static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
+ 
+ 	err = replace_fd(0, files[0], 0);
+ 	fput(files[0]);
++	if (err < 0)
++		return err;
++
+ 	/* and disallow core files too */
+ 	current->signal->rlim[RLIMIT_CORE] = (struct rlimit){1, 1};
+ 
+-	return err;
++	return 0;
+ }
+ 
+ void do_coredump(const kernel_siginfo_t *siginfo)
+-- 
+2.49.0
+
+
+From e2e45ec31fdfce215707ef6edda9a907f8469ecd Mon Sep 17 00:00:00 2001
+From: Christian Brauner <brauner@kernel.org>
+Date: Mon, 14 Apr 2025 15:55:07 +0200
+Subject: [PATCH 42/49] coredump: hand a pidfd to the usermode coredump helper
+
+Give userspace a way to instruct the kernel to install a pidfd into the
+usermode helper process. This makes coredump handling a lot more
+reliable for userspace. In parallel with this commit we already have
+systemd adding support for this in [1].
+
+We create a pidfs file for the coredumping process when we process the
+corename pattern. When the usermode helper process is forked we then
+install the pidfs file as file descriptor three into the usermode
+helpers file descriptor table so it's available to the exec'd program.
+
+Since usermode helpers are either children of the system_unbound_wq
+workqueue or kthreadd we know that the file descriptor table is empty
+and can thus always use three as the file descriptor number.
+
+Note, that we'll install a pidfd for the thread-group leader even if a
+subthread is calling do_coredump(). We know that task linkage hasn't
+been removed due to delay_group_leader() and even if this @current isn't
+the actual thread-group leader we know that the thread-group leader
+cannot be reaped until @current has exited.
+
+Link: https://github.com/systemd/systemd/pull/37125 [1]
+Link: https://lore.kernel.org/20250414-work-coredump-v2-3-685bf231f828@kernel.org
+Tested-by: Luca Boccassi <luca.boccassi@gmail.com>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ fs/coredump.c            | 56 +++++++++++++++++++++++++++++++++++++---
+ include/linux/coredump.h |  1 +
+ 2 files changed, 53 insertions(+), 4 deletions(-)
+
+diff --git a/fs/coredump.c b/fs/coredump.c
+index 9da592aa8f16..d740a0411266 100644
+--- a/fs/coredump.c
++++ b/fs/coredump.c
+@@ -43,6 +43,8 @@
+ #include <linux/timekeeping.h>
+ #include <linux/sysctl.h>
+ #include <linux/elf.h>
++#include <linux/pidfs.h>
++#include <uapi/linux/pidfd.h>
+ 
+ #include <linux/uaccess.h>
+ #include <asm/mmu_context.h>
+@@ -60,6 +62,12 @@ static void free_vma_snapshot(struct coredump_params *cprm);
+ #define CORE_FILE_NOTE_SIZE_DEFAULT (4*1024*1024)
+ /* Define a reasonable max cap */
+ #define CORE_FILE_NOTE_SIZE_MAX (16*1024*1024)
++/*
++ * File descriptor number for the pidfd for the thread-group leader of
++ * the coredumping task installed into the usermode helper's file
++ * descriptor table.
++ */
++#define COREDUMP_PIDFD_NUMBER 3
+ 
+ static int core_uses_pid;
+ static unsigned int core_pipe_limit;
+@@ -339,6 +347,27 @@ static int format_corename(struct core_name *cn, struct coredump_params *cprm,
+ 			case 'C':
+ 				err = cn_printf(cn, "%d", cprm->cpu);
+ 				break;
++			/* pidfd number */
++			case 'F': {
++				/*
++				 * Installing a pidfd only makes sense if
++				 * we actually spawn a usermode helper.
++				 */
++				if (!ispipe)
++					break;
++
++				/*
++				 * Note that we'll install a pidfd for the
++				 * thread-group leader. We know that task
++				 * linkage hasn't been removed yet and even if
++				 * this @current isn't the actual thread-group
++				 * leader we know that the thread-group leader
++				 * cannot be reaped until @current has exited.
++				 */
++				cprm->pid = task_tgid(current);
++				err = cn_printf(cn, "%d", COREDUMP_PIDFD_NUMBER);
++				break;
++			}
+ 			default:
+ 				break;
+ 			}
+@@ -493,7 +522,7 @@ static void wait_for_dump_helpers(struct file *file)
+ }
+ 
+ /*
+- * umh_pipe_setup
++ * umh_coredump_setup
+  * helper function to customize the process used
+  * to collect the core in userspace.  Specifically
+  * it sets up a pipe and installs it as fd 0 (stdin)
+@@ -503,12 +532,31 @@ static void wait_for_dump_helpers(struct file *file)
+  * is a special value that we use to trap recursive
+  * core dumps
+  */
+-static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
++static int umh_coredump_setup(struct subprocess_info *info, struct cred *new)
+ {
+ 	struct file *files[2];
+ 	struct coredump_params *cp = (struct coredump_params *)info->data;
+ 	int err;
+ 
++	if (cp->pid) {
++		struct file *pidfs_file __free(fput) = NULL;
++
++		pidfs_file = pidfs_alloc_file(cp->pid, 0);
++		if (IS_ERR(pidfs_file))
++			return PTR_ERR(pidfs_file);
++
++		/*
++		 * Usermode helpers are childen of either
++		 * system_unbound_wq or of kthreadd. So we know that
++		 * we're starting off with a clean file descriptor
++		 * table. So we should always be able to use
++		 * COREDUMP_PIDFD_NUMBER as our file descriptor value.
++		 */
++		err = replace_fd(COREDUMP_PIDFD_NUMBER, pidfs_file, 0);
++		if (err < 0)
++			return err;
++	}
++
+ 	err = create_pipe_files(files, 0);
+ 	if (err)
+ 		return err;
+@@ -598,7 +646,7 @@ void do_coredump(const kernel_siginfo_t *siginfo)
+ 		}
+ 
+ 		if (cprm.limit == 1) {
+-			/* See umh_pipe_setup() which sets RLIMIT_CORE = 1.
++			/* See umh_coredump_setup() which sets RLIMIT_CORE = 1.
+ 			 *
+ 			 * Normally core limits are irrelevant to pipes, since
+ 			 * we're not writing to the file system, but we use
+@@ -637,7 +685,7 @@ void do_coredump(const kernel_siginfo_t *siginfo)
+ 		retval = -ENOMEM;
+ 		sub_info = call_usermodehelper_setup(helper_argv[0],
+ 						helper_argv, NULL, GFP_KERNEL,
+-						umh_pipe_setup, NULL, &cprm);
++						umh_coredump_setup, NULL, &cprm);
+ 		if (sub_info)
+ 			retval = call_usermodehelper_exec(sub_info,
+ 							  UMH_WAIT_EXEC);
+diff --git a/include/linux/coredump.h b/include/linux/coredump.h
+index 77e6e195d1d6..76e41805b92d 100644
+--- a/include/linux/coredump.h
++++ b/include/linux/coredump.h
+@@ -28,6 +28,7 @@ struct coredump_params {
+ 	int vma_count;
+ 	size_t vma_data_size;
+ 	struct core_vma_metadata *vma_meta;
++	struct pid *pid;
+ };
+ 
+ extern unsigned int core_file_note_size_limit;
+-- 
+2.49.0
+
+
+From e88c843de13992811e68c4eb8adbb81bb86eaee4 Mon Sep 17 00:00:00 2001
+From: Jens Axboe <axboe@kernel.dk>
+Date: Tue, 27 May 2025 07:28:52 -0600
+Subject: [PATCH 43/49] mm/filemap: gate dropbehind invalidate on folio !dirty
+ && !writeback
+
+It's possible for the folio to either get marked for writeback or
+redirtied. Add a helper, filemap_end_dropbehind(), which guards the
+folio_unmap_invalidate() call behind check for the folio being both
+non-dirty and not under writeback AFTER the folio lock has been
+acquired. Use this helper folio_end_dropbehind_write().
+
+Cc: stable@vger.kernel.org
+Reported-by: Al Viro <viro@zeniv.linux.org.uk>
+Fixes: fb7d3bc41493 ("mm/filemap: drop streaming/uncached pages when writeback completes")
+Link: https://lore.kernel.org/linux-fsdevel/20250525083209.GS2023217@ZenIV/
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Link: https://lore.kernel.org/20250527133255.452431-2-axboe@kernel.dk
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ mm/filemap.c | 13 +++++++++++--
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 7b90cbeb4a1a..008a55290f34 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1589,6 +1589,16 @@ int folio_wait_private_2_killable(struct folio *folio)
+ }
+ EXPORT_SYMBOL(folio_wait_private_2_killable);
+ 
++static void filemap_end_dropbehind(struct folio *folio)
++{
++	struct address_space *mapping = folio->mapping;
++
++	VM_BUG_ON_FOLIO(!folio_test_locked(folio), folio);
++
++	if (mapping && !folio_test_writeback(folio) && !folio_test_dirty(folio))
++		folio_unmap_invalidate(mapping, folio, 0);
++}
++
+ /*
+  * If folio was marked as dropbehind, then pages should be dropped when writeback
+  * completes. Do that now. If we fail, it's likely because of a big folio -
+@@ -1604,8 +1614,7 @@ static void folio_end_dropbehind_write(struct folio *folio)
+ 	 * invalidation in that case.
+ 	 */
+ 	if (in_task() && folio_trylock(folio)) {
+-		if (folio->mapping)
+-			folio_unmap_invalidate(folio->mapping, folio, 0);
++		filemap_end_dropbehind(folio);
+ 		folio_unlock(folio);
+ 	}
+ }
+-- 
+2.49.0
+
+
+From d08187ba4e7feaa9ebfb2a8e0392394725c8e727 Mon Sep 17 00:00:00 2001
+From: Jens Axboe <axboe@kernel.dk>
+Date: Tue, 27 May 2025 07:28:53 -0600
+Subject: [PATCH 44/49] mm/filemap: use filemap_end_dropbehind() for read
+ invalidation
+
+Use the filemap_end_dropbehind() helper rather than calling
+folio_unmap_invalidate() directly, as we need to check if the folio has
+been redirtied or marked for writeback once the folio lock has been
+re-acquired.
+
+Cc: stable@vger.kernel.org
+Reported-by: Trond Myklebust <trondmy@hammerspace.com>
+Fixes: 8026e49bff9b ("mm/filemap: add read support for RWF_DONTCACHE")
+Link: https://lore.kernel.org/linux-fsdevel/ba8a9805331ce258a622feaca266b163db681a10.camel@hammerspace.com/
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Link: https://lore.kernel.org/20250527133255.452431-3-axboe@kernel.dk
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ mm/filemap.c | 7 +++----
+ 1 file changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 008a55290f34..6af6d8f2929c 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -2644,8 +2644,7 @@ static inline bool pos_same_folio(loff_t pos1, loff_t pos2, struct folio *folio)
+ 	return (pos1 >> shift == pos2 >> shift);
+ }
+ 
+-static void filemap_end_dropbehind_read(struct address_space *mapping,
+-					struct folio *folio)
++static void filemap_end_dropbehind_read(struct folio *folio)
+ {
+ 	if (!folio_test_dropbehind(folio))
+ 		return;
+@@ -2653,7 +2652,7 @@ static void filemap_end_dropbehind_read(struct address_space *mapping,
+ 		return;
+ 	if (folio_trylock(folio)) {
+ 		if (folio_test_clear_dropbehind(folio))
+-			folio_unmap_invalidate(mapping, folio, 0);
++			filemap_end_dropbehind(folio);
+ 		folio_unlock(folio);
+ 	}
+ }
+@@ -2774,7 +2773,7 @@ ssize_t filemap_read(struct kiocb *iocb, struct iov_iter *iter,
+ 		for (i = 0; i < folio_batch_count(&fbatch); i++) {
+ 			struct folio *folio = fbatch.folios[i];
+ 
+-			filemap_end_dropbehind_read(mapping, folio);
++			filemap_end_dropbehind_read(folio);
+ 			folio_put(folio);
+ 		}
+ 		folio_batch_init(&fbatch);
+-- 
+2.49.0
+
+
+From 8c4530717d6db524cf1bab30ac17ab428485a76a Mon Sep 17 00:00:00 2001
+From: Jens Axboe <axboe@kernel.dk>
+Date: Tue, 27 May 2025 07:28:54 -0600
+Subject: [PATCH 45/49] Revert "Disable FOP_DONTCACHE for now due to bugs"
+
+This reverts commit 478ad02d6844217cc7568619aeb0809d93ade43d.
+
+Both the read and write side dirty && writeback races should be resolved
+now, revert the commit that disabled FOP_DONTCACHE for filesystems.
+
+Link: https://lore.kernel.org/linux-fsdevel/20250525083209.GS2023217@ZenIV/
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Link: https://lore.kernel.org/20250527133255.452431-4-axboe@kernel.dk
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ include/linux/fs.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/include/linux/fs.h b/include/linux/fs.h
+index ef41a8213a6f..cf7208500cee 100644
+--- a/include/linux/fs.h
++++ b/include/linux/fs.h
+@@ -2186,7 +2186,7 @@ struct file_operations {
+ /* Supports asynchronous lock callbacks */
+ #define FOP_ASYNC_LOCK		((__force fop_flags_t)(1 << 6))
+ /* File system supports uncached read/write buffered IO */
+-#define FOP_DONTCACHE		0 /* ((__force fop_flags_t)(1 << 7)) */
++#define FOP_DONTCACHE		((__force fop_flags_t)(1 << 7))
+ 
+ /* Wrap a directory iterator that needs exclusive inode access */
+ int wrap_directory_iterator(struct file *, struct dir_context *,
+-- 
+2.49.0
+
+
+From aa8b56c37d09ac9f0445564be7207af26be2fcb0 Mon Sep 17 00:00:00 2001
+From: Jens Axboe <axboe@kernel.dk>
+Date: Tue, 27 May 2025 07:28:55 -0600
+Subject: [PATCH 46/49] mm/filemap: unify read/write dropbehind naming
+
+The read side is filemap_end_dropbehind_read(), while the write side
+used folio_ as the prefix rather than filemap_. The read side makes more
+sense, unify the naming such that the write side follows that.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Link: https://lore.kernel.org/20250527133255.452431-5-axboe@kernel.dk
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ mm/filemap.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 6af6d8f2929c..2ba1ed116103 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1604,7 +1604,7 @@ static void filemap_end_dropbehind(struct folio *folio)
+  * completes. Do that now. If we fail, it's likely because of a big folio -
+  * just reset dropbehind for that case and latter completions should invalidate.
+  */
+-static void folio_end_dropbehind_write(struct folio *folio)
++static void filemap_end_dropbehind_write(struct folio *folio)
+ {
+ 	/*
+ 	 * Hitting !in_task() should not happen off RWF_DONTCACHE writeback,
+@@ -1659,7 +1659,7 @@ void folio_end_writeback(struct folio *folio)
+ 	acct_reclaim_writeback(folio);
+ 
+ 	if (folio_dropbehind)
+-		folio_end_dropbehind_write(folio);
++		filemap_end_dropbehind_write(folio);
+ 	folio_put(folio);
+ }
+ EXPORT_SYMBOL(folio_end_writeback);
+-- 
+2.49.0
+
+
+From f1664ce28a64df068c1ce1c4d6b0350a3fc71caf Mon Sep 17 00:00:00 2001
+From: Jens Axboe <axboe@kernel.dk>
+Date: Tue, 27 May 2025 07:28:56 -0600
+Subject: [PATCH 47/49] mm/filemap: unify dropbehind flag testing and clearing
+
+The read and write side does this a bit differently, unify it such that
+the _{read,write} helpers check the bit before locking, and the generic
+handler is in charge of clearing the bit and invalidating, once under
+the folio lock.
+
+Signed-off-by: Jens Axboe <axboe@kernel.dk>
+Link: https://lore.kernel.org/20250527133255.452431-6-axboe@kernel.dk
+Signed-off-by: Christian Brauner <brauner@kernel.org>
+---
+ mm/filemap.c | 21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
+
+diff --git a/mm/filemap.c b/mm/filemap.c
+index 2ba1ed116103..eef44d7ea12e 100644
+--- a/mm/filemap.c
++++ b/mm/filemap.c
+@@ -1595,7 +1595,11 @@ static void filemap_end_dropbehind(struct folio *folio)
+ 
+ 	VM_BUG_ON_FOLIO(!folio_test_locked(folio), folio);
+ 
+-	if (mapping && !folio_test_writeback(folio) && !folio_test_dirty(folio))
++	if (folio_test_writeback(folio) || folio_test_dirty(folio))
++		return;
++	if (!folio_test_clear_dropbehind(folio))
++		return;
++	if (mapping)
+ 		folio_unmap_invalidate(mapping, folio, 0);
+ }
+ 
+@@ -1606,6 +1610,9 @@ static void filemap_end_dropbehind(struct folio *folio)
+  */
+ static void filemap_end_dropbehind_write(struct folio *folio)
+ {
++	if (!folio_test_dropbehind(folio))
++		return;
++
+ 	/*
+ 	 * Hitting !in_task() should not happen off RWF_DONTCACHE writeback,
+ 	 * but can happen if normal writeback just happens to find dirty folios
+@@ -1629,8 +1636,6 @@ static void filemap_end_dropbehind_write(struct folio *folio)
+  */
+ void folio_end_writeback(struct folio *folio)
+ {
+-	bool folio_dropbehind = false;
+-
+ 	VM_BUG_ON_FOLIO(!folio_test_writeback(folio), folio);
+ 
+ 	/*
+@@ -1652,14 +1657,11 @@ void folio_end_writeback(struct folio *folio)
+ 	 * reused before the folio_wake_bit().
+ 	 */
+ 	folio_get(folio);
+-	if (!folio_test_dirty(folio))
+-		folio_dropbehind = folio_test_clear_dropbehind(folio);
+ 	if (__folio_end_writeback(folio))
+ 		folio_wake_bit(folio, PG_writeback);
+-	acct_reclaim_writeback(folio);
+ 
+-	if (folio_dropbehind)
+-		filemap_end_dropbehind_write(folio);
++	filemap_end_dropbehind_write(folio);
++	acct_reclaim_writeback(folio);
+ 	folio_put(folio);
+ }
+ EXPORT_SYMBOL(folio_end_writeback);
+@@ -2651,8 +2653,7 @@ static void filemap_end_dropbehind_read(struct folio *folio)
+ 	if (folio_test_writeback(folio) || folio_test_dirty(folio))
+ 		return;
+ 	if (folio_trylock(folio)) {
+-		if (folio_test_clear_dropbehind(folio))
+-			filemap_end_dropbehind(folio);
++		filemap_end_dropbehind(folio);
+ 		folio_unlock(folio);
+ 	}
+ }
+-- 
+2.49.0
+
+
+From a0ec77422521df8321cd308156e28ada90743eae Mon Sep 17 00:00:00 2001
+From: Shivank Garg <shivankg@amd.com>
+Date: Mon, 26 May 2025 18:28:18 +0000
+Subject: [PATCH 48/49] mm/khugepaged: fix race with folio split/free using
+ temporary reference
+
+hpage_collapse_scan_file() calls is_refcount_suitable(), which in turn
+calls folio_mapcount().  folio_mapcount() checks folio_test_large() before
+proceeding to folio_large_mapcount(), but there is a race window where the
+folio may get split/freed between these checks, triggering:
+
+  VM_WARN_ON_FOLIO(!folio_test_large(folio), folio)
+
+Take a temporary reference to the folio in hpage_collapse_scan_file().
+This stabilizes the folio during refcount check and prevents incorrect
+large folio detection due to concurrent split/free.  Use helper
+folio_expected_ref_count() + 1 to compare with folio_ref_count() instead
+of using is_refcount_suitable().
+
+Link: https://lkml.kernel.org/r/20250526182818.37978-1-shivankg@amd.com
+Fixes: 05c5323b2a34 ("mm: track mapcount of large folios in single value")
+Signed-off-by: Shivank Garg <shivankg@amd.com>
+Reported-by: syzbot+2b99589e33edbe9475ca@syzkaller.appspotmail.com
+Closes: https://lore.kernel.org/all/6828470d.a70a0220.38f255.000c.GAE@google.com
+Suggested-by: David Hildenbrand <david@redhat.com>
+Acked-by: David Hildenbrand <david@redhat.com>
+Acked-by: Dev Jain <dev.jain@arm.com>
+Reviewed-by: Baolin Wang <baolin.wang@linux.alibaba.com>
+Cc: Bharata B Rao <bharata@amd.com>
+Cc: Fengwei Yin <fengwei.yin@intel.com>
+Cc: Liam Howlett <liam.howlett@oracle.com>
+Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Cc: Mariano Pache <npache@redhat.com>
+Cc: Ryan Roberts <ryan.roberts@arm.com>
+Cc: Zi Yan <ziy@nvidia.com>
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/khugepaged.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/mm/khugepaged.c b/mm/khugepaged.c
+index cc945c6ab3bd..fe1fe7eace54 100644
+--- a/mm/khugepaged.c
++++ b/mm/khugepaged.c
+@@ -2295,6 +2295,17 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
+ 			continue;
+ 		}
+ 
++		if (!folio_try_get(folio)) {
++			xas_reset(&xas);
++			continue;
++		}
++
++		if (unlikely(folio != xas_reload(&xas))) {
++			folio_put(folio);
++			xas_reset(&xas);
++			continue;
++		}
++
+ 		if (folio_order(folio) == HPAGE_PMD_ORDER &&
+ 		    folio->index == start) {
+ 			/* Maybe PMD-mapped */
+@@ -2305,23 +2316,27 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
+ 			 * it's safe to skip LRU and refcount checks before
+ 			 * returning.
+ 			 */
++			folio_put(folio);
+ 			break;
+ 		}
+ 
+ 		node = folio_nid(folio);
+ 		if (hpage_collapse_scan_abort(node, cc)) {
+ 			result = SCAN_SCAN_ABORT;
++			folio_put(folio);
+ 			break;
+ 		}
+ 		cc->node_load[node]++;
+ 
+ 		if (!folio_test_lru(folio)) {
+ 			result = SCAN_PAGE_LRU;
++			folio_put(folio);
+ 			break;
+ 		}
+ 
+-		if (!is_refcount_suitable(folio)) {
++		if (folio_expected_ref_count(folio) + 1 != folio_ref_count(folio)) {
+ 			result = SCAN_PAGE_COUNT;
++			folio_put(folio);
+ 			break;
+ 		}
+ 
+@@ -2333,6 +2348,7 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
+ 		 */
+ 
+ 		present += folio_nr_pages(folio);
++		folio_put(folio);
+ 
+ 		if (need_resched()) {
+ 			xas_pause(&xas);
+-- 
+2.49.0
+
+
+From 0bbd99b250c52e5dda302d9db3b8e6332ca4fed5 Mon Sep 17 00:00:00 2001
+From: Shivank Garg <shivankg@amd.com>
+Date: Wed, 30 Apr 2025 10:01:51 +0000
+Subject: [PATCH 49/49] mm: add folio_expected_ref_count() for reference count
+ calculation
+
+Patch series " JFS: Implement migrate_folio for jfs_metapage_aops" v5.
+
+This patchset addresses a warning that occurs during memory compaction due
+to JFS's missing migrate_folio operation.  The warning was introduced by
+commit 7ee3647243e5 ("migrate: Remove call to ->writepage") which added
+explicit warnings when filesystem don't implement migrate_folio.
+
+The syzbot reported following [1]:
+  jfs_metapage_aops does not implement migrate_folio
+  WARNING: CPU: 1 PID: 5861 at mm/migrate.c:955 fallback_migrate_folio mm/migrate.c:953 [inline]
+  WARNING: CPU: 1 PID: 5861 at mm/migrate.c:955 move_to_new_folio+0x70e/0x840 mm/migrate.c:1007
+  Modules linked in:
+  CPU: 1 UID: 0 PID: 5861 Comm: syz-executor280 Not tainted 6.15.0-rc1-next-20250411-syzkaller #0 PREEMPT(full)
+  Hardware name: Google Google Compute Engine/Google Compute Engine, BIOS Google 02/12/2025
+  RIP: 0010:fallback_migrate_folio mm/migrate.c:953 [inline]
+  RIP: 0010:move_to_new_folio+0x70e/0x840 mm/migrate.c:1007
+
+To fix this issue, this series implement metapage_migrate_folio() for JFS
+which handles both single and multiple metapages per page configurations.
+
+While most filesystems leverage existing migration implementations like
+filemap_migrate_folio(), buffer_migrate_folio_norefs() or
+buffer_migrate_folio() (which internally used folio_expected_refs()),
+JFS's metapage architecture requires special handling of its private data
+during migration.  To support this, this series introduce the
+folio_expected_ref_count(), which calculates external references to a
+folio from page/swap cache, private data, and page table mappings.
+
+This standardized implementation replaces the previous ad-hoc
+folio_expected_refs() function and enables JFS to accurately determine
+whether a folio has unexpected references before attempting migration.
+
+
+
+
+Implement folio_expected_ref_count() to calculate expected folio reference
+counts from:
+- Page/swap cache (1 per page)
+- Private data (1)
+- Page table mappings (1 per map)
+
+While originally needed for page migration operations, this improved
+implementation standardizes reference counting by consolidating all
+refcount contributors into a single, reusable function that can benefit
+any subsystem needing to detect unexpected references to folios.
+
+The folio_expected_ref_count() returns the sum of these external
+references without including any reference the caller itself might hold.
+Callers comparing against the actual folio_ref_count() must account for
+their own references separately.
+
+Link: https://syzkaller.appspot.com/bug?extid=8bb6fd945af4e0ad9299 [1]
+Link: https://lkml.kernel.org/r/20250430100150.279751-1-shivankg@amd.com
+Link: https://lkml.kernel.org/r/20250430100150.279751-2-shivankg@amd.com
+Signed-off-by: David Hildenbrand <david@redhat.com>
+Signed-off-by: Shivank Garg <shivankg@amd.com>
+Suggested-by: Matthew Wilcox <willy@infradead.org>
+Co-developed-by: David Hildenbrand <david@redhat.com>
+Cc: Alistair Popple <apopple@nvidia.com>
+Cc: Dave Kleikamp <shaggy@kernel.org>
+Cc: Donet Tom <donettom@linux.ibm.com>
+Cc: Jane Chu <jane.chu@oracle.com>
+Cc: Kefeng Wang <wangkefeng.wang@huawei.com>
+Cc: Zi Yan <ziy@nvidia.com>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ include/linux/mm.h | 55 ++++++++++++++++++++++++++++++++++++++++++++++
+ mm/migrate.c       | 22 ++++---------------
+ 2 files changed, 59 insertions(+), 18 deletions(-)
+
+diff --git a/include/linux/mm.h b/include/linux/mm.h
+index fdda6b16263b..c726d935aac5 100644
+--- a/include/linux/mm.h
++++ b/include/linux/mm.h
+@@ -2306,6 +2306,61 @@ static inline bool folio_maybe_mapped_shared(struct folio *folio)
+ 	return folio_test_large_maybe_mapped_shared(folio);
+ }
+ 
++/**
++ * folio_expected_ref_count - calculate the expected folio refcount
++ * @folio: the folio
++ *
++ * Calculate the expected folio refcount, taking references from the pagecache,
++ * swapcache, PG_private and page table mappings into account. Useful in
++ * combination with folio_ref_count() to detect unexpected references (e.g.,
++ * GUP or other temporary references).
++ *
++ * Does currently not consider references from the LRU cache. If the folio
++ * was isolated from the LRU (which is the case during migration or split),
++ * the LRU cache does not apply.
++ *
++ * Calling this function on an unmapped folio -- !folio_mapped() -- that is
++ * locked will return a stable result.
++ *
++ * Calling this function on a mapped folio will not result in a stable result,
++ * because nothing stops additional page table mappings from coming (e.g.,
++ * fork()) or going (e.g., munmap()).
++ *
++ * Calling this function without the folio lock will also not result in a
++ * stable result: for example, the folio might get dropped from the swapcache
++ * concurrently.
++ *
++ * However, even when called without the folio lock or on a mapped folio,
++ * this function can be used to detect unexpected references early (for example,
++ * if it makes sense to even lock the folio and unmap it).
++ *
++ * The caller must add any reference (e.g., from folio_try_get()) it might be
++ * holding itself to the result.
++ *
++ * Returns the expected folio refcount.
++ */
++static inline int folio_expected_ref_count(const struct folio *folio)
++{
++	const int order = folio_order(folio);
++	int ref_count = 0;
++
++	if (WARN_ON_ONCE(folio_test_slab(folio)))
++		return 0;
++
++	if (folio_test_anon(folio)) {
++		/* One reference per page from the swapcache. */
++		ref_count += folio_test_swapcache(folio) << order;
++	} else if (!((unsigned long)folio->mapping & PAGE_MAPPING_FLAGS)) {
++		/* One reference per page from the pagecache. */
++		ref_count += !!folio->mapping << order;
++		/* One reference from PG_private. */
++		ref_count += folio_test_private(folio);
++	}
++
++	/* One reference per page table mapping. */
++	return ref_count + folio_mapcount(folio);
++}
++
+ #ifndef HAVE_ARCH_MAKE_FOLIO_ACCESSIBLE
+ static inline int arch_make_folio_accessible(struct folio *folio)
+ {
+diff --git a/mm/migrate.c b/mm/migrate.c
+index 676d9cfc7059..273d46771a6c 100644
+--- a/mm/migrate.c
++++ b/mm/migrate.c
+@@ -445,20 +445,6 @@ void pmd_migration_entry_wait(struct mm_struct *mm, pmd_t *pmd)
+ }
+ #endif
+ 
+-static int folio_expected_refs(struct address_space *mapping,
+-		struct folio *folio)
+-{
+-	int refs = 1;
+-	if (!mapping)
+-		return refs;
+-
+-	refs += folio_nr_pages(folio);
+-	if (folio_test_private(folio))
+-		refs++;
+-
+-	return refs;
+-}
+-
+ /*
+  * Replace the folio in the mapping.
+  *
+@@ -601,7 +587,7 @@ static int __folio_migrate_mapping(struct address_space *mapping,
+ int folio_migrate_mapping(struct address_space *mapping,
+ 		struct folio *newfolio, struct folio *folio, int extra_count)
+ {
+-	int expected_count = folio_expected_refs(mapping, folio) + extra_count;
++	int expected_count = folio_expected_ref_count(folio) + extra_count + 1;
+ 
+ 	if (folio_ref_count(folio) != expected_count)
+ 		return -EAGAIN;
+@@ -618,7 +604,7 @@ int migrate_huge_page_move_mapping(struct address_space *mapping,
+ 				   struct folio *dst, struct folio *src)
+ {
+ 	XA_STATE(xas, &mapping->i_pages, folio_index(src));
+-	int rc, expected_count = folio_expected_refs(mapping, src);
++	int rc, expected_count = folio_expected_ref_count(src) + 1;
+ 
+ 	if (folio_ref_count(src) != expected_count)
+ 		return -EAGAIN;
+@@ -749,7 +735,7 @@ static int __migrate_folio(struct address_space *mapping, struct folio *dst,
+ 			   struct folio *src, void *src_private,
+ 			   enum migrate_mode mode)
+ {
+-	int rc, expected_count = folio_expected_refs(mapping, src);
++	int rc, expected_count = folio_expected_ref_count(src) + 1;
+ 
+ 	/* Check whether src does not have extra refs before we do more work */
+ 	if (folio_ref_count(src) != expected_count)
+@@ -837,7 +823,7 @@ static int __buffer_migrate_folio(struct address_space *mapping,
+ 		return migrate_folio(mapping, dst, src, mode);
+ 
+ 	/* Check whether page does not have extra refs before we do more work */
+-	expected_count = folio_expected_refs(mapping, src);
++	expected_count = folio_expected_ref_count(src) + 1;
+ 	if (folio_ref_count(src) != expected_count)
+ 		return -EAGAIN;
+ 
 -- 
 2.49.0
 
