@@ -1,7 +1,7 @@
-From 029daaebe0e9875efb872257ca68c49f82019f20 Mon Sep 17 00:00:00 2001
+From f04767eff967d8f9dba7a52e56cddb43cf975a37 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/49] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/46] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -12,7 +12,7 @@ Signed-off-by: Eric Naim <dnaim@cachyos.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/arch/Kconfig b/arch/Kconfig
-index b0adb665041f..eea830cc90a7 100644
+index b0adb665041f1..eea830cc90a77 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
@@ -37,10 +37,10 @@ index b0adb665041f..eea830cc90a7 100644
 2.49.0
 
 
-From 2a80b791d124e4f7cdc5aaafb8ab6fefb861e23c Mon Sep 17 00:00:00 2001
+From 676dca977ce76f8a39bd0b5aab394009217577d9 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/49] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/46] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -53,7 +53,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -72,10 +72,10 @@ index 452374d63c24..08f80d7c5df0 100644
 2.49.0
 
 
-From 7d0d096ce450065b30434e73bcb53b9919f6cb7e Mon Sep 17 00:00:00 2001
+From 258c37a9b884d8b5362ce5986bd9579c70c53c05 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 03/49] drivers/base/node: Optimize memory block registration
+Subject: [PATCH 03/46] drivers/base/node: Optimize memory block registration
  to reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -181,7 +181,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 58 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index 19469e7f88c2..39fcc075a36f 100644
+index 19469e7f88c25..39fcc075a36f2 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
 @@ -22,6 +22,7 @@
@@ -227,7 +227,7 @@ index 19469e7f88c2..39fcc075a36f 100644
  	struct memory_block *mem;
  
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index cd13ef287011..a8e087d9b0ae 100644
+index cd13ef2870119..a8e087d9b0aea 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -20,6 +20,7 @@
@@ -290,7 +290,7 @@ index cd13ef287011..a8e087d9b0ae 100644
 +	register_memory_blocks_under_nodes();
  }
 diff --git a/include/linux/memory.h b/include/linux/memory.h
-index 12daa6ec7d09..2a61088e17ad 100644
+index 12daa6ec7d09f..2a61088e17ad0 100644
 --- a/include/linux/memory.h
 +++ b/include/linux/memory.h
 @@ -171,12 +171,30 @@ struct memory_group *memory_group_find_by_id(int mgid);
@@ -331,7 +331,7 @@ index 12daa6ec7d09..2a61088e17ad 100644
 -
  #endif /* _LINUX_MEMORY_H_ */
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 2b7517892230..485370f3bc17 100644
+index 2b75178922301..485370f3bc177 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -120,6 +120,9 @@ static inline void register_memory_blocks_under_node(int nid, unsigned long star
@@ -348,10 +348,10 @@ index 2b7517892230..485370f3bc17 100644
 2.49.0
 
 
-From 6678868f3e28b60b89226b7d11d45a33b426122c Mon Sep 17 00:00:00 2001
+From 9d30b893cc481f7bd33de4fed577baea51b2ca0f Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 04/49] drivers/base/node: remove
+Subject: [PATCH 04/46] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -371,7 +371,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 57 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index a8e087d9b0ae..07709cb1d9d8 100644
+index a8e087d9b0aea..07709cb1d9d8a 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -748,15 +748,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
@@ -458,10 +458,10 @@ index a8e087d9b0ae..07709cb1d9d8 100644
 2.49.0
 
 
-From c94f8d3e23f1ea0edd769c852a1b994bd1134ab1 Mon Sep 17 00:00:00 2001
+From 52a565e79626f591ef30368877ee40922cbe8e17 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 05/49] drivers/base/node: Remove
+Subject: [PATCH 05/46] drivers/base/node: Remove
  register_memory_blocks_under_node() function call from register_one_node
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -486,7 +486,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 15 deletions(-)
 
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 485370f3bc17..b15de78e0408 100644
+index 485370f3bc177..b15de78e04087 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -134,21 +134,7 @@ extern int __register_one_node(int nid);
@@ -516,10 +516,10 @@ index 485370f3bc17..b15de78e0408 100644
 2.49.0
 
 
-From 905cf274ef5a0a0dd91421e3f8936900734c6dd3 Mon Sep 17 00:00:00 2001
+From 8d2c257d4b341e736894251e36e3b2788e03ab01 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 06/49] drivers/base/node: Rename
+Subject: [PATCH 06/46] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -544,7 +544,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  3 files changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 07709cb1d9d8..f4f70432c9dc 100644
+index 07709cb1d9d8a..f4f70432c9dc9 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -830,9 +830,8 @@ static void register_memory_blocks_under_nodes(void)
@@ -560,7 +560,7 @@ index 07709cb1d9d8..f4f70432c9dc 100644
  	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
  			   (void *)&nid, register_mem_block_under_node_hotplug);
 diff --git a/include/linux/node.h b/include/linux/node.h
-index b15de78e0408..75b036a100d2 100644
+index b15de78e04087..75b036a100d2c 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -111,13 +111,12 @@ struct memory_block;
@@ -583,7 +583,7 @@ index b15de78e0408..75b036a100d2 100644
  }
  static inline void register_memory_blocks_under_nodes(void)
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index 8305483de38b..f734cc924b51 100644
+index 8305483de38bb..f734cc924b51b 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -602,10 +602,10 @@ index 8305483de38b..f734cc924b51 100644
 2.49.0
 
 
-From 77c9cfecc681203586c0b12af540d7a9cd5f0307 Mon Sep 17 00:00:00 2001
+From 624f12ccebbc2ada823a453b5cf06604f8c189e5 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 07/49] drivers/base/node: Rename __register_one_node() to
+Subject: [PATCH 07/46] drivers/base/node: Rename __register_one_node() to
  register_one_node()
 
 The register_one_node() function was a simple wrapper around
@@ -623,7 +623,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 5 insertions(+), 16 deletions(-)
 
 diff --git a/arch/powerpc/platforms/pseries/pci_dlpar.c b/arch/powerpc/platforms/pseries/pci_dlpar.c
-index 52e2623a741d..aeb8633a3d00 100644
+index 52e2623a741de..aeb8633a3d00f 100644
 --- a/arch/powerpc/platforms/pseries/pci_dlpar.c
 +++ b/arch/powerpc/platforms/pseries/pci_dlpar.c
 @@ -29,7 +29,7 @@ struct pci_controller *init_phb_dynamic(struct device_node *dn)
@@ -636,7 +636,7 @@ index 52e2623a741d..aeb8633a3d00 100644
  			} else {
  				update_numa_distance(dn);
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index f4f70432c9dc..d724af8eeaff 100644
+index f4f70432c9dc9..d724af8eeafff 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -839,7 +839,7 @@ void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
@@ -658,7 +658,7 @@ index f4f70432c9dc..d724af8eeaff 100644
  			panic("%s() failed to add node: %d\n", __func__, ret);
  	}
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 75b036a100d2..88bceebcbfa5 100644
+index 75b036a100d2c..88bceebcbfa54 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -128,14 +128,7 @@ extern void unregister_node(struct node *node);
@@ -689,7 +689,7 @@ index 75b036a100d2..88bceebcbfa5 100644
  {
  	return 0;
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index f734cc924b51..4dadd156f836 100644
+index f734cc924b51b..4dadd156f8362 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1571,7 +1571,7 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -705,10 +705,10 @@ index f734cc924b51..4dadd156f836 100644
 2.49.0
 
 
-From 661a1fbd689f5b5501bda84ddca835f5f000e29b Mon Sep 17 00:00:00 2001
+From 44f4b1c193930711275794fa92ca7d27c8c1d38d Mon Sep 17 00:00:00 2001
 From: Pierre Gondois <pierre.gondois@arm.com>
 Date: Tue, 25 Mar 2025 16:05:41 +0100
-Subject: [PATCH 08/49] sched/fair: Allow decaying util_est when util_avg > CPU
+Subject: [PATCH 08/46] sched/fair: Allow decaying util_est when util_avg > CPU
  capa
 
 commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
@@ -758,7 +758,7 @@ Link: https://lore.kernel.org/r/20250325150542.1077344-1-pierre.gondois@arm.com
  1 file changed, 7 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 0fb9bf995a47..a351a1b8bfe4 100644
+index 0fb9bf995a479..a351a1b8bfe45 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -4932,13 +4932,6 @@ static inline void util_est_update(struct cfs_rq *cfs_rq,
@@ -779,10 +779,10 @@ index 0fb9bf995a47..a351a1b8bfe4 100644
 2.49.0
 
 
-From b14f42f4a03804180342ab384e33553b41c97450 Mon Sep 17 00:00:00 2001
+From 4a5f167317bdbe3b4210b68d04cdd8fa75483f6f Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 28 Jan 2025 15:39:49 +0100
-Subject: [PATCH 09/49] sched/fair: Adhere to place_entity() constraints
+Subject: [PATCH 09/46] sched/fair: Adhere to place_entity() constraints
 
 Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
 placement bug causing scheduling lag") relies on commit 4423af84b297
@@ -819,7 +819,7 @@ Link: https://lore.kernel.org/r/c216eb4ef0e0e0029c600aefc69d56681cee5581.camel@g
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index a351a1b8bfe4..e3f673643b7e 100644
+index a351a1b8bfe45..e3f673643b7e3 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -3795,6 +3795,7 @@ static void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
@@ -847,10 +847,10 @@ index a351a1b8bfe4..e3f673643b7e 100644
 2.49.0
 
 
-From f7ea5b403b4137a627a56773245bb3fccf766f11 Mon Sep 17 00:00:00 2001
+From 6bcdc0d886931294da1978154691e873c43dc9e7 Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Tue, 29 Apr 2025 08:07:26 -0700
-Subject: [PATCH 10/49] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 10/46] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -888,7 +888,7 @@ Link: https://lkml.kernel.org/r/20250429150736.3778580-1-jstultz@google.com
  1 file changed, 6 insertions(+)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index c81cf642dba0..b986cd2fb19b 100644
+index c81cf642dba05..b986cd2fb19b7 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -2283,6 +2283,12 @@ unsigned long wait_task_inactive(struct task_struct *p, unsigned int match_state
@@ -908,10 +908,10 @@ index c81cf642dba0..b986cd2fb19b 100644
 2.49.0
 
 
-From 1a06a43356380cf6e33c20f22ba093ea27161835 Mon Sep 17 00:00:00 2001
+From bb35bf0f0ad497629b5b1d5d9b7bd9ec0dead78f Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Mon, 3 Mar 2025 18:52:39 +0800
-Subject: [PATCH 11/49] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
+Subject: [PATCH 11/46] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
 Delayed dequeued feature keeps a sleeping task enqueued until its
 lag has elapsed. As a result, it stays also visible in rq->nr_running.
@@ -931,7 +931,7 @@ Link: https://lore.kernel.org/r/20250303105241.17251-2-xuewen.yan@unisoc.com
  1 file changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e3f673643b7e..305b0a5a5864 100644
+index e3f673643b7e3..305b0a5a58649 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -7191,6 +7191,11 @@ static bool dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
@@ -965,10 +965,10 @@ index e3f673643b7e..305b0a5a5864 100644
 2.49.0
 
 
-From c01ae3138c7392d57645ff3b9c974293b03177b4 Mon Sep 17 00:00:00 2001
+From 38996ab1c2b742d1c36c28865e384d2bfee221ba Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:56 +0800
-Subject: [PATCH 12/49] sched/util_est: Simplify condition for
+Subject: [PATCH 12/46] sched/util_est: Simplify condition for
  util_est_{en,de}queue()
 
 To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
@@ -1008,7 +1008,7 @@ Link: https://lore.kernel.org/r/20250417043457.10632-2-xuewen.yan@unisoc.com
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 305b0a5a5864..b647c19f253e 100644
+index 305b0a5a58649..b647c19f253ef 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -6936,7 +6936,7 @@ enqueue_task_fair(struct rq *rq, struct task_struct *p, int flags)
@@ -1033,10 +1033,10 @@ index 305b0a5a5864..b647c19f253e 100644
 2.49.0
 
 
-From 705cb0e70cc118fa70061780d8ce1d867a0cb0b4 Mon Sep 17 00:00:00 2001
+From 4e6ae465dc2b94378a2cdef4e766c48725c79e90 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:57 +0800
-Subject: [PATCH 13/49] sched/uclamp: Align uclamp and util_est and call before
+Subject: [PATCH 13/46] sched/uclamp: Align uclamp and util_est and call before
  freq update
 
 The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
@@ -1067,7 +1067,7 @@ Link: https://lore.kernel.org/r/20250417043457.10632-3-xuewen.yan@unisoc.com
  1 file changed, 10 insertions(+), 7 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b986cd2fb19b..a87be58d0709 100644
+index b986cd2fb19b7..a87be58d07095 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -1752,7 +1752,7 @@ static inline void uclamp_rq_dec_id(struct rq *rq, struct task_struct *p,
@@ -1121,10 +1121,10 @@ index b986cd2fb19b..a87be58d0709 100644
 2.49.0
 
 
-From 5c9e50358a73b2b2c19c4eca2f31ed276134dcf6 Mon Sep 17 00:00:00 2001
+From 03ee203fd5579430cbfeb72df05745f069ceb7eb Mon Sep 17 00:00:00 2001
 From: Di Shen <di.shen@unisoc.com>
 Date: Tue, 20 May 2025 13:49:43 +0800
-Subject: [PATCH 14/49] Revert "bpf: remove unnecessary
+Subject: [PATCH 14/46] Revert "bpf: remove unnecessary
  rcu_read_{lock,unlock}() in multi-uprobe attach logic"
 
 This reverts commit 4a8f635a60540888dab3804992e86410360339c8.
@@ -1146,7 +1146,7 @@ Acked-by: Andrii Nakryiko <andrii@kernel.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/kernel/trace/bpf_trace.c b/kernel/trace/bpf_trace.c
-index 187dc37d61d4..0c4b6af10601 100644
+index 187dc37d61d4a..0c4b6af106017 100644
 --- a/kernel/trace/bpf_trace.c
 +++ b/kernel/trace/bpf_trace.c
 @@ -3417,7 +3417,9 @@ int bpf_uprobe_multi_link_attach(const union bpf_attr *attr, struct bpf_prog *pr
@@ -1163,10 +1163,10 @@ index 187dc37d61d4..0c4b6af10601 100644
 2.49.0
 
 
-From 921150855524369667132be69eef34e631215556 Mon Sep 17 00:00:00 2001
+From 333c498c8059189b922fdf37e2c481a1bed20cef Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 15/49] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 15/46] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -1191,7 +1191,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 7da531b1cf6b..0eaf3522abe9 100644
+index 7da531b1cf6be..0eaf3522abe9a 100644
 --- a/fs/select.c
 +++ b/fs/select.c
 @@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
@@ -1207,10 +1207,10 @@ index 7da531b1cf6b..0eaf3522abe9 100644
 2.49.0
 
 
-From d3c47f742ab8dc1cc5d539f936cf9785eb12b84e Mon Sep 17 00:00:00 2001
+From 66e7c31849a07a95ffd347f1f8ce17f492d05fe5 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Mon, 14 Apr 2025 09:45:43 +0100
-Subject: [PATCH 16/49] select: core_sys_select add unlikely branch hint on
+Subject: [PATCH 16/46] select: core_sys_select add unlikely branch hint on
  return path
 
 Adding an unlikely() hint on the n < 0 comparison return path improves
@@ -1233,7 +1233,7 @@ Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 0eaf3522abe9..9fb650d03d52 100644
+index 0eaf3522abe9a..9fb650d03d52e 100644
 --- a/fs/select.c
 +++ b/fs/select.c
 @@ -630,7 +630,7 @@ int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
@@ -1249,10 +1249,10 @@ index 0eaf3522abe9..9fb650d03d52 100644
 2.49.0
 
 
-From 6636f0435ca8f4dff1cd7b9101d02ec2e41c31a0 Mon Sep 17 00:00:00 2001
+From f6bfb9ba0fc7fd4d4eb5768329c0d9ce5c5776cb Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:35:51 -0700
-Subject: [PATCH 17/49] Make 'cc-option' work correctly for the -Wno-xyzzy
+Subject: [PATCH 17/46] Make 'cc-option' work correctly for the -Wno-xyzzy
  pattern
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1289,7 +1289,7 @@ Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/scripts/Makefile.compiler b/scripts/Makefile.compiler
-index f4fcc1eaaeae..65cfa72e376b 100644
+index f4fcc1eaaeaee..65cfa72e376be 100644
 --- a/scripts/Makefile.compiler
 +++ b/scripts/Makefile.compiler
 @@ -43,7 +43,7 @@ as-instr = $(call try-run,\
@@ -1314,10 +1314,10 @@ index f4fcc1eaaeae..65cfa72e376b 100644
 2.49.0
 
 
-From cfc0b163bcbc0d11e516f695b77c5df37c70ef01 Mon Sep 17 00:00:00 2001
+From 256e9fb63d077345aa45f86faca6489586114bb1 Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:40:30 -0700
-Subject: [PATCH 18/49] Remove legacy 'cc-disable-warning' use from the generic
+Subject: [PATCH 18/46] Remove legacy 'cc-disable-warning' use from the generic
  build scripts
 
 This just converts the 'cc-disable-warning' uses in the generic makefile
@@ -1335,7 +1335,7 @@ Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
  1 file changed, 16 insertions(+), 16 deletions(-)
 
 diff --git a/scripts/Makefile.extrawarn b/scripts/Makefile.extrawarn
-index fd649c68e198..540f3db5cd86 100644
+index fd649c68e198b..540f3db5cd86b 100644
 --- a/scripts/Makefile.extrawarn
 +++ b/scripts/Makefile.extrawarn
 @@ -16,8 +16,8 @@ KBUILD_CFLAGS += -Werror=return-type
@@ -1429,10 +1429,10 @@ index fd649c68e198..540f3db5cd86 100644
 2.49.0
 
 
-From 555f475a5d37d79f6aeef0b82bc26f37537be9c7 Mon Sep 17 00:00:00 2001
+From 56595448a8736e52ab6d7bc6179a0bec1c2e0259 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:51 -0400
-Subject: [PATCH 19/49] btrfs: exit after state insertion failure at
+Subject: [PATCH 19/46] btrfs: exit after state insertion failure at
  btrfs_convert_extent_bit()
 
 [ Upstream commit 3bf179e36da917c5d9bec71c714573ed1649b7c1 ]
@@ -1456,7 +1456,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+)
 
 diff --git a/fs/btrfs/extent-io-tree.c b/fs/btrfs/extent-io-tree.c
-index 13de6af279e5..92cfde37b1d3 100644
+index 13de6af279e52..92cfde37b1d33 100644
 --- a/fs/btrfs/extent-io-tree.c
 +++ b/fs/btrfs/extent-io-tree.c
 @@ -1456,6 +1456,7 @@ int convert_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
@@ -1471,10 +1471,10 @@ index 13de6af279e5..92cfde37b1d3 100644
 2.49.0
 
 
-From 26a9aeb901f909d407acf8fc0a985b1ea89b3541 Mon Sep 17 00:00:00 2001
+From da657cb358401ab9747bec66fc928709c6d26316 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 28 May 2025 17:55:52 -0400
-Subject: [PATCH 20/49] fs/filesystems: Fix potential unsigned integer
+Subject: [PATCH 20/46] fs/filesystems: Fix potential unsigned integer
  underflow in fs_name()
 
 [ Upstream commit 1363c134ade81e425873b410566e957fecebb261 ]
@@ -1494,7 +1494,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 9 insertions(+), 5 deletions(-)
 
 diff --git a/fs/filesystems.c b/fs/filesystems.c
-index 58b9067b2391..95e5256821a5 100644
+index 58b9067b2391c..95e5256821a53 100644
 --- a/fs/filesystems.c
 +++ b/fs/filesystems.c
 @@ -156,15 +156,19 @@ static int fs_index(const char __user * __name)
@@ -1526,10 +1526,10 @@ index 58b9067b2391..95e5256821a5 100644
 2.49.0
 
 
-From 22f02edcf3ea18ce05d8e9562da8f16c037e2e80 Mon Sep 17 00:00:00 2001
+From 2714a4702244c3f430a052a3bef56f28baf0c91a Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:53 -0400
-Subject: [PATCH 21/49] btrfs: fix fsync of files with no hard links not
+Subject: [PATCH 21/46] btrfs: fix fsync of files with no hard links not
  persisting deletion
 
 [ Upstream commit 5e85262e542d6da8898bb8563a724ad98f6fc936 ]
@@ -1629,7 +1629,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 16 insertions(+), 8 deletions(-)
 
 diff --git a/fs/btrfs/tree-log.c b/fs/btrfs/tree-log.c
-index 90dc094cfa5e..f5af11565b87 100644
+index 90dc094cfa5e5..f5af11565b876 100644
 --- a/fs/btrfs/tree-log.c
 +++ b/fs/btrfs/tree-log.c
 @@ -6583,6 +6583,19 @@ static int btrfs_log_inode(struct btrfs_trans_handle *trans,
@@ -1674,10 +1674,10 @@ index 90dc094cfa5e..f5af11565b87 100644
 2.49.0
 
 
-From c6eee6afab6b7eb1162a28d2aceac95799052fed Mon Sep 17 00:00:00 2001
+From 0e65c54468fc23b156ab76bd32b8c5da04ef72f8 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Wed, 28 May 2025 17:55:54 -0400
-Subject: [PATCH 22/49] gfs2: pass through holder from the VFS for freeze/thaw
+Subject: [PATCH 22/46] gfs2: pass through holder from the VFS for freeze/thaw
 
 [ Upstream commit 62a2175ddf7e72941868f164b7c1f92e00f213bd ]
 
@@ -1693,7 +1693,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 8 insertions(+), 6 deletions(-)
 
 diff --git a/fs/gfs2/super.c b/fs/gfs2/super.c
-index 44e5658b896c..a3fe95e519cb 100644
+index 44e5658b896c8..a3fe95e519cbc 100644
 --- a/fs/gfs2/super.c
 +++ b/fs/gfs2/super.c
 @@ -674,7 +674,7 @@ static int gfs2_sync_fs(struct super_block *sb, int wait)
@@ -1770,10 +1770,10 @@ index 44e5658b896c..a3fe95e519cb 100644
 2.49.0
 
 
-From 748a3d6ecb4c3d076161773d4413e8576eba7278 Mon Sep 17 00:00:00 2001
+From 5afdc0b41a34dff5e7eaffe520cb6eb9be950d35 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:55 -0400
-Subject: [PATCH 23/49] btrfs: exit after state split error at set_extent_bit()
+Subject: [PATCH 23/46] btrfs: exit after state split error at set_extent_bit()
 
 [ Upstream commit 41d69d4d78d8b179bf3bcdfc56d28a12b3a608d2 ]
 
@@ -1796,7 +1796,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 4 insertions(+), 1 deletion(-)
 
 diff --git a/fs/btrfs/extent-io-tree.c b/fs/btrfs/extent-io-tree.c
-index 92cfde37b1d3..b5b44ea91f99 100644
+index 92cfde37b1d33..b5b44ea91f999 100644
 --- a/fs/btrfs/extent-io-tree.c
 +++ b/fs/btrfs/extent-io-tree.c
 @@ -1252,8 +1252,11 @@ static int __set_extent_bit(struct extent_io_tree *tree, u64 start, u64 end,
@@ -1816,10 +1816,10 @@ index 92cfde37b1d3..b5b44ea91f99 100644
 2.49.0
 
 
-From 3d5b7c4bd8ee15659283442da1c99738bb48e17e Mon Sep 17 00:00:00 2001
+From e1bd284e05977ec6106d039a7c95237890ac7da4 Mon Sep 17 00:00:00 2001
 From: Daniel Wagner <wagi@kernel.org>
 Date: Wed, 28 May 2025 17:55:56 -0400
-Subject: [PATCH 24/49] nvmet-fcloop: access fcpreq only when holding reqlock
+Subject: [PATCH 24/46] nvmet-fcloop: access fcpreq only when holding reqlock
 
 [ Upstream commit 47a827cd7929d0550c3496d70b417fcb5649b27b ]
 
@@ -1837,7 +1837,7 @@ Reviewed-by: Hannes Reinecke <hare@kernel.org>
  1 file changed, 16 insertions(+), 15 deletions(-)
 
 diff --git a/drivers/nvme/target/fcloop.c b/drivers/nvme/target/fcloop.c
-index 641201e62c1b..20becea1ad96 100644
+index 641201e62c1ba..20becea1ad968 100644
 --- a/drivers/nvme/target/fcloop.c
 +++ b/drivers/nvme/target/fcloop.c
 @@ -618,12 +618,13 @@ fcloop_fcp_recv_work(struct work_struct *work)
@@ -1911,10 +1911,10 @@ index 641201e62c1b..20becea1ad96 100644
 2.49.0
 
 
-From 38e0e3596623692a87ab3d24b8961193a2274b6c Mon Sep 17 00:00:00 2001
+From 8eefbed1dd40c09f8a6cb815a7e04802db423574 Mon Sep 17 00:00:00 2001
 From: Pavel Begunkov <asml.silence@gmail.com>
 Date: Wed, 28 May 2025 17:55:57 -0400
-Subject: [PATCH 25/49] io_uring: fix spurious drain flushing
+Subject: [PATCH 25/46] io_uring: fix spurious drain flushing
 
 [ Upstream commit fde04c7e2775feb0746301e0ef86a04d3598c3fe ]
 
@@ -1938,7 +1938,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 13 insertions(+), 1 deletion(-)
 
 diff --git a/io_uring/io_uring.c b/io_uring/io_uring.c
-index edda31a15c6e..9266d4f2016a 100644
+index edda31a15c6e6..9266d4f2016ad 100644
 --- a/io_uring/io_uring.c
 +++ b/io_uring/io_uring.c
 @@ -537,18 +537,30 @@ void io_req_queue_iowq(struct io_kiocb *req)
@@ -1977,10 +1977,10 @@ index edda31a15c6e..9266d4f2016a 100644
 2.49.0
 
 
-From 4f498715047739af528b5cd8241050cca69c79de Mon Sep 17 00:00:00 2001
+From 411f3db51731fd37feda62d91b279831a06267cc Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Wed, 28 May 2025 17:55:58 -0400
-Subject: [PATCH 26/49] perf: Ensure bpf_perf_link path is properly serialized
+Subject: [PATCH 26/46] perf: Ensure bpf_perf_link path is properly serialized
 
 [ Upstream commit 7ed9138a72829d2035ecbd8dbd35b1bc3c137c40 ]
 
@@ -1998,7 +1998,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 30 insertions(+), 4 deletions(-)
 
 diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 95e703891b24..eaa9588eb968 100644
+index 95e703891b24f..eaa9588eb968d 100644
 --- a/kernel/events/core.c
 +++ b/kernel/events/core.c
 @@ -6239,6 +6239,9 @@ static int perf_event_set_output(struct perf_event *event,
@@ -2074,10 +2074,10 @@ index 95e703891b24..eaa9588eb968 100644
 2.49.0
 
 
-From 54bfd215385038069f8e2dc325ea36c8b00841e5 Mon Sep 17 00:00:00 2001
+From ef94de10f37864f35f10195ddef036c38f14c27b Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 28 May 2025 17:55:59 -0400
-Subject: [PATCH 27/49] block: use q->elevator with ->elevator_lock held in
+Subject: [PATCH 27/46] block: use q->elevator with ->elevator_lock held in
  elv_iosched_show()
 
 [ Upstream commit 94209d27d14104ed828ca88cd5403a99162fe51a ]
@@ -2098,7 +2098,7 @@ Signed-off-by: Sasha Levin <sashal@kernel.org>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/block/elevator.c b/block/elevator.c
-index b4d08026b02c..dc4cadef728e 100644
+index b4d08026b02ce..dc4cadef728e5 100644
 --- a/block/elevator.c
 +++ b/block/elevator.c
 @@ -744,7 +744,6 @@ ssize_t elv_iosched_store(struct gendisk *disk, const char *buf,
@@ -2122,10 +2122,10 @@ index b4d08026b02c..dc4cadef728e 100644
 2.49.0
 
 
-From a656e02f20587f50b82a62d48e8a0d7a820a0247 Mon Sep 17 00:00:00 2001
+From bd6cd9e4370c92465956068ea495adf6fa8a3a97 Mon Sep 17 00:00:00 2001
 From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
 Date: Thu, 29 May 2025 15:40:43 +0200
-Subject: [PATCH 28/49] Revert "x86/smp: Eliminate
+Subject: [PATCH 28/46] Revert "x86/smp: Eliminate
  mwait_play_dead_cpuid_hint()"
 
 Revert commit 96040f7273e2 ("x86/smp: Eliminate mwait_play_dead_cpuid_hint()")
@@ -2165,7 +2165,7 @@ Link: https://patch.msgid.link/12674167.O9o76ZdvQC@rjwysocki.net
  1 file changed, 47 insertions(+), 7 deletions(-)
 
 diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
-index d6cf1e23c2a3..96355ab9aed9 100644
+index d6cf1e23c2a32..96355ab9aed95 100644
 --- a/arch/x86/kernel/smpboot.c
 +++ b/arch/x86/kernel/smpboot.c
 @@ -1238,10 +1238,6 @@ void play_dead_common(void)
@@ -2247,10 +2247,10 @@ index d6cf1e23c2a3..96355ab9aed9 100644
 2.49.0
 
 
-From 24f8c243b08fe573d139b4cc69b6669345cfc803 Mon Sep 17 00:00:00 2001
+From ce6d15d4dfec110ff208cf9321e37ec7fc40ff2e Mon Sep 17 00:00:00 2001
 From: "Gautham R. Shenoy" <gautham.shenoy@amd.com>
 Date: Thu, 29 May 2025 14:21:43 +0530
-Subject: [PATCH 29/49] acpi-cpufreq: Fix nominal_freq units to KHz in
+Subject: [PATCH 29/46] acpi-cpufreq: Fix nominal_freq units to KHz in
  get_max_boost_ratio()
 
 commit 083466754596 ("cpufreq: ACPI: Fix max-frequency computation")
@@ -2278,7 +2278,7 @@ Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/cpufreq/acpi-cpufreq.c b/drivers/cpufreq/acpi-cpufreq.c
-index d26b610e4f24..76768fe213a9 100644
+index d26b610e4f24f..76768fe213a97 100644
 --- a/drivers/cpufreq/acpi-cpufreq.c
 +++ b/drivers/cpufreq/acpi-cpufreq.c
 @@ -660,7 +660,7 @@ static u64 get_max_boost_ratio(unsigned int cpu, u64 *nominal_freq)
@@ -2294,10 +2294,10 @@ index d26b610e4f24..76768fe213a9 100644
 2.49.0
 
 
-From d53ac68ad10f14179d036c656ea1f0946c0529b5 Mon Sep 17 00:00:00 2001
+From 3b32b741349df687d0c1da8c4ddae26f0bada10f Mon Sep 17 00:00:00 2001
 From: Jinliang Zheng <alexjlzheng@tencent.com>
 Date: Tue, 15 Apr 2025 17:02:32 +0800
-Subject: [PATCH 30/49] mm: fix ratelimit_pages update error in
+Subject: [PATCH 30/46] mm: fix ratelimit_pages update error in
  dirty_ratio_handler()
 
 In dirty_ratio_handler(), vm_dirty_bytes must be set to zero before
@@ -2354,7 +2354,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/mm/page-writeback.c b/mm/page-writeback.c
-index c81624bc3969..20e1d76f1eba 100644
+index c81624bc39697..20e1d76f1eba3 100644
 --- a/mm/page-writeback.c
 +++ b/mm/page-writeback.c
 @@ -520,8 +520,8 @@ static int dirty_ratio_handler(const struct ctl_table *table, int write, void *b
@@ -2371,10 +2371,10 @@ index c81624bc3969..20e1d76f1eba 100644
 2.49.0
 
 
-From 09043302859eb3b890452a20e6313e5bb61fc677 Mon Sep 17 00:00:00 2001
+From c6c74dfed37f342e17df9abd9654617e94dd74c2 Mon Sep 17 00:00:00 2001
 From: GONG Ruiqi <gongruiqi1@huawei.com>
 Date: Sun, 27 Apr 2025 10:53:03 +0800
-Subject: [PATCH 31/49] vgacon: Add check for vc_origin address range in
+Subject: [PATCH 31/46] vgacon: Add check for vc_origin address range in
  vgacon_scroll()
 
 Our in-house Syzkaller reported the following BUG (twice), which we
@@ -2541,7 +2541,7 @@ Signed-off-by: Helge Deller <deller@gmx.de>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/drivers/video/console/vgacon.c b/drivers/video/console/vgacon.c
-index 37bd18730fe0..f9cdbf8c53e3 100644
+index 37bd18730fe0d..f9cdbf8c53e34 100644
 --- a/drivers/video/console/vgacon.c
 +++ b/drivers/video/console/vgacon.c
 @@ -1168,7 +1168,7 @@ static bool vgacon_scroll(struct vc_data *c, unsigned int t, unsigned int b,
@@ -2557,10 +2557,10 @@ index 37bd18730fe0..f9cdbf8c53e3 100644
 2.49.0
 
 
-From 1c1c177040411033777c44bf2ce876d7cde4422f Mon Sep 17 00:00:00 2001
+From 8ce5f7fcec977b6d60801f0ff4ec5149a390361f Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:06 +0300
-Subject: [PATCH 32/49] fbdev: Fix do_register_framebuffer to prevent
+Subject: [PATCH 32/46] fbdev: Fix do_register_framebuffer to prevent
  null-ptr-deref in fb_videomode_to_var
 
 If fb_add_videomode() in do_register_framebuffer() fails to allocate
@@ -2611,7 +2611,7 @@ Signed-off-by: Helge Deller <deller@gmx.de>
  1 file changed, 11 insertions(+), 7 deletions(-)
 
 diff --git a/drivers/video/fbdev/core/fbmem.c b/drivers/video/fbdev/core/fbmem.c
-index 3c568cff2913..e1557d80768f 100644
+index 3c568cff2913e..e1557d80768ff 100644
 --- a/drivers/video/fbdev/core/fbmem.c
 +++ b/drivers/video/fbdev/core/fbmem.c
 @@ -388,7 +388,7 @@ static int fb_check_foreignness(struct fb_info *fi)
@@ -2665,10 +2665,10 @@ index 3c568cff2913..e1557d80768f 100644
 2.49.0
 
 
-From 35b18af520d0823849b6e5a8e240a55c36ff0f91 Mon Sep 17 00:00:00 2001
+From e8f42dc6611bd87b545baa7e64c5622cc6251ba0 Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:07 +0300
-Subject: [PATCH 33/49] fbdev: Fix fb_set_var to prevent null-ptr-deref in
+Subject: [PATCH 33/46] fbdev: Fix fb_set_var to prevent null-ptr-deref in
  fb_videomode_to_var
 
 If fb_add_videomode() in fb_set_var() fails to allocate memory for
@@ -2717,7 +2717,7 @@ Signed-off-by: Helge Deller <deller@gmx.de>
  1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/drivers/video/fbdev/core/fbmem.c b/drivers/video/fbdev/core/fbmem.c
-index e1557d80768f..eca2498f2436 100644
+index e1557d80768ff..eca2498f24368 100644
 --- a/drivers/video/fbdev/core/fbmem.c
 +++ b/drivers/video/fbdev/core/fbmem.c
 @@ -328,8 +328,10 @@ fb_set_var(struct fb_info *info, struct fb_var_screeninfo *var)
@@ -2736,10 +2736,10 @@ index e1557d80768f..eca2498f2436 100644
 2.49.0
 
 
-From 0d0e02e543747e1b6b1cee9d2ab393d3cf376d56 Mon Sep 17 00:00:00 2001
+From 303f23f615463622557c97e08103f6cfc17817c6 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:15 +0200
-Subject: [PATCH 34/49] anon_inode: use a proper mode internally
+Subject: [PATCH 34/46] anon_inode: use a proper mode internally
 
 This allows the VFS to not trip over anonymous inodes and we can add
 asserts based on the mode into the vfs. When we report it to userspace
@@ -2761,7 +2761,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  3 files changed, 46 insertions(+), 1 deletion(-)
 
 diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
-index 583ac81669c2..42e4b9c34f89 100644
+index 583ac81669c24..42e4b9c34f892 100644
 --- a/fs/anon_inodes.c
 +++ b/fs/anon_inodes.c
 @@ -24,9 +24,43 @@
@@ -2825,7 +2825,7 @@ index 583ac81669c2..42e4b9c34f89 100644
  	return 0;
  }
 diff --git a/fs/internal.h b/fs/internal.h
-index b9b3e29a73fd..717dc9eb6185 100644
+index b9b3e29a73fd8..717dc9eb6185b 100644
 --- a/fs/internal.h
 +++ b/fs/internal.h
 @@ -343,3 +343,6 @@ static inline bool path_mounted(const struct path *path)
@@ -2836,7 +2836,7 @@ index b9b3e29a73fd..717dc9eb6185 100644
 +		       struct kstat *stat, u32 request_mask,
 +		       unsigned int query_flags);
 diff --git a/fs/libfs.c b/fs/libfs.c
-index 6393d7c49ee6..e1146620346e 100644
+index 6393d7c49ee6e..e1146620346e2 100644
 --- a/fs/libfs.c
 +++ b/fs/libfs.c
 @@ -1647,7 +1647,13 @@ struct inode *alloc_anon_inode(struct super_block *s)
@@ -2858,10 +2858,10 @@ index 6393d7c49ee6..e1146620346e 100644
 2.49.0
 
 
-From 62ae437d9f1ca6424ff7b89563adf7f7e21eede5 Mon Sep 17 00:00:00 2001
+From cf62b506e66824d106a397af3b7950cc4b297ad6 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:17 +0200
-Subject: [PATCH 35/49] anon_inode: explicitly block ->setattr()
+Subject: [PATCH 35/46] anon_inode: explicitly block ->setattr()
 
 It is currently possible to change the mode and owner of the single
 anonymous inode in the kernel:
@@ -2913,7 +2913,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  2 files changed, 9 insertions(+)
 
 diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
-index 42e4b9c34f89..cb51a90bece0 100644
+index 42e4b9c34f892..cb51a90bece00 100644
 --- a/fs/anon_inodes.c
 +++ b/fs/anon_inodes.c
 @@ -57,8 +57,15 @@ int anon_inode_getattr(struct mnt_idmap *idmap, const struct path *path,
@@ -2933,7 +2933,7 @@ index 42e4b9c34f89..cb51a90bece0 100644
  
  /*
 diff --git a/fs/internal.h b/fs/internal.h
-index 717dc9eb6185..f545400ce607 100644
+index 717dc9eb6185b..f545400ce607f 100644
 --- a/fs/internal.h
 +++ b/fs/internal.h
 @@ -346,3 +346,5 @@ int statmount_mnt_idmap(struct mnt_idmap *idmap, struct seq_file *seq, bool uid_
@@ -2946,10 +2946,10 @@ index 717dc9eb6185..f545400ce607 100644
 2.49.0
 
 
-From feb1932afd923cf9908d6284f6e502f3bd5b348c Mon Sep 17 00:00:00 2001
+From dcb66ad3b54a24c6af63eb07f9f09ae5d42dddc1 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:19 +0200
-Subject: [PATCH 36/49] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
+Subject: [PATCH 36/46] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
 
 It isn't possible to execute anonymous inodes because they cannot be
 opened in any way after they have been created. This includes execution:
@@ -2975,7 +2975,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 2 insertions(+)
 
 diff --git a/fs/anon_inodes.c b/fs/anon_inodes.c
-index cb51a90bece0..e51e7d88980a 100644
+index cb51a90bece00..e51e7d88980a2 100644
 --- a/fs/anon_inodes.c
 +++ b/fs/anon_inodes.c
 @@ -86,6 +86,8 @@ static int anon_inodefs_init_fs_context(struct fs_context *fc)
@@ -2991,10 +2991,10 @@ index cb51a90bece0..e51e7d88980a 100644
 2.49.0
 
 
-From 178f424070c3548b5bc9e0dbdb2daca510e7b812 Mon Sep 17 00:00:00 2001
+From e67ad140e51fe5e7f2bad44e2df6bfe42bb2880d Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 21 Apr 2025 10:27:40 +0200
-Subject: [PATCH 37/49] fs: add S_ANON_INODE
+Subject: [PATCH 37/46] fs: add S_ANON_INODE
 
 This makes it easy to detect proper anonymous inodes and to ensure that
 we can detect them in codepaths such as readahead().
@@ -3020,7 +3020,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  5 files changed, 24 insertions(+), 9 deletions(-)
 
 diff --git a/fs/ioctl.c b/fs/ioctl.c
-index c91fd2b46a77..03d9a11f2247 100644
+index c91fd2b46a77f..03d9a11f22475 100644
 --- a/fs/ioctl.c
 +++ b/fs/ioctl.c
 @@ -821,7 +821,8 @@ static int do_vfs_ioctl(struct file *filp, unsigned int fd,
@@ -3052,7 +3052,7 @@ index c91fd2b46a77..03d9a11f2247 100644
  		break;
  	}
 diff --git a/fs/libfs.c b/fs/libfs.c
-index e1146620346e..e28da9574a65 100644
+index e1146620346e2..e28da9574a652 100644
 --- a/fs/libfs.c
 +++ b/fs/libfs.c
 @@ -1656,7 +1656,7 @@ struct inode *alloc_anon_inode(struct super_block *s)
@@ -3065,7 +3065,7 @@ index e1146620346e..e28da9574a65 100644
  	return inode;
  }
 diff --git a/fs/pidfs.c b/fs/pidfs.c
-index d64a4cbeb0da..0ab9523f6778 100644
+index 50e69a9e104a6..860a8043d0520 100644
 --- a/fs/pidfs.c
 +++ b/fs/pidfs.c
 @@ -826,7 +826,7 @@ static int pidfs_init_inode(struct inode *inode, void *data)
@@ -3078,7 +3078,7 @@ index d64a4cbeb0da..0ab9523f6778 100644
  	inode->i_op = &pidfs_inode_operations;
  	inode->i_fop = &pidfs_file_operations;
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index a4fd649e2c3f..ef41a8213a6f 100644
+index a4fd649e2c3fc..ef41a8213a6fa 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -2344,6 +2344,7 @@ struct super_operations {
@@ -3098,7 +3098,7 @@ index a4fd649e2c3f..ef41a8213a6f 100644
  static inline bool HAS_UNMAPPED_ID(struct mnt_idmap *idmap,
  				   struct inode *inode)
 diff --git a/mm/readahead.c b/mm/readahead.c
-index 6a4e96b69702..20d36d6b055e 100644
+index 6a4e96b69702b..20d36d6b055ed 100644
 --- a/mm/readahead.c
 +++ b/mm/readahead.c
 @@ -690,9 +690,15 @@ EXPORT_SYMBOL_GPL(page_cache_async_ra);
@@ -3141,10 +3141,10 @@ index 6a4e96b69702..20d36d6b055e 100644
 2.49.0
 
 
-From c92a1957c401ab6c7e81c8b2e6f58d0b92a10226 Mon Sep 17 00:00:00 2001
+From 04b55ec127a12986ece397d7b08f2a5ba22c4418 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 7 May 2025 19:50:26 +0800
-Subject: [PATCH 38/49] configfs: Do not override creating attribute file
+Subject: [PATCH 38/46] configfs: Do not override creating attribute file
  failure in populate_attrs()
 
 populate_attrs() may override failure for creating attribute files
@@ -3166,7 +3166,7 @@ Signed-off-by: Andreas Hindborg <a.hindborg@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/configfs/dir.c b/fs/configfs/dir.c
-index 5568cb74b322..f43be44bff62 100644
+index 5568cb74b3224..f43be44bff624 100644
 --- a/fs/configfs/dir.c
 +++ b/fs/configfs/dir.c
 @@ -619,7 +619,7 @@ static int populate_attrs(struct config_item *item)
@@ -3182,10 +3182,10 @@ index 5568cb74b322..f43be44bff62 100644
 2.49.0
 
 
-From e797cd228ae2f81f12ae53f9004b044af2ff6e1e Mon Sep 17 00:00:00 2001
+From e5a1733dba4e48458fa8e189b4d090a6fea6b477 Mon Sep 17 00:00:00 2001
 From: Al Viro <viro@zeniv.linux.org.uk>
 Date: Fri, 23 May 2025 19:20:36 -0400
-Subject: [PATCH 39/49] Don't propagate mounts into detached trees
+Subject: [PATCH 39/46] Don't propagate mounts into detached trees
 
 All versions up to 6.14 did not propagate mount events into detached
 tree.  Shortly after 6.14 a merge of vfs-6.15-rc1.mount.namespace
@@ -3215,7 +3215,7 @@ Signed-off-by: Al Viro <viro@zeniv.linux.org.uk>
  3 files changed, 4 insertions(+), 20 deletions(-)
 
 diff --git a/fs/mount.h b/fs/mount.h
-index 7aecf2a60472..ad7173037924 100644
+index 7aecf2a604723..ad7173037924a 100644
 --- a/fs/mount.h
 +++ b/fs/mount.h
 @@ -7,10 +7,6 @@
@@ -3238,7 +3238,7 @@ index 7aecf2a60472..ad7173037924 100644
  
  struct mnt_pcp {
 diff --git a/fs/namespace.c b/fs/namespace.c
-index 1b466c54a357..623cd110076d 100644
+index 1b466c54a357d..623cd110076dc 100644
 --- a/fs/namespace.c
 +++ b/fs/namespace.c
 @@ -3648,7 +3648,7 @@ static int do_move_mount(struct path *old_path,
@@ -3278,7 +3278,7 @@ index 1b466c54a357..623cd110076d 100644
  	if (!err) {
  		if (attached) {
 diff --git a/fs/pnode.c b/fs/pnode.c
-index fb77427df39e..ffd429b760d5 100644
+index fb77427df39e2..ffd429b760d5d 100644
 --- a/fs/pnode.c
 +++ b/fs/pnode.c
 @@ -231,8 +231,8 @@ static int propagate_one(struct mount *m, struct mountpoint *dest_mp)
@@ -3296,260 +3296,10 @@ index fb77427df39e..ffd429b760d5 100644
 2.49.0
 
 
-From 8fe94fb370865eade1541ac5dcb2d8eaedf1bc12 Mon Sep 17 00:00:00 2001
-From: Christian Brauner <brauner@kernel.org>
-Date: Mon, 14 Apr 2025 15:55:05 +0200
-Subject: [PATCH 40/49] pidfs: move O_RDWR into pidfs_alloc_file()
-
-Since all pidfds must be O_RDWR currently enfore that directly in the
-file allocation function itself instead of letting callers specify it.
-
-Link: https://lore.kernel.org/20250414-work-coredump-v2-1-685bf231f828@kernel.org
-Tested-by: Luca Boccassi <luca.boccassi@gmail.com>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Signed-off-by: Christian Brauner <brauner@kernel.org>
----
- fs/pidfs.c | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/fs/pidfs.c b/fs/pidfs.c
-index 0ab9523f6778..860a8043d052 100644
---- a/fs/pidfs.c
-+++ b/fs/pidfs.c
-@@ -888,6 +888,7 @@ struct file *pidfs_alloc_file(struct pid *pid, unsigned int flags)
- 		return ERR_PTR(-ESRCH);
- 
- 	flags &= ~PIDFD_CLONE;
-+	flags |= O_RDWR;
- 	pidfd_file = dentry_open(&path, flags, current_cred());
- 	/* Raise PIDFD_THREAD explicitly as do_dentry_open() strips it. */
- 	if (!IS_ERR(pidfd_file))
--- 
-2.49.0
-
-
-From 399897cc00b3cfc92c2d025e8bee7be0ac39f50a Mon Sep 17 00:00:00 2001
-From: Christian Brauner <brauner@kernel.org>
-Date: Mon, 14 Apr 2025 15:55:06 +0200
-Subject: [PATCH 41/49] coredump: fix error handling for replace_fd()
-
-The replace_fd() helper returns the file descriptor number on success
-and a negative error code on failure. The current error handling in
-umh_pipe_setup() only works because the file descriptor that is replaced
-is zero but that's pretty volatile. Explicitly check for a negative
-error code.
-
-Link: https://lore.kernel.org/20250414-work-coredump-v2-2-685bf231f828@kernel.org
-Tested-by: Luca Boccassi <luca.boccassi@gmail.com>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Signed-off-by: Christian Brauner <brauner@kernel.org>
----
- fs/coredump.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
-
-diff --git a/fs/coredump.c b/fs/coredump.c
-index c33c177a701b..9da592aa8f16 100644
---- a/fs/coredump.c
-+++ b/fs/coredump.c
-@@ -507,7 +507,9 @@ static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
- {
- 	struct file *files[2];
- 	struct coredump_params *cp = (struct coredump_params *)info->data;
--	int err = create_pipe_files(files, 0);
-+	int err;
-+
-+	err = create_pipe_files(files, 0);
- 	if (err)
- 		return err;
- 
-@@ -515,10 +517,13 @@ static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
- 
- 	err = replace_fd(0, files[0], 0);
- 	fput(files[0]);
-+	if (err < 0)
-+		return err;
-+
- 	/* and disallow core files too */
- 	current->signal->rlim[RLIMIT_CORE] = (struct rlimit){1, 1};
- 
--	return err;
-+	return 0;
- }
- 
- void do_coredump(const kernel_siginfo_t *siginfo)
--- 
-2.49.0
-
-
-From e2e45ec31fdfce215707ef6edda9a907f8469ecd Mon Sep 17 00:00:00 2001
-From: Christian Brauner <brauner@kernel.org>
-Date: Mon, 14 Apr 2025 15:55:07 +0200
-Subject: [PATCH 42/49] coredump: hand a pidfd to the usermode coredump helper
-
-Give userspace a way to instruct the kernel to install a pidfd into the
-usermode helper process. This makes coredump handling a lot more
-reliable for userspace. In parallel with this commit we already have
-systemd adding support for this in [1].
-
-We create a pidfs file for the coredumping process when we process the
-corename pattern. When the usermode helper process is forked we then
-install the pidfs file as file descriptor three into the usermode
-helpers file descriptor table so it's available to the exec'd program.
-
-Since usermode helpers are either children of the system_unbound_wq
-workqueue or kthreadd we know that the file descriptor table is empty
-and can thus always use three as the file descriptor number.
-
-Note, that we'll install a pidfd for the thread-group leader even if a
-subthread is calling do_coredump(). We know that task linkage hasn't
-been removed due to delay_group_leader() and even if this @current isn't
-the actual thread-group leader we know that the thread-group leader
-cannot be reaped until @current has exited.
-
-Link: https://github.com/systemd/systemd/pull/37125 [1]
-Link: https://lore.kernel.org/20250414-work-coredump-v2-3-685bf231f828@kernel.org
-Tested-by: Luca Boccassi <luca.boccassi@gmail.com>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Signed-off-by: Christian Brauner <brauner@kernel.org>
----
- fs/coredump.c            | 56 +++++++++++++++++++++++++++++++++++++---
- include/linux/coredump.h |  1 +
- 2 files changed, 53 insertions(+), 4 deletions(-)
-
-diff --git a/fs/coredump.c b/fs/coredump.c
-index 9da592aa8f16..d740a0411266 100644
---- a/fs/coredump.c
-+++ b/fs/coredump.c
-@@ -43,6 +43,8 @@
- #include <linux/timekeeping.h>
- #include <linux/sysctl.h>
- #include <linux/elf.h>
-+#include <linux/pidfs.h>
-+#include <uapi/linux/pidfd.h>
- 
- #include <linux/uaccess.h>
- #include <asm/mmu_context.h>
-@@ -60,6 +62,12 @@ static void free_vma_snapshot(struct coredump_params *cprm);
- #define CORE_FILE_NOTE_SIZE_DEFAULT (4*1024*1024)
- /* Define a reasonable max cap */
- #define CORE_FILE_NOTE_SIZE_MAX (16*1024*1024)
-+/*
-+ * File descriptor number for the pidfd for the thread-group leader of
-+ * the coredumping task installed into the usermode helper's file
-+ * descriptor table.
-+ */
-+#define COREDUMP_PIDFD_NUMBER 3
- 
- static int core_uses_pid;
- static unsigned int core_pipe_limit;
-@@ -339,6 +347,27 @@ static int format_corename(struct core_name *cn, struct coredump_params *cprm,
- 			case 'C':
- 				err = cn_printf(cn, "%d", cprm->cpu);
- 				break;
-+			/* pidfd number */
-+			case 'F': {
-+				/*
-+				 * Installing a pidfd only makes sense if
-+				 * we actually spawn a usermode helper.
-+				 */
-+				if (!ispipe)
-+					break;
-+
-+				/*
-+				 * Note that we'll install a pidfd for the
-+				 * thread-group leader. We know that task
-+				 * linkage hasn't been removed yet and even if
-+				 * this @current isn't the actual thread-group
-+				 * leader we know that the thread-group leader
-+				 * cannot be reaped until @current has exited.
-+				 */
-+				cprm->pid = task_tgid(current);
-+				err = cn_printf(cn, "%d", COREDUMP_PIDFD_NUMBER);
-+				break;
-+			}
- 			default:
- 				break;
- 			}
-@@ -493,7 +522,7 @@ static void wait_for_dump_helpers(struct file *file)
- }
- 
- /*
-- * umh_pipe_setup
-+ * umh_coredump_setup
-  * helper function to customize the process used
-  * to collect the core in userspace.  Specifically
-  * it sets up a pipe and installs it as fd 0 (stdin)
-@@ -503,12 +532,31 @@ static void wait_for_dump_helpers(struct file *file)
-  * is a special value that we use to trap recursive
-  * core dumps
-  */
--static int umh_pipe_setup(struct subprocess_info *info, struct cred *new)
-+static int umh_coredump_setup(struct subprocess_info *info, struct cred *new)
- {
- 	struct file *files[2];
- 	struct coredump_params *cp = (struct coredump_params *)info->data;
- 	int err;
- 
-+	if (cp->pid) {
-+		struct file *pidfs_file __free(fput) = NULL;
-+
-+		pidfs_file = pidfs_alloc_file(cp->pid, 0);
-+		if (IS_ERR(pidfs_file))
-+			return PTR_ERR(pidfs_file);
-+
-+		/*
-+		 * Usermode helpers are childen of either
-+		 * system_unbound_wq or of kthreadd. So we know that
-+		 * we're starting off with a clean file descriptor
-+		 * table. So we should always be able to use
-+		 * COREDUMP_PIDFD_NUMBER as our file descriptor value.
-+		 */
-+		err = replace_fd(COREDUMP_PIDFD_NUMBER, pidfs_file, 0);
-+		if (err < 0)
-+			return err;
-+	}
-+
- 	err = create_pipe_files(files, 0);
- 	if (err)
- 		return err;
-@@ -598,7 +646,7 @@ void do_coredump(const kernel_siginfo_t *siginfo)
- 		}
- 
- 		if (cprm.limit == 1) {
--			/* See umh_pipe_setup() which sets RLIMIT_CORE = 1.
-+			/* See umh_coredump_setup() which sets RLIMIT_CORE = 1.
- 			 *
- 			 * Normally core limits are irrelevant to pipes, since
- 			 * we're not writing to the file system, but we use
-@@ -637,7 +685,7 @@ void do_coredump(const kernel_siginfo_t *siginfo)
- 		retval = -ENOMEM;
- 		sub_info = call_usermodehelper_setup(helper_argv[0],
- 						helper_argv, NULL, GFP_KERNEL,
--						umh_pipe_setup, NULL, &cprm);
-+						umh_coredump_setup, NULL, &cprm);
- 		if (sub_info)
- 			retval = call_usermodehelper_exec(sub_info,
- 							  UMH_WAIT_EXEC);
-diff --git a/include/linux/coredump.h b/include/linux/coredump.h
-index 77e6e195d1d6..76e41805b92d 100644
---- a/include/linux/coredump.h
-+++ b/include/linux/coredump.h
-@@ -28,6 +28,7 @@ struct coredump_params {
- 	int vma_count;
- 	size_t vma_data_size;
- 	struct core_vma_metadata *vma_meta;
-+	struct pid *pid;
- };
- 
- extern unsigned int core_file_note_size_limit;
--- 
-2.49.0
-
-
-From e88c843de13992811e68c4eb8adbb81bb86eaee4 Mon Sep 17 00:00:00 2001
+From a09fc8527208974df43f32a51a7c7f3c7c1fae88 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:52 -0600
-Subject: [PATCH 43/49] mm/filemap: gate dropbehind invalidate on folio !dirty
+Subject: [PATCH 40/46] mm/filemap: gate dropbehind invalidate on folio !dirty
  && !writeback
 
 It's possible for the folio to either get marked for writeback or
@@ -3570,7 +3320,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 11 insertions(+), 2 deletions(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 7b90cbeb4a1a..008a55290f34 100644
+index 7b90cbeb4a1ad..008a55290f34a 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -1589,6 +1589,16 @@ int folio_wait_private_2_killable(struct folio *folio)
@@ -3604,10 +3354,10 @@ index 7b90cbeb4a1a..008a55290f34 100644
 2.49.0
 
 
-From d08187ba4e7feaa9ebfb2a8e0392394725c8e727 Mon Sep 17 00:00:00 2001
+From 2efac6b903e928c7367098eda7f12d8705551fac Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:53 -0600
-Subject: [PATCH 44/49] mm/filemap: use filemap_end_dropbehind() for read
+Subject: [PATCH 41/46] mm/filemap: use filemap_end_dropbehind() for read
  invalidation
 
 Use the filemap_end_dropbehind() helper rather than calling
@@ -3627,7 +3377,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 3 insertions(+), 4 deletions(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 008a55290f34..6af6d8f2929c 100644
+index 008a55290f34a..6af6d8f2929ce 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -2644,8 +2644,7 @@ static inline bool pos_same_folio(loff_t pos1, loff_t pos2, struct folio *folio)
@@ -3662,10 +3412,10 @@ index 008a55290f34..6af6d8f2929c 100644
 2.49.0
 
 
-From 8c4530717d6db524cf1bab30ac17ab428485a76a Mon Sep 17 00:00:00 2001
+From 9d685f13fcbef53e85fd57fff70e32461f31dda8 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:54 -0600
-Subject: [PATCH 45/49] Revert "Disable FOP_DONTCACHE for now due to bugs"
+Subject: [PATCH 42/46] Revert "Disable FOP_DONTCACHE for now due to bugs"
 
 This reverts commit 478ad02d6844217cc7568619aeb0809d93ade43d.
 
@@ -3681,7 +3431,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index ef41a8213a6f..cf7208500cee 100644
+index ef41a8213a6fa..cf7208500cee3 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -2186,7 +2186,7 @@ struct file_operations {
@@ -3697,10 +3447,10 @@ index ef41a8213a6f..cf7208500cee 100644
 2.49.0
 
 
-From aa8b56c37d09ac9f0445564be7207af26be2fcb0 Mon Sep 17 00:00:00 2001
+From 9b5785a24149bfc999016e58729713cbd02fca58 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:55 -0600
-Subject: [PATCH 46/49] mm/filemap: unify read/write dropbehind naming
+Subject: [PATCH 43/46] mm/filemap: unify read/write dropbehind naming
 
 The read side is filemap_end_dropbehind_read(), while the write side
 used folio_ as the prefix rather than filemap_. The read side makes more
@@ -3714,7 +3464,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 6af6d8f2929c..2ba1ed116103 100644
+index 6af6d8f2929ce..2ba1ed116103a 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -1604,7 +1604,7 @@ static void filemap_end_dropbehind(struct folio *folio)
@@ -3739,10 +3489,10 @@ index 6af6d8f2929c..2ba1ed116103 100644
 2.49.0
 
 
-From f1664ce28a64df068c1ce1c4d6b0350a3fc71caf Mon Sep 17 00:00:00 2001
+From 8f2c4571c2b23b82acb6638bac2fea51e2387120 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:56 -0600
-Subject: [PATCH 47/49] mm/filemap: unify dropbehind flag testing and clearing
+Subject: [PATCH 44/46] mm/filemap: unify dropbehind flag testing and clearing
 
 The read and write side does this a bit differently, unify it such that
 the _{read,write} helpers check the bit before locking, and the generic
@@ -3757,7 +3507,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 11 insertions(+), 10 deletions(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 2ba1ed116103..eef44d7ea12e 100644
+index 2ba1ed116103a..eef44d7ea12e0 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -1595,7 +1595,11 @@ static void filemap_end_dropbehind(struct folio *folio)
@@ -3823,10 +3573,10 @@ index 2ba1ed116103..eef44d7ea12e 100644
 2.49.0
 
 
-From a0ec77422521df8321cd308156e28ada90743eae Mon Sep 17 00:00:00 2001
+From 3a6ff0900b2eb87ab97482a31142509c66be44b6 Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Mon, 26 May 2025 18:28:18 +0000
-Subject: [PATCH 48/49] mm/khugepaged: fix race with folio split/free using
+Subject: [PATCH 45/46] mm/khugepaged: fix race with folio split/free using
  temporary reference
 
 hpage_collapse_scan_file() calls is_refcount_suitable(), which in turn
@@ -3865,7 +3615,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  1 file changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/mm/khugepaged.c b/mm/khugepaged.c
-index cc945c6ab3bd..fe1fe7eace54 100644
+index cc945c6ab3bdb..fe1fe7eace54f 100644
 --- a/mm/khugepaged.c
 +++ b/mm/khugepaged.c
 @@ -2295,6 +2295,17 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
@@ -3927,10 +3677,10 @@ index cc945c6ab3bd..fe1fe7eace54 100644
 2.49.0
 
 
-From 0bbd99b250c52e5dda302d9db3b8e6332ca4fed5 Mon Sep 17 00:00:00 2001
+From e65050e27152af3e102794b4b790b227d3b10892 Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Wed, 30 Apr 2025 10:01:51 +0000
-Subject: [PATCH 49/49] mm: add folio_expected_ref_count() for reference count
+Subject: [PATCH 46/46] mm: add folio_expected_ref_count() for reference count
  calculation
 
 Patch series " JFS: Implement migrate_folio for jfs_metapage_aops" v5.
@@ -4004,7 +3754,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  2 files changed, 59 insertions(+), 18 deletions(-)
 
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index fdda6b16263b..c726d935aac5 100644
+index fdda6b16263b3..c726d935aac5e 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
 @@ -2306,6 +2306,61 @@ static inline bool folio_maybe_mapped_shared(struct folio *folio)
@@ -4070,7 +3820,7 @@ index fdda6b16263b..c726d935aac5 100644
  static inline int arch_make_folio_accessible(struct folio *folio)
  {
 diff --git a/mm/migrate.c b/mm/migrate.c
-index 676d9cfc7059..273d46771a6c 100644
+index 676d9cfc7059c..273d46771a6ca 100644
 --- a/mm/migrate.c
 +++ b/mm/migrate.c
 @@ -445,20 +445,6 @@ void pmd_migration_entry_wait(struct mm_struct *mm, pmd_t *pmd)
