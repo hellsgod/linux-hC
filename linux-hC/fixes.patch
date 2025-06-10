@@ -1,7 +1,7 @@
-From f04767eff967d8f9dba7a52e56cddb43cf975a37 Mon Sep 17 00:00:00 2001
+From dc9f3a015d53d0ec8e5eef5a081989d762a6c4d3 Mon Sep 17 00:00:00 2001
 From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
 Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/46] arch/Kconfig: Default to maximum amount of ASLR bits
+Subject: [PATCH 01/50] arch/Kconfig: Default to maximum amount of ASLR bits
 
 To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
 avoid having to enable `CONFIG_EXPERT`.
@@ -37,10 +37,10 @@ index b0adb665041f1..eea830cc90a77 100644
 2.49.0
 
 
-From 676dca977ce76f8a39bd0b5aab394009217577d9 Mon Sep 17 00:00:00 2001
+From 487d34e4040efc88007c2120c448797dfeb373e0 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/46] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 02/50] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,10 +72,10 @@ index 452374d63c244..08f80d7c5df05 100644
 2.49.0
 
 
-From 258c37a9b884d8b5362ce5986bd9579c70c53c05 Mon Sep 17 00:00:00 2001
+From fcd01bbb46ffddd7be31a1545d3accad813538ab Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 03/46] drivers/base/node: Optimize memory block registration
+Subject: [PATCH 03/50] drivers/base/node: Optimize memory block registration
  to reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -348,10 +348,10 @@ index 2b75178922301..485370f3bc177 100644
 2.49.0
 
 
-From 9d30b893cc481f7bd33de4fed577baea51b2ca0f Mon Sep 17 00:00:00 2001
+From 6ebea3153b301242d15b7f58120db79297a9532a Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 04/46] drivers/base/node: remove
+Subject: [PATCH 04/50] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -458,10 +458,10 @@ index a8e087d9b0aea..07709cb1d9d8a 100644
 2.49.0
 
 
-From 52a565e79626f591ef30368877ee40922cbe8e17 Mon Sep 17 00:00:00 2001
+From 31eb850365bea43d022b48718ffacbbd5d3c2a7b Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 05/46] drivers/base/node: Remove
+Subject: [PATCH 05/50] drivers/base/node: Remove
  register_memory_blocks_under_node() function call from register_one_node
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -516,10 +516,10 @@ index 485370f3bc177..b15de78e04087 100644
 2.49.0
 
 
-From 8d2c257d4b341e736894251e36e3b2788e03ab01 Mon Sep 17 00:00:00 2001
+From 081f0cdb99ca36ffc0d8c5465788e09ca821499f Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 06/46] drivers/base/node: Rename
+Subject: [PATCH 06/50] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -602,10 +602,10 @@ index 8305483de38bb..f734cc924b51b 100644
 2.49.0
 
 
-From 624f12ccebbc2ada823a453b5cf06604f8c189e5 Mon Sep 17 00:00:00 2001
+From c15aa8e9611a4fd291efd68b950a3374ba36d179 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 07/46] drivers/base/node: Rename __register_one_node() to
+Subject: [PATCH 07/50] drivers/base/node: Rename __register_one_node() to
  register_one_node()
 
 The register_one_node() function was a simple wrapper around
@@ -705,10 +705,10 @@ index f734cc924b51b..4dadd156f8362 100644
 2.49.0
 
 
-From 44f4b1c193930711275794fa92ca7d27c8c1d38d Mon Sep 17 00:00:00 2001
+From 5bec447085f68688544501cb4929623a1021b57c Mon Sep 17 00:00:00 2001
 From: Pierre Gondois <pierre.gondois@arm.com>
 Date: Tue, 25 Mar 2025 16:05:41 +0100
-Subject: [PATCH 08/46] sched/fair: Allow decaying util_est when util_avg > CPU
+Subject: [PATCH 08/50] sched/fair: Allow decaying util_est when util_avg > CPU
  capa
 
 commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
@@ -779,10 +779,10 @@ index 0fb9bf995a479..a351a1b8bfe45 100644
 2.49.0
 
 
-From 4a5f167317bdbe3b4210b68d04cdd8fa75483f6f Mon Sep 17 00:00:00 2001
+From e5edf4fce9670ca8ada3bfcd139ecb45c3eb7c86 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 28 Jan 2025 15:39:49 +0100
-Subject: [PATCH 09/46] sched/fair: Adhere to place_entity() constraints
+Subject: [PATCH 09/50] sched/fair: Adhere to place_entity() constraints
 
 Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
 placement bug causing scheduling lag") relies on commit 4423af84b297
@@ -847,10 +847,10 @@ index a351a1b8bfe45..e3f673643b7e3 100644
 2.49.0
 
 
-From 6bcdc0d886931294da1978154691e873c43dc9e7 Mon Sep 17 00:00:00 2001
+From 33d9e0f042315ca2394985a5c2786cb2523d3825 Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Tue, 29 Apr 2025 08:07:26 -0700
-Subject: [PATCH 10/46] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 10/50] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -908,10 +908,10 @@ index c81cf642dba05..b986cd2fb19b7 100644
 2.49.0
 
 
-From bb35bf0f0ad497629b5b1d5d9b7bd9ec0dead78f Mon Sep 17 00:00:00 2001
+From 1f1b09af999fe386fcf4a6b3863ffb0f006064aa Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Mon, 3 Mar 2025 18:52:39 +0800
-Subject: [PATCH 11/46] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
+Subject: [PATCH 11/50] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
 Delayed dequeued feature keeps a sleeping task enqueued until its
 lag has elapsed. As a result, it stays also visible in rq->nr_running.
@@ -965,10 +965,10 @@ index e3f673643b7e3..305b0a5a58649 100644
 2.49.0
 
 
-From 38996ab1c2b742d1c36c28865e384d2bfee221ba Mon Sep 17 00:00:00 2001
+From 8de2d889ee9e58f3c200a7d7786d97e43233279b Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:56 +0800
-Subject: [PATCH 12/46] sched/util_est: Simplify condition for
+Subject: [PATCH 12/50] sched/util_est: Simplify condition for
  util_est_{en,de}queue()
 
 To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
@@ -1033,10 +1033,10 @@ index 305b0a5a58649..b647c19f253ef 100644
 2.49.0
 
 
-From 4e6ae465dc2b94378a2cdef4e766c48725c79e90 Mon Sep 17 00:00:00 2001
+From 69bd47ac2f8b3138d35cc14ca3a439bceb45e3b6 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:57 +0800
-Subject: [PATCH 13/46] sched/uclamp: Align uclamp and util_est and call before
+Subject: [PATCH 13/50] sched/uclamp: Align uclamp and util_est and call before
  freq update
 
 The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
@@ -1121,10 +1121,10 @@ index b986cd2fb19b7..a87be58d07095 100644
 2.49.0
 
 
-From 03ee203fd5579430cbfeb72df05745f069ceb7eb Mon Sep 17 00:00:00 2001
+From df31af91de60a60f0c72eb5638c7f2c2b3c784d1 Mon Sep 17 00:00:00 2001
 From: Di Shen <di.shen@unisoc.com>
 Date: Tue, 20 May 2025 13:49:43 +0800
-Subject: [PATCH 14/46] Revert "bpf: remove unnecessary
+Subject: [PATCH 14/50] Revert "bpf: remove unnecessary
  rcu_read_{lock,unlock}() in multi-uprobe attach logic"
 
 This reverts commit 4a8f635a60540888dab3804992e86410360339c8.
@@ -1163,10 +1163,10 @@ index 187dc37d61d4a..0c4b6af106017 100644
 2.49.0
 
 
-From 333c498c8059189b922fdf37e2c481a1bed20cef Mon Sep 17 00:00:00 2001
+From 01238d1d776b951731c28377c44fdc7935e337d6 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 15/46] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 15/50] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -1207,10 +1207,10 @@ index 7da531b1cf6be..0eaf3522abe9a 100644
 2.49.0
 
 
-From 66e7c31849a07a95ffd347f1f8ce17f492d05fe5 Mon Sep 17 00:00:00 2001
+From efac87287f789ae200a7aa13d43c690f51072ff7 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Mon, 14 Apr 2025 09:45:43 +0100
-Subject: [PATCH 16/46] select: core_sys_select add unlikely branch hint on
+Subject: [PATCH 16/50] select: core_sys_select add unlikely branch hint on
  return path
 
 Adding an unlikely() hint on the n < 0 comparison return path improves
@@ -1249,10 +1249,10 @@ index 0eaf3522abe9a..9fb650d03d52e 100644
 2.49.0
 
 
-From f6bfb9ba0fc7fd4d4eb5768329c0d9ce5c5776cb Mon Sep 17 00:00:00 2001
+From b1be465ef38440115a3a2ccc98bdb2f3d34f234a Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:35:51 -0700
-Subject: [PATCH 17/46] Make 'cc-option' work correctly for the -Wno-xyzzy
+Subject: [PATCH 17/50] Make 'cc-option' work correctly for the -Wno-xyzzy
  pattern
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1314,10 +1314,10 @@ index f4fcc1eaaeaee..65cfa72e376be 100644
 2.49.0
 
 
-From 256e9fb63d077345aa45f86faca6489586114bb1 Mon Sep 17 00:00:00 2001
+From c26cfd8d94cf85df7d0e39c0ca25665313d03fba Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:40:30 -0700
-Subject: [PATCH 18/46] Remove legacy 'cc-disable-warning' use from the generic
+Subject: [PATCH 18/50] Remove legacy 'cc-disable-warning' use from the generic
  build scripts
 
 This just converts the 'cc-disable-warning' uses in the generic makefile
@@ -1429,10 +1429,10 @@ index fd649c68e198b..540f3db5cd86b 100644
 2.49.0
 
 
-From 56595448a8736e52ab6d7bc6179a0bec1c2e0259 Mon Sep 17 00:00:00 2001
+From e50cd6bc180cd6547280f076873ff1f612f813d1 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:51 -0400
-Subject: [PATCH 19/46] btrfs: exit after state insertion failure at
+Subject: [PATCH 19/50] btrfs: exit after state insertion failure at
  btrfs_convert_extent_bit()
 
 [ Upstream commit 3bf179e36da917c5d9bec71c714573ed1649b7c1 ]
@@ -1471,10 +1471,10 @@ index 13de6af279e52..92cfde37b1d33 100644
 2.49.0
 
 
-From da657cb358401ab9747bec66fc928709c6d26316 Mon Sep 17 00:00:00 2001
+From db137a0a81334edf31e57b45e8f97e41618c1d8b Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 28 May 2025 17:55:52 -0400
-Subject: [PATCH 20/46] fs/filesystems: Fix potential unsigned integer
+Subject: [PATCH 20/50] fs/filesystems: Fix potential unsigned integer
  underflow in fs_name()
 
 [ Upstream commit 1363c134ade81e425873b410566e957fecebb261 ]
@@ -1526,10 +1526,10 @@ index 58b9067b2391c..95e5256821a53 100644
 2.49.0
 
 
-From 2714a4702244c3f430a052a3bef56f28baf0c91a Mon Sep 17 00:00:00 2001
+From 38037517304f6d171af2693d90b6298d7f318894 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:53 -0400
-Subject: [PATCH 21/46] btrfs: fix fsync of files with no hard links not
+Subject: [PATCH 21/50] btrfs: fix fsync of files with no hard links not
  persisting deletion
 
 [ Upstream commit 5e85262e542d6da8898bb8563a724ad98f6fc936 ]
@@ -1674,10 +1674,10 @@ index 90dc094cfa5e5..f5af11565b876 100644
 2.49.0
 
 
-From 0e65c54468fc23b156ab76bd32b8c5da04ef72f8 Mon Sep 17 00:00:00 2001
+From 26cefcaa136a42c8d47f65086b220e12f4e306ab Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Wed, 28 May 2025 17:55:54 -0400
-Subject: [PATCH 22/46] gfs2: pass through holder from the VFS for freeze/thaw
+Subject: [PATCH 22/50] gfs2: pass through holder from the VFS for freeze/thaw
 
 [ Upstream commit 62a2175ddf7e72941868f164b7c1f92e00f213bd ]
 
@@ -1770,10 +1770,10 @@ index 44e5658b896c8..a3fe95e519cbc 100644
 2.49.0
 
 
-From 5afdc0b41a34dff5e7eaffe520cb6eb9be950d35 Mon Sep 17 00:00:00 2001
+From 1b835c6528873db16b229328ea05f880f8b273f6 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:55 -0400
-Subject: [PATCH 23/46] btrfs: exit after state split error at set_extent_bit()
+Subject: [PATCH 23/50] btrfs: exit after state split error at set_extent_bit()
 
 [ Upstream commit 41d69d4d78d8b179bf3bcdfc56d28a12b3a608d2 ]
 
@@ -1816,10 +1816,10 @@ index 92cfde37b1d33..b5b44ea91f999 100644
 2.49.0
 
 
-From e1bd284e05977ec6106d039a7c95237890ac7da4 Mon Sep 17 00:00:00 2001
+From 2e956815a30772272bc38df24f51e63c29ee3060 Mon Sep 17 00:00:00 2001
 From: Daniel Wagner <wagi@kernel.org>
 Date: Wed, 28 May 2025 17:55:56 -0400
-Subject: [PATCH 24/46] nvmet-fcloop: access fcpreq only when holding reqlock
+Subject: [PATCH 24/50] nvmet-fcloop: access fcpreq only when holding reqlock
 
 [ Upstream commit 47a827cd7929d0550c3496d70b417fcb5649b27b ]
 
@@ -1911,10 +1911,10 @@ index 641201e62c1ba..20becea1ad968 100644
 2.49.0
 
 
-From 8eefbed1dd40c09f8a6cb815a7e04802db423574 Mon Sep 17 00:00:00 2001
+From a887e58bcb312fc80989657b5d08be34650413ac Mon Sep 17 00:00:00 2001
 From: Pavel Begunkov <asml.silence@gmail.com>
 Date: Wed, 28 May 2025 17:55:57 -0400
-Subject: [PATCH 25/46] io_uring: fix spurious drain flushing
+Subject: [PATCH 25/50] io_uring: fix spurious drain flushing
 
 [ Upstream commit fde04c7e2775feb0746301e0ef86a04d3598c3fe ]
 
@@ -1977,10 +1977,10 @@ index edda31a15c6e6..9266d4f2016ad 100644
 2.49.0
 
 
-From 411f3db51731fd37feda62d91b279831a06267cc Mon Sep 17 00:00:00 2001
+From 3dec3aeb9c010ee48f474855c775eb8850ece409 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Wed, 28 May 2025 17:55:58 -0400
-Subject: [PATCH 26/46] perf: Ensure bpf_perf_link path is properly serialized
+Subject: [PATCH 26/50] perf: Ensure bpf_perf_link path is properly serialized
 
 [ Upstream commit 7ed9138a72829d2035ecbd8dbd35b1bc3c137c40 ]
 
@@ -2074,10 +2074,10 @@ index 95e703891b24f..eaa9588eb968d 100644
 2.49.0
 
 
-From ef94de10f37864f35f10195ddef036c38f14c27b Mon Sep 17 00:00:00 2001
+From 4039606c65dd4552cb07fbfcf54b9a69f41b07bb Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 28 May 2025 17:55:59 -0400
-Subject: [PATCH 27/46] block: use q->elevator with ->elevator_lock held in
+Subject: [PATCH 27/50] block: use q->elevator with ->elevator_lock held in
  elv_iosched_show()
 
 [ Upstream commit 94209d27d14104ed828ca88cd5403a99162fe51a ]
@@ -2122,182 +2122,10 @@ index b4d08026b02ce..dc4cadef728e5 100644
 2.49.0
 
 
-From bd6cd9e4370c92465956068ea495adf6fa8a3a97 Mon Sep 17 00:00:00 2001
-From: "Rafael J. Wysocki" <rafael.j.wysocki@intel.com>
-Date: Thu, 29 May 2025 15:40:43 +0200
-Subject: [PATCH 28/46] Revert "x86/smp: Eliminate
- mwait_play_dead_cpuid_hint()"
-
-Revert commit 96040f7273e2 ("x86/smp: Eliminate mwait_play_dead_cpuid_hint()")
-because it introduced a significant power regression on systems that
-start with "nosmt" in the kernel command line.
-
-Namely, on such systems, SMT siblings permanently go offline early,
-when cpuidle has not been initialized yet, so after the above commit,
-hlt_play_dead() is called for them.  Later on, when the processor
-attempts to enter a deep package C-state, including PC10 which is
-requisite for reaching minimum power in suspend-to-idle, it is not
-able to do that because of the SMT siblings staying in C1 (which
-they have been put into by HLT).
-
-As a result, the idle power (including power in suspend-to-idle)
-rises quite dramatically on those systems with all of the possible
-consequences, which (needless to say) may not be expected by their
-users.
-
-This issue is hard to debug and potentially dangerous, so it needs to
-be addressed as soon as possible in a way that will work for 6.15.y,
-hence the revert.
-
-Of course, after this revert, the issue that commit 96040f7273e2
-attempted to address will be back and it will need to be fixed again
-later.
-
-Fixes: 96040f7273e2 ("x86/smp: Eliminate mwait_play_dead_cpuid_hint()")
-Reported-by: Todd Brandt <todd.e.brandt@linux.intel.com>
-Tested-by: Todd Brandt <todd.e.brandt@linux.intel.com>
-Cc: 6.15+ <stable@vger.kernel.org> # 6.15+
-Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
-Acked-by: Dave Hansen <dave.hansen@linux.intel.com>
-Link: https://patch.msgid.link/12674167.O9o76ZdvQC@rjwysocki.net
----
- arch/x86/kernel/smpboot.c | 54 ++++++++++++++++++++++++++++++++++-----
- 1 file changed, 47 insertions(+), 7 deletions(-)
-
-diff --git a/arch/x86/kernel/smpboot.c b/arch/x86/kernel/smpboot.c
-index d6cf1e23c2a32..96355ab9aed95 100644
---- a/arch/x86/kernel/smpboot.c
-+++ b/arch/x86/kernel/smpboot.c
-@@ -1238,10 +1238,6 @@ void play_dead_common(void)
- 	local_irq_disable();
- }
- 
--/*
-- * We need to flush the caches before going to sleep, lest we have
-- * dirty data in our caches when we come back up.
-- */
- void __noreturn mwait_play_dead(unsigned int eax_hint)
- {
- 	struct mwait_cpu_dead *md = this_cpu_ptr(&mwait_cpu_dead);
-@@ -1287,6 +1283,50 @@ void __noreturn mwait_play_dead(unsigned int eax_hint)
- 	}
- }
- 
-+/*
-+ * We need to flush the caches before going to sleep, lest we have
-+ * dirty data in our caches when we come back up.
-+ */
-+static inline void mwait_play_dead_cpuid_hint(void)
-+{
-+	unsigned int eax, ebx, ecx, edx;
-+	unsigned int highest_cstate = 0;
-+	unsigned int highest_subcstate = 0;
-+	int i;
-+
-+	if (boot_cpu_data.x86_vendor == X86_VENDOR_AMD ||
-+	    boot_cpu_data.x86_vendor == X86_VENDOR_HYGON)
-+		return;
-+	if (!this_cpu_has(X86_FEATURE_MWAIT))
-+		return;
-+	if (!this_cpu_has(X86_FEATURE_CLFLUSH))
-+		return;
-+
-+	eax = CPUID_LEAF_MWAIT;
-+	ecx = 0;
-+	native_cpuid(&eax, &ebx, &ecx, &edx);
-+
-+	/*
-+	 * eax will be 0 if EDX enumeration is not valid.
-+	 * Initialized below to cstate, sub_cstate value when EDX is valid.
-+	 */
-+	if (!(ecx & CPUID5_ECX_EXTENSIONS_SUPPORTED)) {
-+		eax = 0;
-+	} else {
-+		edx >>= MWAIT_SUBSTATE_SIZE;
-+		for (i = 0; i < 7 && edx; i++, edx >>= MWAIT_SUBSTATE_SIZE) {
-+			if (edx & MWAIT_SUBSTATE_MASK) {
-+				highest_cstate = i;
-+				highest_subcstate = edx & MWAIT_SUBSTATE_MASK;
-+			}
-+		}
-+		eax = (highest_cstate << MWAIT_SUBSTATE_SIZE) |
-+			(highest_subcstate - 1);
-+	}
-+
-+	mwait_play_dead(eax);
-+}
-+
- /*
-  * Kick all "offline" CPUs out of mwait on kexec(). See comment in
-  * mwait_play_dead().
-@@ -1337,9 +1377,9 @@ void native_play_dead(void)
- 	play_dead_common();
- 	tboot_shutdown(TB_SHUTDOWN_WFS);
- 
--	/* Below returns only on error. */
--	cpuidle_play_dead();
--	hlt_play_dead();
-+	mwait_play_dead_cpuid_hint();
-+	if (cpuidle_play_dead())
-+		hlt_play_dead();
- }
- 
- #else /* ... !CONFIG_HOTPLUG_CPU */
--- 
-2.49.0
-
-
-From ce6d15d4dfec110ff208cf9321e37ec7fc40ff2e Mon Sep 17 00:00:00 2001
-From: "Gautham R. Shenoy" <gautham.shenoy@amd.com>
-Date: Thu, 29 May 2025 14:21:43 +0530
-Subject: [PATCH 29/46] acpi-cpufreq: Fix nominal_freq units to KHz in
- get_max_boost_ratio()
-
-commit 083466754596 ("cpufreq: ACPI: Fix max-frequency computation")
-modified get_max_boost_ratio() to return the nominal_freq advertised
-in the _CPC object. This was for the purposes of computing the maximum
-frequency. The frequencies advertised in _CPC objects are in
-MHz. However, cpufreq expects the frequency to be in KHz. Since the
-nominal_freq returned by get_max_boost_ratio() was not in KHz but
-instead in MHz,the cpuinfo_max_frequency that was computed using this
-nominal_freq was incorrect and an invalid value which resulted in
-cpufreq reporting the P0 frequency as the cpuinfo_max_freq.
-
-Fix this by converting the nominal_freq to KHz before returning the
-same from get_max_boost_ratio().
-
-Reported-by: Manu Bretelle <chantr4@gmail.com>
-Closes: https://lore.kernel.org/lkml/aDaB63tDvbdcV0cg@HQ-GR2X1W2P57/
-Fixes: 083466754596 ("cpufreq: ACPI: Fix max-frequency computation")
-Signed-off-by: Gautham R. Shenoy <gautham.shenoy@amd.com>
-Cc: 6.14+ <stable@vger.kernel.org> # 6.14+
-Link: https://patch.msgid.link/20250529085143.709-1-gautham.shenoy@amd.com
-Signed-off-by: Rafael J. Wysocki <rafael.j.wysocki@intel.com>
----
- drivers/cpufreq/acpi-cpufreq.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/cpufreq/acpi-cpufreq.c b/drivers/cpufreq/acpi-cpufreq.c
-index d26b610e4f24f..76768fe213a97 100644
---- a/drivers/cpufreq/acpi-cpufreq.c
-+++ b/drivers/cpufreq/acpi-cpufreq.c
-@@ -660,7 +660,7 @@ static u64 get_max_boost_ratio(unsigned int cpu, u64 *nominal_freq)
- 	nominal_perf = perf_caps.nominal_perf;
- 
- 	if (nominal_freq)
--		*nominal_freq = perf_caps.nominal_freq;
-+		*nominal_freq = perf_caps.nominal_freq * 1000;
- 
- 	if (!highest_perf || !nominal_perf) {
- 		pr_debug("CPU%d: highest or nominal performance missing\n", cpu);
--- 
-2.49.0
-
-
-From 3b32b741349df687d0c1da8c4ddae26f0bada10f Mon Sep 17 00:00:00 2001
+From 6fb71b644206de5c3ab953ff98bac0b4cf5a9cb1 Mon Sep 17 00:00:00 2001
 From: Jinliang Zheng <alexjlzheng@tencent.com>
 Date: Tue, 15 Apr 2025 17:02:32 +0800
-Subject: [PATCH 30/46] mm: fix ratelimit_pages update error in
+Subject: [PATCH 28/50] mm: fix ratelimit_pages update error in
  dirty_ratio_handler()
 
 In dirty_ratio_handler(), vm_dirty_bytes must be set to zero before
@@ -2371,10 +2199,10 @@ index c81624bc39697..20e1d76f1eba3 100644
 2.49.0
 
 
-From c6c74dfed37f342e17df9abd9654617e94dd74c2 Mon Sep 17 00:00:00 2001
+From f666adf40471e50d4b32300caa02fb8150143639 Mon Sep 17 00:00:00 2001
 From: GONG Ruiqi <gongruiqi1@huawei.com>
 Date: Sun, 27 Apr 2025 10:53:03 +0800
-Subject: [PATCH 31/46] vgacon: Add check for vc_origin address range in
+Subject: [PATCH 29/50] vgacon: Add check for vc_origin address range in
  vgacon_scroll()
 
 Our in-house Syzkaller reported the following BUG (twice), which we
@@ -2557,10 +2385,10 @@ index 37bd18730fe0d..f9cdbf8c53e34 100644
 2.49.0
 
 
-From 8ce5f7fcec977b6d60801f0ff4ec5149a390361f Mon Sep 17 00:00:00 2001
+From e1fff7088cd284267f72c5b0e4dfd950d6b38cf8 Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:06 +0300
-Subject: [PATCH 32/46] fbdev: Fix do_register_framebuffer to prevent
+Subject: [PATCH 30/50] fbdev: Fix do_register_framebuffer to prevent
  null-ptr-deref in fb_videomode_to_var
 
 If fb_add_videomode() in do_register_framebuffer() fails to allocate
@@ -2665,10 +2493,10 @@ index 3c568cff2913e..e1557d80768ff 100644
 2.49.0
 
 
-From e8f42dc6611bd87b545baa7e64c5622cc6251ba0 Mon Sep 17 00:00:00 2001
+From e2c19bd5549348936bb969c9c5f2bc58d18f1921 Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:07 +0300
-Subject: [PATCH 33/46] fbdev: Fix fb_set_var to prevent null-ptr-deref in
+Subject: [PATCH 31/50] fbdev: Fix fb_set_var to prevent null-ptr-deref in
  fb_videomode_to_var
 
 If fb_add_videomode() in fb_set_var() fails to allocate memory for
@@ -2736,10 +2564,10 @@ index e1557d80768ff..eca2498f24368 100644
 2.49.0
 
 
-From 303f23f615463622557c97e08103f6cfc17817c6 Mon Sep 17 00:00:00 2001
+From 011fd687f8f3fd445c097383055e986763a7fcf2 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:15 +0200
-Subject: [PATCH 34/46] anon_inode: use a proper mode internally
+Subject: [PATCH 32/50] anon_inode: use a proper mode internally
 
 This allows the VFS to not trip over anonymous inodes and we can add
 asserts based on the mode into the vfs. When we report it to userspace
@@ -2858,10 +2686,10 @@ index 6393d7c49ee6e..e1146620346e2 100644
 2.49.0
 
 
-From cf62b506e66824d106a397af3b7950cc4b297ad6 Mon Sep 17 00:00:00 2001
+From ae5a33ef97a8041afdc98aa89d7b5d27a8bdb9fb Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:17 +0200
-Subject: [PATCH 35/46] anon_inode: explicitly block ->setattr()
+Subject: [PATCH 33/50] anon_inode: explicitly block ->setattr()
 
 It is currently possible to change the mode and owner of the single
 anonymous inode in the kernel:
@@ -2946,10 +2774,10 @@ index 717dc9eb6185b..f545400ce607f 100644
 2.49.0
 
 
-From dcb66ad3b54a24c6af63eb07f9f09ae5d42dddc1 Mon Sep 17 00:00:00 2001
+From d7fd8e11857ff89082833099cc838641a8c3b8f6 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:19 +0200
-Subject: [PATCH 36/46] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
+Subject: [PATCH 34/50] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
 
 It isn't possible to execute anonymous inodes because they cannot be
 opened in any way after they have been created. This includes execution:
@@ -2991,10 +2819,10 @@ index cb51a90bece00..e51e7d88980a2 100644
 2.49.0
 
 
-From e67ad140e51fe5e7f2bad44e2df6bfe42bb2880d Mon Sep 17 00:00:00 2001
+From f22046b6da9d4e712bfaa6bcb62ac77cae420c67 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 21 Apr 2025 10:27:40 +0200
-Subject: [PATCH 37/46] fs: add S_ANON_INODE
+Subject: [PATCH 35/50] fs: add S_ANON_INODE
 
 This makes it easy to detect proper anonymous inodes and to ensure that
 we can detect them in codepaths such as readahead().
@@ -3141,10 +2969,10 @@ index 6a4e96b69702b..20d36d6b055ed 100644
 2.49.0
 
 
-From 04b55ec127a12986ece397d7b08f2a5ba22c4418 Mon Sep 17 00:00:00 2001
+From 2b39bc9909d50a4df0f5995c661f3fabf51ff682 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 7 May 2025 19:50:26 +0800
-Subject: [PATCH 38/46] configfs: Do not override creating attribute file
+Subject: [PATCH 36/50] configfs: Do not override creating attribute file
  failure in populate_attrs()
 
 populate_attrs() may override failure for creating attribute files
@@ -3182,10 +3010,10 @@ index 5568cb74b3224..f43be44bff624 100644
 2.49.0
 
 
-From e5a1733dba4e48458fa8e189b4d090a6fea6b477 Mon Sep 17 00:00:00 2001
+From 270006bd3b6636afe221f2db8d1f4cd918bf65b6 Mon Sep 17 00:00:00 2001
 From: Al Viro <viro@zeniv.linux.org.uk>
 Date: Fri, 23 May 2025 19:20:36 -0400
-Subject: [PATCH 39/46] Don't propagate mounts into detached trees
+Subject: [PATCH 37/50] Don't propagate mounts into detached trees
 
 All versions up to 6.14 did not propagate mount events into detached
 tree.  Shortly after 6.14 a merge of vfs-6.15-rc1.mount.namespace
@@ -3296,10 +3124,10 @@ index fb77427df39e2..ffd429b760d5d 100644
 2.49.0
 
 
-From a09fc8527208974df43f32a51a7c7f3c7c1fae88 Mon Sep 17 00:00:00 2001
+From b67bf2bc16a0adafcc53857ac1c4af74d0f3e8c6 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:52 -0600
-Subject: [PATCH 40/46] mm/filemap: gate dropbehind invalidate on folio !dirty
+Subject: [PATCH 38/50] mm/filemap: gate dropbehind invalidate on folio !dirty
  && !writeback
 
 It's possible for the folio to either get marked for writeback or
@@ -3354,10 +3182,10 @@ index 7b90cbeb4a1ad..008a55290f34a 100644
 2.49.0
 
 
-From 2efac6b903e928c7367098eda7f12d8705551fac Mon Sep 17 00:00:00 2001
+From 1ec05e7c4303513784d58ec094d23182580dad9b Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:53 -0600
-Subject: [PATCH 41/46] mm/filemap: use filemap_end_dropbehind() for read
+Subject: [PATCH 39/50] mm/filemap: use filemap_end_dropbehind() for read
  invalidation
 
 Use the filemap_end_dropbehind() helper rather than calling
@@ -3412,10 +3240,10 @@ index 008a55290f34a..6af6d8f2929ce 100644
 2.49.0
 
 
-From 9d685f13fcbef53e85fd57fff70e32461f31dda8 Mon Sep 17 00:00:00 2001
+From 53429a7e1943589533be617d9a28e83ea8163561 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:54 -0600
-Subject: [PATCH 42/46] Revert "Disable FOP_DONTCACHE for now due to bugs"
+Subject: [PATCH 40/50] Revert "Disable FOP_DONTCACHE for now due to bugs"
 
 This reverts commit 478ad02d6844217cc7568619aeb0809d93ade43d.
 
@@ -3447,10 +3275,10 @@ index ef41a8213a6fa..cf7208500cee3 100644
 2.49.0
 
 
-From 9b5785a24149bfc999016e58729713cbd02fca58 Mon Sep 17 00:00:00 2001
+From 67db812f7be2a34d72f77c6c5c6155df97ba7a08 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:55 -0600
-Subject: [PATCH 43/46] mm/filemap: unify read/write dropbehind naming
+Subject: [PATCH 41/50] mm/filemap: unify read/write dropbehind naming
 
 The read side is filemap_end_dropbehind_read(), while the write side
 used folio_ as the prefix rather than filemap_. The read side makes more
@@ -3489,10 +3317,10 @@ index 6af6d8f2929ce..2ba1ed116103a 100644
 2.49.0
 
 
-From 8f2c4571c2b23b82acb6638bac2fea51e2387120 Mon Sep 17 00:00:00 2001
+From 5d53b731b49edeb40b0c3bc55c44452a31cfdced Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:56 -0600
-Subject: [PATCH 44/46] mm/filemap: unify dropbehind flag testing and clearing
+Subject: [PATCH 42/50] mm/filemap: unify dropbehind flag testing and clearing
 
 The read and write side does this a bit differently, unify it such that
 the _{read,write} helpers check the bit before locking, and the generic
@@ -3573,10 +3401,10 @@ index 2ba1ed116103a..eef44d7ea12e0 100644
 2.49.0
 
 
-From 3a6ff0900b2eb87ab97482a31142509c66be44b6 Mon Sep 17 00:00:00 2001
+From afdde6c4cc3ea9ce1fec50eca43bc5857c238be4 Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Mon, 26 May 2025 18:28:18 +0000
-Subject: [PATCH 45/46] mm/khugepaged: fix race with folio split/free using
+Subject: [PATCH 43/50] mm/khugepaged: fix race with folio split/free using
  temporary reference
 
 hpage_collapse_scan_file() calls is_refcount_suitable(), which in turn
@@ -3677,10 +3505,10 @@ index cc945c6ab3bdb..fe1fe7eace54f 100644
 2.49.0
 
 
-From e65050e27152af3e102794b4b790b227d3b10892 Mon Sep 17 00:00:00 2001
+From 22383d2fb6327321f9a58b68e65d349aed403949 Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Wed, 30 Apr 2025 10:01:51 +0000
-Subject: [PATCH 46/46] mm: add folio_expected_ref_count() for reference count
+Subject: [PATCH 44/50] mm: add folio_expected_ref_count() for reference count
  calculation
 
 Patch series " JFS: Implement migrate_folio for jfs_metapage_aops" v5.
@@ -3880,6 +3708,747 @@ index 676d9cfc7059c..273d46771a6ca 100644
  	if (folio_ref_count(src) != expected_count)
  		return -EAGAIN;
  
+-- 
+2.49.0
+
+
+From db27a79a233ad1a53f0db5b3ede9ef44a463c1c0 Mon Sep 17 00:00:00 2001
+From: Pu Lehui <pulehui@huawei.com>
+Date: Thu, 29 May 2025 15:56:47 +0000
+Subject: [PATCH 45/50] mm: fix uprobe pte be overwritten when expanding vma
+
+Patch series "Fix uprobe pte be overwritten when expanding vma".
+
+
+This patch (of 4):
+
+We encountered a BUG alert triggered by Syzkaller as follows:
+   BUG: Bad rss-counter state mm:00000000b4a60fca type:MM_ANONPAGES val:1
+
+And we can reproduce it with the following steps:
+1. register uprobe on file at zero offset
+2. mmap the file at zero offset:
+   addr1 = mmap(NULL, 2 * 4096, PROT_NONE, MAP_PRIVATE, fd, 0);
+3. mremap part of vma1 to new vma2:
+   addr2 = mremap(addr1, 4096, 2 * 4096, MREMAP_MAYMOVE);
+4. mremap back to orig addr1:
+   mremap(addr2, 4096, 4096, MREMAP_MAYMOVE | MREMAP_FIXED, addr1);
+
+In step 3, the vma1 range [addr1, addr1 + 4096] will be remap to new vma2
+with range [addr2, addr2 + 8192], and remap uprobe anon page from the vma1
+to vma2, then unmap the vma1 range [addr1, addr1 + 4096].
+
+In step 4, the vma2 range [addr2, addr2 + 4096] will be remap back to the
+addr range [addr1, addr1 + 4096].  Since the addr range [addr1 + 4096,
+addr1 + 8192] still maps the file, it will take vma_merge_new_range to
+expand the range, and then do uprobe_mmap in vma_complete.  Since the
+merged vma pgoff is also zero offset, it will install uprobe anon page to
+the merged vma.  However, the upcomming move_page_tables step, which use
+set_pte_at to remap the vma2 uprobe pte to the merged vma, will overwrite
+the newly uprobe pte in the merged vma, and lead that pte to be orphan.
+
+Since the uprobe pte will be remapped to the merged vma, we can remove the
+unnecessary uprobe_mmap upon merged vma.
+
+This problem was first found in linux-6.6.y and also exists in the
+community syzkaller:
+https://lore.kernel.org/all/000000000000ada39605a5e71711@google.com/T/
+
+Link: https://lkml.kernel.org/r/20250529155650.4017699-1-pulehui@huaweicloud.com
+Link: https://lkml.kernel.org/r/20250529155650.4017699-2-pulehui@huaweicloud.com
+Fixes: 2b1444983508 ("uprobes, mm, x86: Add the ability to install and remove uprobes breakpoints")
+Signed-off-by: Pu Lehui <pulehui@huawei.com>
+Suggested-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Acked-by: David Hildenbrand <david@redhat.com>
+Cc: Jann Horn <jannh@google.com>
+Cc: Liam Howlett <liam.howlett@oracle.com>
+Cc: "Masami Hiramatsu (Google)" <mhiramat@kernel.org>
+Cc: Oleg Nesterov <oleg@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/vma.c | 20 +++++++++++++++++---
+ mm/vma.h |  7 +++++++
+ 2 files changed, 24 insertions(+), 3 deletions(-)
+
+diff --git a/mm/vma.c b/mm/vma.c
+index a468d4c29c0cd..9b8da1fc9647d 100644
+--- a/mm/vma.c
++++ b/mm/vma.c
+@@ -144,6 +144,9 @@ static void init_multi_vma_prep(struct vma_prepare *vp,
+ 	vp->file = vma->vm_file;
+ 	if (vp->file)
+ 		vp->mapping = vma->vm_file->f_mapping;
++
++	if (vmg && vmg->skip_vma_uprobe)
++		vp->skip_vma_uprobe = true;
+ }
+ 
+ /*
+@@ -333,10 +336,13 @@ static void vma_complete(struct vma_prepare *vp, struct vma_iterator *vmi,
+ 
+ 	if (vp->file) {
+ 		i_mmap_unlock_write(vp->mapping);
+-		uprobe_mmap(vp->vma);
+ 
+-		if (vp->adj_next)
+-			uprobe_mmap(vp->adj_next);
++		if (!vp->skip_vma_uprobe) {
++			uprobe_mmap(vp->vma);
++
++			if (vp->adj_next)
++				uprobe_mmap(vp->adj_next);
++		}
+ 	}
+ 
+ 	if (vp->remove) {
+@@ -1783,6 +1789,14 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
+ 		faulted_in_anon_vma = false;
+ 	}
+ 
++	/*
++	 * If the VMA we are copying might contain a uprobe PTE, ensure
++	 * that we do not establish one upon merge. Otherwise, when mremap()
++	 * moves page tables, it will orphan the newly created PTE.
++	 */
++	if (vma->vm_file)
++		vmg.skip_vma_uprobe = true;
++
+ 	new_vma = find_vma_prev(mm, addr, &vmg.prev);
+ 	if (new_vma && new_vma->vm_start < addr + len)
+ 		return NULL;	/* should never get here */
+diff --git a/mm/vma.h b/mm/vma.h
+index 149926e8a6d1a..7e8aa136e6f77 100644
+--- a/mm/vma.h
++++ b/mm/vma.h
+@@ -19,6 +19,8 @@ struct vma_prepare {
+ 	struct vm_area_struct *insert;
+ 	struct vm_area_struct *remove;
+ 	struct vm_area_struct *remove2;
++
++	bool skip_vma_uprobe :1;
+ };
+ 
+ struct unlink_vma_file_batch {
+@@ -120,6 +122,11 @@ struct vma_merge_struct {
+ 	 */
+ 	bool give_up_on_oom :1;
+ 
++	/*
++	 * If set, skip uprobe_mmap upon merged vma.
++	 */
++	bool skip_vma_uprobe :1;
++
+ 	/* Internal flags set during merge process: */
+ 
+ 	/*
+-- 
+2.49.0
+
+
+From bfee736a8eed015cdd3fd989ab9d1e2124af5627 Mon Sep 17 00:00:00 2001
+From: Jann Horn <jannh@google.com>
+Date: Tue, 27 May 2025 23:23:53 +0200
+Subject: [PATCH 46/50] mm/hugetlb: unshare page tables during VMA split, not
+ before
+
+Currently, __split_vma() triggers hugetlb page table unsharing through
+vm_ops->may_split().  This happens before the VMA lock and rmap locks are
+taken - which is too early, it allows racing VMA-locked page faults in our
+process and racing rmap walks from other processes to cause page tables to
+be shared again before we actually perform the split.
+
+Fix it by explicitly calling into the hugetlb unshare logic from
+__split_vma() in the same place where THP splitting also happens.  At that
+point, both the VMA and the rmap(s) are write-locked.
+
+An annoying detail is that we can now call into the helper
+hugetlb_unshare_pmds() from two different locking contexts:
+
+1. from hugetlb_split(), holding:
+    - mmap lock (exclusively)
+    - VMA lock
+    - file rmap lock (exclusively)
+2. hugetlb_unshare_all_pmds(), which I think is designed to be able to
+   call us with only the mmap lock held (in shared mode), but currently
+   only runs while holding mmap lock (exclusively) and VMA lock
+
+Backporting note:
+This commit fixes a racy protection that was introduced in commit
+b30c14cd6102 ("hugetlb: unshare some PMDs when splitting VMAs"); that
+commit claimed to fix an issue introduced in 5.13, but it should actually
+also go all the way back.
+
+[jannh@google.com: v2]
+  Link: https://lkml.kernel.org/r/20250528-hugetlb-fixes-splitrace-v2-1-1329349bad1a@google.com
+Link: https://lkml.kernel.org/r/20250528-hugetlb-fixes-splitrace-v2-0-1329349bad1a@google.com
+Link: https://lkml.kernel.org/r/20250527-hugetlb-fixes-splitrace-v1-1-f4136f5ec58a@google.com
+Fixes: 39dde65c9940 ("[PATCH] shared page table for hugetlb page")
+Signed-off-by: Jann Horn <jannh@google.com>
+Cc: Liam Howlett <liam.howlett@oracle.com>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Reviewed-by: Oscar Salvador <osalvador@suse.de>
+Cc: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: <stable@vger.kernel.org>	[b30c14cd6102: hugetlb: unshare some PMDs when splitting VMAs]
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ include/linux/hugetlb.h          |  3 ++
+ mm/hugetlb.c                     | 60 +++++++++++++++++++++++---------
+ mm/vma.c                         |  7 ++++
+ tools/testing/vma/vma_internal.h |  2 ++
+ 4 files changed, 56 insertions(+), 16 deletions(-)
+
+diff --git a/include/linux/hugetlb.h b/include/linux/hugetlb.h
+index 4861a7e304bbf..9a93e6dbb95e3 100644
+--- a/include/linux/hugetlb.h
++++ b/include/linux/hugetlb.h
+@@ -276,6 +276,7 @@ bool is_hugetlb_entry_migration(pte_t pte);
+ bool is_hugetlb_entry_hwpoisoned(pte_t pte);
+ void hugetlb_unshare_all_pmds(struct vm_area_struct *vma);
+ void fixup_hugetlb_reservations(struct vm_area_struct *vma);
++void hugetlb_split(struct vm_area_struct *vma, unsigned long addr);
+ 
+ #else /* !CONFIG_HUGETLB_PAGE */
+ 
+@@ -473,6 +474,8 @@ static inline void fixup_hugetlb_reservations(struct vm_area_struct *vma)
+ {
+ }
+ 
++static inline void hugetlb_split(struct vm_area_struct *vma, unsigned long addr) {}
++
+ #endif /* !CONFIG_HUGETLB_PAGE */
+ 
+ #ifndef pgd_write
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index 6a3cf7935c149..97d6a2b903aa6 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -120,7 +120,7 @@ static void hugetlb_vma_lock_free(struct vm_area_struct *vma);
+ static void hugetlb_vma_lock_alloc(struct vm_area_struct *vma);
+ static void __hugetlb_vma_unlock_write_free(struct vm_area_struct *vma);
+ static void hugetlb_unshare_pmds(struct vm_area_struct *vma,
+-		unsigned long start, unsigned long end);
++		unsigned long start, unsigned long end, bool take_locks);
+ static struct resv_map *vma_resv_map(struct vm_area_struct *vma);
+ 
+ static void hugetlb_free_folio(struct folio *folio)
+@@ -5426,26 +5426,40 @@ static int hugetlb_vm_op_split(struct vm_area_struct *vma, unsigned long addr)
+ {
+ 	if (addr & ~(huge_page_mask(hstate_vma(vma))))
+ 		return -EINVAL;
++	return 0;
++}
+ 
++void hugetlb_split(struct vm_area_struct *vma, unsigned long addr)
++{
+ 	/*
+ 	 * PMD sharing is only possible for PUD_SIZE-aligned address ranges
+ 	 * in HugeTLB VMAs. If we will lose PUD_SIZE alignment due to this
+ 	 * split, unshare PMDs in the PUD_SIZE interval surrounding addr now.
++	 * This function is called in the middle of a VMA split operation, with
++	 * MM, VMA and rmap all write-locked to prevent concurrent page table
++	 * walks (except hardware and gup_fast()).
+ 	 */
++	vma_assert_write_locked(vma);
++	i_mmap_assert_write_locked(vma->vm_file->f_mapping);
++
+ 	if (addr & ~PUD_MASK) {
+-		/*
+-		 * hugetlb_vm_op_split is called right before we attempt to
+-		 * split the VMA. We will need to unshare PMDs in the old and
+-		 * new VMAs, so let's unshare before we split.
+-		 */
+ 		unsigned long floor = addr & PUD_MASK;
+ 		unsigned long ceil = floor + PUD_SIZE;
+ 
+-		if (floor >= vma->vm_start && ceil <= vma->vm_end)
+-			hugetlb_unshare_pmds(vma, floor, ceil);
++		if (floor >= vma->vm_start && ceil <= vma->vm_end) {
++			/*
++			 * Locking:
++			 * Use take_locks=false here.
++			 * The file rmap lock is already held.
++			 * The hugetlb VMA lock can't be taken when we already
++			 * hold the file rmap lock, and we don't need it because
++			 * its purpose is to synchronize against concurrent page
++			 * table walks, which are not possible thanks to the
++			 * locks held by our caller.
++			 */
++			hugetlb_unshare_pmds(vma, floor, ceil, /* take_locks = */ false);
++		}
+ 	}
+-
+-	return 0;
+ }
+ 
+ static unsigned long hugetlb_vm_op_pagesize(struct vm_area_struct *vma)
+@@ -7884,9 +7898,16 @@ void move_hugetlb_state(struct folio *old_folio, struct folio *new_folio, int re
+ 	spin_unlock_irq(&hugetlb_lock);
+ }
+ 
++/*
++ * If @take_locks is false, the caller must ensure that no concurrent page table
++ * access can happen (except for gup_fast() and hardware page walks).
++ * If @take_locks is true, we take the hugetlb VMA lock (to lock out things like
++ * concurrent page fault handling) and the file rmap lock.
++ */
+ static void hugetlb_unshare_pmds(struct vm_area_struct *vma,
+ 				   unsigned long start,
+-				   unsigned long end)
++				   unsigned long end,
++				   bool take_locks)
+ {
+ 	struct hstate *h = hstate_vma(vma);
+ 	unsigned long sz = huge_page_size(h);
+@@ -7910,8 +7931,12 @@ static void hugetlb_unshare_pmds(struct vm_area_struct *vma,
+ 	mmu_notifier_range_init(&range, MMU_NOTIFY_CLEAR, 0, mm,
+ 				start, end);
+ 	mmu_notifier_invalidate_range_start(&range);
+-	hugetlb_vma_lock_write(vma);
+-	i_mmap_lock_write(vma->vm_file->f_mapping);
++	if (take_locks) {
++		hugetlb_vma_lock_write(vma);
++		i_mmap_lock_write(vma->vm_file->f_mapping);
++	} else {
++		i_mmap_assert_write_locked(vma->vm_file->f_mapping);
++	}
+ 	for (address = start; address < end; address += PUD_SIZE) {
+ 		ptep = hugetlb_walk(vma, address, sz);
+ 		if (!ptep)
+@@ -7921,8 +7946,10 @@ static void hugetlb_unshare_pmds(struct vm_area_struct *vma,
+ 		spin_unlock(ptl);
+ 	}
+ 	flush_hugetlb_tlb_range(vma, start, end);
+-	i_mmap_unlock_write(vma->vm_file->f_mapping);
+-	hugetlb_vma_unlock_write(vma);
++	if (take_locks) {
++		i_mmap_unlock_write(vma->vm_file->f_mapping);
++		hugetlb_vma_unlock_write(vma);
++	}
+ 	/*
+ 	 * No need to call mmu_notifier_arch_invalidate_secondary_tlbs(), see
+ 	 * Documentation/mm/mmu_notifier.rst.
+@@ -7937,7 +7964,8 @@ static void hugetlb_unshare_pmds(struct vm_area_struct *vma,
+ void hugetlb_unshare_all_pmds(struct vm_area_struct *vma)
+ {
+ 	hugetlb_unshare_pmds(vma, ALIGN(vma->vm_start, PUD_SIZE),
+-			ALIGN_DOWN(vma->vm_end, PUD_SIZE));
++			ALIGN_DOWN(vma->vm_end, PUD_SIZE),
++			/* take_locks = */ true);
+ }
+ 
+ /*
+diff --git a/mm/vma.c b/mm/vma.c
+index 9b8da1fc9647d..a231e382af504 100644
+--- a/mm/vma.c
++++ b/mm/vma.c
+@@ -516,7 +516,14 @@ __split_vma(struct vma_iterator *vmi, struct vm_area_struct *vma,
+ 	init_vma_prep(&vp, vma);
+ 	vp.insert = new;
+ 	vma_prepare(&vp);
++
++	/*
++	 * Get rid of huge pages and shared page tables straddling the split
++	 * boundary.
++	 */
+ 	vma_adjust_trans_huge(vma, vma->vm_start, addr, NULL);
++	if (is_vm_hugetlb_page(vma))
++		hugetlb_split(vma, addr);
+ 
+ 	if (new_below) {
+ 		vma->vm_start = addr;
+diff --git a/tools/testing/vma/vma_internal.h b/tools/testing/vma/vma_internal.h
+index 572ab2cea763f..90eccd1909850 100644
+--- a/tools/testing/vma/vma_internal.h
++++ b/tools/testing/vma/vma_internal.h
+@@ -793,6 +793,8 @@ static inline void vma_adjust_trans_huge(struct vm_area_struct *vma,
+ 	(void)next;
+ }
+ 
++static inline void hugetlb_split(struct vm_area_struct *, unsigned long) {}
++
+ static inline void vma_iter_free(struct vma_iterator *vmi)
+ {
+ 	mas_destroy(&vmi->mas);
+-- 
+2.49.0
+
+
+From 9330e04134cac696c81a1d6678ff362488a3bef6 Mon Sep 17 00:00:00 2001
+From: Jann Horn <jannh@google.com>
+Date: Tue, 27 May 2025 23:23:54 +0200
+Subject: [PATCH 47/50] mm/hugetlb: fix huge_pmd_unshare() vs GUP-fast race
+
+huge_pmd_unshare() drops a reference on a page table that may have
+previously been shared across processes, potentially turning it into a
+normal page table used in another process in which unrelated VMAs can
+afterwards be installed.
+
+If this happens in the middle of a concurrent gup_fast(), gup_fast() could
+end up walking the page tables of another process.  While I don't see any
+way in which that immediately leads to kernel memory corruption, it is
+really weird and unexpected.
+
+Fix it with an explicit broadcast IPI through tlb_remove_table_sync_one(),
+just like we do in khugepaged when removing page tables for a THP
+collapse.
+
+Link: https://lkml.kernel.org/r/20250528-hugetlb-fixes-splitrace-v2-2-1329349bad1a@google.com
+Link: https://lkml.kernel.org/r/20250527-hugetlb-fixes-splitrace-v1-2-f4136f5ec58a@google.com
+Fixes: 39dde65c9940 ("[PATCH] shared page table for hugetlb page")
+Signed-off-by: Jann Horn <jannh@google.com>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Cc: Liam Howlett <liam.howlett@oracle.com>
+Cc: Muchun Song <muchun.song@linux.dev>
+Cc: Oscar Salvador <osalvador@suse.de>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/hugetlb.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/mm/hugetlb.c b/mm/hugetlb.c
+index 97d6a2b903aa6..395857ca8118b 100644
+--- a/mm/hugetlb.c
++++ b/mm/hugetlb.c
+@@ -7628,6 +7628,13 @@ int huge_pmd_unshare(struct mm_struct *mm, struct vm_area_struct *vma,
+ 		return 0;
+ 
+ 	pud_clear(pud);
++	/*
++	 * Once our caller drops the rmap lock, some other process might be
++	 * using this page table as a normal, non-hugetlb page table.
++	 * Wait for pending gup_fast() in other threads to finish before letting
++	 * that happen.
++	 */
++	tlb_remove_table_sync_one();
+ 	ptdesc_pmd_pts_dec(virt_to_ptdesc(ptep));
+ 	mm_dec_nr_pmds(mm);
+ 	return 1;
+-- 
+2.49.0
+
+
+From ab34ec6d185523fddb8e69168a8f01059d4cb4e3 Mon Sep 17 00:00:00 2001
+From: SeongJae Park <sj@kernel.org>
+Date: Mon, 2 Jun 2025 10:49:26 -0700
+Subject: [PATCH 48/50] mm/madvise: handle madvise_lock() failure during race
+ unwinding
+
+When unwinding race on -ERESTARTNOINTR handling of process_madvise(),
+madvise_lock() failure is ignored.  Check the failure and abort remaining
+works in the case.
+
+Link: https://lkml.kernel.org/r/20250602174926.1074-1-sj@kernel.org
+Fixes: 4000e3d0a367 ("mm/madvise: remove redundant mmap_lock operations from process_madvise()")
+Signed-off-by: SeongJae Park <sj@kernel.org>
+Reported-by: Barry Song <21cnbao@gmail.com>
+Closes: https://lore.kernel.org/CAGsJ_4xJXXO0G+4BizhohSZ4yDteziPw43_uF8nPXPWxUVChzw@mail.gmail.com
+Reviewed-by: Jann Horn <jannh@google.com>
+Reviewed-by: Lorenzo Stoakes <lorenzo.stoakes@oracle.com>
+Acked-by: David Hildenbrand <david@redhat.com>
+Reviewed-by: Shakeel Butt <shakeel.butt@linux.dev>
+Reviewed-by: Barry Song <baohua@kernel.org>
+Cc: Liam Howlett <liam.howlett@oracle.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: <stable@vger.kernel.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+---
+ mm/madvise.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/mm/madvise.c b/mm/madvise.c
+index b17f684322ad7..69510e7377830 100644
+--- a/mm/madvise.c
++++ b/mm/madvise.c
+@@ -1830,7 +1830,9 @@ static ssize_t vector_madvise(struct mm_struct *mm, struct iov_iter *iter,
+ 
+ 			/* Drop and reacquire lock to unwind race. */
+ 			madvise_unlock(mm, behavior);
+-			madvise_lock(mm, behavior);
++			ret = madvise_lock(mm, behavior);
++			if (ret)
++				goto out;
+ 			continue;
+ 		}
+ 		if (ret < 0)
+@@ -1839,6 +1841,7 @@ static ssize_t vector_madvise(struct mm_struct *mm, struct iov_iter *iter,
+ 	}
+ 	madvise_unlock(mm, behavior);
+ 
++out:
+ 	ret = (total_len - iov_iter_count(iter)) ? : ret;
+ 
+ 	return ret;
+-- 
+2.49.0
+
+
+From 6dd77143dd711482b7073680c692aaca3a4ae076 Mon Sep 17 00:00:00 2001
+From: Thomas Zimmermann <tzimmermann@suse.de>
+Date: Wed, 28 May 2025 10:02:08 +0200
+Subject: [PATCH 49/50] video: screen_info: Relocate framebuffers behind PCI
+ bridges
+
+Apply PCI host-bridge window offsets to screen_info framebuffers. Fixes
+invalid access to I/O memory.
+
+Resources behind a PCI host bridge can be relocated by a certain offset
+in the kernel's CPU address range used for I/O. The framebuffer memory
+range stored in screen_info refers to the CPU addresses as seen during
+boot (where the offset is 0). During boot up, firmware may assign a
+different memory offset to the PCI host bridge and thereby relocating
+the framebuffer address of the PCI graphics device as seen by the kernel.
+The information in screen_info must be updated as well.
+
+The helper pcibios_bus_to_resource() performs the relocation of the
+screen_info's framebuffer resource (given in PCI bus addresses). The
+result matches the I/O-memory resource of the PCI graphics device (given
+in CPU addresses). As before, we store away the information necessary to
+later update the information in screen_info itself.
+
+Commit 78aa89d1dfba ("firmware/sysfb: Update screen_info for relocated
+EFI framebuffers") added the code for updating screen_info. It is based
+on similar functionality that pre-existed in efifb. Efifb uses a pointer
+to the PCI resource, while the newer code does a memcpy of the region.
+Hence efifb sees any updates to the PCI resource and avoids the issue.
+
+v3:
+- Only use struct pci_bus_region for PCI bus addresses (Bjorn)
+- Clarify address semantics in commit messages and comments (Bjorn)
+v2:
+- Fixed tags (Takashi, Ivan)
+- Updated information on efifb
+
+Signed-off-by: Thomas Zimmermann <tzimmermann@suse.de>
+Reviewed-by: Javier Martinez Canillas <javierm@redhat.com>
+Reported-by: "Ivan T. Ivanov" <iivanov@suse.de>
+Closes: https://bugzilla.suse.com/show_bug.cgi?id=1240696
+Tested-by: "Ivan T. Ivanov" <iivanov@suse.de>
+Fixes: 78aa89d1dfba ("firmware/sysfb: Update screen_info for relocated EFI framebuffers")
+Cc: dri-devel@lists.freedesktop.org
+Cc: <stable@vger.kernel.org> # v6.9+
+Link: https://lore.kernel.org/r/20250528080234.7380-1-tzimmermann@suse.de
+---
+ drivers/video/screen_info_pci.c | 79 +++++++++++++++++++++------------
+ 1 file changed, 50 insertions(+), 29 deletions(-)
+
+diff --git a/drivers/video/screen_info_pci.c b/drivers/video/screen_info_pci.c
+index 6c58335171410..66bfc1d0a6dc8 100644
+--- a/drivers/video/screen_info_pci.c
++++ b/drivers/video/screen_info_pci.c
+@@ -7,8 +7,8 @@
+ 
+ static struct pci_dev *screen_info_lfb_pdev;
+ static size_t screen_info_lfb_bar;
+-static resource_size_t screen_info_lfb_offset;
+-static struct resource screen_info_lfb_res = DEFINE_RES_MEM(0, 0);
++static resource_size_t screen_info_lfb_res_start; // original start of resource
++static resource_size_t screen_info_lfb_offset; // framebuffer offset within resource
+ 
+ static bool __screen_info_relocation_is_valid(const struct screen_info *si, struct resource *pr)
+ {
+@@ -31,7 +31,7 @@ void screen_info_apply_fixups(void)
+ 	if (screen_info_lfb_pdev) {
+ 		struct resource *pr = &screen_info_lfb_pdev->resource[screen_info_lfb_bar];
+ 
+-		if (pr->start != screen_info_lfb_res.start) {
++		if (pr->start != screen_info_lfb_res_start) {
+ 			if (__screen_info_relocation_is_valid(si, pr)) {
+ 				/*
+ 				 * Only update base if we have an actual
+@@ -47,46 +47,67 @@ void screen_info_apply_fixups(void)
+ 	}
+ }
+ 
++static int __screen_info_lfb_pci_bus_region(const struct screen_info *si, unsigned int type,
++					    struct pci_bus_region *r)
++{
++	u64 base, size;
++
++	base = __screen_info_lfb_base(si);
++	if (!base)
++		return -EINVAL;
++
++	size = __screen_info_lfb_size(si, type);
++	if (!size)
++		return -EINVAL;
++
++	r->start = base;
++	r->end = base + size - 1;
++
++	return 0;
++}
++
+ static void screen_info_fixup_lfb(struct pci_dev *pdev)
+ {
+ 	unsigned int type;
+-	struct resource res[SCREEN_INFO_MAX_RESOURCES];
+-	size_t i, numres;
++	struct pci_bus_region bus_region;
+ 	int ret;
++	struct resource r = {
++		.flags = IORESOURCE_MEM,
++	};
++	const struct resource *pr;
+ 	const struct screen_info *si = &screen_info;
+ 
+ 	if (screen_info_lfb_pdev)
+ 		return; // already found
+ 
+ 	type = screen_info_video_type(si);
+-	if (type != VIDEO_TYPE_EFI)
+-		return; // only applies to EFI
++	if (!__screen_info_has_lfb(type))
++		return; // only applies to EFI; maybe VESA
+ 
+-	ret = screen_info_resources(si, res, ARRAY_SIZE(res));
++	ret = __screen_info_lfb_pci_bus_region(si, type, &bus_region);
+ 	if (ret < 0)
+ 		return;
+-	numres = ret;
+ 
+-	for (i = 0; i < numres; ++i) {
+-		struct resource *r = &res[i];
+-		const struct resource *pr;
+-
+-		if (!(r->flags & IORESOURCE_MEM))
+-			continue;
+-		pr = pci_find_resource(pdev, r);
+-		if (!pr)
+-			continue;
+-
+-		/*
+-		 * We've found a PCI device with the framebuffer
+-		 * resource. Store away the parameters to track
+-		 * relocation of the framebuffer aperture.
+-		 */
+-		screen_info_lfb_pdev = pdev;
+-		screen_info_lfb_bar = pr - pdev->resource;
+-		screen_info_lfb_offset = r->start - pr->start;
+-		memcpy(&screen_info_lfb_res, r, sizeof(screen_info_lfb_res));
+-	}
++	/*
++	 * Translate the PCI bus address to resource. Account
++	 * for an offset if the framebuffer is behind a PCI host
++	 * bridge.
++	 */
++	pcibios_bus_to_resource(pdev->bus, &r, &bus_region);
++
++	pr = pci_find_resource(pdev, &r);
++	if (!pr)
++		return;
++
++	/*
++	 * We've found a PCI device with the framebuffer
++	 * resource. Store away the parameters to track
++	 * relocation of the framebuffer aperture.
++	 */
++	screen_info_lfb_pdev = pdev;
++	screen_info_lfb_bar = pr - pdev->resource;
++	screen_info_lfb_offset = r.start - pr->start;
++	screen_info_lfb_res_start = bus_region.start;
+ }
+ DECLARE_PCI_FIXUP_CLASS_HEADER(PCI_ANY_ID, PCI_ANY_ID, PCI_BASE_CLASS_DISPLAY, 16,
+ 			       screen_info_fixup_lfb);
+-- 
+2.49.0
+
+
+From e9395b262482b2043bff82b4f3080abd3942f2b2 Mon Sep 17 00:00:00 2001
+From: Thomas Zimmermann <tzimmermann@suse.de>
+Date: Tue, 3 Jun 2025 17:48:20 +0200
+Subject: [PATCH 50/50] sysfb: Fix screen_info type check for VGA
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Use the helper screen_info_video_type() to get the framebuffer
+type from struct screen_info. Handle supported values in sorted
+switch statement.
+
+Reading orig_video_isVGA is unreliable. On most systems it is a
+VIDEO_TYPE_ constant. On some systems with VGA it is simply set
+to 1 to signal the presence of a VGA output. See vga_probe() for
+an example. Retrieving the screen_info type with the helper
+screen_info_video_type() detects these cases and returns the
+appropriate VIDEO_TYPE_ constant. For VGA, sysfb creates a device
+named "vga-framebuffer".
+
+The sysfb code has been taken from vga16fb, where it likely didn't
+work correctly either. With this bugfix applied, vga16fb loads for
+compatible vga-framebuffer devices.
+
+Fixes: 0db5b61e0dc0 ("fbdev/vga16fb: Create EGA/VGA devices in sysfb code")
+Cc: Thomas Zimmermann <tzimmermann@suse.de>
+Cc: Javier Martinez Canillas <javierm@redhat.com>
+Cc: Alex Deucher <alexander.deucher@amd.com>
+Cc: Tzung-Bi Shih <tzungbi@kernel.org>
+Cc: Helge Deller <deller@gmx.de>
+Cc: "Uwe Kleine-König" <u.kleine-koenig@baylibre.com>
+Cc: Zsolt Kajtar <soci@c64.rulez.org>
+Cc: <stable@vger.kernel.org> # v6.1+
+Signed-off-by: Thomas Zimmermann <tzimmermann@suse.de>
+Reviewed-by: Tzung-Bi Shih <tzungbi@kernel.org>
+Reviewed-by: Javier Martinez Canillas <javierm@redhat.com>
+Link: https://lore.kernel.org/r/20250603154838.401882-1-tzimmermann@suse.de
+---
+ drivers/firmware/sysfb.c | 26 ++++++++++++++++++--------
+ 1 file changed, 18 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/firmware/sysfb.c b/drivers/firmware/sysfb.c
+index 7c5c03f274b95..889e5b05c739c 100644
+--- a/drivers/firmware/sysfb.c
++++ b/drivers/firmware/sysfb.c
+@@ -143,6 +143,7 @@ static __init int sysfb_init(void)
+ {
+ 	struct screen_info *si = &screen_info;
+ 	struct device *parent;
++	unsigned int type;
+ 	struct simplefb_platform_data mode;
+ 	const char *name;
+ 	bool compatible;
+@@ -170,17 +171,26 @@ static __init int sysfb_init(void)
+ 			goto put_device;
+ 	}
+ 
++	type = screen_info_video_type(si);
++
+ 	/* if the FB is incompatible, create a legacy framebuffer device */
+-	if (si->orig_video_isVGA == VIDEO_TYPE_EFI)
+-		name = "efi-framebuffer";
+-	else if (si->orig_video_isVGA == VIDEO_TYPE_VLFB)
+-		name = "vesa-framebuffer";
+-	else if (si->orig_video_isVGA == VIDEO_TYPE_VGAC)
+-		name = "vga-framebuffer";
+-	else if (si->orig_video_isVGA == VIDEO_TYPE_EGAC)
++	switch (type) {
++	case VIDEO_TYPE_EGAC:
+ 		name = "ega-framebuffer";
+-	else
++		break;
++	case VIDEO_TYPE_VGAC:
++		name = "vga-framebuffer";
++		break;
++	case VIDEO_TYPE_VLFB:
++		name = "vesa-framebuffer";
++		break;
++	case VIDEO_TYPE_EFI:
++		name = "efi-framebuffer";
++		break;
++	default:
+ 		name = "platform-framebuffer";
++		break;
++	}
+ 
+ 	pd = platform_device_alloc(name, 0);
+ 	if (!pd) {
 -- 
 2.49.0
 
