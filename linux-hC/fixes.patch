@@ -1,46 +1,7 @@
-From dc9f3a015d53d0ec8e5eef5a081989d762a6c4d3 Mon Sep 17 00:00:00 2001
-From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
-Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 01/50] arch/Kconfig: Default to maximum amount of ASLR bits
-
-To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
-avoid having to enable `CONFIG_EXPERT`.
-
-Signed-off-by: Eric Naim <dnaim@cachyos.org>
----
- arch/Kconfig | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/arch/Kconfig b/arch/Kconfig
-index b0adb665041f1..eea830cc90a77 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
- 	int "Number of bits to use for ASLR of mmap base address" if EXPERT
- 	range ARCH_MMAP_RND_BITS_MIN ARCH_MMAP_RND_BITS_MAX
- 	default ARCH_MMAP_RND_BITS_DEFAULT if ARCH_MMAP_RND_BITS_DEFAULT
--	default ARCH_MMAP_RND_BITS_MIN
-+	default ARCH_MMAP_RND_BITS_MAX
- 	depends on HAVE_ARCH_MMAP_RND_BITS
- 	help
- 	  This value can be used to select the number of bits to use to
-@@ -1171,7 +1171,7 @@ config ARCH_MMAP_RND_COMPAT_BITS
- 	int "Number of bits to use for ASLR of mmap base address for compatible applications" if EXPERT
- 	range ARCH_MMAP_RND_COMPAT_BITS_MIN ARCH_MMAP_RND_COMPAT_BITS_MAX
- 	default ARCH_MMAP_RND_COMPAT_BITS_DEFAULT if ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
--	default ARCH_MMAP_RND_COMPAT_BITS_MIN
-+	default ARCH_MMAP_RND_COMPAT_BITS_MAX
- 	depends on HAVE_ARCH_MMAP_RND_COMPAT_BITS
- 	help
- 	  This value can be used to select the number of bits to use to
--- 
-2.49.0
-
-
-From 487d34e4040efc88007c2120c448797dfeb373e0 Mon Sep 17 00:00:00 2001
+From 5551bf931fca0f29838aee7f168a24f121c2f606 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 02/50] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 01/49] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,10 +33,10 @@ index 452374d63c244..08f80d7c5df05 100644
 2.49.0
 
 
-From fcd01bbb46ffddd7be31a1545d3accad813538ab Mon Sep 17 00:00:00 2001
+From 70a850f103b87326d7ad412beeaad836c3c42220 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 03/50] drivers/base/node: Optimize memory block registration
+Subject: [PATCH 02/49] drivers/base/node: Optimize memory block registration
  to reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -348,10 +309,10 @@ index 2b75178922301..485370f3bc177 100644
 2.49.0
 
 
-From 6ebea3153b301242d15b7f58120db79297a9532a Mon Sep 17 00:00:00 2001
+From a69fdd6b3c8843adf567b9854710c0f7f8028d2e Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 04/50] drivers/base/node: remove
+Subject: [PATCH 03/49] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -458,10 +419,10 @@ index a8e087d9b0aea..07709cb1d9d8a 100644
 2.49.0
 
 
-From 31eb850365bea43d022b48718ffacbbd5d3c2a7b Mon Sep 17 00:00:00 2001
+From c6d239aa3c6a31bf98086399241266330a3c323b Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 05/50] drivers/base/node: Remove
+Subject: [PATCH 04/49] drivers/base/node: Remove
  register_memory_blocks_under_node() function call from register_one_node
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -516,10 +477,10 @@ index 485370f3bc177..b15de78e04087 100644
 2.49.0
 
 
-From 081f0cdb99ca36ffc0d8c5465788e09ca821499f Mon Sep 17 00:00:00 2001
+From 7a30edfc322c04a2ecac0a9cb80af8114c25f1db Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 06/50] drivers/base/node: Rename
+Subject: [PATCH 05/49] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -602,10 +563,10 @@ index 8305483de38bb..f734cc924b51b 100644
 2.49.0
 
 
-From c15aa8e9611a4fd291efd68b950a3374ba36d179 Mon Sep 17 00:00:00 2001
+From 398156b2798fb505a002bbff9bfcabe1ef5284b7 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 07/50] drivers/base/node: Rename __register_one_node() to
+Subject: [PATCH 06/49] drivers/base/node: Rename __register_one_node() to
  register_one_node()
 
 The register_one_node() function was a simple wrapper around
@@ -705,10 +666,10 @@ index f734cc924b51b..4dadd156f8362 100644
 2.49.0
 
 
-From 5bec447085f68688544501cb4929623a1021b57c Mon Sep 17 00:00:00 2001
+From 3694ce7f2b9df5a77e4e7e4b2d8a3a3cf27ef991 Mon Sep 17 00:00:00 2001
 From: Pierre Gondois <pierre.gondois@arm.com>
 Date: Tue, 25 Mar 2025 16:05:41 +0100
-Subject: [PATCH 08/50] sched/fair: Allow decaying util_est when util_avg > CPU
+Subject: [PATCH 07/49] sched/fair: Allow decaying util_est when util_avg > CPU
  capa
 
 commit 10a35e6812aa ("sched/pelt: Skip updating util_est when
@@ -779,10 +740,10 @@ index 0fb9bf995a479..a351a1b8bfe45 100644
 2.49.0
 
 
-From e5edf4fce9670ca8ada3bfcd139ecb45c3eb7c86 Mon Sep 17 00:00:00 2001
+From 138a9a2fbeb7a0aaff73a8d6e30ae4a5485adfea Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Tue, 28 Jan 2025 15:39:49 +0100
-Subject: [PATCH 09/50] sched/fair: Adhere to place_entity() constraints
+Subject: [PATCH 08/49] sched/fair: Adhere to place_entity() constraints
 
 Mike reports that commit 6d71a9c61604 ("sched/fair: Fix EEVDF entity
 placement bug causing scheduling lag") relies on commit 4423af84b297
@@ -847,10 +808,10 @@ index a351a1b8bfe45..e3f673643b7e3 100644
 2.49.0
 
 
-From 33d9e0f042315ca2394985a5c2786cb2523d3825 Mon Sep 17 00:00:00 2001
+From be974a2b8be0dee5ea0a88e0c92aed9071efad2a Mon Sep 17 00:00:00 2001
 From: John Stultz <jstultz@google.com>
 Date: Tue, 29 Apr 2025 08:07:26 -0700
-Subject: [PATCH 10/50] sched/core: Tweak wait_task_inactive() to force dequeue
+Subject: [PATCH 09/49] sched/core: Tweak wait_task_inactive() to force dequeue
  sched_delayed tasks
 
 It was reported that in 6.12, smpboot_create_threads() was
@@ -908,10 +869,10 @@ index c81cf642dba05..b986cd2fb19b7 100644
 2.49.0
 
 
-From 1f1b09af999fe386fcf4a6b3863ffb0f006064aa Mon Sep 17 00:00:00 2001
+From ee8668ccef2db906cf349e9223024fd9055e73b6 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Mon, 3 Mar 2025 18:52:39 +0800
-Subject: [PATCH 11/50] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
+Subject: [PATCH 10/49] sched/fair: Fixup wake_up_sync() vs DELAYED_DEQUEUE
 
 Delayed dequeued feature keeps a sleeping task enqueued until its
 lag has elapsed. As a result, it stays also visible in rq->nr_running.
@@ -965,10 +926,10 @@ index e3f673643b7e3..305b0a5a58649 100644
 2.49.0
 
 
-From 8de2d889ee9e58f3c200a7d7786d97e43233279b Mon Sep 17 00:00:00 2001
+From 1bc67e023a24ea54001799e272eedf9b6d64f5fb Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:56 +0800
-Subject: [PATCH 12/50] sched/util_est: Simplify condition for
+Subject: [PATCH 11/49] sched/util_est: Simplify condition for
  util_est_{en,de}queue()
 
 To prevent double enqueue/dequeue of the util-est for sched_delayed tasks,
@@ -1033,10 +994,10 @@ index 305b0a5a58649..b647c19f253ef 100644
 2.49.0
 
 
-From 69bd47ac2f8b3138d35cc14ca3a439bceb45e3b6 Mon Sep 17 00:00:00 2001
+From d47bd25f6b926b1803e829ff8ef315d1ee5c68a2 Mon Sep 17 00:00:00 2001
 From: Xuewen Yan <xuewen.yan@unisoc.com>
 Date: Thu, 17 Apr 2025 12:34:57 +0800
-Subject: [PATCH 13/50] sched/uclamp: Align uclamp and util_est and call before
+Subject: [PATCH 12/49] sched/uclamp: Align uclamp and util_est and call before
  freq update
 
 The commit dfa0a574cbc47 ("sched/uclamg: Handle delayed dequeue")
@@ -1121,10 +1082,10 @@ index b986cd2fb19b7..a87be58d07095 100644
 2.49.0
 
 
-From df31af91de60a60f0c72eb5638c7f2c2b3c784d1 Mon Sep 17 00:00:00 2001
+From ca6417f7a3705ae7e5201e6778f9f0d2138fe0db Mon Sep 17 00:00:00 2001
 From: Di Shen <di.shen@unisoc.com>
 Date: Tue, 20 May 2025 13:49:43 +0800
-Subject: [PATCH 14/50] Revert "bpf: remove unnecessary
+Subject: [PATCH 13/49] Revert "bpf: remove unnecessary
  rcu_read_{lock,unlock}() in multi-uprobe attach logic"
 
 This reverts commit 4a8f635a60540888dab3804992e86410360339c8.
@@ -1163,10 +1124,10 @@ index 187dc37d61d4a..0c4b6af106017 100644
 2.49.0
 
 
-From 01238d1d776b951731c28377c44fdc7935e337d6 Mon Sep 17 00:00:00 2001
+From f52908111ec1b9ca7c10ed606e61847e4c03a604 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 15/50] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 14/49] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -1207,10 +1168,10 @@ index 7da531b1cf6be..0eaf3522abe9a 100644
 2.49.0
 
 
-From efac87287f789ae200a7aa13d43c690f51072ff7 Mon Sep 17 00:00:00 2001
+From d9406a94e34de5d5fc3d3ba16893dc637425a1bc Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Mon, 14 Apr 2025 09:45:43 +0100
-Subject: [PATCH 16/50] select: core_sys_select add unlikely branch hint on
+Subject: [PATCH 15/49] select: core_sys_select add unlikely branch hint on
  return path
 
 Adding an unlikely() hint on the n < 0 comparison return path improves
@@ -1249,10 +1210,10 @@ index 0eaf3522abe9a..9fb650d03d52e 100644
 2.49.0
 
 
-From b1be465ef38440115a3a2ccc98bdb2f3d34f234a Mon Sep 17 00:00:00 2001
+From fc7bc687db2d36f4f3478ff291de9b0cec915286 Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:35:51 -0700
-Subject: [PATCH 17/50] Make 'cc-option' work correctly for the -Wno-xyzzy
+Subject: [PATCH 16/49] Make 'cc-option' work correctly for the -Wno-xyzzy
  pattern
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -1314,10 +1275,10 @@ index f4fcc1eaaeaee..65cfa72e376be 100644
 2.49.0
 
 
-From c26cfd8d94cf85df7d0e39c0ca25665313d03fba Mon Sep 17 00:00:00 2001
+From 34225fbf44bcdbaf2040ea33e804cae6fc172056 Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:40:30 -0700
-Subject: [PATCH 18/50] Remove legacy 'cc-disable-warning' use from the generic
+Subject: [PATCH 17/49] Remove legacy 'cc-disable-warning' use from the generic
  build scripts
 
 This just converts the 'cc-disable-warning' uses in the generic makefile
@@ -1429,10 +1390,10 @@ index fd649c68e198b..540f3db5cd86b 100644
 2.49.0
 
 
-From e50cd6bc180cd6547280f076873ff1f612f813d1 Mon Sep 17 00:00:00 2001
+From 5c028d5699c2d5afee210fc9ebddaf92faa11c7e Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:51 -0400
-Subject: [PATCH 19/50] btrfs: exit after state insertion failure at
+Subject: [PATCH 18/49] btrfs: exit after state insertion failure at
  btrfs_convert_extent_bit()
 
 [ Upstream commit 3bf179e36da917c5d9bec71c714573ed1649b7c1 ]
@@ -1471,10 +1432,10 @@ index 13de6af279e52..92cfde37b1d33 100644
 2.49.0
 
 
-From db137a0a81334edf31e57b45e8f97e41618c1d8b Mon Sep 17 00:00:00 2001
+From 9863b3eaecc31babc11f5747e21061b185f93e37 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 28 May 2025 17:55:52 -0400
-Subject: [PATCH 20/50] fs/filesystems: Fix potential unsigned integer
+Subject: [PATCH 19/49] fs/filesystems: Fix potential unsigned integer
  underflow in fs_name()
 
 [ Upstream commit 1363c134ade81e425873b410566e957fecebb261 ]
@@ -1526,10 +1487,10 @@ index 58b9067b2391c..95e5256821a53 100644
 2.49.0
 
 
-From 38037517304f6d171af2693d90b6298d7f318894 Mon Sep 17 00:00:00 2001
+From 8f1a4c1dd0874fe751bb5f04869db53a0adeadab Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:53 -0400
-Subject: [PATCH 21/50] btrfs: fix fsync of files with no hard links not
+Subject: [PATCH 20/49] btrfs: fix fsync of files with no hard links not
  persisting deletion
 
 [ Upstream commit 5e85262e542d6da8898bb8563a724ad98f6fc936 ]
@@ -1674,10 +1635,10 @@ index 90dc094cfa5e5..f5af11565b876 100644
 2.49.0
 
 
-From 26cefcaa136a42c8d47f65086b220e12f4e306ab Mon Sep 17 00:00:00 2001
+From 9923ab00b07c9dac8c7176964a6f65a0a0e87c2d Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Wed, 28 May 2025 17:55:54 -0400
-Subject: [PATCH 22/50] gfs2: pass through holder from the VFS for freeze/thaw
+Subject: [PATCH 21/49] gfs2: pass through holder from the VFS for freeze/thaw
 
 [ Upstream commit 62a2175ddf7e72941868f164b7c1f92e00f213bd ]
 
@@ -1770,10 +1731,10 @@ index 44e5658b896c8..a3fe95e519cbc 100644
 2.49.0
 
 
-From 1b835c6528873db16b229328ea05f880f8b273f6 Mon Sep 17 00:00:00 2001
+From 9ce85a9b496db808a3badd0ca6efa73a06169d67 Mon Sep 17 00:00:00 2001
 From: Filipe Manana <fdmanana@suse.com>
 Date: Wed, 28 May 2025 17:55:55 -0400
-Subject: [PATCH 23/50] btrfs: exit after state split error at set_extent_bit()
+Subject: [PATCH 22/49] btrfs: exit after state split error at set_extent_bit()
 
 [ Upstream commit 41d69d4d78d8b179bf3bcdfc56d28a12b3a608d2 ]
 
@@ -1816,10 +1777,10 @@ index 92cfde37b1d33..b5b44ea91f999 100644
 2.49.0
 
 
-From 2e956815a30772272bc38df24f51e63c29ee3060 Mon Sep 17 00:00:00 2001
+From 283c97b96206af908f285e52cd3e6a052222d177 Mon Sep 17 00:00:00 2001
 From: Daniel Wagner <wagi@kernel.org>
 Date: Wed, 28 May 2025 17:55:56 -0400
-Subject: [PATCH 24/50] nvmet-fcloop: access fcpreq only when holding reqlock
+Subject: [PATCH 23/49] nvmet-fcloop: access fcpreq only when holding reqlock
 
 [ Upstream commit 47a827cd7929d0550c3496d70b417fcb5649b27b ]
 
@@ -1911,10 +1872,10 @@ index 641201e62c1ba..20becea1ad968 100644
 2.49.0
 
 
-From a887e58bcb312fc80989657b5d08be34650413ac Mon Sep 17 00:00:00 2001
+From 3bcd7a6d737649c7285aad441e04f916fa5e55eb Mon Sep 17 00:00:00 2001
 From: Pavel Begunkov <asml.silence@gmail.com>
 Date: Wed, 28 May 2025 17:55:57 -0400
-Subject: [PATCH 25/50] io_uring: fix spurious drain flushing
+Subject: [PATCH 24/49] io_uring: fix spurious drain flushing
 
 [ Upstream commit fde04c7e2775feb0746301e0ef86a04d3598c3fe ]
 
@@ -1977,10 +1938,10 @@ index edda31a15c6e6..9266d4f2016ad 100644
 2.49.0
 
 
-From 3dec3aeb9c010ee48f474855c775eb8850ece409 Mon Sep 17 00:00:00 2001
+From d9ed21db54df9e9c22dfe7abf8c6676f40942c95 Mon Sep 17 00:00:00 2001
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Wed, 28 May 2025 17:55:58 -0400
-Subject: [PATCH 26/50] perf: Ensure bpf_perf_link path is properly serialized
+Subject: [PATCH 25/49] perf: Ensure bpf_perf_link path is properly serialized
 
 [ Upstream commit 7ed9138a72829d2035ecbd8dbd35b1bc3c137c40 ]
 
@@ -2074,10 +2035,10 @@ index 95e703891b24f..eaa9588eb968d 100644
 2.49.0
 
 
-From 4039606c65dd4552cb07fbfcf54b9a69f41b07bb Mon Sep 17 00:00:00 2001
+From 32ae7ac72fc31d0666eb27341c3bd2c7dbecbd6d Mon Sep 17 00:00:00 2001
 From: Ming Lei <ming.lei@redhat.com>
 Date: Wed, 28 May 2025 17:55:59 -0400
-Subject: [PATCH 27/50] block: use q->elevator with ->elevator_lock held in
+Subject: [PATCH 26/49] block: use q->elevator with ->elevator_lock held in
  elv_iosched_show()
 
 [ Upstream commit 94209d27d14104ed828ca88cd5403a99162fe51a ]
@@ -2122,10 +2083,10 @@ index b4d08026b02ce..dc4cadef728e5 100644
 2.49.0
 
 
-From 6fb71b644206de5c3ab953ff98bac0b4cf5a9cb1 Mon Sep 17 00:00:00 2001
+From 85a3bece81d3f3ac0c329825c876e09fcffee8dd Mon Sep 17 00:00:00 2001
 From: Jinliang Zheng <alexjlzheng@tencent.com>
 Date: Tue, 15 Apr 2025 17:02:32 +0800
-Subject: [PATCH 28/50] mm: fix ratelimit_pages update error in
+Subject: [PATCH 27/49] mm: fix ratelimit_pages update error in
  dirty_ratio_handler()
 
 In dirty_ratio_handler(), vm_dirty_bytes must be set to zero before
@@ -2199,10 +2160,10 @@ index c81624bc39697..20e1d76f1eba3 100644
 2.49.0
 
 
-From f666adf40471e50d4b32300caa02fb8150143639 Mon Sep 17 00:00:00 2001
+From 876ea37c521245ea3ae0607810c41628346d7f23 Mon Sep 17 00:00:00 2001
 From: GONG Ruiqi <gongruiqi1@huawei.com>
 Date: Sun, 27 Apr 2025 10:53:03 +0800
-Subject: [PATCH 29/50] vgacon: Add check for vc_origin address range in
+Subject: [PATCH 28/49] vgacon: Add check for vc_origin address range in
  vgacon_scroll()
 
 Our in-house Syzkaller reported the following BUG (twice), which we
@@ -2385,10 +2346,10 @@ index 37bd18730fe0d..f9cdbf8c53e34 100644
 2.49.0
 
 
-From e1fff7088cd284267f72c5b0e4dfd950d6b38cf8 Mon Sep 17 00:00:00 2001
+From e224ad7f346a0c918421bb55b62287156eb7cd26 Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:06 +0300
-Subject: [PATCH 30/50] fbdev: Fix do_register_framebuffer to prevent
+Subject: [PATCH 29/49] fbdev: Fix do_register_framebuffer to prevent
  null-ptr-deref in fb_videomode_to_var
 
 If fb_add_videomode() in do_register_framebuffer() fails to allocate
@@ -2493,10 +2454,10 @@ index 3c568cff2913e..e1557d80768ff 100644
 2.49.0
 
 
-From e2c19bd5549348936bb969c9c5f2bc58d18f1921 Mon Sep 17 00:00:00 2001
+From ddbdc60bc35e5e4de7fc3d709d8383975cb23b03 Mon Sep 17 00:00:00 2001
 From: Murad Masimov <m.masimov@mt-integration.ru>
 Date: Mon, 28 Apr 2025 18:34:07 +0300
-Subject: [PATCH 31/50] fbdev: Fix fb_set_var to prevent null-ptr-deref in
+Subject: [PATCH 30/49] fbdev: Fix fb_set_var to prevent null-ptr-deref in
  fb_videomode_to_var
 
 If fb_add_videomode() in fb_set_var() fails to allocate memory for
@@ -2564,10 +2525,10 @@ index e1557d80768ff..eca2498f24368 100644
 2.49.0
 
 
-From 011fd687f8f3fd445c097383055e986763a7fcf2 Mon Sep 17 00:00:00 2001
+From b9ecdf41e7e4940e820be3399bcf4329d14d7769 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:15 +0200
-Subject: [PATCH 32/50] anon_inode: use a proper mode internally
+Subject: [PATCH 31/49] anon_inode: use a proper mode internally
 
 This allows the VFS to not trip over anonymous inodes and we can add
 asserts based on the mode into the vfs. When we report it to userspace
@@ -2686,10 +2647,10 @@ index 6393d7c49ee6e..e1146620346e2 100644
 2.49.0
 
 
-From ae5a33ef97a8041afdc98aa89d7b5d27a8bdb9fb Mon Sep 17 00:00:00 2001
+From a8d1814fe1b22ada55bb1b01922d3a53d2332578 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:17 +0200
-Subject: [PATCH 33/50] anon_inode: explicitly block ->setattr()
+Subject: [PATCH 32/49] anon_inode: explicitly block ->setattr()
 
 It is currently possible to change the mode and owner of the single
 anonymous inode in the kernel:
@@ -2774,10 +2735,10 @@ index 717dc9eb6185b..f545400ce607f 100644
 2.49.0
 
 
-From d7fd8e11857ff89082833099cc838641a8c3b8f6 Mon Sep 17 00:00:00 2001
+From a56ac6e1ce33a6840e6bf2ef506e96856915d761 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 7 Apr 2025 11:54:19 +0200
-Subject: [PATCH 34/50] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
+Subject: [PATCH 33/49] anon_inode: raise SB_I_NODEV and SB_I_NOEXEC
 
 It isn't possible to execute anonymous inodes because they cannot be
 opened in any way after they have been created. This includes execution:
@@ -2819,10 +2780,10 @@ index cb51a90bece00..e51e7d88980a2 100644
 2.49.0
 
 
-From f22046b6da9d4e712bfaa6bcb62ac77cae420c67 Mon Sep 17 00:00:00 2001
+From a42a52b676dcc31d95d7da494f04459f8a4f4a78 Mon Sep 17 00:00:00 2001
 From: Christian Brauner <brauner@kernel.org>
 Date: Mon, 21 Apr 2025 10:27:40 +0200
-Subject: [PATCH 35/50] fs: add S_ANON_INODE
+Subject: [PATCH 34/49] fs: add S_ANON_INODE
 
 This makes it easy to detect proper anonymous inodes and to ensure that
 we can detect them in codepaths such as readahead().
@@ -2969,10 +2930,10 @@ index 6a4e96b69702b..20d36d6b055ed 100644
 2.49.0
 
 
-From 2b39bc9909d50a4df0f5995c661f3fabf51ff682 Mon Sep 17 00:00:00 2001
+From 9922b6f5fd607953403db7cdc9e607eeda86fb77 Mon Sep 17 00:00:00 2001
 From: Zijun Hu <quic_zijuhu@quicinc.com>
 Date: Wed, 7 May 2025 19:50:26 +0800
-Subject: [PATCH 36/50] configfs: Do not override creating attribute file
+Subject: [PATCH 35/49] configfs: Do not override creating attribute file
  failure in populate_attrs()
 
 populate_attrs() may override failure for creating attribute files
@@ -3010,10 +2971,10 @@ index 5568cb74b3224..f43be44bff624 100644
 2.49.0
 
 
-From 270006bd3b6636afe221f2db8d1f4cd918bf65b6 Mon Sep 17 00:00:00 2001
+From c9c3f971d79fcace847e3dfbcb3d0ae595f48d54 Mon Sep 17 00:00:00 2001
 From: Al Viro <viro@zeniv.linux.org.uk>
 Date: Fri, 23 May 2025 19:20:36 -0400
-Subject: [PATCH 37/50] Don't propagate mounts into detached trees
+Subject: [PATCH 36/49] Don't propagate mounts into detached trees
 
 All versions up to 6.14 did not propagate mount events into detached
 tree.  Shortly after 6.14 a merge of vfs-6.15-rc1.mount.namespace
@@ -3124,10 +3085,10 @@ index fb77427df39e2..ffd429b760d5d 100644
 2.49.0
 
 
-From b67bf2bc16a0adafcc53857ac1c4af74d0f3e8c6 Mon Sep 17 00:00:00 2001
+From 9a552a82107e815995da6dc5c4102ea249ffd0ac Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:52 -0600
-Subject: [PATCH 38/50] mm/filemap: gate dropbehind invalidate on folio !dirty
+Subject: [PATCH 37/49] mm/filemap: gate dropbehind invalidate on folio !dirty
  && !writeback
 
 It's possible for the folio to either get marked for writeback or
@@ -3182,10 +3143,10 @@ index 7b90cbeb4a1ad..008a55290f34a 100644
 2.49.0
 
 
-From 1ec05e7c4303513784d58ec094d23182580dad9b Mon Sep 17 00:00:00 2001
+From 1cbaaf5645f96d0843f678e78a1fad640babb56e Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:53 -0600
-Subject: [PATCH 39/50] mm/filemap: use filemap_end_dropbehind() for read
+Subject: [PATCH 38/49] mm/filemap: use filemap_end_dropbehind() for read
  invalidation
 
 Use the filemap_end_dropbehind() helper rather than calling
@@ -3240,10 +3201,10 @@ index 008a55290f34a..6af6d8f2929ce 100644
 2.49.0
 
 
-From 53429a7e1943589533be617d9a28e83ea8163561 Mon Sep 17 00:00:00 2001
+From f8fde898e62ded292c1667d61ad12ec20bb0b953 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:54 -0600
-Subject: [PATCH 40/50] Revert "Disable FOP_DONTCACHE for now due to bugs"
+Subject: [PATCH 39/49] Revert "Disable FOP_DONTCACHE for now due to bugs"
 
 This reverts commit 478ad02d6844217cc7568619aeb0809d93ade43d.
 
@@ -3275,10 +3236,10 @@ index ef41a8213a6fa..cf7208500cee3 100644
 2.49.0
 
 
-From 67db812f7be2a34d72f77c6c5c6155df97ba7a08 Mon Sep 17 00:00:00 2001
+From c4959f804f621296a29ffa700a5faf453f4cd847 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:55 -0600
-Subject: [PATCH 41/50] mm/filemap: unify read/write dropbehind naming
+Subject: [PATCH 40/49] mm/filemap: unify read/write dropbehind naming
 
 The read side is filemap_end_dropbehind_read(), while the write side
 used folio_ as the prefix rather than filemap_. The read side makes more
@@ -3317,10 +3278,10 @@ index 6af6d8f2929ce..2ba1ed116103a 100644
 2.49.0
 
 
-From 5d53b731b49edeb40b0c3bc55c44452a31cfdced Mon Sep 17 00:00:00 2001
+From fb61ef97e25f4b5bbb46446c4e5f1d7e8e2b0ba1 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:56 -0600
-Subject: [PATCH 42/50] mm/filemap: unify dropbehind flag testing and clearing
+Subject: [PATCH 41/49] mm/filemap: unify dropbehind flag testing and clearing
 
 The read and write side does this a bit differently, unify it such that
 the _{read,write} helpers check the bit before locking, and the generic
@@ -3401,10 +3362,10 @@ index 2ba1ed116103a..eef44d7ea12e0 100644
 2.49.0
 
 
-From afdde6c4cc3ea9ce1fec50eca43bc5857c238be4 Mon Sep 17 00:00:00 2001
+From 7fdfccbd965fe2e83e3c510614d637ab8fd1415e Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Mon, 26 May 2025 18:28:18 +0000
-Subject: [PATCH 43/50] mm/khugepaged: fix race with folio split/free using
+Subject: [PATCH 42/49] mm/khugepaged: fix race with folio split/free using
  temporary reference
 
 hpage_collapse_scan_file() calls is_refcount_suitable(), which in turn
@@ -3505,10 +3466,10 @@ index cc945c6ab3bdb..fe1fe7eace54f 100644
 2.49.0
 
 
-From 22383d2fb6327321f9a58b68e65d349aed403949 Mon Sep 17 00:00:00 2001
+From 6188d1eeafa47f14de60a35e44c37fb2f7f35909 Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Wed, 30 Apr 2025 10:01:51 +0000
-Subject: [PATCH 44/50] mm: add folio_expected_ref_count() for reference count
+Subject: [PATCH 43/49] mm: add folio_expected_ref_count() for reference count
  calculation
 
 Patch series " JFS: Implement migrate_folio for jfs_metapage_aops" v5.
@@ -3712,10 +3673,10 @@ index 676d9cfc7059c..273d46771a6ca 100644
 2.49.0
 
 
-From db27a79a233ad1a53f0db5b3ede9ef44a463c1c0 Mon Sep 17 00:00:00 2001
+From 7b254faad5056b89a2285b9c2102c034106bf99e Mon Sep 17 00:00:00 2001
 From: Pu Lehui <pulehui@huawei.com>
 Date: Thu, 29 May 2025 15:56:47 +0000
-Subject: [PATCH 45/50] mm: fix uprobe pte be overwritten when expanding vma
+Subject: [PATCH 44/49] mm: fix uprobe pte be overwritten when expanding vma
 
 Patch series "Fix uprobe pte be overwritten when expanding vma".
 
@@ -3849,10 +3810,10 @@ index 149926e8a6d1a..7e8aa136e6f77 100644
 2.49.0
 
 
-From bfee736a8eed015cdd3fd989ab9d1e2124af5627 Mon Sep 17 00:00:00 2001
+From 8e46afd46bef63da84d998b272e55c1112769ae4 Mon Sep 17 00:00:00 2001
 From: Jann Horn <jannh@google.com>
 Date: Tue, 27 May 2025 23:23:53 +0200
-Subject: [PATCH 46/50] mm/hugetlb: unshare page tables during VMA split, not
+Subject: [PATCH 45/49] mm/hugetlb: unshare page tables during VMA split, not
  before
 
 Currently, __split_vma() triggers hugetlb page table unsharing through
@@ -4079,10 +4040,10 @@ index 572ab2cea763f..90eccd1909850 100644
 2.49.0
 
 
-From 9330e04134cac696c81a1d6678ff362488a3bef6 Mon Sep 17 00:00:00 2001
+From 6573bd567f6583be0b7db5c386dc584adcf055e7 Mon Sep 17 00:00:00 2001
 From: Jann Horn <jannh@google.com>
 Date: Tue, 27 May 2025 23:23:54 +0200
-Subject: [PATCH 47/50] mm/hugetlb: fix huge_pmd_unshare() vs GUP-fast race
+Subject: [PATCH 46/49] mm/hugetlb: fix huge_pmd_unshare() vs GUP-fast race
 
 huge_pmd_unshare() drops a reference on a page table that may have
 previously been shared across processes, potentially turning it into a
@@ -4135,10 +4096,10 @@ index 97d6a2b903aa6..395857ca8118b 100644
 2.49.0
 
 
-From ab34ec6d185523fddb8e69168a8f01059d4cb4e3 Mon Sep 17 00:00:00 2001
+From b41cbad7a0a6201b04b82c0690f5e21b4fcfeaaa Mon Sep 17 00:00:00 2001
 From: SeongJae Park <sj@kernel.org>
 Date: Mon, 2 Jun 2025 10:49:26 -0700
-Subject: [PATCH 48/50] mm/madvise: handle madvise_lock() failure during race
+Subject: [PATCH 47/49] mm/madvise: handle madvise_lock() failure during race
  unwinding
 
 When unwinding race on -ERESTARTNOINTR handling of process_madvise(),
@@ -4190,10 +4151,10 @@ index b17f684322ad7..69510e7377830 100644
 2.49.0
 
 
-From 6dd77143dd711482b7073680c692aaca3a4ae076 Mon Sep 17 00:00:00 2001
+From e999124e0d3a2599f62b1e39fe7ae7c1b6b3eda9 Mon Sep 17 00:00:00 2001
 From: Thomas Zimmermann <tzimmermann@suse.de>
 Date: Wed, 28 May 2025 10:02:08 +0200
-Subject: [PATCH 49/50] video: screen_info: Relocate framebuffers behind PCI
+Subject: [PATCH 48/49] video: screen_info: Relocate framebuffers behind PCI
  bridges
 
 Apply PCI host-bridge window offsets to screen_info framebuffers. Fixes
@@ -4361,10 +4322,10 @@ index 6c58335171410..66bfc1d0a6dc8 100644
 2.49.0
 
 
-From e9395b262482b2043bff82b4f3080abd3942f2b2 Mon Sep 17 00:00:00 2001
+From 07a3be57f1c97678140ab13aa7614e4f6ee40c5b Mon Sep 17 00:00:00 2001
 From: Thomas Zimmermann <tzimmermann@suse.de>
 Date: Tue, 3 Jun 2025 17:48:20 +0200
-Subject: [PATCH 50/50] sysfb: Fix screen_info type check for VGA
+Subject: [PATCH 49/49] sysfb: Fix screen_info type check for VGA
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit

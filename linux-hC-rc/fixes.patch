@@ -1,46 +1,7 @@
-From 7050d0c45e1dcd26f1af97286aa699e9efa2e036 Mon Sep 17 00:00:00 2001
-From: "Jan Alexander Steffens (heftig)" <heftig@archlinux.org>
-Date: Sat, 13 Jan 2024 15:29:25 +0100
-Subject: [PATCH 1/7] arch/Kconfig: Default to maximum amount of ASLR bits
-
-To mitigate https://zolutal.github.io/aslrnt/; do this with a patch to
-avoid having to enable `CONFIG_EXPERT`.
-
-Signed-off-by: Eric Naim <dnaim@cachyos.org>
----
- arch/Kconfig | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/arch/Kconfig b/arch/Kconfig
-index a3308a220f864..24d44e9aa7297 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -1137,7 +1137,7 @@ config ARCH_MMAP_RND_BITS
- 	int "Number of bits to use for ASLR of mmap base address" if EXPERT
- 	range ARCH_MMAP_RND_BITS_MIN ARCH_MMAP_RND_BITS_MAX
- 	default ARCH_MMAP_RND_BITS_DEFAULT if ARCH_MMAP_RND_BITS_DEFAULT
--	default ARCH_MMAP_RND_BITS_MIN
-+	default ARCH_MMAP_RND_BITS_MAX
- 	depends on HAVE_ARCH_MMAP_RND_BITS
- 	help
- 	  This value can be used to select the number of bits to use to
-@@ -1171,7 +1171,7 @@ config ARCH_MMAP_RND_COMPAT_BITS
- 	int "Number of bits to use for ASLR of mmap base address for compatible applications" if EXPERT
- 	range ARCH_MMAP_RND_COMPAT_BITS_MIN ARCH_MMAP_RND_COMPAT_BITS_MAX
- 	default ARCH_MMAP_RND_COMPAT_BITS_DEFAULT if ARCH_MMAP_RND_COMPAT_BITS_DEFAULT
--	default ARCH_MMAP_RND_COMPAT_BITS_MIN
-+	default ARCH_MMAP_RND_COMPAT_BITS_MAX
- 	depends on HAVE_ARCH_MMAP_RND_COMPAT_BITS
- 	help
- 	  This value can be used to select the number of bits to use to
--- 
-2.49.0
-
-
-From 9b8675989a8ecc1193681540efb884ba362c7732 Mon Sep 17 00:00:00 2001
+From b1efef30fcf6ec5fd9c8bccde1c80af8667f16af Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 2/7] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/6] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -72,10 +33,10 @@ index 452374d63c244..08f80d7c5df05 100644
 2.49.0
 
 
-From 9fa906838fbd95e6f9b0ea71bf64372d5980d800 Mon Sep 17 00:00:00 2001
+From 642a4361b704862f37a9450aed1506337e2dc71a Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 3/7] drivers/base/node: Optimize memory block registration to
+Subject: [PATCH 2/6] drivers/base/node: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -348,10 +309,10 @@ index 2b75178922301..485370f3bc177 100644
 2.49.0
 
 
-From c72b4e3fe38b05c2655ddf603257bb9f56dd8dac Mon Sep 17 00:00:00 2001
+From e35ba1c0c70b01b33b2ab548ff21d650bd3b52ac Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 4/7] drivers/base/node: remove
+Subject: [PATCH 3/6] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -458,10 +419,10 @@ index a854d04cea5d9..24c32cdbe97da 100644
 2.49.0
 
 
-From 620b9da27897378e15c4a5ffa53e03adb909ac83 Mon Sep 17 00:00:00 2001
+From ead728135a966c0ca3c07c91b36cbb6b2b85e98d Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 5/7] drivers/base/node: Remove
+Subject: [PATCH 4/6] drivers/base/node: Remove
  register_memory_blocks_under_node() function call from register_one_node
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -516,10 +477,10 @@ index 485370f3bc177..b15de78e04087 100644
 2.49.0
 
 
-From dca6bdf5f92661ea7dc22cf93eb1b5e0663b3cd4 Mon Sep 17 00:00:00 2001
+From ecb800ea9c0bb910944e0b43c577b02760804a0f Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 6/7] drivers/base/node: Rename
+Subject: [PATCH 5/6] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -602,10 +563,10 @@ index b1caedbade5b1..c6ce1aba64e6c 100644
 2.49.0
 
 
-From b9965f8da115fb392a7d4834d8e3f1c04430f7cc Mon Sep 17 00:00:00 2001
+From d29a1055da68f12bda4ffc988235a1efd1dc7da4 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 7/7] drivers/base/node: Rename __register_one_node() to
+Subject: [PATCH 6/6] drivers/base/node: Rename __register_one_node() to
  register_one_node()
 
 The register_one_node() function was a simple wrapper around
