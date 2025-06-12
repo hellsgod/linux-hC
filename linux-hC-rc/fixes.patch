@@ -1,7 +1,7 @@
 From b1efef30fcf6ec5fd9c8bccde1c80af8667f16af Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/6] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/7] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -14,7 +14,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -36,7 +36,7 @@ index 452374d63c244..08f80d7c5df05 100644
 From 642a4361b704862f37a9450aed1506337e2dc71a Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 2/6] drivers/base/node: Optimize memory block registration to
+Subject: [PATCH 2/7] drivers/base/node: Optimize memory block registration to
  reduce boot time
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -142,7 +142,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 58 insertions(+), 20 deletions(-)
 
 diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index ed3e69dc785c3..5c6c1d6bb59f1 100644
+index ed3e69dc785c..5c6c1d6bb59f 100644
 --- a/drivers/base/memory.c
 +++ b/drivers/base/memory.c
 @@ -22,6 +22,7 @@
@@ -188,7 +188,7 @@ index ed3e69dc785c3..5c6c1d6bb59f1 100644
  	struct memory_block *mem;
  
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index c19094481630d..a854d04cea5d9 100644
+index c19094481630..a854d04cea5d 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -21,6 +21,7 @@
@@ -251,7 +251,7 @@ index c19094481630d..a854d04cea5d9 100644
 +	register_memory_blocks_under_nodes();
  }
 diff --git a/include/linux/memory.h b/include/linux/memory.h
-index 5ec4e6d209b96..c39ad931713db 100644
+index 5ec4e6d209b9..c39ad931713d 100644
 --- a/include/linux/memory.h
 +++ b/include/linux/memory.h
 @@ -179,12 +179,30 @@ struct memory_group *memory_group_find_by_id(int mgid);
@@ -292,7 +292,7 @@ index 5ec4e6d209b96..c39ad931713db 100644
 -
  #endif /* _LINUX_MEMORY_H_ */
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 2b75178922301..485370f3bc177 100644
+index 2b7517892230..485370f3bc17 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -120,6 +120,9 @@ static inline void register_memory_blocks_under_node(int nid, unsigned long star
@@ -312,7 +312,7 @@ index 2b75178922301..485370f3bc177 100644
 From e35ba1c0c70b01b33b2ab548ff21d650bd3b52ac Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 3/6] drivers/base/node: remove
+Subject: [PATCH 3/7] drivers/base/node: remove
  register_mem_block_under_node_early()
 
 The function register_mem_block_under_node_early() is no longer used,
@@ -332,7 +332,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 57 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index a854d04cea5d9..24c32cdbe97da 100644
+index a854d04cea5d..24c32cdbe97d 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -757,15 +757,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
@@ -422,7 +422,7 @@ index a854d04cea5d9..24c32cdbe97da 100644
 From ead728135a966c0ca3c07c91b36cbb6b2b85e98d Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 4/6] drivers/base/node: Remove
+Subject: [PATCH 4/7] drivers/base/node: Remove
  register_memory_blocks_under_node() function call from register_one_node
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -447,7 +447,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  1 file changed, 1 insertion(+), 15 deletions(-)
 
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 485370f3bc177..b15de78e04087 100644
+index 485370f3bc17..b15de78e0408 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -134,21 +134,7 @@ extern int __register_one_node(int nid);
@@ -480,7 +480,7 @@ index 485370f3bc177..b15de78e04087 100644
 From ecb800ea9c0bb910944e0b43c577b02760804a0f Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 5/6] drivers/base/node: Rename
+Subject: [PATCH 5/7] drivers/base/node: Rename
  register_memory_blocks_under_node() and remove context argument
 
 The function register_memory_blocks_under_node() is now only called from
@@ -505,7 +505,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  3 files changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 24c32cdbe97da..302cb99853ddf 100644
+index 24c32cdbe97d..302cb99853dd 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -839,9 +839,8 @@ static void register_memory_blocks_under_nodes(void)
@@ -521,7 +521,7 @@ index 24c32cdbe97da..302cb99853ddf 100644
  	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
  			   (void *)&nid, register_mem_block_under_node_hotplug);
 diff --git a/include/linux/node.h b/include/linux/node.h
-index b15de78e04087..75b036a100d2c 100644
+index b15de78e0408..75b036a100d2 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -111,13 +111,12 @@ struct memory_block;
@@ -544,7 +544,7 @@ index b15de78e04087..75b036a100d2c 100644
  }
  static inline void register_memory_blocks_under_nodes(void)
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index b1caedbade5b1..c6ce1aba64e6c 100644
+index b1caedbade5b..c6ce1aba64e6 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -566,7 +566,7 @@ index b1caedbade5b1..c6ce1aba64e6c 100644
 From d29a1055da68f12bda4ffc988235a1efd1dc7da4 Mon Sep 17 00:00:00 2001
 From: Donet Tom <donettom@linux.ibm.com>
 Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 6/6] drivers/base/node: Rename __register_one_node() to
+Subject: [PATCH 6/7] drivers/base/node: Rename __register_one_node() to
  register_one_node()
 
 The register_one_node() function was a simple wrapper around
@@ -584,7 +584,7 @@ Signed-off-by: Donet Tom <donettom@linux.ibm.com>
  4 files changed, 5 insertions(+), 16 deletions(-)
 
 diff --git a/arch/powerpc/platforms/pseries/pci_dlpar.c b/arch/powerpc/platforms/pseries/pci_dlpar.c
-index 52e2623a741de..aeb8633a3d00f 100644
+index 52e2623a741d..aeb8633a3d00 100644
 --- a/arch/powerpc/platforms/pseries/pci_dlpar.c
 +++ b/arch/powerpc/platforms/pseries/pci_dlpar.c
 @@ -29,7 +29,7 @@ struct pci_controller *init_phb_dynamic(struct device_node *dn)
@@ -597,7 +597,7 @@ index 52e2623a741de..aeb8633a3d00f 100644
  			} else {
  				update_numa_distance(dn);
 diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 302cb99853ddf..6cbeca45c451f 100644
+index 302cb99853dd..6cbeca45c451 100644
 --- a/drivers/base/node.c
 +++ b/drivers/base/node.c
 @@ -848,7 +848,7 @@ void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
@@ -619,7 +619,7 @@ index 302cb99853ddf..6cbeca45c451f 100644
  			panic("%s() failed to add node: %d\n", __func__, ret);
  	}
 diff --git a/include/linux/node.h b/include/linux/node.h
-index 75b036a100d2c..88bceebcbfa54 100644
+index 75b036a100d2..88bceebcbfa5 100644
 --- a/include/linux/node.h
 +++ b/include/linux/node.h
 @@ -128,14 +128,7 @@ extern void unregister_node(struct node *node);
@@ -650,7 +650,7 @@ index 75b036a100d2c..88bceebcbfa54 100644
  {
  	return 0;
 diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index c6ce1aba64e6c..bec20a91e7575 100644
+index c6ce1aba64e6..bec20a91e757 100644
 --- a/mm/memory_hotplug.c
 +++ b/mm/memory_hotplug.c
 @@ -1571,7 +1571,7 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
@@ -662,6 +662,50 @@ index c6ce1aba64e6c..bec20a91e7575 100644
  		BUG_ON(ret);
  	}
  
+-- 
+2.49.0
+
+
+From ee9a5639c539b57085e0b8099134296e08cefee3 Mon Sep 17 00:00:00 2001
+From: hellsgod <hellsgod@gmx.ch>
+Date: Thu, 12 Jun 2025 13:41:28 +0200
+Subject: [PATCH 7/7] Revert "af_unix: Inherit sk_flags at connect()."
+
+This reverts commit 3f84d577b79d2fce8221244f2509734940609ca6.
+---
+ net/unix/af_unix.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
+index 2e2e9997a68e..9c2f84022505 100644
+--- a/net/unix/af_unix.c
++++ b/net/unix/af_unix.c
+@@ -1708,7 +1708,6 @@ static int unix_stream_connect(struct socket *sock, struct sockaddr *uaddr,
+ 	unix_peer(newsk) = sk;
+ 	newsk->sk_state = TCP_ESTABLISHED;
+ 	newsk->sk_type = sk->sk_type;
+-	newsk->sk_scm_recv_flags = other->sk_scm_recv_flags;
+ 	init_peercred(newsk, &peercred);
+ 
+ 	newu = unix_sk(newsk);
+@@ -1840,6 +1839,7 @@ static int unix_accept(struct socket *sock, struct socket *newsock,
+ 	unix_state_lock(tsk);
+ 	unix_update_edges(unix_sk(tsk));
+ 	newsock->state = SS_CONNECTED;
++	tsk->sk_scm_recv_flags = READ_ONCE(sk->sk_scm_recv_flags);
+ 	sock_graft(tsk, newsock);
+ 	unix_state_unlock(tsk);
+ 	return 0;
+@@ -1971,7 +1971,8 @@ static void unix_maybe_add_creds(struct sk_buff *skb, const struct sock *sk,
+ 	if (UNIXCB(skb).pid)
+ 		return;
+ 
+-	if (unix_may_passcred(sk) || unix_may_passcred(other)) {
++	if (unix_may_passcred(sk) ||
++	    !other->sk_socket || unix_may_passcred(other)) {
+ 		UNIXCB(skb).pid = get_pid(task_tgid(current));
+ 		current_uid_gid(&UNIXCB(skb).uid, &UNIXCB(skb).gid);
+ 	}
 -- 
 2.49.0
 
