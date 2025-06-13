@@ -666,43 +666,80 @@ index c6ce1aba64e6..bec20a91e757 100644
 2.49.0
 
 
-From ee9a5639c539b57085e0b8099134296e08cefee3 Mon Sep 17 00:00:00 2001
-From: hellsgod <hellsgod@gmx.ch>
-Date: Thu, 12 Jun 2025 13:41:28 +0200
-Subject: [PATCH 7/7] Revert "af_unix: Inherit sk_flags at connect()."
+From 1a75408cb79e203626d17ce3c65b570923e19579 Mon Sep 17 00:00:00 2001
+From: Kuniyuki Iwashima <kuniyu@google.com>
+Date: Wed, 11 Jun 2025 13:27:35 -0700
+Subject: [PATCH 7/7] af_unix: Allow passing cred for embryo without
+ SO_PASSCRED/SO_PASSPIDFD.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
 
-This reverts commit 3f84d577b79d2fce8221244f2509734940609ca6.
+Before the cited commit, the kernel unconditionally embedded SCM
+credentials to skb for embryo sockets even when both the sender
+and listener disabled SO_PASSCRED and SO_PASSPIDFD.
+
+Now, the credentials are added to skb only when configured by the
+sender or the listener.
+
+However, as reported in the link below, it caused a regression for
+some programs that assume credentials are included in every skb,
+but sometimes not now.
+
+The only problematic scenario would be that a socket starts listening
+before setting the option.  Then, there will be 2 types of non-small
+race window, where a client can send skb without credentials, which
+the peer receives as an "invalid" message (and aborts the connection
+it seems ?):
+
+  Client                    Server
+  ------                    ------
+                            s1.listen()  <-- No SO_PASS{CRED,PIDFD}
+  s2.connect()
+  s2.send()  <-- w/o cred
+                            s1.setsockopt(SO_PASS{CRED,PIDFD})
+  s2.send()  <-- w/  cred
+
+or
+
+  Client                    Server
+  ------                    ------
+                            s1.listen()  <-- No SO_PASS{CRED,PIDFD}
+  s2.connect()
+  s2.send()  <-- w/o cred
+                            s3, _ = s1.accept()  <-- Inherit cred options
+  s2.send()  <-- w/o cred                            but not set yet
+
+                            s3.setsockopt(SO_PASS{CRED,PIDFD})
+  s2.send()  <-- w/  cred
+
+It's unfortunate that buggy programs depend on the behaviour,
+but let's restore the previous behaviour.
+
+Fixes: 3f84d577b79d ("af_unix: Inherit sk_flags at connect().")
+Reported-by: Jacek Łuczak <difrost.kernel@gmail.com>
+Closes: https://lore.kernel.org/all/68d38b0b-1666-4974-85d4-15575789c8d4@gmail.com/
+Signed-off-by: Kuniyuki Iwashima <kuniyu@google.com>
+Tested-by: Christian Heusel <christian@heusel.eu>
+Tested-by: André Almeida <andrealmeid@igalia.com>
+Tested-by: Jacek Łuczak <difrost.kernel@gmail.com>
+Link: https://patch.msgid.link/20250611202758.3075858-1-kuni1840@gmail.com
+Signed-off-by: Jakub Kicinski <kuba@kernel.org>
 ---
- net/unix/af_unix.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ net/unix/af_unix.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/net/unix/af_unix.c b/net/unix/af_unix.c
-index 2e2e9997a68e..9c2f84022505 100644
+index 2e2e9997a68e..22e170fb5dda 100644
 --- a/net/unix/af_unix.c
 +++ b/net/unix/af_unix.c
-@@ -1708,7 +1708,6 @@ static int unix_stream_connect(struct socket *sock, struct sockaddr *uaddr,
- 	unix_peer(newsk) = sk;
- 	newsk->sk_state = TCP_ESTABLISHED;
- 	newsk->sk_type = sk->sk_type;
--	newsk->sk_scm_recv_flags = other->sk_scm_recv_flags;
- 	init_peercred(newsk, &peercred);
- 
- 	newu = unix_sk(newsk);
-@@ -1840,6 +1839,7 @@ static int unix_accept(struct socket *sock, struct socket *newsock,
- 	unix_state_lock(tsk);
- 	unix_update_edges(unix_sk(tsk));
- 	newsock->state = SS_CONNECTED;
-+	tsk->sk_scm_recv_flags = READ_ONCE(sk->sk_scm_recv_flags);
- 	sock_graft(tsk, newsock);
- 	unix_state_unlock(tsk);
- 	return 0;
 @@ -1971,7 +1971,8 @@ static void unix_maybe_add_creds(struct sk_buff *skb, const struct sock *sk,
  	if (UNIXCB(skb).pid)
  		return;
  
 -	if (unix_may_passcred(sk) || unix_may_passcred(other)) {
-+	if (unix_may_passcred(sk) ||
-+	    !other->sk_socket || unix_may_passcred(other)) {
++	if (unix_may_passcred(sk) || unix_may_passcred(other) ||
++	    !other->sk_socket) {
  		UNIXCB(skb).pid = get_pid(task_tgid(current));
  		current_uid_gid(&UNIXCB(skb).uid, &UNIXCB(skb).gid);
  	}
