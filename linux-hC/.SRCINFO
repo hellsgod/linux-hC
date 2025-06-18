@@ -33,9 +33,8 @@ pkgbase = linux-hC
 	source = kbuild.patch
 	source = tweaks.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/dkms-clang.patch
-	source = https://us.download.nvidia.com/XFree86/Linux-x86_64/575.57.08/NVIDIA-Linux-x86_64-575.57.08.run
+	source = https://us.download.nvidia.com/XFree86/Linux-x86_64/575.64/NVIDIA-Linux-x86_64-575.64.run
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0003-Workaround-nv_vm_flags_-calling-GPL-only-code.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/sched/0001-bore.patch
 	b2sums = c2b23abc39af6d2cf67f5963121f16d4a231869203d3915ed6260d6f39ef0d7dbd5c86abac9cc6f9af5b00f8ad6c754f212bdde1d670e60e3a91866718980799
 	b2sums = e7be658f0c44816c0b5b7070df6359b28773d56ab4148a84846ceac168685957463c341b2f1dab7c3547c4ea5c136550ac0f433a1e158467e20909e8654ce699
@@ -49,9 +48,8 @@ pkgbase = linux-hC
 	b2sums = 1bbc3693b2c0455c379c09e5f5a7a8223c9275c5ee8eb0b2da1258ea9f7263502a41c217180deb79415c8d41fd3040c6d8b933e930e8e61c5f38a68c6ce2799e
 	b2sums = 4e64710dfb6b0ecda50247d95b325168b8e8ba1c6c506b5b60abed3d826ee57ecf75ea5b94b0ffea43ad67f8653bd9f2b367a6d45f7555db511c9f7c6adcefef
 	b2sums = c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452
-	b2sums = 04274c2fa9a97767a13c9896ba1132388b4edfb521856e235fcb6e1a2350bbccdfcf3329d41283b98260f51b9af8ebb10b46d19fae4383c3fdc0147d308766f6
+	b2sums = 8ae4ff774e76815c839f1dc150e4750332e4dd59f048b00d19f1ef3c462877776249b4b8275c2960b8ae2b3b19c3196f63047168b2f468e15a8c864917ef3ae1
 	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
-	b2sums = 03996467969052d0584b92154a8a20eba5a40ccbdd1e14e439af2c0b785e6dfb5862bb4cfec7c897c1de2cc4a38a429188f83d26c909ddc767ecf0bbb6f241ee
 	b2sums = c2abf138377ec4737663b1010c9c0e0cdccf2478a3fc38125faf3dfff9fb5c889e68735dd8b7a178f2ac951c8b126567d6ab0bc63734a2175f96fc5ae5dd8398
 
 pkgname = linux-hC
@@ -77,10 +75,10 @@ pkgname = linux-hC-headers
 	depends = lld
 
 pkgname = linux-hC-nvidia
-	pkgdesc = nvidia module of 575.57.08 driver for the linux-hC kernel
+	pkgdesc = nvidia module of 575.64 driver for the linux-hC kernel
 	license = custom
 	depends = linux-hC=6.15.2-1
-	depends = nvidia-utils=575.57.08
+	depends = nvidia-utils=575.64
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-nvidia-open
