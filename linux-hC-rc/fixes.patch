@@ -1,4 +1,4 @@
-From b1efef30fcf6ec5fd9c8bccde1c80af8667f16af Mon Sep 17 00:00:00 2001
+From 4d00820c493e1d9893aa682c0520603f3f01d283 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
 Subject: [PATCH 1/7] kbuild: add resolve_btfids to pacman PKGBUILD
@@ -14,7 +14,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -30,637 +30,359 @@ index 452374d63c24..08f80d7c5df0 100644
  	mkdir -p "${builddir}"
  	cp System.map "${builddir}/System.map"
 -- 
-2.49.0
+2.50.0
 
 
-From 642a4361b704862f37a9450aed1506337e2dc71a Mon Sep 17 00:00:00 2001
-From: Donet Tom <donettom@linux.ibm.com>
-Date: Wed, 28 May 2025 12:18:00 -0500
-Subject: [PATCH 2/7] drivers/base/node: Optimize memory block registration to
- reduce boot time
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+From 3e0b9ad1eb8acb4c60de4a5f45c952830cd600ca Mon Sep 17 00:00:00 2001
+From: En-Wei Wu <en-wei.wu@canonical.com>
+Date: Wed, 15 Jan 2025 11:50:14 +0800
+Subject: [PATCH 2/7] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
 
-During node device initialization, `memory blocks` are registered under
-each NUMA node. The `memory blocks` to be registered are identified using
-the node’s start and end PFNs, which are obtained from the node's pg_data
+Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
 
-However, not all PFNs within this range necessarily belong to the same
-node—some may belong to other nodes. Additionally, due to the
-discontiguous nature of physical memory, certain sections within a
-`memory block` may be absent.
+The information in /sys/kernel/debug/usb/devices about the Bluetooth
+device is listed as the below.
 
-As a result, `memory blocks` that fall between a node’s start and end
-PFNs may span across multiple nodes, and some sections within those blocks
-may be missing. `Memory blocks` have a fixed size, which is architecture
-dependent.
+T:  Bus=01 Lev=01 Prnt=01 Port=03 Cnt=03 Dev#=  4 Spd=480  MxCh= 0
+D:  Ver= 2.10 Cls=ef(misc ) Sub=02 Prot=01 MxPS=64 #Cfgs=  1
+P:  Vendor=0489 ProdID=e14e Rev= 1.00
+S:  Manufacturer=MediaTek Inc.
+S:  Product=Wireless_Device
+S:  SerialNumber=000000000
+C:* #Ifs= 3 Cfg#= 1 Atr=e0 MxPwr=100mA
+A:  FirstIf#= 0 IfCount= 3 Cls=e0(wlcon) Sub=01 Prot=01
+I:* If#= 0 Alt= 0 #EPs= 3 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=81(I) Atr=03(Int.) MxPS=  16 Ivl=125us
+E:  Ad=82(I) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+E:  Ad=02(O) Atr=02(Bulk) MxPS= 512 Ivl=0ms
+I:* If#= 1 Alt= 0 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=   0 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=   0 Ivl=1ms
+I:  If#= 1 Alt= 1 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=   9 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=   9 Ivl=1ms
+I:  If#= 1 Alt= 2 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  17 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  17 Ivl=1ms
+I:  If#= 1 Alt= 3 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  25 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  25 Ivl=1ms
+I:  If#= 1 Alt= 4 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  33 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  33 Ivl=1ms
+I:  If#= 1 Alt= 5 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  49 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  49 Ivl=1ms
+I:  If#= 1 Alt= 6 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=83(I) Atr=01(Isoc) MxPS=  63 Ivl=1ms
+E:  Ad=03(O) Atr=01(Isoc) MxPS=  63 Ivl=1ms
+I:  If#= 2 Alt= 0 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=8a(I) Atr=03(Int.) MxPS=  64 Ivl=125us
+E:  Ad=0a(O) Atr=03(Int.) MxPS=  64 Ivl=125us
+I:* If#= 2 Alt= 1 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
+E:  Ad=8a(I) Atr=03(Int.) MxPS= 512 Ivl=125us
+E:  Ad=0a(O) Atr=03(Int.) MxPS= 512 Ivl=125us
 
-Due to these considerations, the memory block registration is currently
-performed as follows:
-
-for_each_online_node(nid):
-    start_pfn = pgdat->node_start_pfn;
-    end_pfn = pgdat->node_start_pfn + node_spanned_pages;
-    for_each_memory_block_between(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn))
-        mem_blk = memory_block_id(pfn_to_section_nr(pfn));
-        pfn_mb_start=section_nr_to_pfn(mem_blk->start_section_nr)
-        pfn_mb_end = pfn_start + memory_block_pfns - 1
-        for (pfn = pfn_mb_start; pfn < pfn_mb_end; pfn++):
-            if (get_nid_for_pfn(pfn) != nid):
-                continue;
-            else
-                do_register_memory_block_under_node(nid, mem_blk,
-                                                        MEMINIT_EARLY);
-
-Here, we derive the start and end PFNs from the node's pg_data, then
-determine the memory blocks that may belong to the node. For each
-`memory block` in this range, we inspect all PFNs it contains and check
-their associated NUMA node ID. If a PFN within the block matches the
-current node, the memory block is registered under that node.
-
-If CONFIG_DEFERRED_STRUCT_PAGE_INIT is enabled, get_nid_for_pfn() performs
-a binary search in the `memblock regions` to determine the NUMA node ID
-for a given PFN. If it is not enabled, the node ID is retrieved directly
-from the struct page.
-
-On large systems, this process can become time-consuming, especially since
-we iterate over each `memory block` and all PFNs within it until a match is
-found. When CONFIG_DEFERRED_STRUCT_PAGE_INIT is enabled, the additional
-overhead of the binary search increases the execution time significantly,
-potentially leading to soft lockups during boot.
-
-In this patch, we iterate over `memblock region` to identify the
-`memory blocks` that belong to the current NUMA node. `memblock regions`
-are contiguous memory ranges, each associated with a single NUMA node, and
-they do not span across multiple nodes.
-
-for_each_memory_region(r): // r => region
-  if (!node_online(r->nid)):
-    continue;
-  else
-    for_each_memory_block_between(r->base, r->base + r->size - 1):
-      do_register_memory_block_under_node(r->nid, mem_blk, MEMINIT_EARLY);
-
-We iterate over all memblock regions, and if the node associated with the
-region is online, we calculate the start and end memory blocks based on the
-region's start and end PFNs. We then register all the memory blocks within
-that range under the region node.
-
-Test Results on My system with 32TB RAM
-=======================================
-1. Boot time with CONFIG_DEFERRED_STRUCT_PAGE_INIT enabled.
-
-Without this patch
-------------------
-Startup finished in 1min 16.528s (kernel)
-
-With this patch
----------------
-Startup finished in 17.236s (kernel) - 78% Improvement
-
-2. Boot time with CONFIG_DEFERRED_STRUCT_PAGE_INIT disabled.
-
-Without this patch
-------------------
-Startup finished in 28.320s (kernel)
-
-With this patch
----------------
-Startup finished in 15.621s (kernel) - 46% Improvement
-
-Acked-by: David Hildenbrand <david@redhat.com>
-Acked-by: Oscar Salvador <osalvador@suse.de>
-Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
-Acked-by: Zi Yan <ziy@nvidia.com>
-Signed-off-by: Donet Tom <donettom@linux.ibm.com>
+Signed-off-by: En-Wei Wu <en-wei.wu@canonical.com>
 ---
- drivers/base/memory.c  | 21 ++++-----------------
- drivers/base/node.c    | 35 +++++++++++++++++++++++++++++++++--
- include/linux/memory.h | 19 ++++++++++++++++++-
- include/linux/node.h   |  3 +++
- 4 files changed, 58 insertions(+), 20 deletions(-)
+ drivers/bluetooth/btusb.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/drivers/base/memory.c b/drivers/base/memory.c
-index ed3e69dc785c..5c6c1d6bb59f 100644
---- a/drivers/base/memory.c
-+++ b/drivers/base/memory.c
-@@ -22,6 +22,7 @@
- #include <linux/stat.h>
- #include <linux/slab.h>
- #include <linux/xarray.h>
-+#include <linux/export.h>
+diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
+index 9ab661d2d1e69..ff4e11a34c515 100644
+--- a/drivers/bluetooth/btusb.c
++++ b/drivers/bluetooth/btusb.c
+@@ -705,6 +705,8 @@ static const struct usb_device_id quirks_table[] = {
+ 						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x0489, 0xe139), .driver_info = BTUSB_MEDIATEK |
+ 						     BTUSB_WIDEBAND_SPEECH },
++	{ USB_DEVICE(0x0489, 0xe14e), .driver_info = BTUSB_MEDIATEK |
++						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x0489, 0xe14f), .driver_info = BTUSB_MEDIATEK |
+ 						     BTUSB_WIDEBAND_SPEECH },
+ 	{ USB_DEVICE(0x0489, 0xe150), .driver_info = BTUSB_MEDIATEK |
+-- 
+2.50.0
+
+
+From 138c3dc2b81edce848849c8e6c30e91d3870de91 Mon Sep 17 00:00:00 2001
+From: Melissa Wen <mwen@igalia.com>
+Date: Sun, 11 May 2025 18:22:41 -0300
+Subject: [PATCH 3/7] drm/amd/display: disable CRTC degamma LUT for DCN401
+
+In DCN401 pre-blending degamma LUT isn't affecting cursor as in previous
+DCN version. As this is not the behavior close to what is expected for
+CRTC degamma LUT, disable CRTC degamma LUT property in this HW.
+
+Link: https://gitlab.freedesktop.org/drm/amd/-/issues/4176
+Signed-off-by: Melissa Wen <mwen@igalia.com>
+---
+ .../gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c    | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
+index 87058271b00cc..2551823382f8b 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
+@@ -728,7 +728,16 @@ int amdgpu_dm_crtc_init(struct amdgpu_display_manager *dm,
+ 	 * support programmable degamma anywhere.
+ 	 */
+ 	is_dcn = dm->adev->dm.dc->caps.color.dpp.dcn_arch;
+-	drm_crtc_enable_color_mgmt(&acrtc->base, is_dcn ? MAX_COLOR_LUT_ENTRIES : 0,
++	/* Dont't enable DRM CRTC degamma property for DCN401 since the
++	 * pre-blending degamma LUT doesn't apply to cursor, and therefore
++	 * can't work similar to a post-blending degamma LUT as in other hw
++	 * versions.
++	 * TODO: revisit it once KMS plane color API is merged.
++	 */
++	drm_crtc_enable_color_mgmt(&acrtc->base,
++				   (is_dcn &&
++				    dm->adev->dm.dc->ctx->dce_version != DCN_VERSION_4_01) ?
++				     MAX_COLOR_LUT_ENTRIES : 0,
+ 				   true, MAX_COLOR_LUT_ENTRIES);
  
- #include <linux/atomic.h>
- #include <linux/uaccess.h>
-@@ -48,22 +49,8 @@ int mhp_online_type_from_str(const char *str)
+ 	drm_mode_crtc_set_gamma_size(&acrtc->base, MAX_COLOR_LEGACY_LUT_ENTRIES);
+-- 
+2.50.0
+
+
+From 5c9361afd81bebea74d0b064503c25fbaa1e0778 Mon Sep 17 00:00:00 2001
+From: Mario Limonciello <mario.limonciello@amd.com>
+Date: Mon, 2 Jun 2025 15:09:56 -0500
+Subject: [PATCH 4/7] mfd: Fix compilation without CONFIG_OF
+
+When compiling without CONFIG_OF but with CONFIG_WERROR enabled
+several mfd drivers fail with -Werror=unused-variable.
+
+The assignment from these variables is only used in of_fwnode_handle()
+and thus they can be moved to only be used directly in the macro.
+
+Fixes: a36aa0f7226a2 ("mfd: Switch to irq_domain_create_*()")
+Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
+---
+ drivers/mfd/88pm860x-core.c | 5 ++---
+ drivers/mfd/max8925-core.c  | 5 ++---
+ drivers/mfd/twl4030-irq.c   | 3 +--
+ 3 files changed, 5 insertions(+), 8 deletions(-)
+
+diff --git a/drivers/mfd/88pm860x-core.c b/drivers/mfd/88pm860x-core.c
+index 488e346047c12..25300b53a8eff 100644
+--- a/drivers/mfd/88pm860x-core.c
++++ b/drivers/mfd/88pm860x-core.c
+@@ -573,7 +573,6 @@ static int device_irq_init(struct pm860x_chip *chip,
+ 	unsigned long flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
+ 	int data, mask, ret = -EINVAL;
+ 	int nr_irqs, irq_base = -1;
+-	struct device_node *node = i2c->dev.of_node;
  
- #define to_memory_block(dev) container_of(dev, struct memory_block, dev)
- 
--static int sections_per_block;
--
--static inline unsigned long memory_block_id(unsigned long section_nr)
--{
--	return section_nr / sections_per_block;
--}
--
--static inline unsigned long pfn_to_block_id(unsigned long pfn)
--{
--	return memory_block_id(pfn_to_section_nr(pfn));
--}
--
--static inline unsigned long phys_to_block_id(unsigned long phys)
--{
--	return pfn_to_block_id(PFN_DOWN(phys));
--}
-+int sections_per_block;
-+EXPORT_SYMBOL(sections_per_block);
- 
- static int memory_subsys_online(struct device *dev);
- static int memory_subsys_offline(struct device *dev);
-@@ -683,7 +670,7 @@ int __weak arch_get_memory_phys_device(unsigned long start_pfn)
-  *
-  * Called under device_hotplug_lock.
-  */
--static struct memory_block *find_memory_block_by_id(unsigned long block_id)
-+struct memory_block *find_memory_block_by_id(unsigned long block_id)
+ 	mask = PM8607_B0_MISC1_INV_INT | PM8607_B0_MISC1_INT_CLEAR
+ 		| PM8607_B0_MISC1_INT_MASK;
+@@ -624,8 +623,8 @@ static int device_irq_init(struct pm860x_chip *chip,
+ 		ret = -EBUSY;
+ 		goto out;
+ 	}
+-	irq_domain_create_legacy(of_fwnode_handle(node), nr_irqs, chip->irq_base, 0,
+-				 &pm860x_irq_domain_ops, chip);
++	irq_domain_create_legacy(of_fwnode_handle(i2c->dev.of_node), nr_irqs,
++				 chip->irq_base, 0, &pm860x_irq_domain_ops, chip);
+ 	chip->core_irq = i2c->irq;
+ 	if (!chip->core_irq)
+ 		goto out;
+diff --git a/drivers/mfd/max8925-core.c b/drivers/mfd/max8925-core.c
+index 78b16c67a5fc6..91388477ad2b7 100644
+--- a/drivers/mfd/max8925-core.c
++++ b/drivers/mfd/max8925-core.c
+@@ -656,7 +656,6 @@ static int max8925_irq_init(struct max8925_chip *chip, int irq,
  {
- 	struct memory_block *mem;
+ 	unsigned long flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
+ 	int ret;
+-	struct device_node *node = chip->dev->of_node;
  
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index c19094481630..a854d04cea5d 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -21,6 +21,7 @@
- #include <linux/pm_runtime.h>
- #include <linux/swap.h>
- #include <linux/slab.h>
-+#include <linux/memblock.h>
+ 	/* clear all interrupts */
+ 	max8925_reg_read(chip->i2c, MAX8925_CHG_IRQ1);
+@@ -682,8 +681,8 @@ static int max8925_irq_init(struct max8925_chip *chip, int irq,
+ 		return -EBUSY;
+ 	}
  
- static const struct bus_type node_subsys = {
- 	.name = "node",
-@@ -859,6 +860,34 @@ void unregister_memory_block_under_nodes(struct memory_block *mem_blk)
- 			  kobject_name(&node_devices[mem_blk->nid]->dev.kobj));
- }
+-	irq_domain_create_legacy(of_fwnode_handle(node), MAX8925_NR_IRQS, chip->irq_base, 0,
+-				 &max8925_irq_domain_ops, chip);
++	irq_domain_create_legacy(of_fwnode_handle(chip->dev->of_node), MAX8925_NR_IRQS,
++				 chip->irq_base, 0, &max8925_irq_domain_ops, chip);
  
-+/* register all memory blocks under the corresponding nodes */
-+static void register_memory_blocks_under_nodes(void)
-+{
-+	struct memblock_region *r;
-+
-+	for_each_mem_region(r) {
-+		const unsigned long start_block_id = phys_to_block_id(r->base);
-+		const unsigned long end_block_id = phys_to_block_id(r->base + r->size - 1);
-+		const int nid = memblock_get_region_node(r);
-+		unsigned long block_id;
-+
-+		if (!node_online(nid))
-+			continue;
-+
-+		for (block_id = start_block_id; block_id <= end_block_id; block_id++) {
-+			struct memory_block *mem;
-+
-+			mem = find_memory_block_by_id(block_id);
-+			if (!mem)
-+				continue;
-+
-+			do_register_memory_block_under_node(nid, mem, MEMINIT_EARLY);
-+			put_device(&mem->dev);
-+		}
-+
-+	}
-+}
-+
- void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
- 				       unsigned long end_pfn,
- 				       enum meminit_context context)
-@@ -980,11 +1009,13 @@ void __init node_dev_init(void)
+ 	/* request irq handler for pmic main irq*/
+ 	chip->core_irq = irq;
+diff --git a/drivers/mfd/twl4030-irq.c b/drivers/mfd/twl4030-irq.c
+index 232c2bfe8c180..a2ab5deef9e21 100644
+--- a/drivers/mfd/twl4030-irq.c
++++ b/drivers/mfd/twl4030-irq.c
+@@ -676,7 +676,6 @@ int twl4030_init_irq(struct device *dev, int irq_num)
+ 	static struct irq_chip	twl4030_irq_chip;
+ 	int			status, i;
+ 	int			irq_base, irq_end, nr_irqs;
+-	struct			device_node *node = dev->of_node;
  
  	/*
- 	 * Create all node devices, which will properly link the node
--	 * to applicable memory block devices and already created cpu devices.
-+	 * to already created cpu devices.
- 	 */
- 	for_each_online_node(i) {
--		ret = register_one_node(i);
-+		ret =  __register_one_node(i);
- 		if (ret)
- 			panic("%s() failed to add node: %d\n", __func__, ret);
+ 	 * TWL core and pwr interrupts must be contiguous because
+@@ -691,7 +690,7 @@ int twl4030_init_irq(struct device *dev, int irq_num)
+ 		return irq_base;
  	}
-+
-+	register_memory_blocks_under_nodes();
- }
-diff --git a/include/linux/memory.h b/include/linux/memory.h
-index 5ec4e6d209b9..c39ad931713d 100644
---- a/include/linux/memory.h
-+++ b/include/linux/memory.h
-@@ -179,12 +179,30 @@ struct memory_group *memory_group_find_by_id(int mgid);
- typedef int (*walk_memory_groups_func_t)(struct memory_group *, void *);
- int walk_dynamic_memory_groups(int nid, walk_memory_groups_func_t func,
- 			       struct memory_group *excluded, void *arg);
-+struct memory_block *find_memory_block_by_id(unsigned long block_id);
- #define hotplug_memory_notifier(fn, pri) ({		\
- 	static __meminitdata struct notifier_block fn##_mem_nb =\
- 		{ .notifier_call = fn, .priority = pri };\
- 	register_memory_notifier(&fn##_mem_nb);			\
- })
  
-+extern int sections_per_block;
-+
-+static inline unsigned long memory_block_id(unsigned long section_nr)
-+{
-+	return section_nr / sections_per_block;
-+}
-+
-+static inline unsigned long pfn_to_block_id(unsigned long pfn)
-+{
-+	return memory_block_id(pfn_to_section_nr(pfn));
-+}
-+
-+static inline unsigned long phys_to_block_id(unsigned long phys)
-+{
-+	return pfn_to_block_id(PFN_DOWN(phys));
-+}
-+
- #ifdef CONFIG_NUMA
- void memory_block_add_nid(struct memory_block *mem, int nid,
- 			  enum meminit_context context);
-@@ -198,5 +216,4 @@ unsigned long memory_block_advised_max_size(void);
-  * can sleep.
-  */
- extern struct mutex text_mutex;
--
- #endif /* _LINUX_MEMORY_H_ */
-diff --git a/include/linux/node.h b/include/linux/node.h
-index 2b7517892230..485370f3bc17 100644
---- a/include/linux/node.h
-+++ b/include/linux/node.h
-@@ -120,6 +120,9 @@ static inline void register_memory_blocks_under_node(int nid, unsigned long star
- 						     enum meminit_context context)
- {
- }
-+static inline void register_memory_blocks_under_nodes(void)
-+{
-+}
- #endif
+-	irq_domain_create_legacy(of_fwnode_handle(node), nr_irqs, irq_base, 0,
++	irq_domain_create_legacy(of_fwnode_handle(dev->of_node), nr_irqs, irq_base, 0,
+ 				 &irq_domain_simple_ops, NULL);
  
- extern void unregister_node(struct node *node);
+ 	irq_end = irq_base + TWL4030_CORE_NR_IRQS;
 -- 
-2.49.0
+2.50.0
 
 
-From e35ba1c0c70b01b33b2ab548ff21d650bd3b52ac Mon Sep 17 00:00:00 2001
-From: Donet Tom <donettom@linux.ibm.com>
-Date: Wed, 28 May 2025 12:18:01 -0500
-Subject: [PATCH 3/7] drivers/base/node: remove
- register_mem_block_under_node_early()
+From 3fc14ea18ab8964af31f9f7cc04770a26a716c20 Mon Sep 17 00:00:00 2001
+From: Eric Naim <dnaim@cachyos.org>
+Date: Mon, 23 Jun 2025 15:16:01 +0700
+Subject: [PATCH 5/7] Revert "wifi: iwlwifi: Fix incorrect logic on cmd_ver
+ range checking"
 
-The function register_mem_block_under_node_early() is no longer used,
-as register_memory_blocks_under_node_early() now handles memory block
-registration during early boot.
+This reverts commit 83f3ac2848b46e3e5af5d06b5f176c17e35733a3.
 
-Removed register_mem_block_under_node_early() and get_nid_for_pfn(),
-the latter was only used by the former.
+This breaks WiFi on the AX200.
 
-Acked-by: Oscar Salvador <osalvador@suse.de>
-Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
-Acked-by: David Hildenbrand <david@redhat.com>
-Acked-by: Zi Yan <ziy@nvidia.com>
-Signed-off-by: Donet Tom <donettom@linux.ibm.com>
+Signed-off-by: Eric Naim <dnaim@cachyos.org>
 ---
- drivers/base/node.c | 58 +--------------------------------------------
- 1 file changed, 1 insertion(+), 57 deletions(-)
+ drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index a854d04cea5d..24c32cdbe97d 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -757,15 +757,6 @@ int unregister_cpu_under_node(unsigned int cpu, unsigned int nid)
- }
+diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c b/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c
+index 3c255ae916c85..81ca9ff67be96 100644
+--- a/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c
++++ b/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c
+@@ -34,7 +34,7 @@ static void iwl_mvm_mld_mac_ctxt_cmd_common(struct iwl_mvm *mvm,
+ 					    WIDE_ID(MAC_CONF_GROUP,
+ 						    MAC_CONFIG_CMD), 0);
  
- #ifdef CONFIG_MEMORY_HOTPLUG
--static int __ref get_nid_for_pfn(unsigned long pfn)
--{
--#ifdef CONFIG_DEFERRED_STRUCT_PAGE_INIT
--	if (system_state < SYSTEM_RUNNING)
--		return early_pfn_to_nid(pfn);
--#endif
--	return pfn_to_nid(pfn);
--}
--
- static void do_register_memory_block_under_node(int nid,
- 						struct memory_block *mem_blk,
- 						enum meminit_context context)
-@@ -792,46 +783,6 @@ static void do_register_memory_block_under_node(int nid,
- 				    ret);
- }
+-	if (WARN_ON(cmd_ver < 1 || cmd_ver > 3))
++	if (WARN_ON(cmd_ver < 1 && cmd_ver > 3))
+ 		return;
  
--/* register memory section under specified node if it spans that node */
--static int register_mem_block_under_node_early(struct memory_block *mem_blk,
--					       void *arg)
--{
--	unsigned long memory_block_pfns = memory_block_size_bytes() / PAGE_SIZE;
--	unsigned long start_pfn = section_nr_to_pfn(mem_blk->start_section_nr);
--	unsigned long end_pfn = start_pfn + memory_block_pfns - 1;
--	int nid = *(int *)arg;
--	unsigned long pfn;
--
--	for (pfn = start_pfn; pfn <= end_pfn; pfn++) {
--		int page_nid;
--
--		/*
--		 * memory block could have several absent sections from start.
--		 * skip pfn range from absent section
--		 */
--		if (!pfn_in_present_section(pfn)) {
--			pfn = round_down(pfn + PAGES_PER_SECTION,
--					 PAGES_PER_SECTION) - 1;
--			continue;
--		}
--
--		/*
--		 * We need to check if page belongs to nid only at the boot
--		 * case because node's ranges can be interleaved.
--		 */
--		page_nid = get_nid_for_pfn(pfn);
--		if (page_nid < 0)
--			continue;
--		if (page_nid != nid)
--			continue;
--
--		do_register_memory_block_under_node(nid, mem_blk, MEMINIT_EARLY);
--		return 0;
+ 	cmd->id_and_color = cpu_to_le32(mvmvif->id);
+-- 
+2.50.0
+
+
+From b2196c0715161f627ff2fad4f3e3c6d12c15e1f7 Mon Sep 17 00:00:00 2001
+From: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
+Date: Fri, 13 Jun 2025 11:42:46 +0530
+Subject: [PATCH 6/7] drm/i915/snps_hdmi_pll: Fix 64-bit divisor truncation by
+ using div64_u64
+
+DIV_ROUND_CLOSEST_ULL uses do_div(), which expects a 32-bit divisor.
+When passing a 64-bit constant like CURVE2_MULTIPLIER, the value is
+silently truncated to u32, potentially leading to incorrect results
+on large divisors.
+
+Replace DIV_ROUND_CLOSEST_ULL with div64_u64(), which correctly
+handles full 64-bit division. Since the result is clamped between
+1 and 127, rounding is unnecessary and truncating division
+is sufficient.
+
+Fixes: 5947642004bf ("drm/i915/display: Add support for SNPS PHY HDMI PLL algorithm for DG2")
+Cc: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
+Cc: Suraj Kandpal <suraj.kandpal@intel.com>
+Cc: Jani Nikula <jani.nikula@intel.com>
+Cc: <stable@vger.kernel.org> # v6.15+
+Signed-off-by: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
+Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/145
+---
+ drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c b/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
+index 74bb3bedf30f5..ac609bdf66539 100644
+--- a/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
++++ b/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
+@@ -103,8 +103,8 @@ static void get_ana_cp_int_prop(u64 vco_clk,
+ 			    DIV_ROUND_DOWN_ULL(curve_1_interpolated, CURVE0_MULTIPLIER)));
+ 
+ 	ana_cp_int_temp =
+-		DIV_ROUND_CLOSEST_ULL(DIV_ROUND_DOWN_ULL(adjusted_vco_clk1, curve_2_scaled1),
+-				      CURVE2_MULTIPLIER);
++		div64_u64(DIV_ROUND_DOWN_ULL(adjusted_vco_clk1, curve_2_scaled1),
++			  CURVE2_MULTIPLIER);
+ 
+ 	*ana_cp_int = max(1, min(ana_cp_int_temp, 127));
+ 
+-- 
+2.50.0
+
+
+From 811c96fe80cb26bddec518eebde1c60277bb6849 Mon Sep 17 00:00:00 2001
+From: Filipe Manana <fdmanana@suse.com>
+Date: Tue, 3 Jun 2025 19:29:01 +0100
+Subject: [PATCH 7/7] btrfs: fix invalid inode pointer dereferences during log
+ replay
+
+In a few places where we call read_one_inode(), if we get a NULL pointer
+we end up jumping into an error path, or fallthrough in case of
+__add_inode_ref(), where we then do something like this:
+
+   iput(&inode->vfs_inode);
+
+which results in an invalid inode pointer that triggers an invalid memory
+access, resulting in a crash.
+
+Fix this by making sure we don't do such dereferences.
+
+Fixes: b4c50cbb01a1 ("btrfs: return a btrfs_inode from read_one_inode()")
+CC: stable@vger.kernel.org # 6.15+
+Signed-off-by: Filipe Manana <fdmanana@suse.com>
+Reviewed-by: David Sterba <dsterba@suse.com>
+Signed-off-by: David Sterba <dsterba@suse.com>
+---
+ fs/btrfs/tree-log.c | 14 ++++++--------
+ 1 file changed, 6 insertions(+), 8 deletions(-)
+
+diff --git a/fs/btrfs/tree-log.c b/fs/btrfs/tree-log.c
+index 97e933113b822..21d2f3dded513 100644
+--- a/fs/btrfs/tree-log.c
++++ b/fs/btrfs/tree-log.c
+@@ -668,15 +668,12 @@ static noinline int replay_one_extent(struct btrfs_trans_handle *trans,
+ 		extent_end = ALIGN(start + size,
+ 				   fs_info->sectorsize);
+ 	} else {
+-		ret = 0;
+-		goto out;
++		return 0;
+ 	}
+ 
+ 	inode = read_one_inode(root, key->objectid);
+-	if (!inode) {
+-		ret = -EIO;
+-		goto out;
 -	}
--	/* mem section does not span the specified node */
--	return 0;
--}
--
- /*
-  * During hotplug we know that all pages in the memory block belong to the same
-  * node.
-@@ -892,15 +843,8 @@ void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
- 				       unsigned long end_pfn,
- 				       enum meminit_context context)
- {
--	walk_memory_blocks_func_t func;
--
--	if (context == MEMINIT_HOTPLUG)
--		func = register_mem_block_under_node_hotplug;
--	else
--		func = register_mem_block_under_node_early;
--
- 	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
--			   (void *)&nid, func);
-+			   (void *)&nid, register_mem_block_under_node_hotplug);
- 	return;
++	if (!inode)
++		return -EIO;
+ 
+ 	/*
+ 	 * first check to see if we already have this extent in the
+@@ -961,7 +958,8 @@ static noinline int drop_one_dir_item(struct btrfs_trans_handle *trans,
+ 	ret = unlink_inode_for_log_replay(trans, dir, inode, &name);
+ out:
+ 	kfree(name.name);
+-	iput(&inode->vfs_inode);
++	if (inode)
++		iput(&inode->vfs_inode);
+ 	return ret;
  }
- #endif /* CONFIG_MEMORY_HOTPLUG */
+ 
+@@ -1176,8 +1174,8 @@ static inline int __add_inode_ref(struct btrfs_trans_handle *trans,
+ 					ret = unlink_inode_for_log_replay(trans,
+ 							victim_parent,
+ 							inode, &victim_name);
++					iput(&victim_parent->vfs_inode);
+ 				}
+-				iput(&victim_parent->vfs_inode);
+ 				kfree(victim_name.name);
+ 				if (ret)
+ 					return ret;
 -- 
-2.49.0
+2.50.0
 
-
-From ead728135a966c0ca3c07c91b36cbb6b2b85e98d Mon Sep 17 00:00:00 2001
-From: Donet Tom <donettom@linux.ibm.com>
-Date: Wed, 28 May 2025 12:18:02 -0500
-Subject: [PATCH 4/7] drivers/base/node: Remove
- register_memory_blocks_under_node() function call from register_one_node
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-register_one_node() is now only called via cpu_up() → __try_online_node()
-during CPU hotplug operations to online a node.
-
-At this stage, the node has not yet had any memory added. As a result,
-there are no memory blocks to walk or register, so calling
-register_memory_blocks_under_node() is unnecessary.
-
-Therefore, the call to register_memory_blocks_under_node()
-has been removed from register_one_node().
-
-Acked-by: Oscar Salvador <osalvador@suse.de>
-Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
-Acked-by: David Hildenbrand <david@redhat.com>
-Signed-off-by: Donet Tom <donettom@linux.ibm.com>
----
- include/linux/node.h | 16 +---------------
- 1 file changed, 1 insertion(+), 15 deletions(-)
-
-diff --git a/include/linux/node.h b/include/linux/node.h
-index 485370f3bc17..b15de78e0408 100644
---- a/include/linux/node.h
-+++ b/include/linux/node.h
-@@ -134,21 +134,7 @@ extern int __register_one_node(int nid);
- /* Registers an online node */
- static inline int register_one_node(int nid)
- {
--	int error = 0;
--
--	if (node_online(nid)) {
--		struct pglist_data *pgdat = NODE_DATA(nid);
--		unsigned long start_pfn = pgdat->node_start_pfn;
--		unsigned long end_pfn = start_pfn + pgdat->node_spanned_pages;
--
--		error = __register_one_node(nid);
--		if (error)
--			return error;
--		register_memory_blocks_under_node(nid, start_pfn, end_pfn,
--						  MEMINIT_EARLY);
--	}
--
--	return error;
-+	return __register_one_node(nid);
- }
- 
- extern void unregister_one_node(int nid);
--- 
-2.49.0
-
-
-From ecb800ea9c0bb910944e0b43c577b02760804a0f Mon Sep 17 00:00:00 2001
-From: Donet Tom <donettom@linux.ibm.com>
-Date: Wed, 28 May 2025 12:18:03 -0500
-Subject: [PATCH 5/7] drivers/base/node: Rename
- register_memory_blocks_under_node() and remove context argument
-
-The function register_memory_blocks_under_node() is now only called from
-the memory hotplug path, as register_memory_blocks_under_node_early()
-handles registration during early boot. Therefore, the context argument
-used to differentiate between early boot and hotplug is no longer needed
-and was removed.
-
-Since the function is only called from the hotplug path, we renamed
-register_memory_blocks_under_node() to
-register_memory_blocks_under_node_hotplug()
-
-Acked-by: Oscar Salvador <osalvador@suse.de>
-Acked-by: Mike Rapoport (Microsoft) <rppt@kernel.org>
-Acked-by: David Hildenbrand <david@redhat.com>
-Acked-by: Zi Yan <ziy@nvidia.com>
-Signed-off-by: Donet Tom <donettom@linux.ibm.com>
----
- drivers/base/node.c  |  5 ++---
- include/linux/node.h | 11 +++++------
- mm/memory_hotplug.c  |  5 ++---
- 3 files changed, 9 insertions(+), 12 deletions(-)
-
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 24c32cdbe97d..302cb99853dd 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -839,9 +839,8 @@ static void register_memory_blocks_under_nodes(void)
- 	}
- }
- 
--void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
--				       unsigned long end_pfn,
--				       enum meminit_context context)
-+void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
-+					       unsigned long end_pfn)
- {
- 	walk_memory_blocks(PFN_PHYS(start_pfn), PFN_PHYS(end_pfn - start_pfn),
- 			   (void *)&nid, register_mem_block_under_node_hotplug);
-diff --git a/include/linux/node.h b/include/linux/node.h
-index b15de78e0408..75b036a100d2 100644
---- a/include/linux/node.h
-+++ b/include/linux/node.h
-@@ -111,13 +111,12 @@ struct memory_block;
- extern struct node *node_devices[];
- 
- #if defined(CONFIG_MEMORY_HOTPLUG) && defined(CONFIG_NUMA)
--void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
--				       unsigned long end_pfn,
--				       enum meminit_context context);
-+void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
-+					       unsigned long end_pfn);
- #else
--static inline void register_memory_blocks_under_node(int nid, unsigned long start_pfn,
--						     unsigned long end_pfn,
--						     enum meminit_context context)
-+static inline void register_memory_blocks_under_node_hotplug(int nid,
-+							     unsigned long start_pfn,
-+							     unsigned long end_pfn)
- {
- }
- static inline void register_memory_blocks_under_nodes(void)
-diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index b1caedbade5b..c6ce1aba64e6 100644
---- a/mm/memory_hotplug.c
-+++ b/mm/memory_hotplug.c
-@@ -1575,9 +1575,8 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
- 		BUG_ON(ret);
- 	}
- 
--	register_memory_blocks_under_node(nid, PFN_DOWN(start),
--					  PFN_UP(start + size - 1),
--					  MEMINIT_HOTPLUG);
-+	register_memory_blocks_under_node_hotplug(nid, PFN_DOWN(start),
-+					  PFN_UP(start + size - 1));
- 
- 	/* create new memmap entry */
- 	if (!strcmp(res->name, "System RAM"))
--- 
-2.49.0
-
-
-From d29a1055da68f12bda4ffc988235a1efd1dc7da4 Mon Sep 17 00:00:00 2001
-From: Donet Tom <donettom@linux.ibm.com>
-Date: Wed, 28 May 2025 12:18:04 -0500
-Subject: [PATCH 6/7] drivers/base/node: Rename __register_one_node() to
- register_one_node()
-
-The register_one_node() function was a simple wrapper around
-__register_one_node(). To simplify the code, register_one_node()
-has been removed, and __register_one_node() has been renamed to
-register_one_node().
-
-Acked-by: David Hildenbrand <david@redhat.com>
-Signed-off-by: Donet Tom <donettom@linux.ibm.com>
----
- arch/powerpc/platforms/pseries/pci_dlpar.c |  2 +-
- drivers/base/node.c                        |  4 ++--
- include/linux/node.h                       | 13 +------------
- mm/memory_hotplug.c                        |  2 +-
- 4 files changed, 5 insertions(+), 16 deletions(-)
-
-diff --git a/arch/powerpc/platforms/pseries/pci_dlpar.c b/arch/powerpc/platforms/pseries/pci_dlpar.c
-index 52e2623a741d..aeb8633a3d00 100644
---- a/arch/powerpc/platforms/pseries/pci_dlpar.c
-+++ b/arch/powerpc/platforms/pseries/pci_dlpar.c
-@@ -29,7 +29,7 @@ struct pci_controller *init_phb_dynamic(struct device_node *dn)
- 	nid = of_node_to_nid(dn);
- 	if (likely((nid) >= 0)) {
- 		if (!node_online(nid)) {
--			if (__register_one_node(nid)) {
-+			if (register_one_node(nid)) {
- 				pr_err("PCI: Failed to register node %d\n", nid);
- 			} else {
- 				update_numa_distance(dn);
-diff --git a/drivers/base/node.c b/drivers/base/node.c
-index 302cb99853dd..6cbeca45c451 100644
---- a/drivers/base/node.c
-+++ b/drivers/base/node.c
-@@ -848,7 +848,7 @@ void register_memory_blocks_under_node_hotplug(int nid, unsigned long start_pfn,
- }
- #endif /* CONFIG_MEMORY_HOTPLUG */
- 
--int __register_one_node(int nid)
-+int register_one_node(int nid)
- {
- 	int error;
- 	int cpu;
-@@ -955,7 +955,7 @@ void __init node_dev_init(void)
- 	 * to already created cpu devices.
- 	 */
- 	for_each_online_node(i) {
--		ret =  __register_one_node(i);
-+		ret =  register_one_node(i);
- 		if (ret)
- 			panic("%s() failed to add node: %d\n", __func__, ret);
- 	}
-diff --git a/include/linux/node.h b/include/linux/node.h
-index 75b036a100d2..88bceebcbfa5 100644
---- a/include/linux/node.h
-+++ b/include/linux/node.h
-@@ -128,14 +128,7 @@ extern void unregister_node(struct node *node);
- #ifdef CONFIG_NUMA
- extern void node_dev_init(void);
- /* Core of the node registration - only memory hotplug should use this */
--extern int __register_one_node(int nid);
--
--/* Registers an online node */
--static inline int register_one_node(int nid)
--{
--	return __register_one_node(nid);
--}
--
-+extern int register_one_node(int nid);
- extern void unregister_one_node(int nid);
- extern int register_cpu_under_node(unsigned int cpu, unsigned int nid);
- extern int unregister_cpu_under_node(unsigned int cpu, unsigned int nid);
-@@ -148,10 +141,6 @@ extern int register_memory_node_under_compute_node(unsigned int mem_nid,
- static inline void node_dev_init(void)
- {
- }
--static inline int __register_one_node(int nid)
--{
--	return 0;
--}
- static inline int register_one_node(int nid)
- {
- 	return 0;
-diff --git a/mm/memory_hotplug.c b/mm/memory_hotplug.c
-index c6ce1aba64e6..bec20a91e757 100644
---- a/mm/memory_hotplug.c
-+++ b/mm/memory_hotplug.c
-@@ -1571,7 +1571,7 @@ int add_memory_resource(int nid, struct resource *res, mhp_t mhp_flags)
- 		 * We online node here. We can't roll back from here.
- 		 */
- 		node_set_online(nid);
--		ret = __register_one_node(nid);
-+		ret = register_one_node(nid);
- 		BUG_ON(ret);
- 	}
- 
--- 
-2.49.0
