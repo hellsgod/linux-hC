@@ -1,7 +1,7 @@
-From 4d00820c493e1d9893aa682c0520603f3f01d283 Mon Sep 17 00:00:00 2001
+From d1f54eba35e37d033e2974b8a3b45efc3162f2f6 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/7] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/4] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -33,10 +33,10 @@ index 452374d63c244..08f80d7c5df05 100644
 2.50.0
 
 
-From 3e0b9ad1eb8acb4c60de4a5f45c952830cd600ca Mon Sep 17 00:00:00 2001
+From 749214fa0cca37c09bd48b3068bcbaf653f1d5b4 Mon Sep 17 00:00:00 2001
 From: En-Wei Wu <en-wei.wu@canonical.com>
 Date: Wed, 15 Jan 2025 11:50:14 +0800
-Subject: [PATCH 2/7] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
+Subject: [PATCH 2/4] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
 
 Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
 
@@ -105,10 +105,10 @@ index 9ab661d2d1e69..ff4e11a34c515 100644
 2.50.0
 
 
-From 138c3dc2b81edce848849c8e6c30e91d3870de91 Mon Sep 17 00:00:00 2001
+From 951ce2b78429c93d1e68a8354b10cd637143bda2 Mon Sep 17 00:00:00 2001
 From: Melissa Wen <mwen@igalia.com>
 Date: Sun, 11 May 2025 18:22:41 -0300
-Subject: [PATCH 3/7] drm/amd/display: disable CRTC degamma LUT for DCN401
+Subject: [PATCH 3/4] drm/amd/display: disable CRTC degamma LUT for DCN401
 
 In DCN401 pre-blending degamma LUT isn't affecting cursor as in previous
 DCN version. As this is not the behavior close to what is expected for
@@ -146,10 +146,10 @@ index 87058271b00cc..2551823382f8b 100644
 2.50.0
 
 
-From 5c9361afd81bebea74d0b064503c25fbaa1e0778 Mon Sep 17 00:00:00 2001
+From 101acbb60b1b89f39b1356674ebb927b993e7d88 Mon Sep 17 00:00:00 2001
 From: Mario Limonciello <mario.limonciello@amd.com>
 Date: Mon, 2 Jun 2025 15:09:56 -0500
-Subject: [PATCH 4/7] mfd: Fix compilation without CONFIG_OF
+Subject: [PATCH 4/4] mfd: Fix compilation without CONFIG_OF
 
 When compiling without CONFIG_OF but with CONFIG_WERROR enabled
 several mfd drivers fail with -Werror=unused-variable.
@@ -232,157 +232,6 @@ index 232c2bfe8c180..a2ab5deef9e21 100644
  				 &irq_domain_simple_ops, NULL);
  
  	irq_end = irq_base + TWL4030_CORE_NR_IRQS;
--- 
-2.50.0
-
-
-From 3fc14ea18ab8964af31f9f7cc04770a26a716c20 Mon Sep 17 00:00:00 2001
-From: Eric Naim <dnaim@cachyos.org>
-Date: Mon, 23 Jun 2025 15:16:01 +0700
-Subject: [PATCH 5/7] Revert "wifi: iwlwifi: Fix incorrect logic on cmd_ver
- range checking"
-
-This reverts commit 83f3ac2848b46e3e5af5d06b5f176c17e35733a3.
-
-This breaks WiFi on the AX200.
-
-Signed-off-by: Eric Naim <dnaim@cachyos.org>
----
- drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c b/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c
-index 3c255ae916c85..81ca9ff67be96 100644
---- a/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c
-+++ b/drivers/net/wireless/intel/iwlwifi/mvm/mld-mac.c
-@@ -34,7 +34,7 @@ static void iwl_mvm_mld_mac_ctxt_cmd_common(struct iwl_mvm *mvm,
- 					    WIDE_ID(MAC_CONF_GROUP,
- 						    MAC_CONFIG_CMD), 0);
- 
--	if (WARN_ON(cmd_ver < 1 || cmd_ver > 3))
-+	if (WARN_ON(cmd_ver < 1 && cmd_ver > 3))
- 		return;
- 
- 	cmd->id_and_color = cpu_to_le32(mvmvif->id);
--- 
-2.50.0
-
-
-From b2196c0715161f627ff2fad4f3e3c6d12c15e1f7 Mon Sep 17 00:00:00 2001
-From: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
-Date: Fri, 13 Jun 2025 11:42:46 +0530
-Subject: [PATCH 6/7] drm/i915/snps_hdmi_pll: Fix 64-bit divisor truncation by
- using div64_u64
-
-DIV_ROUND_CLOSEST_ULL uses do_div(), which expects a 32-bit divisor.
-When passing a 64-bit constant like CURVE2_MULTIPLIER, the value is
-silently truncated to u32, potentially leading to incorrect results
-on large divisors.
-
-Replace DIV_ROUND_CLOSEST_ULL with div64_u64(), which correctly
-handles full 64-bit division. Since the result is clamped between
-1 and 127, rounding is unnecessary and truncating division
-is sufficient.
-
-Fixes: 5947642004bf ("drm/i915/display: Add support for SNPS PHY HDMI PLL algorithm for DG2")
-Cc: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
-Cc: Suraj Kandpal <suraj.kandpal@intel.com>
-Cc: Jani Nikula <jani.nikula@intel.com>
-Cc: <stable@vger.kernel.org> # v6.15+
-Signed-off-by: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
-Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/145
----
- drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c b/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
-index 74bb3bedf30f5..ac609bdf66539 100644
---- a/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
-+++ b/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
-@@ -103,8 +103,8 @@ static void get_ana_cp_int_prop(u64 vco_clk,
- 			    DIV_ROUND_DOWN_ULL(curve_1_interpolated, CURVE0_MULTIPLIER)));
- 
- 	ana_cp_int_temp =
--		DIV_ROUND_CLOSEST_ULL(DIV_ROUND_DOWN_ULL(adjusted_vco_clk1, curve_2_scaled1),
--				      CURVE2_MULTIPLIER);
-+		div64_u64(DIV_ROUND_DOWN_ULL(adjusted_vco_clk1, curve_2_scaled1),
-+			  CURVE2_MULTIPLIER);
- 
- 	*ana_cp_int = max(1, min(ana_cp_int_temp, 127));
- 
--- 
-2.50.0
-
-
-From 811c96fe80cb26bddec518eebde1c60277bb6849 Mon Sep 17 00:00:00 2001
-From: Filipe Manana <fdmanana@suse.com>
-Date: Tue, 3 Jun 2025 19:29:01 +0100
-Subject: [PATCH 7/7] btrfs: fix invalid inode pointer dereferences during log
- replay
-
-In a few places where we call read_one_inode(), if we get a NULL pointer
-we end up jumping into an error path, or fallthrough in case of
-__add_inode_ref(), where we then do something like this:
-
-   iput(&inode->vfs_inode);
-
-which results in an invalid inode pointer that triggers an invalid memory
-access, resulting in a crash.
-
-Fix this by making sure we don't do such dereferences.
-
-Fixes: b4c50cbb01a1 ("btrfs: return a btrfs_inode from read_one_inode()")
-CC: stable@vger.kernel.org # 6.15+
-Signed-off-by: Filipe Manana <fdmanana@suse.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/tree-log.c | 14 ++++++--------
- 1 file changed, 6 insertions(+), 8 deletions(-)
-
-diff --git a/fs/btrfs/tree-log.c b/fs/btrfs/tree-log.c
-index 97e933113b822..21d2f3dded513 100644
---- a/fs/btrfs/tree-log.c
-+++ b/fs/btrfs/tree-log.c
-@@ -668,15 +668,12 @@ static noinline int replay_one_extent(struct btrfs_trans_handle *trans,
- 		extent_end = ALIGN(start + size,
- 				   fs_info->sectorsize);
- 	} else {
--		ret = 0;
--		goto out;
-+		return 0;
- 	}
- 
- 	inode = read_one_inode(root, key->objectid);
--	if (!inode) {
--		ret = -EIO;
--		goto out;
--	}
-+	if (!inode)
-+		return -EIO;
- 
- 	/*
- 	 * first check to see if we already have this extent in the
-@@ -961,7 +958,8 @@ static noinline int drop_one_dir_item(struct btrfs_trans_handle *trans,
- 	ret = unlink_inode_for_log_replay(trans, dir, inode, &name);
- out:
- 	kfree(name.name);
--	iput(&inode->vfs_inode);
-+	if (inode)
-+		iput(&inode->vfs_inode);
- 	return ret;
- }
- 
-@@ -1176,8 +1174,8 @@ static inline int __add_inode_ref(struct btrfs_trans_handle *trans,
- 					ret = unlink_inode_for_log_replay(trans,
- 							victim_parent,
- 							inode, &victim_name);
-+					iput(&victim_parent->vfs_inode);
- 				}
--				iput(&victim_parent->vfs_inode);
- 				kfree(victim_name.name);
- 				if (ret)
- 					return ret;
 -- 
 2.50.0
 
