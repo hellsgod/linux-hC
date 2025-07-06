@@ -1,7 +1,7 @@
-From 511f4dd76fd8383877cd5ed1c6aada2c9fcba4db Mon Sep 17 00:00:00 2001
+From 844473d4fcc24e0ada6ba14d0ea68025db0fc5de Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 01/16] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 01/10] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -14,7 +14,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -33,10 +33,10 @@ index 452374d63c244..08f80d7c5df05 100644
 2.50.0
 
 
-From 61451fc755a7c8dd27a9a6a386bb183b892244b1 Mon Sep 17 00:00:00 2001
+From dfb8d4d0c28abb1f2aab36c24825acfc90a5a676 Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Wed, 9 Apr 2025 16:55:10 +0100
-Subject: [PATCH 02/16] select: do_pollfd: add unlikely branch hint return path
+Subject: [PATCH 02/10] select: do_pollfd: add unlikely branch hint return path
 
 Adding an unlikely() hint on the fd < 0 comparison return path improves
 run-time performance of the poll() system call. gcov based coverage
@@ -61,7 +61,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 7da531b1cf6be..0eaf3522abe9a 100644
+index 7da531b1cf6b..0eaf3522abe9 100644
 --- a/fs/select.c
 +++ b/fs/select.c
 @@ -857,7 +857,7 @@ static inline __poll_t do_pollfd(struct pollfd *pollfd, poll_table *pwait,
@@ -77,10 +77,10 @@ index 7da531b1cf6be..0eaf3522abe9a 100644
 2.50.0
 
 
-From 6039b82b703e99d498b48d065e3fc1d9d9b43c4d Mon Sep 17 00:00:00 2001
+From aa6bbec02bf4bb417921729cb01c7c7664c5c46a Mon Sep 17 00:00:00 2001
 From: Colin Ian King <colin.i.king@gmail.com>
 Date: Mon, 14 Apr 2025 09:45:43 +0100
-Subject: [PATCH 03/16] select: core_sys_select add unlikely branch hint on
+Subject: [PATCH 03/10] select: core_sys_select add unlikely branch hint on
  return path
 
 Adding an unlikely() hint on the n < 0 comparison return path improves
@@ -103,7 +103,7 @@ Signed-off-by: Colin Ian King <colin.i.king@gmail.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/fs/select.c b/fs/select.c
-index 0eaf3522abe9a..9fb650d03d52e 100644
+index 0eaf3522abe9..9fb650d03d52 100644
 --- a/fs/select.c
 +++ b/fs/select.c
 @@ -630,7 +630,7 @@ int core_sys_select(int n, fd_set __user *inp, fd_set __user *outp,
@@ -119,10 +119,10 @@ index 0eaf3522abe9a..9fb650d03d52e 100644
 2.50.0
 
 
-From 626f485aeb11dd529eb6d6ce4d0fbb09f94c5ea7 Mon Sep 17 00:00:00 2001
+From edad7397db9a61f025609209195db2ea5362e92b Mon Sep 17 00:00:00 2001
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Date: Tue, 27 May 2025 14:40:30 -0700
-Subject: [PATCH 04/16] Remove legacy 'cc-disable-warning' use from the generic
+Subject: [PATCH 04/10] Remove legacy 'cc-disable-warning' use from the generic
  build scripts
 
 This just converts the 'cc-disable-warning' uses in the generic makefile
@@ -140,7 +140,7 @@ Signed-off-by: Linus Torvalds <torvalds@linux-foundation.org>
  1 file changed, 16 insertions(+), 16 deletions(-)
 
 diff --git a/scripts/Makefile.extrawarn b/scripts/Makefile.extrawarn
-index fd649c68e198b..540f3db5cd86b 100644
+index fd649c68e198..540f3db5cd86 100644
 --- a/scripts/Makefile.extrawarn
 +++ b/scripts/Makefile.extrawarn
 @@ -16,8 +16,8 @@ KBUILD_CFLAGS += -Werror=return-type
@@ -234,10 +234,10 @@ index fd649c68e198b..540f3db5cd86b 100644
 2.50.0
 
 
-From 5dfca47d7e662379e2a2cc66503b5743d3abcd82 Mon Sep 17 00:00:00 2001
+From 95d2b1119c543707c58b32c2a9771c7521dc1048 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:54 -0600
-Subject: [PATCH 05/16] Revert "Disable FOP_DONTCACHE for now due to bugs"
+Subject: [PATCH 05/10] Revert "Disable FOP_DONTCACHE for now due to bugs"
 
 This reverts commit 478ad02d6844217cc7568619aeb0809d93ade43d.
 
@@ -253,7 +253,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/include/linux/fs.h b/include/linux/fs.h
-index ef41a8213a6fa..cf7208500cee3 100644
+index ef41a8213a6f..cf7208500cee 100644
 --- a/include/linux/fs.h
 +++ b/include/linux/fs.h
 @@ -2186,7 +2186,7 @@ struct file_operations {
@@ -269,10 +269,10 @@ index ef41a8213a6fa..cf7208500cee3 100644
 2.50.0
 
 
-From 0397f95e75472f1e23af6e8aa50e3e17a727d61d Mon Sep 17 00:00:00 2001
+From d7e4c66105ccaf4420e1c637270c1ab9e9afde12 Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:55 -0600
-Subject: [PATCH 06/16] mm/filemap: unify read/write dropbehind naming
+Subject: [PATCH 06/10] mm/filemap: unify read/write dropbehind naming
 
 The read side is filemap_end_dropbehind_read(), while the write side
 used folio_ as the prefix rather than filemap_. The read side makes more
@@ -286,7 +286,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 6af6d8f2929ce..2ba1ed116103a 100644
+index 6af6d8f2929c..2ba1ed116103 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -1604,7 +1604,7 @@ static void filemap_end_dropbehind(struct folio *folio)
@@ -311,10 +311,10 @@ index 6af6d8f2929ce..2ba1ed116103a 100644
 2.50.0
 
 
-From 3ea1fe5126eeaa9ceb1095b7ed08ec88c6a08c52 Mon Sep 17 00:00:00 2001
+From 3ccccd9b32cab4e54d6df42dece9959e212d832d Mon Sep 17 00:00:00 2001
 From: Jens Axboe <axboe@kernel.dk>
 Date: Tue, 27 May 2025 07:28:56 -0600
-Subject: [PATCH 07/16] mm/filemap: unify dropbehind flag testing and clearing
+Subject: [PATCH 07/10] mm/filemap: unify dropbehind flag testing and clearing
 
 The read and write side does this a bit differently, unify it such that
 the _{read,write} helpers check the bit before locking, and the generic
@@ -329,7 +329,7 @@ Signed-off-by: Christian Brauner <brauner@kernel.org>
  1 file changed, 11 insertions(+), 10 deletions(-)
 
 diff --git a/mm/filemap.c b/mm/filemap.c
-index 2ba1ed116103a..eef44d7ea12e0 100644
+index 2ba1ed116103..eef44d7ea12e 100644
 --- a/mm/filemap.c
 +++ b/mm/filemap.c
 @@ -1595,7 +1595,11 @@ static void filemap_end_dropbehind(struct folio *folio)
@@ -395,10 +395,10 @@ index 2ba1ed116103a..eef44d7ea12e0 100644
 2.50.0
 
 
-From b7f1142d2c1f6b36c10ed376754e7f71dab860bc Mon Sep 17 00:00:00 2001
+From 1658c9e306ea67ef35fe75c9d2bea3fec2c5b84a Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Mon, 26 May 2025 18:28:18 +0000
-Subject: [PATCH 08/16] mm/khugepaged: fix race with folio split/free using
+Subject: [PATCH 08/10] mm/khugepaged: fix race with folio split/free using
  temporary reference
 
 hpage_collapse_scan_file() calls is_refcount_suitable(), which in turn
@@ -437,7 +437,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  1 file changed, 17 insertions(+), 1 deletion(-)
 
 diff --git a/mm/khugepaged.c b/mm/khugepaged.c
-index cc945c6ab3bdb..fe1fe7eace54f 100644
+index cc945c6ab3bd..fe1fe7eace54 100644
 --- a/mm/khugepaged.c
 +++ b/mm/khugepaged.c
 @@ -2295,6 +2295,17 @@ static int hpage_collapse_scan_file(struct mm_struct *mm, unsigned long addr,
@@ -499,10 +499,10 @@ index cc945c6ab3bdb..fe1fe7eace54f 100644
 2.50.0
 
 
-From 726a36f1d6dd608a6868afdad6435460d7b1058a Mon Sep 17 00:00:00 2001
+From d40dd300609b8368762f196f5dfd31f59172d0da Mon Sep 17 00:00:00 2001
 From: Shivank Garg <shivankg@amd.com>
 Date: Wed, 30 Apr 2025 10:01:51 +0000
-Subject: [PATCH 09/16] mm: add folio_expected_ref_count() for reference count
+Subject: [PATCH 09/10] mm: add folio_expected_ref_count() for reference count
  calculation
 
 Patch series " JFS: Implement migrate_folio for jfs_metapage_aops" v5.
@@ -576,7 +576,7 @@ Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
  2 files changed, 59 insertions(+), 18 deletions(-)
 
 diff --git a/include/linux/mm.h b/include/linux/mm.h
-index e51dba8398f74..000a67a789ada 100644
+index e51dba8398f7..000a67a789ad 100644
 --- a/include/linux/mm.h
 +++ b/include/linux/mm.h
 @@ -2306,6 +2306,61 @@ static inline bool folio_maybe_mapped_shared(struct folio *folio)
@@ -642,7 +642,7 @@ index e51dba8398f74..000a67a789ada 100644
  static inline int arch_make_folio_accessible(struct folio *folio)
  {
 diff --git a/mm/migrate.c b/mm/migrate.c
-index 676d9cfc7059c..273d46771a6ca 100644
+index 676d9cfc7059..273d46771a6c 100644
 --- a/mm/migrate.c
 +++ b/mm/migrate.c
 @@ -445,20 +445,6 @@ void pmd_migration_entry_wait(struct mm_struct *mm, pmd_t *pmd)
@@ -706,546 +706,10 @@ index 676d9cfc7059c..273d46771a6ca 100644
 2.50.0
 
 
-From 5661ea999e58dc6f2cd4b6d53084ae35df74f823 Mon Sep 17 00:00:00 2001
-From: Kairui Song <kasong@tencent.com>
-Date: Tue, 10 Jun 2025 01:17:51 +0800
-Subject: [PATCH 10/16] mm/shmem, swap: fix softlockup with mTHP swapin
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-
-Following softlockup can be easily reproduced on my test machine with:
-
-echo always > /sys/kernel/mm/transparent_hugepage/hugepages-64kB/enabled
-swapon /dev/zram0 # zram0 is a 48G swap device
-mkdir -p /sys/fs/cgroup/memory/test
-echo 1G > /sys/fs/cgroup/test/memory.max
-echo $BASHPID > /sys/fs/cgroup/test/cgroup.procs
-while true; do
-    dd if=/dev/zero of=/tmp/test.img bs=1M count=5120
-    cat /tmp/test.img > /dev/null
-    rm /tmp/test.img
-done
-
-Then after a while:
-watchdog: BUG: soft lockup - CPU#0 stuck for 763s! [cat:5787]
-Modules linked in: zram virtiofs
-CPU: 0 UID: 0 PID: 5787 Comm: cat Kdump: loaded Tainted: G             L      6.15.0.orig-gf3021d9246bc-dirty #118 PREEMPT(voluntary)·
-Tainted: [L]=SOFTLOCKUP
-Hardware name: Red Hat KVM/RHEL-AV, BIOS 0.0.0 02/06/2015
-RIP: 0010:mpol_shared_policy_lookup+0xd/0x70
-Code: e9 b8 b4 ff ff 31 c0 c3 cc cc cc cc 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 66 0f 1f 00 0f 1f 44 00 00 41 54 55 53 <48> 8b 1f 48 85 db 74 41 4c 8d 67 08 48 89 fb 48 89 f5 4c 89 e7 e8
-RSP: 0018:ffffc90002b1fc28 EFLAGS: 00000202
-RAX: 00000000001c20ca RBX: 0000000000724e1e RCX: 0000000000000001
-RDX: ffff888118e214c8 RSI: 0000000000057d42 RDI: ffff888118e21518
-RBP: 000000000002bec8 R08: 0000000000000001 R09: 0000000000000000
-R10: 0000000000000bf4 R11: 0000000000000000 R12: 0000000000000001
-R13: 00000000001c20ca R14: 00000000001c20ca R15: 0000000000000000
-FS:  00007f03f995c740(0000) GS:ffff88a07ad9a000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 00007f03f98f1000 CR3: 0000000144626004 CR4: 0000000000770eb0
-DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-PKRU: 55555554
-Call Trace:
- <TASK>
- shmem_alloc_folio+0x31/0xc0
- shmem_swapin_folio+0x309/0xcf0
- ? filemap_get_entry+0x117/0x1e0
- ? xas_load+0xd/0xb0
- ? filemap_get_entry+0x101/0x1e0
- shmem_get_folio_gfp+0x2ed/0x5b0
- shmem_file_read_iter+0x7f/0x2e0
- vfs_read+0x252/0x330
- ksys_read+0x68/0xf0
- do_syscall_64+0x4c/0x1c0
- entry_SYSCALL_64_after_hwframe+0x76/0x7e
-RIP: 0033:0x7f03f9a46991
-Code: 00 48 8b 15 81 14 10 00 f7 d8 64 89 02 b8 ff ff ff ff eb bd e8 20 ad 01 00 f3 0f 1e fa 80 3d 35 97 10 00 00 74 13 31 c0 0f 05 <48> 3d 00 f0 ff ff 77 4f c3 66 0f 1f 44 00 00 55 48 89 e5 48 83 ec
-RSP: 002b:00007fff3c52bd28 EFLAGS: 00000246 ORIG_RAX: 0000000000000000
-RAX: ffffffffffffffda RBX: 0000000000040000 RCX: 00007f03f9a46991
-RDX: 0000000000040000 RSI: 00007f03f98ba000 RDI: 0000000000000003
-RBP: 00007fff3c52bd50 R08: 0000000000000000 R09: 00007f03f9b9a380
-R10: 0000000000000022 R11: 0000000000000246 R12: 0000000000040000
-R13: 00007f03f98ba000 R14: 0000000000000003 R15: 0000000000000000
- </TASK>
-
-The reason is simple, readahead brought some order 0 folio in swap cache,
-and the swapin mTHP folio being allocated is in conflict with it, so
-swapcache_prepare fails and causes shmem_swap_alloc_folio to return
--EEXIST, and shmem simply retries again and again causing this loop.
-
-Fix it by applying a similar fix for anon mTHP swapin.
-
-The performance change is very slight, time of swapin 10g zero folios
-with shmem (test for 12 times):
-Before:  2.47s
-After:   2.48s
-
-[kasong@tencent.com: add comment]
-  Link: https://lkml.kernel.org/r/20250610181645.45922-1-ryncsn@gmail.com
-Link: https://lkml.kernel.org/r/20250610181645.45922-1-ryncsn@gmail.com
-Link: https://lkml.kernel.org/r/20250609171751.36305-1-ryncsn@gmail.com
-Fixes: 1dd44c0af4fa ("mm: shmem: skip swapcache for swapin of synchronous swap device")
-Signed-off-by: Kairui Song <kasong@tencent.com>
-Reviewed-by: Barry Song <baohua@kernel.org>
-Acked-by: Nhat Pham <nphamcs@gmail.com>
-Reviewed-by: Baolin Wang <baolin.wang@linux.alibaba.com>
-Cc: Baoquan He <bhe@redhat.com>
-Cc: Chris Li <chrisl@kernel.org>
-Cc: Hugh Dickins <hughd@google.com>
-Cc: Kemeng Shi <shikemeng@huaweicloud.com>
-Cc: Usama Arif <usamaarif642@gmail.com>
-Cc: <stable@vger.kernel.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
- mm/memory.c | 20 --------------------
- mm/shmem.c  |  6 +++++-
- mm/swap.h   | 23 +++++++++++++++++++++++
- 3 files changed, 28 insertions(+), 21 deletions(-)
-
-diff --git a/mm/memory.c b/mm/memory.c
-index 49199410805cd..2c7d9bb28e88e 100644
---- a/mm/memory.c
-+++ b/mm/memory.c
-@@ -4224,26 +4224,6 @@ static struct folio *__alloc_swap_folio(struct vm_fault *vmf)
- }
- 
- #ifdef CONFIG_TRANSPARENT_HUGEPAGE
--static inline int non_swapcache_batch(swp_entry_t entry, int max_nr)
--{
--	struct swap_info_struct *si = swp_swap_info(entry);
--	pgoff_t offset = swp_offset(entry);
--	int i;
--
--	/*
--	 * While allocating a large folio and doing swap_read_folio, which is
--	 * the case the being faulted pte doesn't have swapcache. We need to
--	 * ensure all PTEs have no cache as well, otherwise, we might go to
--	 * swap devices while the content is in swapcache.
--	 */
--	for (i = 0; i < max_nr; i++) {
--		if ((si->swap_map[offset + i] & SWAP_HAS_CACHE))
--			return i;
--	}
--
--	return i;
--}
--
- /*
-  * Check if the PTEs within a range are contiguous swap entries
-  * and have consistent swapcache, zeromap.
-diff --git a/mm/shmem.c b/mm/shmem.c
-index 99327c30507c4..12882a39759b4 100644
---- a/mm/shmem.c
-+++ b/mm/shmem.c
-@@ -2262,6 +2262,7 @@ static int shmem_swapin_folio(struct inode *inode, pgoff_t index,
- 	folio = swap_cache_get_folio(swap, NULL, 0);
- 	order = xa_get_order(&mapping->i_pages, index);
- 	if (!folio) {
-+		int nr_pages = 1 << order;
- 		bool fallback_order0 = false;
- 
- 		/* Or update major stats only when swapin succeeds?? */
-@@ -2275,9 +2276,12 @@ static int shmem_swapin_folio(struct inode *inode, pgoff_t index,
- 		 * If uffd is active for the vma, we need per-page fault
- 		 * fidelity to maintain the uffd semantics, then fallback
- 		 * to swapin order-0 folio, as well as for zswap case.
-+		 * Any existing sub folio in the swap cache also blocks
-+		 * mTHP swapin.
- 		 */
- 		if (order > 0 && ((vma && unlikely(userfaultfd_armed(vma))) ||
--				  !zswap_never_enabled()))
-+				  !zswap_never_enabled() ||
-+				  non_swapcache_batch(swap, nr_pages) != nr_pages))
- 			fallback_order0 = true;
- 
- 		/* Skip swapcache for synchronous device. */
-diff --git a/mm/swap.h b/mm/swap.h
-index 6f4a3f927edb2..ca4d7abfafabc 100644
---- a/mm/swap.h
-+++ b/mm/swap.h
-@@ -106,6 +106,25 @@ static inline int swap_zeromap_batch(swp_entry_t entry, int max_nr,
- 		return find_next_bit(sis->zeromap, end, start) - start;
- }
- 
-+static inline int non_swapcache_batch(swp_entry_t entry, int max_nr)
-+{
-+	struct swap_info_struct *si = swp_swap_info(entry);
-+	pgoff_t offset = swp_offset(entry);
-+	int i;
-+
-+	/*
-+	 * While allocating a large folio and doing mTHP swapin, we need to
-+	 * ensure all entries are not cached, otherwise, the mTHP folio will
-+	 * be in conflict with the folio in swap cache.
-+	 */
-+	for (i = 0; i < max_nr; i++) {
-+		if ((si->swap_map[offset + i] & SWAP_HAS_CACHE))
-+			return i;
-+	}
-+
-+	return i;
-+}
-+
- #else /* CONFIG_SWAP */
- struct swap_iocb;
- static inline void swap_read_folio(struct folio *folio, struct swap_iocb **plug)
-@@ -199,6 +218,10 @@ static inline int swap_zeromap_batch(swp_entry_t entry, int max_nr,
- 	return 0;
- }
- 
-+static inline int non_swapcache_batch(swp_entry_t entry, int max_nr)
-+{
-+	return 0;
-+}
- #endif /* CONFIG_SWAP */
- 
- #endif /* _MM_SWAP_H */
--- 
-2.50.0
-
-
-From 4755b6669e13908c4721d3b510cac9c95c2533d0 Mon Sep 17 00:00:00 2001
-From: David Hildenbrand <david@redhat.com>
-Date: Wed, 11 Jun 2025 15:13:14 +0200
-Subject: [PATCH 11/16] mm/gup: revert "mm: gup: fix infinite loop within
- __get_longterm_locked"
-
-After commit 1aaf8c122918 ("mm: gup: fix infinite loop within
-__get_longterm_locked") we are able to longterm pin folios that are not
-supposed to get longterm pinned, simply because they temporarily have the
-LRU flag cleared (esp.  temporarily isolated).
-
-For example, two __get_longterm_locked() callers can race, or
-__get_longterm_locked() can race with anything else that temporarily
-isolates folios.
-
-The introducing commit mentions the use case of a driver that uses
-vm_ops->fault to insert pages allocated through cma_alloc() into the page
-tables, assuming they can later get longterm pinned.  These pages/ folios
-would never have the LRU flag set and consequently cannot get isolated.
-There is no known in-tree user making use of that so far, fortunately.
-
-To handle that in the future -- and avoid retrying forever to
-isolate/migrate them -- we will need a different mechanism for the CMA
-area *owner* to indicate that it actually already allocated the page and
-is fine with longterm pinning it.  The LRU flag is not suitable for that.
-
-Probably we can lookup the relevant CMA area and query the bitmap; we only
-have have to care about some races, probably.  If already allocated, we
-could just allow longterm pinning)
-
-Anyhow, let's fix the "must not be longterm pinned" problem first by
-reverting the original commit.
-
-Link: https://lkml.kernel.org/r/20250611131314.594529-1-david@redhat.com
-Fixes: 1aaf8c122918 ("mm: gup: fix infinite loop within __get_longterm_locked")
-Signed-off-by: David Hildenbrand <david@redhat.com>
-Closes: https://lore.kernel.org/all/20250522092755.GA3277597@tiffany/
-Reported-by: Hyesoo Yu <hyesoo.yu@samsung.com>
-Reviewed-by: John Hubbard <jhubbard@nvidia.com>
-Cc: Jason Gunthorpe <jgg@ziepe.ca>
-Cc: Peter Xu <peterx@redhat.com>
-Cc: Zhaoyang Huang <zhaoyang.huang@unisoc.com>
-Cc: Aijun Sun <aijun.sun@unisoc.com>
-Cc: Alistair Popple <apopple@nvidia.com>
-Cc: <stable@vger.kernel.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
- mm/gup.c | 14 ++++++++++----
- 1 file changed, 10 insertions(+), 4 deletions(-)
-
-diff --git a/mm/gup.c b/mm/gup.c
-index 84461d384ae2b..696fe16e2d51a 100644
---- a/mm/gup.c
-+++ b/mm/gup.c
-@@ -2320,13 +2320,13 @@ static void pofs_unpin(struct pages_or_folios *pofs)
- /*
-  * Returns the number of collected folios. Return value is always >= 0.
-  */
--static void collect_longterm_unpinnable_folios(
-+static unsigned long collect_longterm_unpinnable_folios(
- 		struct list_head *movable_folio_list,
- 		struct pages_or_folios *pofs)
- {
-+	unsigned long i, collected = 0;
- 	struct folio *prev_folio = NULL;
- 	bool drain_allow = true;
--	unsigned long i;
- 
- 	for (i = 0; i < pofs->nr_entries; i++) {
- 		struct folio *folio = pofs_get_folio(pofs, i);
-@@ -2338,6 +2338,8 @@ static void collect_longterm_unpinnable_folios(
- 		if (folio_is_longterm_pinnable(folio))
- 			continue;
- 
-+		collected++;
-+
- 		if (folio_is_device_coherent(folio))
- 			continue;
- 
-@@ -2359,6 +2361,8 @@ static void collect_longterm_unpinnable_folios(
- 				    NR_ISOLATED_ANON + folio_is_file_lru(folio),
- 				    folio_nr_pages(folio));
- 	}
-+
-+	return collected;
- }
- 
- /*
-@@ -2435,9 +2439,11 @@ static long
- check_and_migrate_movable_pages_or_folios(struct pages_or_folios *pofs)
- {
- 	LIST_HEAD(movable_folio_list);
-+	unsigned long collected;
- 
--	collect_longterm_unpinnable_folios(&movable_folio_list, pofs);
--	if (list_empty(&movable_folio_list))
-+	collected = collect_longterm_unpinnable_folios(&movable_folio_list,
-+						       pofs);
-+	if (!collected)
- 		return 0;
- 
- 	return migrate_longterm_unpinnable_folios(&movable_folio_list, pofs);
--- 
-2.50.0
-
-
-From c3070c99ee727c94ef6a4a184543612d2f45b875 Mon Sep 17 00:00:00 2001
-From: Kairui Song <kasong@tencent.com>
-Date: Wed, 4 Jun 2025 23:10:38 +0800
-Subject: [PATCH 12/16] mm: userfaultfd: fix race of userfaultfd_move and swap
- cache
-
-This commit fixes two kinds of races, they may have different results:
-
-Barry reported a BUG_ON in commit c50f8e6053b0, we may see the same
-BUG_ON if the filemap lookup returned NULL and folio is added to swap
-cache after that.
-
-If another kind of race is triggered (folio changed after lookup) we
-may see RSS counter is corrupted:
-
-[  406.893936] BUG: Bad rss-counter state mm:ffff0000c5a9ddc0
-type:MM_ANONPAGES val:-1
-[  406.894071] BUG: Bad rss-counter state mm:ffff0000c5a9ddc0
-type:MM_SHMEMPAGES val:1
-
-Because the folio is being accounted to the wrong VMA.
-
-I'm not sure if there will be any data corruption though, seems no.
-The issues above are critical already.
-
-
-On seeing a swap entry PTE, userfaultfd_move does a lockless swap cache
-lookup, and tries to move the found folio to the faulting vma.  Currently,
-it relies on checking the PTE value to ensure that the moved folio still
-belongs to the src swap entry and that no new folio has been added to the
-swap cache, which turns out to be unreliable.
-
-While working and reviewing the swap table series with Barry, following
-existing races are observed and reproduced [1]:
-
-In the example below, move_pages_pte is moving src_pte to dst_pte, where
-src_pte is a swap entry PTE holding swap entry S1, and S1 is not in the
-swap cache:
-
-CPU1                               CPU2
-userfaultfd_move
-  move_pages_pte()
-    entry = pte_to_swp_entry(orig_src_pte);
-    // Here it got entry = S1
-    ... < interrupted> ...
-                                   <swapin src_pte, alloc and use folio A>
-                                   // folio A is a new allocated folio
-                                   // and get installed into src_pte
-                                   <frees swap entry S1>
-                                   // src_pte now points to folio A, S1
-                                   // has swap count == 0, it can be freed
-                                   // by folio_swap_swap or swap
-                                   // allocator's reclaim.
-                                   <try to swap out another folio B>
-                                   // folio B is a folio in another VMA.
-                                   <put folio B to swap cache using S1 >
-                                   // S1 is freed, folio B can use it
-                                   // for swap out with no problem.
-                                   ...
-    folio = filemap_get_folio(S1)
-    // Got folio B here !!!
-    ... < interrupted again> ...
-                                   <swapin folio B and free S1>
-                                   // Now S1 is free to be used again.
-                                   <swapout src_pte & folio A using S1>
-                                   // Now src_pte is a swap entry PTE
-                                   // holding S1 again.
-    folio_trylock(folio)
-    move_swap_pte
-      double_pt_lock
-      is_pte_pages_stable
-      // Check passed because src_pte == S1
-      folio_move_anon_rmap(...)
-      // Moved invalid folio B here !!!
-
-The race window is very short and requires multiple collisions of multiple
-rare events, so it's very unlikely to happen, but with a deliberately
-constructed reproducer and increased time window, it can be reproduced
-easily.
-
-This can be fixed by checking if the folio returned by filemap is the
-valid swap cache folio after acquiring the folio lock.
-
-Another similar race is possible: filemap_get_folio may return NULL, but
-folio (A) could be swapped in and then swapped out again using the same
-swap entry after the lookup.  In such a case, folio (A) may remain in the
-swap cache, so it must be moved too:
-
-CPU1                               CPU2
-userfaultfd_move
-  move_pages_pte()
-    entry = pte_to_swp_entry(orig_src_pte);
-    // Here it got entry = S1, and S1 is not in swap cache
-    folio = filemap_get_folio(S1)
-    // Got NULL
-    ... < interrupted again> ...
-                                   <swapin folio A and free S1>
-                                   <swapout folio A re-using S1>
-    move_swap_pte
-      double_pt_lock
-      is_pte_pages_stable
-      // Check passed because src_pte == S1
-      folio_move_anon_rmap(...)
-      // folio A is ignored !!!
-
-Fix this by checking the swap cache again after acquiring the src_pte
-lock.  And to avoid the filemap overhead, we check swap_map directly [2].
-
-The SWP_SYNCHRONOUS_IO path does make the problem more complex, but so far
-we don't need to worry about that, since folios can only be exposed to the
-swap cache in the swap out path, and this is covered in this patch by
-checking the swap cache again after acquiring the src_pte lock.
-
-Testing with a simple C program that allocates and moves several GB of
-memory did not show any observable performance change.
-
-Link: https://lkml.kernel.org/r/20250604151038.21968-1-ryncsn@gmail.com
-Fixes: adef440691ba ("userfaultfd: UFFDIO_MOVE uABI")
-Signed-off-by: Kairui Song <kasong@tencent.com>
-Closes: https://lore.kernel.org/linux-mm/CAMgjq7B1K=6OOrK2OUZ0-tqCzi+EJt+2_K97TPGoSt=9+JwP7Q@mail.gmail.com/ [1]
-Link: https://lore.kernel.org/all/CAGsJ_4yJhJBo16XhiC-nUzSheyX-V3-nFE+tAi=8Y560K8eT=A@mail.gmail.com/ [2]
-Reviewed-by: Lokesh Gidra <lokeshgidra@google.com>
-Acked-by: Peter Xu <peterx@redhat.com>
-Reviewed-by: Suren Baghdasaryan <surenb@google.com>
-Reviewed-by: Barry Song <baohua@kernel.org>
-Reviewed-by: Chris Li <chrisl@kernel.org>
-Cc: Andrea Arcangeli <aarcange@redhat.com>
-Cc: David Hildenbrand <david@redhat.com>
-Cc: Kairui Song <kasong@tencent.com>
-Cc: <stable@vger.kernel.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
----
- mm/userfaultfd.c | 33 +++++++++++++++++++++++++++++++--
- 1 file changed, 31 insertions(+), 2 deletions(-)
-
-diff --git a/mm/userfaultfd.c b/mm/userfaultfd.c
-index e0db855c89b41..416c573ed3631 100644
---- a/mm/userfaultfd.c
-+++ b/mm/userfaultfd.c
-@@ -1084,8 +1084,18 @@ static int move_swap_pte(struct mm_struct *mm, struct vm_area_struct *dst_vma,
- 			 pte_t orig_dst_pte, pte_t orig_src_pte,
- 			 pmd_t *dst_pmd, pmd_t dst_pmdval,
- 			 spinlock_t *dst_ptl, spinlock_t *src_ptl,
--			 struct folio *src_folio)
-+			 struct folio *src_folio,
-+			 struct swap_info_struct *si, swp_entry_t entry)
- {
-+	/*
-+	 * Check if the folio still belongs to the target swap entry after
-+	 * acquiring the lock. Folio can be freed in the swap cache while
-+	 * not locked.
-+	 */
-+	if (src_folio && unlikely(!folio_test_swapcache(src_folio) ||
-+				  entry.val != src_folio->swap.val))
-+		return -EAGAIN;
-+
- 	double_pt_lock(dst_ptl, src_ptl);
- 
- 	if (!is_pte_pages_stable(dst_pte, src_pte, orig_dst_pte, orig_src_pte,
-@@ -1102,6 +1112,25 @@ static int move_swap_pte(struct mm_struct *mm, struct vm_area_struct *dst_vma,
- 	if (src_folio) {
- 		folio_move_anon_rmap(src_folio, dst_vma);
- 		src_folio->index = linear_page_index(dst_vma, dst_addr);
-+	} else {
-+		/*
-+		 * Check if the swap entry is cached after acquiring the src_pte
-+		 * lock. Otherwise, we might miss a newly loaded swap cache folio.
-+		 *
-+		 * Check swap_map directly to minimize overhead, READ_ONCE is sufficient.
-+		 * We are trying to catch newly added swap cache, the only possible case is
-+		 * when a folio is swapped in and out again staying in swap cache, using the
-+		 * same entry before the PTE check above. The PTL is acquired and released
-+		 * twice, each time after updating the swap_map's flag. So holding
-+		 * the PTL here ensures we see the updated value. False positive is possible,
-+		 * e.g. SWP_SYNCHRONOUS_IO swapin may set the flag without touching the
-+		 * cache, or during the tiny synchronization window between swap cache and
-+		 * swap_map, but it will be gone very quickly, worst result is retry jitters.
-+		 */
-+		if (READ_ONCE(si->swap_map[swp_offset(entry)]) & SWAP_HAS_CACHE) {
-+			double_pt_unlock(dst_ptl, src_ptl);
-+			return -EAGAIN;
-+		}
- 	}
- 
- 	orig_src_pte = ptep_get_and_clear(mm, src_addr, src_pte);
-@@ -1412,7 +1441,7 @@ static int move_pages_pte(struct mm_struct *mm, pmd_t *dst_pmd, pmd_t *src_pmd,
- 		}
- 		err = move_swap_pte(mm, dst_vma, dst_addr, src_addr, dst_pte, src_pte,
- 				orig_dst_pte, orig_src_pte, dst_pmd, dst_pmdval,
--				dst_ptl, src_ptl, src_folio);
-+				dst_ptl, src_ptl, src_folio, si, entry);
- 	}
- 
- out:
--- 
-2.50.0
-
-
-From dc0b4eec27217fa0725b8d7cd328c63c470127fb Mon Sep 17 00:00:00 2001
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Date: Tue, 10 Jun 2025 20:53:30 +0200
-Subject: [PATCH 13/16] dm-raid: fix variable in journal device check
-
-Replace "rdev" with correct loop variable name "r".
-
-Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
-Cc: stable@vger.kernel.org
-Fixes: 63c32ed4afc2 ("dm raid: add raid4/5/6 journaling support")
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
----
- drivers/md/dm-raid.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
-index 6adc55fd90d3d..0d40c18fe3ead 100644
---- a/drivers/md/dm-raid.c
-+++ b/drivers/md/dm-raid.c
-@@ -2410,7 +2410,7 @@ static int super_init_validation(struct raid_set *rs, struct md_rdev *rdev)
- 	 */
- 	sb_retrieve_failed_devices(sb, failed_devices);
- 	rdev_for_each(r, mddev) {
--		if (test_bit(Journal, &rdev->flags) ||
-+		if (test_bit(Journal, &r->flags) ||
- 		    !r->sb_page)
- 			continue;
- 		sb2 = page_address(r->sb_page);
--- 
-2.50.0
-
-
-From b2afb291b6349cb0a953f9a8ee553a9e6880c402 Mon Sep 17 00:00:00 2001
+From 530bed015df875a59339570d3caaa536950ba648 Mon Sep 17 00:00:00 2001
 From: John Garry <john.g.garry@oracle.com>
 Date: Sun, 4 May 2025 11:26:45 +0200
-Subject: [PATCH 14/16] dm-table: Set BLK_FEAT_ATOMIC_WRITES for target queue
+Subject: [PATCH 10/10] dm-table: Set BLK_FEAT_ATOMIC_WRITES for target queue
  limits
 
 Feature flag BLK_FEAT_ATOMIC_WRITES is not being properly set for the
@@ -1274,7 +738,7 @@ Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
  1 file changed, 6 insertions(+)
 
 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index dd074c8ecbbad..51026ab1dda30 100644
+index dd074c8ecbba..51026ab1dda3 100644
 --- a/drivers/md/dm-table.c
 +++ b/drivers/md/dm-table.c
 @@ -431,6 +431,12 @@ static int dm_set_device_limits(struct dm_target *ti, struct dm_dev *dev,
@@ -1290,125 +754,6 @@ index dd074c8ecbbad..51026ab1dda30 100644
  	mutex_lock(&q->limits_lock);
  	/*
  	 * BLK_FEAT_ATOMIC_WRITES is not inherited from the bottom device in
--- 
-2.50.0
-
-
-From 3bb0ceb207cccb50c3a23a85f2dcdc3825b6609a Mon Sep 17 00:00:00 2001
-From: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
-Date: Fri, 13 Jun 2025 11:42:46 +0530
-Subject: [PATCH 15/16] drm/i915/snps_hdmi_pll: Fix 64-bit divisor truncation
- by using div64_u64
-
-DIV_ROUND_CLOSEST_ULL uses do_div(), which expects a 32-bit divisor.
-When passing a 64-bit constant like CURVE2_MULTIPLIER, the value is
-silently truncated to u32, potentially leading to incorrect results
-on large divisors.
-
-Replace DIV_ROUND_CLOSEST_ULL with div64_u64(), which correctly
-handles full 64-bit division. Since the result is clamped between
-1 and 127, rounding is unnecessary and truncating division
-is sufficient.
-
-Fixes: 5947642004bf ("drm/i915/display: Add support for SNPS PHY HDMI PLL algorithm for DG2")
-Cc: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
-Cc: Suraj Kandpal <suraj.kandpal@intel.com>
-Cc: Jani Nikula <jani.nikula@intel.com>
-Cc: <stable@vger.kernel.org> # v6.15+
-Signed-off-by: Ankit Nautiyal <ankit.k.nautiyal@intel.com>
-Cherry-picked-for: https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/issues/145
----
- drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c b/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
-index 74bb3bedf30f5..ac609bdf66539 100644
---- a/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
-+++ b/drivers/gpu/drm/i915/display/intel_snps_hdmi_pll.c
-@@ -103,8 +103,8 @@ static void get_ana_cp_int_prop(u64 vco_clk,
- 			    DIV_ROUND_DOWN_ULL(curve_1_interpolated, CURVE0_MULTIPLIER)));
- 
- 	ana_cp_int_temp =
--		DIV_ROUND_CLOSEST_ULL(DIV_ROUND_DOWN_ULL(adjusted_vco_clk1, curve_2_scaled1),
--				      CURVE2_MULTIPLIER);
-+		div64_u64(DIV_ROUND_DOWN_ULL(adjusted_vco_clk1, curve_2_scaled1),
-+			  CURVE2_MULTIPLIER);
- 
- 	*ana_cp_int = max(1, min(ana_cp_int_temp, 127));
- 
--- 
-2.50.0
-
-
-From 99bf23a6738aa748df9c5b15b58893bbde362e8e Mon Sep 17 00:00:00 2001
-From: Filipe Manana <fdmanana@suse.com>
-Date: Tue, 3 Jun 2025 19:29:01 +0100
-Subject: [PATCH 16/16] btrfs: fix invalid inode pointer dereferences during
- log replay
-
-In a few places where we call read_one_inode(), if we get a NULL pointer
-we end up jumping into an error path, or fallthrough in case of
-__add_inode_ref(), where we then do something like this:
-
-   iput(&inode->vfs_inode);
-
-which results in an invalid inode pointer that triggers an invalid memory
-access, resulting in a crash.
-
-Fix this by making sure we don't do such dereferences.
-
-Fixes: b4c50cbb01a1 ("btrfs: return a btrfs_inode from read_one_inode()")
-CC: stable@vger.kernel.org # 6.15+
-Signed-off-by: Filipe Manana <fdmanana@suse.com>
-Reviewed-by: David Sterba <dsterba@suse.com>
-Signed-off-by: David Sterba <dsterba@suse.com>
----
- fs/btrfs/tree-log.c | 14 ++++++--------
- 1 file changed, 6 insertions(+), 8 deletions(-)
-
-diff --git a/fs/btrfs/tree-log.c b/fs/btrfs/tree-log.c
-index f5af11565b876..ef9660eabf0c6 100644
---- a/fs/btrfs/tree-log.c
-+++ b/fs/btrfs/tree-log.c
-@@ -668,15 +668,12 @@ static noinline int replay_one_extent(struct btrfs_trans_handle *trans,
- 		extent_end = ALIGN(start + size,
- 				   fs_info->sectorsize);
- 	} else {
--		ret = 0;
--		goto out;
-+		return 0;
- 	}
- 
- 	inode = read_one_inode(root, key->objectid);
--	if (!inode) {
--		ret = -EIO;
--		goto out;
--	}
-+	if (!inode)
-+		return -EIO;
- 
- 	/*
- 	 * first check to see if we already have this extent in the
-@@ -961,7 +958,8 @@ static noinline int drop_one_dir_item(struct btrfs_trans_handle *trans,
- 	ret = unlink_inode_for_log_replay(trans, dir, inode, &name);
- out:
- 	kfree(name.name);
--	iput(&inode->vfs_inode);
-+	if (inode)
-+		iput(&inode->vfs_inode);
- 	return ret;
- }
- 
-@@ -1176,8 +1174,8 @@ static inline int __add_inode_ref(struct btrfs_trans_handle *trans,
- 					ret = unlink_inode_for_log_replay(trans,
- 							victim_parent,
- 							inode, &victim_name);
-+					iput(&victim_parent->vfs_inode);
- 				}
--				iput(&victim_parent->vfs_inode);
- 				kfree(victim_name.name);
- 				if (ret)
- 					return ret;
 -- 
 2.50.0
 

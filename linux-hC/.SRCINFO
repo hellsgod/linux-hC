@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 6.15.4
+	pkgver = 6.15.5
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.15.4.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.15.5.tar.xz
 	source = config
 	source = 0001-linux6.15.y-le9uo-1.15.patch
 	source = 0002-sched-fair-Prefer-full-idle-SMT-cores.patch
@@ -36,7 +36,7 @@ pkgbase = linux-hC
 	source = https://us.download.nvidia.com/XFree86/Linux-x86_64/575.64.03/NVIDIA-Linux-x86_64-575.64.03.run
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.15/sched/0001-bore.patch
-	b2sums = 926cbb770f3928263414b444f63790606376f9a48ee006e85d15f877ed04444c6de889be7ccde8d25ffc650f98de78fd04639c11bf4540182244366440b6ccaa
+	b2sums = 6e8143b4f2c10f6747ab1cc4c56b06b9dc06ff3790c5067ce6daf53f5538c78f5d4dd0e4fb037dd73b673140ff3b93b1a663befe4b1f059abe2dfca3ce939ea8
 	b2sums = e7be658f0c44816c0b5b7070df6359b28773d56ab4148a84846ceac168685957463c341b2f1dab7c3547c4ea5c136550ac0f433a1e158467e20909e8654ce699
 	b2sums = 8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c
 	b2sums = eb57fb07a2661760cdba725c8cba04db9d34d28bedb3c1a97dd0467dcba8924416d8f75595a48997daf18e991a1224380723bc7f1a3d138eca0296d3ce12a9db
@@ -44,7 +44,7 @@ pkgbase = linux-hC
 	b2sums = 11847f6f450595d830a801e965b0d3e74e27f26d11acbcc96394a0da4cd0e59e034b99fb41fe33ed1c30cb8d2cc5c98b1e80652fbcf4b699d43741362115ad9d
 	b2sums = 844fd0eed7b00265c4942df4f9855ffea5f65cb339bb71911718061fc83ac0aff3e1270edae549151c701dd9e6816c0cad1e61d14392847e2b78dda897d39c8d
 	b2sums = 5f6fdbe1a8aebffd51f8c3dd793c9309a2046e4f80c5ed1aacfef1bb122983f1104365e42865bb4b327df5c945b2d24cb4461a59587cebf9895d37145cf519fa
-	b2sums = 939207c9f43e32a4553abeaa637ccfb2766ed01a7239b2e95012abf21eb10d365811f66878a81113e68efab875bd6bee7e5a8398ee1a8b6f0bd027b911681342
+	b2sums = 1d5f25629debdf3fe79d71d567f2e2b50f8173cf19d0beb70215979fca8a3d8eeb01fca30ed44c0b33f9f83caa0697ce1cdc73ad3f9b46d4913dcd7baab53a74
 	b2sums = 1bbc3693b2c0455c379c09e5f5a7a8223c9275c5ee8eb0b2da1258ea9f7263502a41c217180deb79415c8d41fd3040c6d8b933e930e8e61c5f38a68c6ce2799e
 	b2sums = 4e64710dfb6b0ecda50247d95b325168b8e8ba1c6c506b5b60abed3d826ee57ecf75ea5b94b0ffea43ad67f8653bd9f2b367a6d45f7555db511c9f7c6adcefef
 	b2sums = c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452
@@ -77,7 +77,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia
 	pkgdesc = nvidia module of 575.64.03 driver for the linux-hC kernel
 	license = custom
-	depends = linux-hC=6.15.4-1
+	depends = linux-hC=6.15.5-1
 	depends = nvidia-utils=575.64.03
 	depends = libglvnd
 	provides = NVIDIA-MODULE
