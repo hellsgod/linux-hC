@@ -1,7 +1,7 @@
-From d1f54eba35e37d033e2974b8a3b45efc3162f2f6 Mon Sep 17 00:00:00 2001
+From add51b9ad3a58f47e0fe0556a17fe2110e0322e3 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/4] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/2] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -14,7 +14,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -33,10 +33,10 @@ index 452374d63c244..08f80d7c5df05 100644
 2.50.0
 
 
-From 749214fa0cca37c09bd48b3068bcbaf653f1d5b4 Mon Sep 17 00:00:00 2001
+From eef020f91e80d364d529c3339d234dc109f86f8a Mon Sep 17 00:00:00 2001
 From: En-Wei Wu <en-wei.wu@canonical.com>
 Date: Wed, 15 Jan 2025 11:50:14 +0800
-Subject: [PATCH 2/4] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
+Subject: [PATCH 2/2] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
 
 Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
 
@@ -89,7 +89,7 @@ Signed-off-by: En-Wei Wu <en-wei.wu@canonical.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
-index 9ab661d2d1e69..ff4e11a34c515 100644
+index 9ab661d2d1e6..ff4e11a34c51 100644
 --- a/drivers/bluetooth/btusb.c
 +++ b/drivers/bluetooth/btusb.c
 @@ -705,6 +705,8 @@ static const struct usb_device_id quirks_table[] = {
@@ -101,137 +101,6 @@ index 9ab661d2d1e69..ff4e11a34c515 100644
  	{ USB_DEVICE(0x0489, 0xe14f), .driver_info = BTUSB_MEDIATEK |
  						     BTUSB_WIDEBAND_SPEECH },
  	{ USB_DEVICE(0x0489, 0xe150), .driver_info = BTUSB_MEDIATEK |
--- 
-2.50.0
-
-
-From 951ce2b78429c93d1e68a8354b10cd637143bda2 Mon Sep 17 00:00:00 2001
-From: Melissa Wen <mwen@igalia.com>
-Date: Sun, 11 May 2025 18:22:41 -0300
-Subject: [PATCH 3/4] drm/amd/display: disable CRTC degamma LUT for DCN401
-
-In DCN401 pre-blending degamma LUT isn't affecting cursor as in previous
-DCN version. As this is not the behavior close to what is expected for
-CRTC degamma LUT, disable CRTC degamma LUT property in this HW.
-
-Link: https://gitlab.freedesktop.org/drm/amd/-/issues/4176
-Signed-off-by: Melissa Wen <mwen@igalia.com>
----
- .../gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c    | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-index 87058271b00cc..2551823382f8b 100644
---- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-+++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-@@ -728,7 +728,16 @@ int amdgpu_dm_crtc_init(struct amdgpu_display_manager *dm,
- 	 * support programmable degamma anywhere.
- 	 */
- 	is_dcn = dm->adev->dm.dc->caps.color.dpp.dcn_arch;
--	drm_crtc_enable_color_mgmt(&acrtc->base, is_dcn ? MAX_COLOR_LUT_ENTRIES : 0,
-+	/* Dont't enable DRM CRTC degamma property for DCN401 since the
-+	 * pre-blending degamma LUT doesn't apply to cursor, and therefore
-+	 * can't work similar to a post-blending degamma LUT as in other hw
-+	 * versions.
-+	 * TODO: revisit it once KMS plane color API is merged.
-+	 */
-+	drm_crtc_enable_color_mgmt(&acrtc->base,
-+				   (is_dcn &&
-+				    dm->adev->dm.dc->ctx->dce_version != DCN_VERSION_4_01) ?
-+				     MAX_COLOR_LUT_ENTRIES : 0,
- 				   true, MAX_COLOR_LUT_ENTRIES);
- 
- 	drm_mode_crtc_set_gamma_size(&acrtc->base, MAX_COLOR_LEGACY_LUT_ENTRIES);
--- 
-2.50.0
-
-
-From 101acbb60b1b89f39b1356674ebb927b993e7d88 Mon Sep 17 00:00:00 2001
-From: Mario Limonciello <mario.limonciello@amd.com>
-Date: Mon, 2 Jun 2025 15:09:56 -0500
-Subject: [PATCH 4/4] mfd: Fix compilation without CONFIG_OF
-
-When compiling without CONFIG_OF but with CONFIG_WERROR enabled
-several mfd drivers fail with -Werror=unused-variable.
-
-The assignment from these variables is only used in of_fwnode_handle()
-and thus they can be moved to only be used directly in the macro.
-
-Fixes: a36aa0f7226a2 ("mfd: Switch to irq_domain_create_*()")
-Signed-off-by: Mario Limonciello <mario.limonciello@amd.com>
----
- drivers/mfd/88pm860x-core.c | 5 ++---
- drivers/mfd/max8925-core.c  | 5 ++---
- drivers/mfd/twl4030-irq.c   | 3 +--
- 3 files changed, 5 insertions(+), 8 deletions(-)
-
-diff --git a/drivers/mfd/88pm860x-core.c b/drivers/mfd/88pm860x-core.c
-index 488e346047c12..25300b53a8eff 100644
---- a/drivers/mfd/88pm860x-core.c
-+++ b/drivers/mfd/88pm860x-core.c
-@@ -573,7 +573,6 @@ static int device_irq_init(struct pm860x_chip *chip,
- 	unsigned long flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
- 	int data, mask, ret = -EINVAL;
- 	int nr_irqs, irq_base = -1;
--	struct device_node *node = i2c->dev.of_node;
- 
- 	mask = PM8607_B0_MISC1_INV_INT | PM8607_B0_MISC1_INT_CLEAR
- 		| PM8607_B0_MISC1_INT_MASK;
-@@ -624,8 +623,8 @@ static int device_irq_init(struct pm860x_chip *chip,
- 		ret = -EBUSY;
- 		goto out;
- 	}
--	irq_domain_create_legacy(of_fwnode_handle(node), nr_irqs, chip->irq_base, 0,
--				 &pm860x_irq_domain_ops, chip);
-+	irq_domain_create_legacy(of_fwnode_handle(i2c->dev.of_node), nr_irqs,
-+				 chip->irq_base, 0, &pm860x_irq_domain_ops, chip);
- 	chip->core_irq = i2c->irq;
- 	if (!chip->core_irq)
- 		goto out;
-diff --git a/drivers/mfd/max8925-core.c b/drivers/mfd/max8925-core.c
-index 78b16c67a5fc6..91388477ad2b7 100644
---- a/drivers/mfd/max8925-core.c
-+++ b/drivers/mfd/max8925-core.c
-@@ -656,7 +656,6 @@ static int max8925_irq_init(struct max8925_chip *chip, int irq,
- {
- 	unsigned long flags = IRQF_TRIGGER_FALLING | IRQF_ONESHOT;
- 	int ret;
--	struct device_node *node = chip->dev->of_node;
- 
- 	/* clear all interrupts */
- 	max8925_reg_read(chip->i2c, MAX8925_CHG_IRQ1);
-@@ -682,8 +681,8 @@ static int max8925_irq_init(struct max8925_chip *chip, int irq,
- 		return -EBUSY;
- 	}
- 
--	irq_domain_create_legacy(of_fwnode_handle(node), MAX8925_NR_IRQS, chip->irq_base, 0,
--				 &max8925_irq_domain_ops, chip);
-+	irq_domain_create_legacy(of_fwnode_handle(chip->dev->of_node), MAX8925_NR_IRQS,
-+				 chip->irq_base, 0, &max8925_irq_domain_ops, chip);
- 
- 	/* request irq handler for pmic main irq*/
- 	chip->core_irq = irq;
-diff --git a/drivers/mfd/twl4030-irq.c b/drivers/mfd/twl4030-irq.c
-index 232c2bfe8c180..a2ab5deef9e21 100644
---- a/drivers/mfd/twl4030-irq.c
-+++ b/drivers/mfd/twl4030-irq.c
-@@ -676,7 +676,6 @@ int twl4030_init_irq(struct device *dev, int irq_num)
- 	static struct irq_chip	twl4030_irq_chip;
- 	int			status, i;
- 	int			irq_base, irq_end, nr_irqs;
--	struct			device_node *node = dev->of_node;
- 
- 	/*
- 	 * TWL core and pwr interrupts must be contiguous because
-@@ -691,7 +690,7 @@ int twl4030_init_irq(struct device *dev, int irq_num)
- 		return irq_base;
- 	}
- 
--	irq_domain_create_legacy(of_fwnode_handle(node), nr_irqs, irq_base, 0,
-+	irq_domain_create_legacy(of_fwnode_handle(dev->of_node), nr_irqs, irq_base, 0,
- 				 &irq_domain_simple_ops, NULL);
- 
- 	irq_end = irq_base + TWL4030_CORE_NR_IRQS;
 -- 
 2.50.0
 
