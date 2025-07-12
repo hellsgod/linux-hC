@@ -1,19 +1,19 @@
-From 44005849d189820f576f95ad7c52185ac545b3c8 Mon Sep 17 00:00:00 2001
+From 18335a37e83a2f70532616a6c68442cfa6a78ab1 Mon Sep 17 00:00:00 2001
 From: hellsgod <hellsgod@gmx.ch>
-Date: Fri, 16 May 2025 10:02:52 +0200
+Date: Sat, 12 Jul 2025 12:11:51 +0200
 Subject: [PATCH] Makefile: Rework my Optimizations
 
 ---
- Makefile     | 161 +++++++++++++++++++++++++++++++++++++++++++++++++--
+ Makefile     | 153 +++++++++++++++++++++++++++++++++++++++++++++++++--
  init/Kconfig |   4 +-
- 2 files changed, 157 insertions(+), 8 deletions(-)
+ 2 files changed, 149 insertions(+), 8 deletions(-)
 
 diff --git a/Makefile b/Makefile
-index 907a4565f06a..80ce2b3d8358 100644
+index 35e6e5240c61a..85f7170e68789 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -462,9 +462,113 @@ HOSTRUSTC = rustc
- HOSTPKG_CONFIG	= pkg-config
+@@ -464,9 +464,106 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
+ export KERNELDOC
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
 -			 -O2 -fomit-frame-pointer -std=gnu11
@@ -34,14 +34,13 @@ index 907a4565f06a..80ce2b3d8358 100644
 +  -plugin-opt=mergefunc \
 +  -plugin-opt=mergefunc-preserve-debug-info \
 +  -plugin-opt=pick-merged-source-locations \
-+  -plugin-opt=inline-threshold=350 \
++  -plugin-opt=inline-threshold=375 \
 +  -plugin-opt=inlinehint-threshold=150 \
 +  -plugin-opt=inlinecold-threshold=100 \
 +  -plugin-opt=max-num-inline-blocks=12 \
 +  -plugin-opt=max-partial-inlining=6 \
 +  -plugin-opt=inline-deferral \
 +  -plugin-opt=inline-deferral-scale=4 \
-+  -plugin-opt=inline-priority-mode=cost-benefit \
 +  -plugin-opt=inline-savings-multiplier=2 \
 +  -plugin-opt=inline-savings-profitable-multiplier=3 \
 +  -plugin-opt=inline-size-allowance=24 \
@@ -56,10 +55,8 @@ index 907a4565f06a..80ce2b3d8358 100644
 +  -plugin-opt=unroll-and-jam-threshold=50 \
 +  -plugin-opt=enable-interleaved-mem-accesses \
 +  -plugin-opt=enable-masked-interleaved-mem-accesses \
-+  -plugin-opt=expand-large-div-rem \
 +  -plugin-opt=expand-memcmp \
 +  -plugin-opt=enable-tbaa \
-+  -plugin-opt=globals-aa \
 +  -plugin-opt=recompute-globalsaa \
 +  -plugin-opt=globalopt \
 +  -plugin-opt=globalsplit \
@@ -82,7 +79,7 @@ index 907a4565f06a..80ce2b3d8358 100644
 +  -plugin-opt=misched-cyclicpath \
 +  -plugin-opt=misched-dcpl \
 +  -plugin-opt=misched-regpressure \
-+  -plugin-opt=max-sched-reorder=48 \
++  -plugin-opt=max-sched-reorder=64 \
 +  -plugin-opt=post-RA-scheduler \
 +  -plugin-opt=early-live-intervals \
 +  -plugin-opt=optimize-regalloc \
@@ -105,30 +102,26 @@ index 907a4565f06a..80ce2b3d8358 100644
 +  -plugin-opt=slp-schedule-budget=32 \
 +  -plugin-opt=slp-split-alternate-instructions \
 +  -plugin-opt=extra-vectorizer-passes \
-+  -plugin-opt=enable-vplan-native-path \
 +  -plugin-opt=enable-epilogue-vectorization \
 +  -plugin-opt=enable-early-exit-vectorization \
 +  -plugin-opt=hot-cold-static-analysis \
 +  -plugin-opt=hot-cold-split=true \
 +  -plugin-opt=basic-block-sections=labels \
 +  -plugin-opt=unique-basic-block-section-names \
-+  -plugin-opt=ext-tsp-apply-without-profile \
-+  -plugin-opt=ext-tsp-block-placement-max-blocks=256 \
 +  -plugin-opt=optimize-existing-hot-cold-new \
 +  -plugin-opt=enable-if-conversion \
 +  -plugin-opt=enable-ipra \
 +  -plugin-opt=enable-cold-section \
-+  -plugin-opt=prefetch-distance=16 \
++  -plugin-opt=prefetch-distance=20 \
 +  -plugin-opt=loop-prefetch-writes \
-+  -plugin-opt=max-prefetch-iters-ahead=8 \
++  -plugin-opt=max-prefetch-iters-ahead=12 \
 +  -plugin-opt=hoist-common-insts \
 +  -plugin-opt=enable-loop-simplifycfg-term-folding \
-+  -plugin-opt=enable-split-backedge-in-load-pre \
-+  -plugin-opt=enable-unswitch-cost-multiplier $(USERLDFLAGS)
++  -plugin-opt=enable-split-backedge-in-load-pre $(USERLDFLAGS)
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -491,7 +595,7 @@ export rust_common_flags := --edition=2021 \
+@@ -492,7 +589,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -137,7 +130,7 @@ index 907a4565f06a..80ce2b3d8358 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -575,7 +679,52 @@ LINUXINCLUDE    := \
+@@ -576,7 +673,51 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -159,7 +152,6 @@ index 907a4565f06a..80ce2b3d8358 100644
 +  -mllvm -slp-vectorize-hor \
 +  -mllvm -slp-vectorize-hor-store \
 +  -mllvm -loop-rotate-multi \
-+  -mllvm -enable-loop-flatten \
 +  -mllvm -enable-loop-distribute \
 +  -mllvm -allow-unroll-and-jam \
 +  -mllvm -simplifycfg-merge-cond-stores \
@@ -191,7 +183,7 @@ index 907a4565f06a..80ce2b3d8358 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -859,8 +1008,8 @@ endif # need-config
+@@ -860,8 +1001,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -203,10 +195,10 @@ index 907a4565f06a..80ce2b3d8358 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index 5ab47c346ef9..288a0f7cc89f 100644
+index af4c2f0854554..775c659a7b1f1 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1464,10 +1464,10 @@ choice
+@@ -1492,10 +1492,10 @@ choice
  	default CC_OPTIMIZE_FOR_PERFORMANCE
  
  config CC_OPTIMIZE_FOR_PERFORMANCE
@@ -220,5 +212,5 @@ index 5ab47c346ef9..288a0f7cc89f 100644
  
  config CC_OPTIMIZE_FOR_SIZE
 -- 
-2.49.0
+2.50.1
 
