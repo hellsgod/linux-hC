@@ -1,7 +1,7 @@
 From 2928cdb088e67267a3a73f8d489c042fcd215a1a Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/3] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/4] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -36,7 +36,7 @@ index 452374d63c24..08f80d7c5df0 100644
 From 5a8d37e321871650cb53b46d474cc10ff5348466 Mon Sep 17 00:00:00 2001
 From: En-Wei Wu <en-wei.wu@canonical.com>
 Date: Wed, 15 Jan 2025 11:50:14 +0800
-Subject: [PATCH 2/3] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
+Subject: [PATCH 2/4] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
 
 Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
 
@@ -108,7 +108,7 @@ index 9ab661d2d1e6..ff4e11a34c51 100644
 From c39ba85ce6f535998e7dc87318d8f75c456a9870 Mon Sep 17 00:00:00 2001
 From: Melissa Wen <mwen@igalia.com>
 Date: Sun, 11 May 2025 18:22:41 -0300
-Subject: [PATCH 3/3] drm/amd/display: disable CRTC degamma LUT for DCN401
+Subject: [PATCH 3/4] drm/amd/display: disable CRTC degamma LUT for DCN401
 
 In DCN401 pre-blending degamma LUT isn't affecting cursor as in previous
 DCN version. As this is not the behavior close to what is expected for
@@ -142,6 +142,85 @@ index 87058271b00c..2551823382f8 100644
  				   true, MAX_COLOR_LUT_ENTRIES);
  
  	drm_mode_crtc_set_gamma_size(&acrtc->base, MAX_COLOR_LEGACY_LUT_ENTRIES);
+-- 
+2.50.1
+
+
+From bb4110899a22c4a84de1824ca864a0af7e86de7a Mon Sep 17 00:00:00 2001
+From: Uros Bizjak <ubizjak@gmail.com>
+Date: Wed, 9 Jul 2025 15:19:03 +0200
+Subject: [PATCH 4/4] workqueue: Use atomic_try_cmpxchg_relaxed() in
+ tryinc_node_nr_active()
+
+Use try_cmpxchg() family of locking primitives instead of
+cmpxchg(*ptr, old, new) == old.
+
+The x86 CMPXCHG instruction returns success in the ZF flag, so this
+change saves a compare after CMPXCHG (and related move instruction
+in front of CMPXCHG).
+
+Also, try_cmpxchg() implicitly assigns old *ptr value to "old" when
+CMPXCHG fails. There is no need to re-read the value in the loop.
+
+The generated assembly improves from:
+
+     3f7:	44 8b 0a             	mov    (%rdx),%r9d
+     3fa:	eb 12                	jmp    40e <...>
+     3fc:	8d 79 01             	lea    0x1(%rcx),%edi
+     3ff:	89 c8                	mov    %ecx,%eax
+     401:	f0 0f b1 7a 04       	lock cmpxchg %edi,0x4(%rdx)
+     406:	39 c1                	cmp    %eax,%ecx
+     408:	0f 84 83 00 00 00    	je     491 <...>
+     40e:	8b 4a 04             	mov    0x4(%rdx),%ecx
+     411:	41 39 c9             	cmp    %ecx,%r9d
+     414:	7f e6                	jg     3fc <...>
+
+to:
+
+    256b:	45 8b 08             	mov    (%r8),%r9d
+    256e:	41 8b 40 04          	mov    0x4(%r8),%eax
+    2572:	41 39 c1             	cmp    %eax,%r9d
+    2575:	7e 10                	jle    2587 <...>
+    2577:	8d 78 01             	lea    0x1(%rax),%edi
+    257a:	f0 41 0f b1 78 04    	lock cmpxchg %edi,0x4(%r8)
+    2580:	75 f0                	jne    2572 <...>
+
+No functional change intended.
+
+Signed-off-by: Uros Bizjak <ubizjak@gmail.com>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Lai Jiangshan <jiangshanlai@gmail.com>
+---
+ kernel/workqueue.c | 13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
+
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 9f9148075828..f0bd688bb88b 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1686,17 +1686,14 @@ static void __pwq_activate_work(struct pool_workqueue *pwq,
+ static bool tryinc_node_nr_active(struct wq_node_nr_active *nna)
+ {
+ 	int max = READ_ONCE(nna->max);
++	int old = atomic_read(&nna->nr);
+ 
+-	while (true) {
+-		int old, tmp;
+-
+-		old = atomic_read(&nna->nr);
++	do {
+ 		if (old >= max)
+ 			return false;
+-		tmp = atomic_cmpxchg_relaxed(&nna->nr, old, old + 1);
+-		if (tmp == old)
+-			return true;
+-	}
++	} while (!atomic_try_cmpxchg_relaxed(&nna->nr, &old, old + 1));
++
++	return true;
+ }
+ 
+ /**
 -- 
 2.50.1
 
