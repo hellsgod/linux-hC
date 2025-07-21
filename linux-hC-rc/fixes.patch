@@ -1,7 +1,7 @@
-From 2928cdb088e67267a3a73f8d489c042fcd215a1a Mon Sep 17 00:00:00 2001
+From 8e2058b991cd039834db3ce2d50e6b967dc25bf5 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/4] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/3] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -33,10 +33,10 @@ index 452374d63c24..08f80d7c5df0 100644
 2.50.1
 
 
-From 5a8d37e321871650cb53b46d474cc10ff5348466 Mon Sep 17 00:00:00 2001
+From 3109a7a39230b0f93cf54cf473a451d70ed84f9a Mon Sep 17 00:00:00 2001
 From: En-Wei Wu <en-wei.wu@canonical.com>
 Date: Wed, 15 Jan 2025 11:50:14 +0800
-Subject: [PATCH 2/4] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
+Subject: [PATCH 2/3] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
 
 Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
 
@@ -89,7 +89,7 @@ Signed-off-by: En-Wei Wu <en-wei.wu@canonical.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
-index 9ab661d2d1e6..ff4e11a34c51 100644
+index f9eeec0aed57..6b12b44f3a0d 100644
 --- a/drivers/bluetooth/btusb.c
 +++ b/drivers/bluetooth/btusb.c
 @@ -705,6 +705,8 @@ static const struct usb_device_id quirks_table[] = {
@@ -105,51 +105,10 @@ index 9ab661d2d1e6..ff4e11a34c51 100644
 2.50.1
 
 
-From c39ba85ce6f535998e7dc87318d8f75c456a9870 Mon Sep 17 00:00:00 2001
-From: Melissa Wen <mwen@igalia.com>
-Date: Sun, 11 May 2025 18:22:41 -0300
-Subject: [PATCH 3/4] drm/amd/display: disable CRTC degamma LUT for DCN401
-
-In DCN401 pre-blending degamma LUT isn't affecting cursor as in previous
-DCN version. As this is not the behavior close to what is expected for
-CRTC degamma LUT, disable CRTC degamma LUT property in this HW.
-
-Link: https://gitlab.freedesktop.org/drm/amd/-/issues/4176
-Signed-off-by: Melissa Wen <mwen@igalia.com>
----
- .../gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c    | 11 ++++++++++-
- 1 file changed, 10 insertions(+), 1 deletion(-)
-
-diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-index 87058271b00c..2551823382f8 100644
---- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-+++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-@@ -728,7 +728,16 @@ int amdgpu_dm_crtc_init(struct amdgpu_display_manager *dm,
- 	 * support programmable degamma anywhere.
- 	 */
- 	is_dcn = dm->adev->dm.dc->caps.color.dpp.dcn_arch;
--	drm_crtc_enable_color_mgmt(&acrtc->base, is_dcn ? MAX_COLOR_LUT_ENTRIES : 0,
-+	/* Dont't enable DRM CRTC degamma property for DCN401 since the
-+	 * pre-blending degamma LUT doesn't apply to cursor, and therefore
-+	 * can't work similar to a post-blending degamma LUT as in other hw
-+	 * versions.
-+	 * TODO: revisit it once KMS plane color API is merged.
-+	 */
-+	drm_crtc_enable_color_mgmt(&acrtc->base,
-+				   (is_dcn &&
-+				    dm->adev->dm.dc->ctx->dce_version != DCN_VERSION_4_01) ?
-+				     MAX_COLOR_LUT_ENTRIES : 0,
- 				   true, MAX_COLOR_LUT_ENTRIES);
- 
- 	drm_mode_crtc_set_gamma_size(&acrtc->base, MAX_COLOR_LEGACY_LUT_ENTRIES);
--- 
-2.50.1
-
-
-From bb4110899a22c4a84de1824ca864a0af7e86de7a Mon Sep 17 00:00:00 2001
+From 3aa51509a0e81c26801464b2c4eb0a766784b667 Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Wed, 9 Jul 2025 15:19:03 +0200
-Subject: [PATCH 4/4] workqueue: Use atomic_try_cmpxchg_relaxed() in
+Subject: [PATCH 3/3] workqueue: Use atomic_try_cmpxchg_relaxed() in
  tryinc_node_nr_active()
 
 Use try_cmpxchg() family of locking primitives instead of
