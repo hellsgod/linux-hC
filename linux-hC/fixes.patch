@@ -1,7 +1,7 @@
-From 8e2058b991cd039834db3ce2d50e6b967dc25bf5 Mon Sep 17 00:00:00 2001
+From 388e591529e0390b11fdb3f96faa8139e14992bb Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/7] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/6] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -14,7 +14,7 @@ Signed-off-by: Peter Jung <admin@ptr1337.dev>
  1 file changed, 5 insertions(+)
 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
@@ -33,10 +33,10 @@ index 452374d63c24..08f80d7c5df0 100644
 2.50.1
 
 
-From 3109a7a39230b0f93cf54cf473a451d70ed84f9a Mon Sep 17 00:00:00 2001
+From fdc55e6cd1fc6f45247840d981dc14ed99645645 Mon Sep 17 00:00:00 2001
 From: En-Wei Wu <en-wei.wu@canonical.com>
 Date: Wed, 15 Jan 2025 11:50:14 +0800
-Subject: [PATCH 2/7] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
+Subject: [PATCH 2/6] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
 
 Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
 
@@ -89,7 +89,7 @@ Signed-off-by: En-Wei Wu <en-wei.wu@canonical.com>
  1 file changed, 2 insertions(+)
 
 diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
-index f9eeec0aed57..6b12b44f3a0d 100644
+index f9eeec0aed57d..6b12b44f3a0d3 100644
 --- a/drivers/bluetooth/btusb.c
 +++ b/drivers/bluetooth/btusb.c
 @@ -705,6 +705,8 @@ static const struct usb_device_id quirks_table[] = {
@@ -105,10 +105,10 @@ index f9eeec0aed57..6b12b44f3a0d 100644
 2.50.1
 
 
-From 3aa51509a0e81c26801464b2c4eb0a766784b667 Mon Sep 17 00:00:00 2001
+From 3f53a09f10c8e2175719cb47208f14bd636588d1 Mon Sep 17 00:00:00 2001
 From: Uros Bizjak <ubizjak@gmail.com>
 Date: Wed, 9 Jul 2025 15:19:03 +0200
-Subject: [PATCH 3/7] workqueue: Use atomic_try_cmpxchg_relaxed() in
+Subject: [PATCH 3/6] workqueue: Use atomic_try_cmpxchg_relaxed() in
  tryinc_node_nr_active()
 
 Use try_cmpxchg() family of locking primitives instead of
@@ -154,7 +154,7 @@ Cc: Lai Jiangshan <jiangshanlai@gmail.com>
  1 file changed, 5 insertions(+), 8 deletions(-)
 
 diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 9f9148075828..f0bd688bb88b 100644
+index 9f91480758288..f0bd688bb88b2 100644
 --- a/kernel/workqueue.c
 +++ b/kernel/workqueue.c
 @@ -1686,17 +1686,14 @@ static void __pwq_activate_work(struct pool_workqueue *pwq,
@@ -184,10 +184,10 @@ index 9f9148075828..f0bd688bb88b 100644
 2.50.1
 
 
-From 29dbc1782b12ecf4f3d752656363351800c1227b Mon Sep 17 00:00:00 2001
+From 006d8f1706cade141c86ae04874b71257739e9ee Mon Sep 17 00:00:00 2001
 From: Fernand Sieber <sieberf@amazon.com>
 Date: Tue, 1 Apr 2025 14:36:20 +0200
-Subject: [PATCH 4/7] sched/fair: Only increment deadline once on yield
+Subject: [PATCH 4/6] sched/fair: Only increment deadline once on yield
 
 If a task yields, the scheduler may decide to pick it again. The task in
 turn may decide to yield immediately or shortly after, leading to a tight
@@ -217,7 +217,7 @@ Reviewed-by: Madadi Vineeth Reddy <vineethr@linux.ibm.com>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 7a14da5396fb..2535a616547f 100644
+index 7a14da5396fb2..2535a616547ff 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -9036,7 +9036,7 @@ static void yield_task_fair(struct rq *rq)
@@ -233,10 +233,10 @@ index 7a14da5396fb..2535a616547f 100644
 2.50.1
 
 
-From af661bea6266c70d8d68f3e3a53eaed8acc2a30a Mon Sep 17 00:00:00 2001
+From 70257358f7666d8070b2f96f8001f87991e0696d Mon Sep 17 00:00:00 2001
 From: Huang Shijie <shijie@os.amperecomputing.com>
 Date: Tue, 22 Jul 2025 18:26:00 +0800
-Subject: [PATCH 5/7] sched/fair: do not scan twice in detach_tasks()
+Subject: [PATCH 5/6] sched/fair: do not scan twice in detach_tasks()
 
 detach_tasks() uses struct lb_env.loop_max as an env.src_rq->cfs_tasks
 iteration count limit. It is however set without the source RQ lock held.
@@ -274,7 +274,7 @@ Reviewed-by: Valentin Schneider <vschneid@redhat.com>
  1 file changed, 5 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 2535a616547f..7f9209dc49d8 100644
+index 2535a616547ff..7f9209dc49d8d 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -11809,12 +11809,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
@@ -299,10 +299,10 @@ index 2535a616547f..7f9209dc49d8 100644
 2.50.1
 
 
-From 5b7780163c6a88166f7a316c6acb238f238c866e Mon Sep 17 00:00:00 2001
+From f36e8cf736171185e5f2f7ed69f7f7e18237d7a3 Mon Sep 17 00:00:00 2001
 From: Dave Hansen <dave.hansen@linux.intel.com>
 Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 6/7] x86/mm: Simplify redundant overlap calculation
+Subject: [PATCH 6/6] x86/mm: Simplify redundant overlap calculation
 
 There have been a couple of reports that the two sides of the
 overlaps() calculation are redundant.  I spent way too much time
@@ -327,7 +327,7 @@ Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
  1 file changed, 1 insertion(+), 2 deletions(-)
 
 diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 8834c76f91c9..4042c341ac00 100644
+index 8834c76f91c9e..4042c341ac005 100644
 --- a/arch/x86/mm/pat/set_memory.c
 +++ b/arch/x86/mm/pat/set_memory.c
 @@ -484,8 +484,7 @@ static void cpa_flush(struct cpa_data *cpa, int cache)
@@ -340,149 +340,6 @@ index 8834c76f91c9..4042c341ac00 100644
  }
  
  #ifdef CONFIG_PCI_BIOS
--- 
-2.50.1
-
-
-From f14e36a5d19dc2bf9ead6904d0aacdf1edac0423 Mon Sep 17 00:00:00 2001
-From: Filipe Manana <fdmanana@suse.com>
-Date: Wed, 30 Jul 2025 20:20:40 +0100
-Subject: [PATCH 7/7] btrfs: fix log tree replay failure due to file with 0
- links and extents
-
-If we log a new inode (not persisted in a past transaction) that has 0
-links and extents, then log another inode with an higher inode number, we
-end up with failing to replay the log tree with -EINVAL. The steps for
-this are:
-
-1) create new file A
-2) write some data to file A
-3) open an fd on file A
-4) unlink file A
-5) fsync file A using the previously open fd
-6) create file B (has higher inode number than file A)
-7) fsync file B
-8) power fail before current transaction commits
-
-Now when attempting to mount the fs, the log replay will fail with
--ENOENT at replay_one_extent() when attempting to replay the first
-extent of file A. The failure comes when trying to open the inode for
-file A in the subvolume tree, since it doesn't exist.
-
-Before commit 5f61b961599a ("btrfs: fix inode lookup error handling
-during log replay"), the returned error was -EIO instead of -ENOENT,
-since we converted any errors when attempting to read an inode during
-log replay to -EIO.
-
-The reason for this is that the log replay procedure fails to ignore
-the current inode when we are at the stage LOG_WALK_REPLAY_ALL, our
-current inode has 0 links and last inode we processed in the previous
-stage has a non 0 link count. In other words, the issue is that at
-replay_one_extent() we only update wc->ignore_cur_inode if the current
-replay stage is LOG_WALK_REPLAY_INODES.
-
-Fix this by updating wc->ignore_cur_inode whenever we find an inode item
-regardless of the current replay stage. This is a simple solution and easy
-to backport, but later we can do other alternatives like avoid logging
-extents or inode items other than the inode item for inodes with a link
-count of 0.
-
-The problem with the wc->ignore_cur_inode logic has been around since
-commit f2d72f42d5fa ("Btrfs: fix warning when replaying log after fsync
-of a tmpfile") but it only became frequent to hit since the more recent
-commit 5e85262e542d ("btrfs: fix fsync of files with no hard links not
-persisting deletion"), because we stopped skipping inodes with a link
-count of 0 when logging, while before the problem would only be triggered
-if trying to replay a log tree created with an older kernel which has a
-logged inode with 0 links.
-
-A test case for fstests will be submitted soon.
-
-Reported-by: Peter Jung <ptr1337@cachyos.org>
-Link: https://lore.kernel.org/linux-btrfs/fce139db-4458-4788-bb97-c29acf6cb1df@cachyos.org/
-Reported-by: burneddi <burneddi@protonmail.com>
-Link: https://lore.kernel.org/linux-btrfs/lh4W-Lwc0Mbk-QvBhhQyZxf6VbM3E8VtIvU3fPIQgweP_Q1n7wtlUZQc33sYlCKYd-o6rryJQfhHaNAOWWRKxpAXhM8NZPojzsJPyHMf2qY=@protonmail.com/#t
-Reported-by: Russell Haley <yumpusamongus@gmail.com>
-Link: https://lore.kernel.org/linux-btrfs/598ecc75-eb80-41b3-83c2-f2317fbb9864@gmail.com/
-Fixes: f2d72f42d5fa ("Btrfs: fix warning when replaying log after fsync of a tmpfile")
-Signed-off-by: Filipe Manana <fdmanana@suse.com>
-Reviewed-by: Boris Burkov <boris@bur.io>
----
- fs/btrfs/tree-log.c | 44 +++++++++++++++++++++++++++++---------------
- 1 file changed, 29 insertions(+), 15 deletions(-)
-
-diff --git a/fs/btrfs/tree-log.c b/fs/btrfs/tree-log.c
-index cea8a7e9d6d3..cd904f281489 100644
---- a/fs/btrfs/tree-log.c
-+++ b/fs/btrfs/tree-log.c
-@@ -2413,23 +2413,30 @@ static int replay_one_buffer(struct btrfs_root *log, struct extent_buffer *eb,
- 
- 	nritems = btrfs_header_nritems(eb);
- 	for (i = 0; i < nritems; i++) {
--		btrfs_item_key_to_cpu(eb, &key, i);
-+		struct btrfs_inode_item *inode_item;
- 
--		/* inode keys are done during the first stage */
--		if (key.type == BTRFS_INODE_ITEM_KEY &&
--		    wc->stage == LOG_WALK_REPLAY_INODES) {
--			struct btrfs_inode_item *inode_item;
--			u32 mode;
-+		btrfs_item_key_to_cpu(eb, &key, i);
- 
--			inode_item = btrfs_item_ptr(eb, i,
--					    struct btrfs_inode_item);
-+		if (key.type == BTRFS_INODE_ITEM_KEY) {
-+			inode_item = btrfs_item_ptr(eb, i, struct btrfs_inode_item);
- 			/*
--			 * If we have a tmpfile (O_TMPFILE) that got fsync'ed
--			 * and never got linked before the fsync, skip it, as
--			 * replaying it is pointless since it would be deleted
--			 * later. We skip logging tmpfiles, but it's always
--			 * possible we are replaying a log created with a kernel
--			 * that used to log tmpfiles.
-+			 * An inode with no links is either:
-+			 *
-+			 * 1) A tmpfile (O_TMPFILE) that got fsync'ed and never
-+			 *    got linked before the fsync, skip it, as replaying
-+			 *    it is pointless since it would be deleted later.
-+			 *    We skip logging tmpfiles, but it's always possible
-+			 *    we are replaying a log created with a kernel that
-+			 *    used to log tmpfiles;
-+			 *
-+			 * 2) A non-tmpfile which got its last link deleted
-+			 *    while holding an open fd on it and later got
-+			 *    fsynced through that fd. We always log the
-+			 *    parent inodes when inode->last_unlink_trans is
-+			 *    set to the current transaction, so ignore all the
-+			 *    inode items for this inode. We will delete the
-+			 *    inode when processing the parent directory with
-+			 *    replay_dir_deletes().
- 			 */
- 			if (btrfs_inode_nlink(eb, inode_item) == 0) {
- 				wc->ignore_cur_inode = true;
-@@ -2437,6 +2444,13 @@ static int replay_one_buffer(struct btrfs_root *log, struct extent_buffer *eb,
- 			} else {
- 				wc->ignore_cur_inode = false;
- 			}
-+		}
-+
-+		/* Inode keys are done during the first stage. */
-+		if (key.type == BTRFS_INODE_ITEM_KEY &&
-+		    wc->stage == LOG_WALK_REPLAY_INODES) {
-+			u32 mode;
-+
- 			ret = replay_xattr_deletes(wc->trans, root, log,
- 						   path, key.objectid);
- 			if (ret)
-@@ -2875,7 +2889,7 @@ static inline void btrfs_remove_log_ctx(struct btrfs_root *root,
- 	mutex_unlock(&root->log_mutex);
- }
- 
--/* 
-+/*
-  * Invoked in log mutex context, or be sure there is no other task which
-  * can access the list.
-  */
 -- 
 2.50.1
 
