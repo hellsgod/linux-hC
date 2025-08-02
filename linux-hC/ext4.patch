@@ -1,0 +1,5155 @@
+From 1b5f8a2e1dcc1a683dc6e492892975b04bd15086 Mon Sep 17 00:00:00 2001
+From: Jinliang Zheng <alexjlzheng@tencent.com>
+Date: Tue, 29 Apr 2025 19:17:22 +0800
+Subject: [PATCH 01/40] ext4: remove duplicate check for EXT4_FC_REPLAY
+
+EXT4_FC_REPLAY will be checked in ext4_es_lookup_extent(). If it is
+set, ext4_es_lookup_extent() will return 0.
+
+Remove the repeated check for EXT4_FC_REPLAY in ext4_map_blocks()
+to simplify the code.
+
+Signed-off-by: Jinliang Zheng <alexjlzheng@tencent.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250429111722.294975-1-alexjlzheng@tencent.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index be9a4cba35fd5..a798e7c15fb56 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -723,8 +723,7 @@ int ext4_map_blocks(handle_t *handle, struct inode *inode,
+ 		ext4_check_map_extents_env(inode);
+ 
+ 	/* Lookup extent status tree firstly */
+-	if (!(EXT4_SB(inode->i_sb)->s_mount_state & EXT4_FC_REPLAY) &&
+-	    ext4_es_lookup_extent(inode, map->m_lblk, NULL, &es)) {
++	if (ext4_es_lookup_extent(inode, map->m_lblk, NULL, &es)) {
+ 		if (ext4_es_is_written(&es) || ext4_es_is_unwritten(&es)) {
+ 			map->m_pblk = ext4_es_pblock(&es) +
+ 					map->m_lblk - es.es_lblk;
+-- 
+2.50.1
+
+
+From 0a60fcafc206a681d54f43840f1879c6062fd983 Mon Sep 17 00:00:00 2001
+From: Dan Carpenter <dan.carpenter@linaro.org>
+Date: Fri, 23 May 2025 19:08:45 +0300
+Subject: [PATCH 02/40] ext4: remove unnecessary duplicate check in
+ ext4_map_blocks()
+
+The previous lines ensure that EXT4_GET_BLOCKS_QUERY_LAST_IN_LEAF is
+set so remove this duplicate check.
+
+Signed-off-by: Dan Carpenter <dan.carpenter@linaro.org>
+Reviewed-by: Ritesh Harjani (IBM) <ritesh.list@gmail.com>
+Link: https://patch.msgid.link/aDCdjUhpzxB64vkD@stanley.mountain
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index a798e7c15fb56..35e7f34ee1889 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -756,8 +756,7 @@ int ext4_map_blocks(handle_t *handle, struct inode *inode,
+ 				orig_mlen == map->m_len)
+ 			goto found;
+ 
+-		if (flags & EXT4_GET_BLOCKS_QUERY_LAST_IN_LEAF)
+-			map->m_len = orig_mlen;
++		map->m_len = orig_mlen;
+ 	}
+ 	/*
+ 	 * In the query cache no-wait mode, nothing we can do more if we
+-- 
+2.50.1
+
+
+From 6ff2780c0791e04cedb6a5a27fc0138948e81fdb Mon Sep 17 00:00:00 2001
+From: Baolin Liu <liubaolin@kylinos.cn>
+Date: Tue, 27 May 2025 13:38:05 +0800
+Subject: [PATCH 03/40] ext4: remove unused EXT_STATS macro from ext4_extents.h
+
+The EXT_STATS macro in fs/ext4/ext4_extents.h has been defined
+but never used in the codebase since its introduction. This patch
+removes it.
+
+Analysis:
+1. No references found in fs/ext4/ or other kernel code.
+2. No impact on compilation or functionality.
+3. Git history shows it was never utilized.
+
+Signed-off-by: Baolin Liu <liubaolin@kylinos.cn>
+Reviewed-by: Baokun Li <libaokun1@huawei.com>
+Link: https://patch.msgid.link/20250527053805.1550912-1-liubaolin12138@163.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4_extents.h | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/fs/ext4/ext4_extents.h b/fs/ext4/ext4_extents.h
+index 26435f3a30946..c484125d963fb 100644
+--- a/fs/ext4/ext4_extents.h
++++ b/fs/ext4/ext4_extents.h
+@@ -30,13 +30,6 @@
+  */
+ #define CHECK_BINSEARCH__
+ 
+-/*
+- * If EXT_STATS is defined then stats numbers are collected.
+- * These number will be displayed at umount time.
+- */
+-#define EXT_STATS_
+-
+-
+ /*
+  * ext4_inode has i_block array (60 bytes total).
+  * The first 12 bytes store ext4_extent_header;
+-- 
+2.50.1
+
+
+From f6f63874f10f40ddfde4ab4074f12640962f18f9 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:04 +0800
+Subject: [PATCH 04/40] ext4: process folios writeback in bytes
+
+Since ext4 supports large folios, processing writebacks in pages is no
+longer appropriate, it can be modified to process writebacks in bytes.
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-2-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c             | 70 +++++++++++++++++++------------------
+ include/trace/events/ext4.h | 13 ++++---
+ 2 files changed, 42 insertions(+), 41 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 35e7f34ee1889..4cb499f28c12c 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -1665,11 +1665,12 @@ struct mpage_da_data {
+ 	unsigned int can_map:1;	/* Can writepages call map blocks? */
+ 
+ 	/* These are internal state of ext4_do_writepages() */
+-	pgoff_t first_page;	/* The first page to write */
+-	pgoff_t next_page;	/* Current page to examine */
+-	pgoff_t last_page;	/* Last page to examine */
++	loff_t start_pos;	/* The start pos to write */
++	loff_t next_pos;	/* Current pos to examine */
++	loff_t end_pos;		/* Last pos to examine */
++
+ 	/*
+-	 * Extent to map - this can be after first_page because that can be
++	 * Extent to map - this can be after start_pos because that can be
+ 	 * fully mapped. We somewhat abuse m_flags to store whether the extent
+ 	 * is delalloc or unwritten.
+ 	 */
+@@ -1689,38 +1690,38 @@ static void mpage_release_unused_pages(struct mpage_da_data *mpd,
+ 	struct inode *inode = mpd->inode;
+ 	struct address_space *mapping = inode->i_mapping;
+ 
+-	/* This is necessary when next_page == 0. */
+-	if (mpd->first_page >= mpd->next_page)
++	/* This is necessary when next_pos == 0. */
++	if (mpd->start_pos >= mpd->next_pos)
+ 		return;
+ 
+ 	mpd->scanned_until_end = 0;
+-	index = mpd->first_page;
+-	end   = mpd->next_page - 1;
+ 	if (invalidate) {
+ 		ext4_lblk_t start, last;
+-		start = index << (PAGE_SHIFT - inode->i_blkbits);
+-		last = end << (PAGE_SHIFT - inode->i_blkbits);
++		start = EXT4_B_TO_LBLK(inode, mpd->start_pos);
++		last = mpd->next_pos >> inode->i_blkbits;
+ 
+ 		/*
+ 		 * avoid racing with extent status tree scans made by
+ 		 * ext4_insert_delayed_block()
+ 		 */
+ 		down_write(&EXT4_I(inode)->i_data_sem);
+-		ext4_es_remove_extent(inode, start, last - start + 1);
++		ext4_es_remove_extent(inode, start, last - start);
+ 		up_write(&EXT4_I(inode)->i_data_sem);
+ 	}
+ 
+ 	folio_batch_init(&fbatch);
+-	while (index <= end) {
+-		nr = filemap_get_folios(mapping, &index, end, &fbatch);
++	index = mpd->start_pos >> PAGE_SHIFT;
++	end = mpd->next_pos >> PAGE_SHIFT;
++	while (index < end) {
++		nr = filemap_get_folios(mapping, &index, end - 1, &fbatch);
+ 		if (nr == 0)
+ 			break;
+ 		for (i = 0; i < nr; i++) {
+ 			struct folio *folio = fbatch.folios[i];
+ 
+-			if (folio->index < mpd->first_page)
++			if (folio_pos(folio) < mpd->start_pos)
+ 				continue;
+-			if (folio_next_index(folio) - 1 > end)
++			if (folio_next_index(folio) > end)
+ 				continue;
+ 			BUG_ON(!folio_test_locked(folio));
+ 			BUG_ON(folio_test_writeback(folio));
+@@ -2022,7 +2023,7 @@ int ext4_da_get_block_prep(struct inode *inode, sector_t iblock,
+ 
+ static void mpage_folio_done(struct mpage_da_data *mpd, struct folio *folio)
+ {
+-	mpd->first_page += folio_nr_pages(folio);
++	mpd->start_pos += folio_size(folio);
+ 	folio_unlock(folio);
+ }
+ 
+@@ -2032,7 +2033,7 @@ static int mpage_submit_folio(struct mpage_da_data *mpd, struct folio *folio)
+ 	loff_t size;
+ 	int err;
+ 
+-	BUG_ON(folio->index != mpd->first_page);
++	WARN_ON_ONCE(folio_pos(folio) != mpd->start_pos);
+ 	folio_clear_dirty_for_io(folio);
+ 	/*
+ 	 * We have to be very careful here!  Nothing protects writeback path
+@@ -2444,7 +2445,7 @@ static int mpage_map_and_submit_extent(handle_t *handle,
+ 	 * Update on-disk size after IO is submitted.  Races with
+ 	 * truncate are avoided by checking i_size under i_data_sem.
+ 	 */
+-	disksize = ((loff_t)mpd->first_page) << PAGE_SHIFT;
++	disksize = mpd->start_pos;
+ 	if (disksize > READ_ONCE(EXT4_I(inode)->i_disksize)) {
+ 		int err2;
+ 		loff_t i_size;
+@@ -2547,8 +2548,8 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+ 	struct address_space *mapping = mpd->inode->i_mapping;
+ 	struct folio_batch fbatch;
+ 	unsigned int nr_folios;
+-	pgoff_t index = mpd->first_page;
+-	pgoff_t end = mpd->last_page;
++	pgoff_t index = mpd->start_pos >> PAGE_SHIFT;
++	pgoff_t end = mpd->end_pos >> PAGE_SHIFT;
+ 	xa_mark_t tag;
+ 	int i, err = 0;
+ 	int blkbits = mpd->inode->i_blkbits;
+@@ -2563,7 +2564,7 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+ 		tag = PAGECACHE_TAG_DIRTY;
+ 
+ 	mpd->map.m_len = 0;
+-	mpd->next_page = index;
++	mpd->next_pos = mpd->start_pos;
+ 	if (ext4_should_journal_data(mpd->inode)) {
+ 		handle = ext4_journal_start(mpd->inode, EXT4_HT_WRITE_PAGE,
+ 					    bpp);
+@@ -2594,7 +2595,8 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+ 				goto out;
+ 
+ 			/* If we can't merge this page, we are done. */
+-			if (mpd->map.m_len > 0 && mpd->next_page != folio->index)
++			if (mpd->map.m_len > 0 &&
++			    mpd->next_pos != folio_pos(folio))
+ 				goto out;
+ 
+ 			if (handle) {
+@@ -2640,8 +2642,8 @@ static int mpage_prepare_extent_to_map(struct mpage_da_data *mpd)
+ 			}
+ 
+ 			if (mpd->map.m_len == 0)
+-				mpd->first_page = folio->index;
+-			mpd->next_page = folio_next_index(folio);
++				mpd->start_pos = folio_pos(folio);
++			mpd->next_pos = folio_pos(folio) + folio_size(folio);
+ 			/*
+ 			 * Writeout when we cannot modify metadata is simple.
+ 			 * Just submit the page. For data=journal mode we
+@@ -2784,18 +2786,18 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 		writeback_index = mapping->writeback_index;
+ 		if (writeback_index)
+ 			cycled = 0;
+-		mpd->first_page = writeback_index;
+-		mpd->last_page = -1;
++		mpd->start_pos = writeback_index << PAGE_SHIFT;
++		mpd->end_pos = LLONG_MAX;
+ 	} else {
+-		mpd->first_page = wbc->range_start >> PAGE_SHIFT;
+-		mpd->last_page = wbc->range_end >> PAGE_SHIFT;
++		mpd->start_pos = wbc->range_start;
++		mpd->end_pos = wbc->range_end;
+ 	}
+ 
+ 	ext4_io_submit_init(&mpd->io_submit, wbc);
+ retry:
+ 	if (wbc->sync_mode == WB_SYNC_ALL || wbc->tagged_writepages)
+-		tag_pages_for_writeback(mapping, mpd->first_page,
+-					mpd->last_page);
++		tag_pages_for_writeback(mapping, mpd->start_pos >> PAGE_SHIFT,
++					mpd->end_pos >> PAGE_SHIFT);
+ 	blk_start_plug(&plug);
+ 
+ 	/*
+@@ -2855,7 +2857,7 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 		}
+ 		mpd->do_map = 1;
+ 
+-		trace_ext4_da_write_pages(inode, mpd->first_page, wbc);
++		trace_ext4_da_write_pages(inode, mpd->start_pos, wbc);
+ 		ret = mpage_prepare_extent_to_map(mpd);
+ 		if (!ret && mpd->map.m_len)
+ 			ret = mpage_map_and_submit_extent(handle, mpd,
+@@ -2912,8 +2914,8 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 	blk_finish_plug(&plug);
+ 	if (!ret && !cycled && wbc->nr_to_write > 0) {
+ 		cycled = 1;
+-		mpd->last_page = writeback_index - 1;
+-		mpd->first_page = 0;
++		mpd->end_pos = (writeback_index << PAGE_SHIFT) - 1;
++		mpd->start_pos = 0;
+ 		goto retry;
+ 	}
+ 
+@@ -2923,7 +2925,7 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 		 * Set the writeback_index so that range_cyclic
+ 		 * mode will write it back later
+ 		 */
+-		mapping->writeback_index = mpd->first_page;
++		mapping->writeback_index = mpd->start_pos >> PAGE_SHIFT;
+ 
+ out_writepages:
+ 	trace_ext4_writepages_result(inode, wbc, ret,
+diff --git a/include/trace/events/ext4.h b/include/trace/events/ext4.h
+index 156908641e68f..62d52997b5c64 100644
+--- a/include/trace/events/ext4.h
++++ b/include/trace/events/ext4.h
+@@ -483,15 +483,15 @@ TRACE_EVENT(ext4_writepages,
+ );
+ 
+ TRACE_EVENT(ext4_da_write_pages,
+-	TP_PROTO(struct inode *inode, pgoff_t first_page,
++	TP_PROTO(struct inode *inode, loff_t start_pos,
+ 		 struct writeback_control *wbc),
+ 
+-	TP_ARGS(inode, first_page, wbc),
++	TP_ARGS(inode, start_pos, wbc),
+ 
+ 	TP_STRUCT__entry(
+ 		__field(	dev_t,	dev			)
+ 		__field(	ino_t,	ino			)
+-		__field(      pgoff_t,	first_page		)
++		__field(       loff_t,	start_pos		)
+ 		__field(	 long,	nr_to_write		)
+ 		__field(	  int,	sync_mode		)
+ 	),
+@@ -499,15 +499,14 @@ TRACE_EVENT(ext4_da_write_pages,
+ 	TP_fast_assign(
+ 		__entry->dev		= inode->i_sb->s_dev;
+ 		__entry->ino		= inode->i_ino;
+-		__entry->first_page	= first_page;
++		__entry->start_pos	= start_pos;
+ 		__entry->nr_to_write	= wbc->nr_to_write;
+ 		__entry->sync_mode	= wbc->sync_mode;
+ 	),
+ 
+-	TP_printk("dev %d,%d ino %lu first_page %lu nr_to_write %ld "
+-		  "sync_mode %d",
++	TP_printk("dev %d,%d ino %lu start_pos 0x%llx nr_to_write %ld sync_mode %d",
+ 		  MAJOR(__entry->dev), MINOR(__entry->dev),
+-		  (unsigned long) __entry->ino, __entry->first_page,
++		  (unsigned long) __entry->ino, __entry->start_pos,
+ 		  __entry->nr_to_write, __entry->sync_mode)
+ );
+ 
+-- 
+2.50.1
+
+
+From 17cb52030d8becd257d6633b6d0ed9ef0580fed2 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:05 +0800
+Subject: [PATCH 05/40] ext4: move the calculation of wbc->nr_to_write to
+ mpage_folio_done()
+
+mpage_folio_done() should be a more appropriate place than
+mpage_submit_folio() for updating the wbc->nr_to_write after we have
+submitted a fully mapped folio. Preparing to make mpage_submit_folio()
+allows to submit partially mapped folio that is still under processing.
+
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Baokun Li <libaokun1@huawei.com>
+Link: https://patch.msgid.link/20250707140814.542883-3-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 4cb499f28c12c..399c765bc22dd 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2024,6 +2024,7 @@ int ext4_da_get_block_prep(struct inode *inode, sector_t iblock,
+ static void mpage_folio_done(struct mpage_da_data *mpd, struct folio *folio)
+ {
+ 	mpd->start_pos += folio_size(folio);
++	mpd->wbc->nr_to_write -= folio_nr_pages(folio);
+ 	folio_unlock(folio);
+ }
+ 
+@@ -2054,8 +2055,6 @@ static int mpage_submit_folio(struct mpage_da_data *mpd, struct folio *folio)
+ 	    !ext4_verity_in_progress(mpd->inode))
+ 		len = size & (len - 1);
+ 	err = ext4_bio_write_folio(&mpd->io_submit, folio, len);
+-	if (!err)
+-		mpd->wbc->nr_to_write -= folio_nr_pages(folio);
+ 
+ 	return err;
+ }
+-- 
+2.50.1
+
+
+From ead8e7fbe3b146abea0d7937836664cf3e18bcb3 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:06 +0800
+Subject: [PATCH 06/40] ext4: fix stale data if it bail out of the extents
+ mapping loop
+
+During the process of writing back folios, if
+mpage_map_and_submit_extent() exits the extent mapping loop due to an
+ENOSPC or ENOMEM error, it may result in stale data or filesystem
+inconsistency in environments where the block size is smaller than the
+folio size.
+
+When mapping a discontinuous folio in mpage_map_and_submit_extent(),
+some buffers may have already be mapped. If we exit the mapping loop
+prematurely, the folio data within the mapped range will not be written
+back, and the file's disk size will not be updated. Once the transaction
+that includes this range of extents is committed, this can lead to stale
+data or filesystem inconsistency.
+
+Fix this by submitting the current processing partially mapped folio.
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-4-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 51 ++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 50 insertions(+), 1 deletion(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 399c765bc22dd..ceb68df19f1e6 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2359,6 +2359,47 @@ static int mpage_map_one_extent(handle_t *handle, struct mpage_da_data *mpd)
+ 	return 0;
+ }
+ 
++/*
++ * This is used to submit mapped buffers in a single folio that is not fully
++ * mapped for various reasons, such as insufficient space or journal credits.
++ */
++static int mpage_submit_partial_folio(struct mpage_da_data *mpd)
++{
++	struct inode *inode = mpd->inode;
++	struct folio *folio;
++	loff_t pos;
++	int ret;
++
++	folio = filemap_get_folio(inode->i_mapping,
++				  mpd->start_pos >> PAGE_SHIFT);
++	if (IS_ERR(folio))
++		return PTR_ERR(folio);
++	/*
++	 * The mapped position should be within the current processing folio
++	 * but must not be the folio start position.
++	 */
++	pos = ((loff_t)mpd->map.m_lblk) << inode->i_blkbits;
++	if (WARN_ON_ONCE((folio_pos(folio) == pos) ||
++			 !folio_contains(folio, pos >> PAGE_SHIFT)))
++		return -EINVAL;
++
++	ret = mpage_submit_folio(mpd, folio);
++	if (ret)
++		goto out;
++	/*
++	 * Update start_pos to prevent this folio from being released in
++	 * mpage_release_unused_pages(), it will be reset to the aligned folio
++	 * pos when this folio is written again in the next round. Additionally,
++	 * do not update wbc->nr_to_write here, as it will be updated once the
++	 * entire folio has finished processing.
++	 */
++	mpd->start_pos = pos;
++out:
++	folio_unlock(folio);
++	folio_put(folio);
++	return ret;
++}
++
+ /*
+  * mpage_map_and_submit_extent - map extent starting at mpd->lblk of length
+  *				 mpd->len and submit pages underlying it for IO
+@@ -2409,8 +2450,16 @@ static int mpage_map_and_submit_extent(handle_t *handle,
+ 			 */
+ 			if ((err == -ENOMEM) ||
+ 			    (err == -ENOSPC && ext4_count_free_clusters(sb))) {
+-				if (progress)
++				/*
++				 * We may have already allocated extents for
++				 * some bhs inside the folio, issue the
++				 * corresponding data to prevent stale data.
++				 */
++				if (progress) {
++					if (mpage_submit_partial_folio(mpd))
++						goto invalidate_dirty_pages;
+ 					goto update_disksize;
++				}
+ 				return err;
+ 			}
+ 			ext4_msg(sb, KERN_CRIT,
+-- 
+2.50.1
+
+
+From d1e633aeef31e41a2fe385831ac9eaea7c36458e Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:07 +0800
+Subject: [PATCH 07/40] ext4: refactor the block allocation process of
+ ext4_page_mkwrite()
+
+The block allocation process and error handling in ext4_page_mkwrite()
+is complex now. Refactor it by introducing a new helper function,
+ext4_block_page_mkwrite(). It will call ext4_block_write_begin() to
+allocate blocks instead of directly calling block_page_mkwrite().
+Preparing to implement retry logic in a subsequent patch to address
+situations where the reserved journal credits are insufficient.
+Additionally, this modification will help prevent potential deadlocks
+that may occur when waiting for folio writeback while holding the
+transaction handle.
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-5-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 95 ++++++++++++++++++++++++++-----------------------
+ 1 file changed, 50 insertions(+), 45 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index ceb68df19f1e6..f8946430304c9 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -6603,6 +6603,53 @@ static int ext4_bh_unmapped(handle_t *handle, struct inode *inode,
+ 	return !buffer_mapped(bh);
+ }
+ 
++static int ext4_block_page_mkwrite(struct inode *inode, struct folio *folio,
++				   get_block_t get_block)
++{
++	handle_t *handle;
++	loff_t size;
++	unsigned long len;
++	int ret;
++
++	handle = ext4_journal_start(inode, EXT4_HT_WRITE_PAGE,
++				    ext4_writepage_trans_blocks(inode));
++	if (IS_ERR(handle))
++		return PTR_ERR(handle);
++
++	folio_lock(folio);
++	size = i_size_read(inode);
++	/* Page got truncated from under us? */
++	if (folio->mapping != inode->i_mapping || folio_pos(folio) > size) {
++		ret = -EFAULT;
++		goto out_error;
++	}
++
++	len = folio_size(folio);
++	if (folio_pos(folio) + len > size)
++		len = size - folio_pos(folio);
++
++	ret = ext4_block_write_begin(handle, folio, 0, len, get_block);
++	if (ret)
++		goto out_error;
++
++	if (!ext4_should_journal_data(inode)) {
++		block_commit_write(folio, 0, len);
++		folio_mark_dirty(folio);
++	} else {
++		ret = ext4_journal_folio_buffers(handle, folio, len);
++		if (ret)
++			goto out_error;
++	}
++	ext4_journal_stop(handle);
++	folio_wait_stable(folio);
++	return ret;
++
++out_error:
++	folio_unlock(folio);
++	ext4_journal_stop(handle);
++	return ret;
++}
++
+ vm_fault_t ext4_page_mkwrite(struct vm_fault *vmf)
+ {
+ 	struct vm_area_struct *vma = vmf->vma;
+@@ -6614,8 +6661,7 @@ vm_fault_t ext4_page_mkwrite(struct vm_fault *vmf)
+ 	struct file *file = vma->vm_file;
+ 	struct inode *inode = file_inode(file);
+ 	struct address_space *mapping = inode->i_mapping;
+-	handle_t *handle;
+-	get_block_t *get_block;
++	get_block_t *get_block = ext4_get_block;
+ 	int retries = 0;
+ 
+ 	if (unlikely(IS_IMMUTABLE(inode)))
+@@ -6683,46 +6729,9 @@ vm_fault_t ext4_page_mkwrite(struct vm_fault *vmf)
+ 	/* OK, we need to fill the hole... */
+ 	if (ext4_should_dioread_nolock(inode))
+ 		get_block = ext4_get_block_unwritten;
+-	else
+-		get_block = ext4_get_block;
+ retry_alloc:
+-	handle = ext4_journal_start(inode, EXT4_HT_WRITE_PAGE,
+-				    ext4_writepage_trans_blocks(inode));
+-	if (IS_ERR(handle)) {
+-		ret = VM_FAULT_SIGBUS;
+-		goto out;
+-	}
+-	/*
+-	 * Data journalling can't use block_page_mkwrite() because it
+-	 * will set_buffer_dirty() before do_journal_get_write_access()
+-	 * thus might hit warning messages for dirty metadata buffers.
+-	 */
+-	if (!ext4_should_journal_data(inode)) {
+-		err = block_page_mkwrite(vma, vmf, get_block);
+-	} else {
+-		folio_lock(folio);
+-		size = i_size_read(inode);
+-		/* Page got truncated from under us? */
+-		if (folio->mapping != mapping || folio_pos(folio) > size) {
+-			ret = VM_FAULT_NOPAGE;
+-			goto out_error;
+-		}
+-
+-		len = folio_size(folio);
+-		if (folio_pos(folio) + len > size)
+-			len = size - folio_pos(folio);
+-
+-		err = ext4_block_write_begin(handle, folio, 0, len,
+-					     ext4_get_block);
+-		if (!err) {
+-			ret = VM_FAULT_SIGBUS;
+-			if (ext4_journal_folio_buffers(handle, folio, len))
+-				goto out_error;
+-		} else {
+-			folio_unlock(folio);
+-		}
+-	}
+-	ext4_journal_stop(handle);
++	/* Start journal and allocate blocks */
++	err = ext4_block_page_mkwrite(inode, folio, get_block);
+ 	if (err == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
+ 		goto retry_alloc;
+ out_ret:
+@@ -6731,8 +6740,4 @@ vm_fault_t ext4_page_mkwrite(struct vm_fault *vmf)
+ 	filemap_invalidate_unlock_shared(mapping);
+ 	sb_end_pagefault(inode->i_sb);
+ 	return ret;
+-out_error:
+-	folio_unlock(folio);
+-	ext4_journal_stop(handle);
+-	goto out;
+ }
+-- 
+2.50.1
+
+
+From be8ff7ce1f2238bb86cb7311ebfecc0d6a7bf913 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:08 +0800
+Subject: [PATCH 08/40] ext4: restart handle if credits are insufficient during
+ allocating blocks
+
+After large folios are supported on ext4, writing back a sufficiently
+large and discontinuous folio may consume a significant number of
+journal credits, placing considerable strain on the journal. For
+example, in a 20GB filesystem with 1K block size and 1MB journal size,
+writing back a 2MB folio could require thousands of credits in the
+worst-case scenario (when each block is discontinuous and distributed
+across different block groups), potentially exceeding the journal size.
+This issue can also occur in ext4_write_begin() and ext4_page_mkwrite()
+when delalloc is not enabled.
+
+Fix this by ensuring that there are sufficient journal credits before
+allocating an extent in mpage_map_one_extent() and
+ext4_block_write_begin(). If there are not enough credits, return
+-EAGAIN, exit the current mapping loop, restart a new handle and a new
+transaction, and allocating blocks on this folio again in the next
+iteration.
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-6-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 41 ++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 36 insertions(+), 5 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index f8946430304c9..74b7ba2afb679 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -875,6 +875,26 @@ static void ext4_update_bh_state(struct buffer_head *bh, unsigned long flags)
+ 	} while (unlikely(!try_cmpxchg(&bh->b_state, &old_state, new_state)));
+ }
+ 
++/*
++ * Make sure that the current journal transaction has enough credits to map
++ * one extent. Return -EAGAIN if it cannot extend the current running
++ * transaction.
++ */
++static inline int ext4_journal_ensure_extent_credits(handle_t *handle,
++						     struct inode *inode)
++{
++	int credits;
++	int ret;
++
++	/* Called from ext4_da_write_begin() which has no handle started? */
++	if (!handle)
++		return 0;
++
++	credits = ext4_chunk_trans_blocks(inode, 1);
++	ret = __ext4_journal_ensure_credits(handle, credits, credits, 0);
++	return ret <= 0 ? ret : -EAGAIN;
++}
++
+ static int _ext4_get_block(struct inode *inode, sector_t iblock,
+ 			   struct buffer_head *bh, int flags)
+ {
+@@ -1173,7 +1193,9 @@ int ext4_block_write_begin(handle_t *handle, struct folio *folio,
+ 			clear_buffer_new(bh);
+ 		if (!buffer_mapped(bh)) {
+ 			WARN_ON(bh->b_size != blocksize);
+-			err = get_block(inode, block, bh, 1);
++			err = ext4_journal_ensure_extent_credits(handle, inode);
++			if (!err)
++				err = get_block(inode, block, bh, 1);
+ 			if (err)
+ 				break;
+ 			if (buffer_new(bh)) {
+@@ -1372,8 +1394,9 @@ static int ext4_write_begin(struct file *file, struct address_space *mapping,
+ 				ext4_orphan_del(NULL, inode);
+ 		}
+ 
+-		if (ret == -ENOSPC &&
+-		    ext4_should_retry_alloc(inode->i_sb, &retries))
++		if (ret == -EAGAIN ||
++		    (ret == -ENOSPC &&
++		     ext4_should_retry_alloc(inode->i_sb, &retries)))
+ 			goto retry_journal;
+ 		folio_put(folio);
+ 		return ret;
+@@ -2321,6 +2344,11 @@ static int mpage_map_one_extent(handle_t *handle, struct mpage_da_data *mpd)
+ 	int get_blocks_flags;
+ 	int err, dioread_nolock;
+ 
++	/* Make sure transaction has enough credits for this extent */
++	err = ext4_journal_ensure_extent_credits(handle, inode);
++	if (err < 0)
++		return err;
++
+ 	trace_ext4_da_write_pages_extent(inode, map);
+ 	/*
+ 	 * Call ext4_map_blocks() to allocate any delayed allocation blocks, or
+@@ -2448,7 +2476,7 @@ static int mpage_map_and_submit_extent(handle_t *handle,
+ 			 * In the case of ENOSPC, if ext4_count_free_blocks()
+ 			 * is non-zero, a commit should free up blocks.
+ 			 */
+-			if ((err == -ENOMEM) ||
++			if ((err == -ENOMEM) || (err == -EAGAIN) ||
+ 			    (err == -ENOSPC && ext4_count_free_clusters(sb))) {
+ 				/*
+ 				 * We may have already allocated extents for
+@@ -2954,6 +2982,8 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 			ret = 0;
+ 			continue;
+ 		}
++		if (ret == -EAGAIN)
++			ret = 0;
+ 		/* Fatal error - ENOMEM, EIO... */
+ 		if (ret)
+ 			break;
+@@ -6732,7 +6762,8 @@ vm_fault_t ext4_page_mkwrite(struct vm_fault *vmf)
+ retry_alloc:
+ 	/* Start journal and allocate blocks */
+ 	err = ext4_block_page_mkwrite(inode, folio, get_block);
+-	if (err == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries))
++	if (err == -EAGAIN ||
++	    (err == -ENOSPC && ext4_should_retry_alloc(inode->i_sb, &retries)))
+ 		goto retry_alloc;
+ out_ret:
+ 	ret = vmf_fs_error(err);
+-- 
+2.50.1
+
+
+From a90b381079531466edb86b37c0af493a1ede6b4c Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:09 +0800
+Subject: [PATCH 09/40] ext4: enhance tracepoints during the folios writeback
+
+After mpage_map_and_submit_extent() supports restarting handle if
+credits are insufficient during allocating blocks, it is more likely to
+exit the current mapping iteration and continue to process the current
+processing partially mapped folio again. The existing tracepoints are
+not sufficient to track this situation, so enhance the tracepoints to
+track the writeback position and the return value before and after
+submitting the folios.
+
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-7-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c             |  5 ++++-
+ include/trace/events/ext4.h | 42 ++++++++++++++++++++++++++++++++-----
+ 2 files changed, 41 insertions(+), 6 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 74b7ba2afb679..2b1d158b3f18f 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2933,7 +2933,8 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 		}
+ 		mpd->do_map = 1;
+ 
+-		trace_ext4_da_write_pages(inode, mpd->start_pos, wbc);
++		trace_ext4_da_write_folios_start(inode, mpd->start_pos,
++				mpd->next_pos, wbc);
+ 		ret = mpage_prepare_extent_to_map(mpd);
+ 		if (!ret && mpd->map.m_len)
+ 			ret = mpage_map_and_submit_extent(handle, mpd,
+@@ -2971,6 +2972,8 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 		} else
+ 			ext4_put_io_end(mpd->io_submit.io_end);
+ 		mpd->io_submit.io_end = NULL;
++		trace_ext4_da_write_folios_end(inode, mpd->start_pos,
++				mpd->next_pos, wbc, ret);
+ 
+ 		if (ret == -ENOSPC && sbi->s_journal) {
+ 			/*
+diff --git a/include/trace/events/ext4.h b/include/trace/events/ext4.h
+index 62d52997b5c64..845451077c418 100644
+--- a/include/trace/events/ext4.h
++++ b/include/trace/events/ext4.h
+@@ -482,16 +482,17 @@ TRACE_EVENT(ext4_writepages,
+ 		  (unsigned long) __entry->writeback_index)
+ );
+ 
+-TRACE_EVENT(ext4_da_write_pages,
+-	TP_PROTO(struct inode *inode, loff_t start_pos,
++TRACE_EVENT(ext4_da_write_folios_start,
++	TP_PROTO(struct inode *inode, loff_t start_pos, loff_t next_pos,
+ 		 struct writeback_control *wbc),
+ 
+-	TP_ARGS(inode, start_pos, wbc),
++	TP_ARGS(inode, start_pos, next_pos, wbc),
+ 
+ 	TP_STRUCT__entry(
+ 		__field(	dev_t,	dev			)
+ 		__field(	ino_t,	ino			)
+ 		__field(       loff_t,	start_pos		)
++		__field(       loff_t,	next_pos		)
+ 		__field(	 long,	nr_to_write		)
+ 		__field(	  int,	sync_mode		)
+ 	),
+@@ -500,16 +501,47 @@ TRACE_EVENT(ext4_da_write_pages,
+ 		__entry->dev		= inode->i_sb->s_dev;
+ 		__entry->ino		= inode->i_ino;
+ 		__entry->start_pos	= start_pos;
++		__entry->next_pos	= next_pos;
+ 		__entry->nr_to_write	= wbc->nr_to_write;
+ 		__entry->sync_mode	= wbc->sync_mode;
+ 	),
+ 
+-	TP_printk("dev %d,%d ino %lu start_pos 0x%llx nr_to_write %ld sync_mode %d",
++	TP_printk("dev %d,%d ino %lu start_pos 0x%llx next_pos 0x%llx nr_to_write %ld sync_mode %d",
+ 		  MAJOR(__entry->dev), MINOR(__entry->dev),
+-		  (unsigned long) __entry->ino, __entry->start_pos,
++		  (unsigned long) __entry->ino, __entry->start_pos, __entry->next_pos,
+ 		  __entry->nr_to_write, __entry->sync_mode)
+ );
+ 
++TRACE_EVENT(ext4_da_write_folios_end,
++	TP_PROTO(struct inode *inode, loff_t start_pos, loff_t next_pos,
++		 struct writeback_control *wbc, int ret),
++
++	TP_ARGS(inode, start_pos, next_pos, wbc, ret),
++
++	TP_STRUCT__entry(
++		__field(	dev_t,	dev			)
++		__field(	ino_t,	ino			)
++		__field(       loff_t,	start_pos		)
++		__field(       loff_t,	next_pos		)
++		__field(	 long,	nr_to_write		)
++		__field(	  int,	ret			)
++	),
++
++	TP_fast_assign(
++		__entry->dev		= inode->i_sb->s_dev;
++		__entry->ino		= inode->i_ino;
++		__entry->start_pos	= start_pos;
++		__entry->next_pos	= next_pos;
++		__entry->nr_to_write	= wbc->nr_to_write;
++		__entry->ret		= ret;
++	),
++
++	TP_printk("dev %d,%d ino %lu start_pos 0x%llx next_pos 0x%llx nr_to_write %ld ret %d",
++		  MAJOR(__entry->dev), MINOR(__entry->dev),
++		  (unsigned long) __entry->ino, __entry->start_pos, __entry->next_pos,
++		  __entry->nr_to_write, __entry->ret)
++);
++
+ TRACE_EVENT(ext4_da_write_pages_extent,
+ 	TP_PROTO(struct inode *inode, struct ext4_map_blocks *map),
+ 
+-- 
+2.50.1
+
+
+From f6de88b8f01e80ccb6ddea7e3ebd2bef22598c6c Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:10 +0800
+Subject: [PATCH 10/40] ext4: correct the reserved credits for extent
+ conversion
+
+Now, we reserve journal credits for converting extents in only one page
+to written state when the I/O operation is complete. This is
+insufficient when large folio is enabled.
+
+Fix this by reserving credits for converting up to one extent per block in
+the largest 2MB folio, this calculation should only involve extents index
+and leaf blocks, so it should not estimate too many credits.
+
+Fixes: 7ac67301e82f ("ext4: enable large folio for regular file")
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Baokun Li <libaokun1@huawei.com>
+Link: https://patch.msgid.link/20250707140814.542883-8-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 2b1d158b3f18f..1d158e1de3a15 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2847,12 +2847,12 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 	mpd->journalled_more_data = 0;
+ 
+ 	if (ext4_should_dioread_nolock(inode)) {
++		int bpf = ext4_journal_blocks_per_folio(inode);
+ 		/*
+ 		 * We may need to convert up to one extent per block in
+-		 * the page and we may dirty the inode.
++		 * the folio and we may dirty the inode.
+ 		 */
+-		rsv_blocks = 1 + ext4_chunk_trans_blocks(inode,
+-						PAGE_SIZE >> inode->i_blkbits);
++		rsv_blocks = 1 + ext4_ext_index_trans_blocks(inode, bpf);
+ 	}
+ 
+ 	if (wbc->range_start == 0 && wbc->range_end == LLONG_MAX)
+-- 
+2.50.1
+
+
+From c85667d973570c74af731ef07df3ea2ce29c19c3 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:11 +0800
+Subject: [PATCH 11/40] ext4: reserved credits for one extent during the folio
+ writeback
+
+After ext4 supports large folios, reserving journal credits for one
+maximum-ordered folio based on the worst case cenario during the
+writeback process can easily exceed the maximum transaction credits.
+Additionally, reserving journal credits for one page is also no
+longer appropriate.
+
+Currently, the folio writeback process can either extend the journal
+credits or initiate a new transaction if the currently reserved journal
+credits are insufficient. Therefore, it can be modified to reserve
+credits for only one extent at the outset. In most cases involving
+continuous mapping, these credits are generally adequate, and we may
+only need to perform some basic credit expansion. However, in extreme
+cases where the block size and folio size differ significantly, or when
+the folios are sufficiently discontinuous, it may be necessary to
+restart a new transaction and resubmit the folios.
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-9-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 25 ++++++++-----------------
+ 1 file changed, 8 insertions(+), 17 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 1d158e1de3a15..5230af8798143 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -2545,21 +2545,6 @@ static int mpage_map_and_submit_extent(handle_t *handle,
+ 	return err;
+ }
+ 
+-/*
+- * Calculate the total number of credits to reserve for one writepages
+- * iteration. This is called from ext4_writepages(). We map an extent of
+- * up to MAX_WRITEPAGES_EXTENT_LEN blocks and then we go on and finish mapping
+- * the last partial page. So in total we can map MAX_WRITEPAGES_EXTENT_LEN +
+- * bpp - 1 blocks in bpp different extents.
+- */
+-static int ext4_da_writepages_trans_blocks(struct inode *inode)
+-{
+-	int bpp = ext4_journal_blocks_per_folio(inode);
+-
+-	return ext4_meta_trans_blocks(inode,
+-				MAX_WRITEPAGES_EXTENT_LEN + bpp - 1, bpp);
+-}
+-
+ static int ext4_journal_folio_buffers(handle_t *handle, struct folio *folio,
+ 				     size_t len)
+ {
+@@ -2916,8 +2901,14 @@ static int ext4_do_writepages(struct mpage_da_data *mpd)
+ 		 * not supported by delalloc.
+ 		 */
+ 		BUG_ON(ext4_should_journal_data(inode));
+-		needed_blocks = ext4_da_writepages_trans_blocks(inode);
+-
++		/*
++		 * Calculate the number of credits needed to reserve for one
++		 * extent of up to MAX_WRITEPAGES_EXTENT_LEN blocks. It will
++		 * attempt to extend the transaction or start a new iteration
++		 * if the reserved credits are insufficient.
++		 */
++		needed_blocks = ext4_chunk_trans_blocks(inode,
++						MAX_WRITEPAGES_EXTENT_LEN);
+ 		/* start a new transaction */
+ 		handle = ext4_journal_start_with_reserve(inode,
+ 				EXT4_HT_WRITE_PAGE, needed_blocks, rsv_blocks);
+-- 
+2.50.1
+
+
+From f1cca883a25ed2078b38844577c35a6866f5ca80 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:12 +0800
+Subject: [PATCH 12/40] ext4: replace ext4_writepage_trans_blocks()
+
+After ext4 supports large folios, the semantics of reserving credits in
+pages is no longer applicable. In most scenarios, reserving credits in
+extents is sufficient. Therefore, introduce ext4_chunk_trans_extent()
+to replace ext4_writepage_trans_blocks(). move_extent_per_page() is the
+only remaining location where we are still processing extents in pages.
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-10-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h        |  2 +-
+ fs/ext4/extents.c     |  6 +++---
+ fs/ext4/inline.c      |  6 +++---
+ fs/ext4/inode.c       | 33 +++++++++++++++------------------
+ fs/ext4/move_extent.c |  3 ++-
+ fs/ext4/xattr.c       |  2 +-
+ 6 files changed, 25 insertions(+), 27 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 18373de980f27..f705046ba6c67 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -3064,9 +3064,9 @@ extern int ext4_punch_hole(struct file *file, loff_t offset, loff_t length);
+ extern void ext4_set_inode_flags(struct inode *, bool init);
+ extern int ext4_alloc_da_blocks(struct inode *inode);
+ extern void ext4_set_aops(struct inode *inode);
+-extern int ext4_writepage_trans_blocks(struct inode *);
+ extern int ext4_normal_submit_inode_data_buffers(struct jbd2_inode *jinode);
+ extern int ext4_chunk_trans_blocks(struct inode *, int nrblocks);
++extern int ext4_chunk_trans_extent(struct inode *inode, int nrblocks);
+ extern int ext4_meta_trans_blocks(struct inode *inode, int lblocks,
+ 				  int pextents);
+ extern int ext4_zero_partial_blocks(handle_t *handle, struct inode *inode,
+diff --git a/fs/ext4/extents.c b/fs/ext4/extents.c
+index b543a46fc8096..f0f1554586978 100644
+--- a/fs/ext4/extents.c
++++ b/fs/ext4/extents.c
+@@ -5171,7 +5171,7 @@ ext4_ext_shift_path_extents(struct ext4_ext_path *path, ext4_lblk_t shift,
+ 				credits = depth + 2;
+ 			}
+ 
+-			restart_credits = ext4_writepage_trans_blocks(inode);
++			restart_credits = ext4_chunk_trans_extent(inode, 0);
+ 			err = ext4_datasem_ensure_credits(handle, inode, credits,
+ 					restart_credits, 0);
+ 			if (err) {
+@@ -5431,7 +5431,7 @@ static int ext4_collapse_range(struct file *file, loff_t offset, loff_t len)
+ 
+ 	truncate_pagecache(inode, start);
+ 
+-	credits = ext4_writepage_trans_blocks(inode);
++	credits = ext4_chunk_trans_extent(inode, 0);
+ 	handle = ext4_journal_start(inode, EXT4_HT_TRUNCATE, credits);
+ 	if (IS_ERR(handle))
+ 		return PTR_ERR(handle);
+@@ -5527,7 +5527,7 @@ static int ext4_insert_range(struct file *file, loff_t offset, loff_t len)
+ 
+ 	truncate_pagecache(inode, start);
+ 
+-	credits = ext4_writepage_trans_blocks(inode);
++	credits = ext4_chunk_trans_extent(inode, 0);
+ 	handle = ext4_journal_start(inode, EXT4_HT_TRUNCATE, credits);
+ 	if (IS_ERR(handle))
+ 		return PTR_ERR(handle);
+diff --git a/fs/ext4/inline.c b/fs/ext4/inline.c
+index a1bbcdf408247..d5b32d242495a 100644
+--- a/fs/ext4/inline.c
++++ b/fs/ext4/inline.c
+@@ -562,7 +562,7 @@ static int ext4_convert_inline_data_to_extent(struct address_space *mapping,
+ 		return 0;
+ 	}
+ 
+-	needed_blocks = ext4_writepage_trans_blocks(inode);
++	needed_blocks = ext4_chunk_trans_extent(inode, 1);
+ 
+ 	ret = ext4_get_inode_loc(inode, &iloc);
+ 	if (ret)
+@@ -1864,7 +1864,7 @@ int ext4_inline_data_truncate(struct inode *inode, int *has_inline)
+ 	};
+ 
+ 
+-	needed_blocks = ext4_writepage_trans_blocks(inode);
++	needed_blocks = ext4_chunk_trans_extent(inode, 1);
+ 	handle = ext4_journal_start(inode, EXT4_HT_INODE, needed_blocks);
+ 	if (IS_ERR(handle))
+ 		return PTR_ERR(handle);
+@@ -1979,7 +1979,7 @@ int ext4_convert_inline_data(struct inode *inode)
+ 			return 0;
+ 	}
+ 
+-	needed_blocks = ext4_writepage_trans_blocks(inode);
++	needed_blocks = ext4_chunk_trans_extent(inode, 1);
+ 
+ 	iloc.bh = NULL;
+ 	error = ext4_get_inode_loc(inode, &iloc);
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 5230af8798143..13b25f41c134b 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -1294,7 +1294,8 @@ static int ext4_write_begin(struct file *file, struct address_space *mapping,
+ 	 * Reserve one block more for addition to orphan list in case
+ 	 * we allocate blocks but write fails for some reason
+ 	 */
+-	needed_blocks = ext4_writepage_trans_blocks(inode) + 1;
++	needed_blocks = ext4_chunk_trans_extent(inode,
++			ext4_journal_blocks_per_folio(inode)) + 1;
+ 	index = pos >> PAGE_SHIFT;
+ 
+ 	if (ext4_test_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA)) {
+@@ -4461,7 +4462,7 @@ int ext4_punch_hole(struct file *file, loff_t offset, loff_t length)
+ 		return ret;
+ 
+ 	if (ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))
+-		credits = ext4_writepage_trans_blocks(inode);
++		credits = ext4_chunk_trans_extent(inode, 2);
+ 	else
+ 		credits = ext4_blocks_for_truncate(inode);
+ 	handle = ext4_journal_start(inode, EXT4_HT_TRUNCATE, credits);
+@@ -4610,7 +4611,7 @@ int ext4_truncate(struct inode *inode)
+ 	}
+ 
+ 	if (ext4_test_inode_flag(inode, EXT4_INODE_EXTENTS))
+-		credits = ext4_writepage_trans_blocks(inode);
++		credits = ext4_chunk_trans_extent(inode, 1);
+ 	else
+ 		credits = ext4_blocks_for_truncate(inode);
+ 
+@@ -6237,25 +6238,19 @@ int ext4_meta_trans_blocks(struct inode *inode, int lblocks, int pextents)
+ }
+ 
+ /*
+- * Calculate the total number of credits to reserve to fit
+- * the modification of a single pages into a single transaction,
+- * which may include multiple chunks of block allocations.
+- *
+- * This could be called via ext4_write_begin()
+- *
+- * We need to consider the worse case, when
+- * one new block per extent.
++ * Calculate the journal credits for modifying the number of blocks
++ * in a single extent within one transaction. 'nrblocks' is used only
++ * for non-extent inodes. For extent type inodes, 'nrblocks' can be
++ * zero if the exact number of blocks is unknown.
+  */
+-int ext4_writepage_trans_blocks(struct inode *inode)
++int ext4_chunk_trans_extent(struct inode *inode, int nrblocks)
+ {
+-	int bpp = ext4_journal_blocks_per_folio(inode);
+ 	int ret;
+ 
+-	ret = ext4_meta_trans_blocks(inode, bpp, bpp);
+-
++	ret = ext4_meta_trans_blocks(inode, nrblocks, 1);
+ 	/* Account for data blocks for journalled mode */
+ 	if (ext4_should_journal_data(inode))
+-		ret += bpp;
++		ret += nrblocks;
+ 	return ret;
+ }
+ 
+@@ -6633,10 +6628,12 @@ static int ext4_block_page_mkwrite(struct inode *inode, struct folio *folio,
+ 	handle_t *handle;
+ 	loff_t size;
+ 	unsigned long len;
++	int credits;
+ 	int ret;
+ 
+-	handle = ext4_journal_start(inode, EXT4_HT_WRITE_PAGE,
+-				    ext4_writepage_trans_blocks(inode));
++	credits = ext4_chunk_trans_extent(inode,
++			ext4_journal_blocks_per_folio(inode));
++	handle = ext4_journal_start(inode, EXT4_HT_WRITE_PAGE, credits);
+ 	if (IS_ERR(handle))
+ 		return PTR_ERR(handle);
+ 
+diff --git a/fs/ext4/move_extent.c b/fs/ext4/move_extent.c
+index 1f8493a56e8f6..adae3caf175a9 100644
+--- a/fs/ext4/move_extent.c
++++ b/fs/ext4/move_extent.c
+@@ -280,7 +280,8 @@ move_extent_per_page(struct file *o_filp, struct inode *donor_inode,
+ 	 */
+ again:
+ 	*err = 0;
+-	jblocks = ext4_writepage_trans_blocks(orig_inode) * 2;
++	jblocks = ext4_meta_trans_blocks(orig_inode, block_len_in_page,
++					 block_len_in_page) * 2;
+ 	handle = ext4_journal_start(orig_inode, EXT4_HT_MOVE_EXTENTS, jblocks);
+ 	if (IS_ERR(handle)) {
+ 		*err = PTR_ERR(handle);
+diff --git a/fs/ext4/xattr.c b/fs/ext4/xattr.c
+index 8d15acbacc203..3fb93247330d1 100644
+--- a/fs/ext4/xattr.c
++++ b/fs/ext4/xattr.c
+@@ -962,7 +962,7 @@ int __ext4_xattr_set_credits(struct super_block *sb, struct inode *inode,
+ 	 * so we need to reserve credits for this eventuality
+ 	 */
+ 	if (inode && ext4_has_inline_data(inode))
+-		credits += ext4_writepage_trans_blocks(inode) + 1;
++		credits += ext4_chunk_trans_extent(inode, 1) + 1;
+ 
+ 	/* We are done if ea_inode feature is not enabled. */
+ 	if (!ext4_has_feature_ea_inode(sb))
+-- 
+2.50.1
+
+
+From d08e5d4411188949a41fc5cfc7d17e803815b94d Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:13 +0800
+Subject: [PATCH 13/40] ext4: fix insufficient credits calculation in
+ ext4_meta_trans_blocks()
+
+The calculation of journal credits in ext4_meta_trans_blocks() should
+include pextents, as each extent separately may be allocated from a
+different group and thus need to update different bitmap and group
+descriptor block.
+
+Fixes: 0e32d8617012 ("ext4: correct the journal credits calculations of allocating blocks")
+Reported-by: Jan Kara <jack@suse.cz>
+Closes: https://lore.kernel.org/linux-ext4/nhxfuu53wyacsrq7xqgxvgzcggyscu2tbabginahcygvmc45hy@t4fvmyeky33e/
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Baokun Li <libaokun1@huawei.com>
+Link: https://patch.msgid.link/20250707140814.542883-11-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inode.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 13b25f41c134b..4a0ba009c88e7 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -6212,7 +6212,7 @@ int ext4_meta_trans_blocks(struct inode *inode, int lblocks, int pextents)
+ 	int ret;
+ 
+ 	/*
+-	 * How many index and lead blocks need to touch to map @lblocks
++	 * How many index and leaf blocks need to touch to map @lblocks
+ 	 * logical blocks to @pextents physical extents?
+ 	 */
+ 	idxblocks = ext4_index_trans_blocks(inode, lblocks, pextents);
+@@ -6221,7 +6221,7 @@ int ext4_meta_trans_blocks(struct inode *inode, int lblocks, int pextents)
+ 	 * Now let's see how many group bitmaps and group descriptors need
+ 	 * to account
+ 	 */
+-	groups = idxblocks;
++	groups = idxblocks + pextents;
+ 	gdpblocks = groups;
+ 	if (groups > ngroups)
+ 		groups = ngroups;
+-- 
+2.50.1
+
+
+From 5e7ce041a116555d40f11d79db3d56e98fc38a1e Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Mon, 7 Jul 2025 22:08:14 +0800
+Subject: [PATCH 14/40] ext4: limit the maximum folio order
+
+In environments with a page size of 64KB, the maximum size of a folio
+can reach up to 128MB. Consequently, during the write-back of folios,
+the 'rsv_blocks' will be overestimated to 1,577, which can make
+pressure on the journal space where the journal is small. This can
+easily exceed the limit of a single transaction. Besides, an excessively
+large folio is meaningless and will instead increase the overhead of
+traversing the bhs within the folio. Therefore, limit the maximum order
+of a folio to 2048 filesystem blocks.
+
+Reported-by: Naresh Kamboju <naresh.kamboju@linaro.org>
+Reported-by: Joseph Qi <jiangqi903@gmail.com>
+Closes: https://lore.kernel.org/linux-ext4/CA+G9fYsyYQ3ZL4xaSg1-Tt5Evto7Zd+hgNWZEa9cQLbahA1+xg@mail.gmail.com/
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Tested-by: Joseph Qi <joseph.qi@linux.alibaba.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250707140814.542883-12-yi.zhang@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h   |  2 +-
+ fs/ext4/ialloc.c |  3 +--
+ fs/ext4/inode.c  | 22 +++++++++++++++++++---
+ 3 files changed, 21 insertions(+), 6 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index f705046ba6c67..9ac0a7d4fa0cd 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -3020,7 +3020,7 @@ int ext4_walk_page_buffers(handle_t *handle,
+ 				     struct buffer_head *bh));
+ int do_journal_get_write_access(handle_t *handle, struct inode *inode,
+ 				struct buffer_head *bh);
+-bool ext4_should_enable_large_folio(struct inode *inode);
++void ext4_set_inode_mapping_order(struct inode *inode);
+ #define FALL_BACK_TO_NONDELALLOC 1
+ #define CONVERT_INLINE_DATA	 2
+ 
+diff --git a/fs/ext4/ialloc.c b/fs/ext4/ialloc.c
+index 79aa3df8d0197..df4051613b290 100644
+--- a/fs/ext4/ialloc.c
++++ b/fs/ext4/ialloc.c
+@@ -1335,8 +1335,7 @@ struct inode *__ext4_new_inode(struct mnt_idmap *idmap,
+ 		}
+ 	}
+ 
+-	if (ext4_should_enable_large_folio(inode))
+-		mapping_set_large_folios(inode->i_mapping);
++	ext4_set_inode_mapping_order(inode);
+ 
+ 	ext4_update_inode_fsync_trans(handle, inode, 1);
+ 
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 4a0ba009c88e7..8bdf2029ebc74 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -5179,7 +5179,7 @@ static int check_igot_inode(struct inode *inode, ext4_iget_flags flags,
+ 	return -EFSCORRUPTED;
+ }
+ 
+-bool ext4_should_enable_large_folio(struct inode *inode)
++static bool ext4_should_enable_large_folio(struct inode *inode)
+ {
+ 	struct super_block *sb = inode->i_sb;
+ 
+@@ -5196,6 +5196,22 @@ bool ext4_should_enable_large_folio(struct inode *inode)
+ 	return true;
+ }
+ 
++/*
++ * Limit the maximum folio order to 2048 blocks to prevent overestimation
++ * of reserve handle credits during the folio writeback in environments
++ * where the PAGE_SIZE exceeds 4KB.
++ */
++#define EXT4_MAX_PAGECACHE_ORDER(i)		\
++		umin(MAX_PAGECACHE_ORDER, (11 + (i)->i_blkbits - PAGE_SHIFT))
++void ext4_set_inode_mapping_order(struct inode *inode)
++{
++	if (!ext4_should_enable_large_folio(inode))
++		return;
++
++	mapping_set_folio_order_range(inode->i_mapping, 0,
++				      EXT4_MAX_PAGECACHE_ORDER(inode));
++}
++
+ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
+ 			  ext4_iget_flags flags, const char *function,
+ 			  unsigned int line)
+@@ -5513,8 +5529,8 @@ struct inode *__ext4_iget(struct super_block *sb, unsigned long ino,
+ 		ret = -EFSCORRUPTED;
+ 		goto bad_inode;
+ 	}
+-	if (ext4_should_enable_large_folio(inode))
+-		mapping_set_large_folios(inode->i_mapping);
++
++	ext4_set_inode_mapping_order(inode);
+ 
+ 	ret = check_igot_inode(inode, flags, function, line);
+ 	/*
+-- 
+2.50.1
+
+
+From 77dd640629a21e3715d89e20509c6499cb6a8b1a Mon Sep 17 00:00:00 2001
+From: I Hsin Cheng <richard120310@gmail.com>
+Date: Tue, 8 Jul 2025 10:00:13 +0800
+Subject: [PATCH 15/40] ext4: Refactor breaking condition for
+ xattr_find_entry()
+
+Refactor the condition for breaking the loop within xattr_find_entry().
+Elimate the usage of "<=" and take condition shortcut when "!cmp" is
+true.
+
+Originally, the condition was "(cmp <= 0 && (sorted || cmp == 0))", which
+means after it knows "cmp <= 0" is true, it has to check the value of
+"sorted" and "cmp". The checking of "cmp" here would be redundant since
+it has already checked it.
+
+Observing from the logic, when "cmp == 0" the branch is going to be true,
+no need to check "cmp == 0" again, so we only need to take shortcut when
+"cmp == 0", on the other hand, we'll check "sorted" when "cmp < 0".
+
+The refactor can shrink the generated code size by 44 bytes. Numerous
+instructions can be saved thus should also benefit execution efficiency
+as well.
+
+$ ./scripts/bloat-o-meter vmlinux_old vmlinux_new
+add/remove: 0/0 grow/shrink: 0/1 up/down: 0/-44 (-44)
+Function                                     old     new   delta
+xattr_find_entry                             300     256     -44
+Total: Before=22989434, After=22989390, chg -0.00%
+
+The test is done on kernel version 6.16 with x86_64 defconfig
+and gcc 13.3.0.
+
+Signed-off-by: I Hsin Cheng <richard120310@gmail.com>
+Link: https://patch.msgid.link/20250708020013.175728-1-richard120310@gmail.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/xattr.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/ext4/xattr.c b/fs/ext4/xattr.c
+index 3fb93247330d1..5a6fe1513fd20 100644
+--- a/fs/ext4/xattr.c
++++ b/fs/ext4/xattr.c
+@@ -338,7 +338,7 @@ xattr_find_entry(struct inode *inode, struct ext4_xattr_entry **pentry,
+ 			cmp = name_len - entry->e_name_len;
+ 		if (!cmp)
+ 			cmp = memcmp(name, entry->e_name, name_len);
+-		if (cmp <= 0 && (sorted || cmp == 0))
++		if (!cmp || (cmp < 0 && sorted))
+ 			break;
+ 	}
+ 	*pentry = entry;
+-- 
+2.50.1
+
+
+From 307922cfd52b65bb7c0afc9dd93fd463fe351b62 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Tue, 8 Jul 2025 19:15:04 +0800
+Subject: [PATCH 16/40] ext4: fix inode use after free in
+ ext4_end_io_rsv_work()
+
+In ext4_io_end_defer_completion(), check if io_end->list_vec is empty to
+avoid adding an io_end that requires no conversion to the
+i_rsv_conversion_list, which in turn prevents starting an unnecessary
+worker. An ext4_emergency_state() check is also added to avoid attempting
+to abort the journal in an emergency state.
+
+Additionally, ext4_put_io_end_defer() is refactored to call
+ext4_io_end_defer_completion() directly instead of being open-coded.
+This also prevents starting an unnecessary worker when EXT4_IO_END_FAILED
+is set but data_err=abort is not enabled.
+
+This ensures that the check in ext4_put_io_end_defer() is consistent with
+the check in ext4_end_bio(). Otherwise, we might add an io_end to the
+i_rsv_conversion_list and then call ext4_finish_bio(), after which the
+inode could be freed before ext4_end_io_rsv_work() is called, triggering
+a use-after-free issue.
+
+Fixes: ce51afb8cc5e ("ext4: abort journal on data writeback failure if in data_err=abort mode")
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250708111504.3208660-1-libaokun@huaweicloud.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/page-io.c | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/fs/ext4/page-io.c b/fs/ext4/page-io.c
+index 179e54f3a3b6a..3d8b0f6d2dea5 100644
+--- a/fs/ext4/page-io.c
++++ b/fs/ext4/page-io.c
+@@ -236,10 +236,12 @@ static void dump_completed_IO(struct inode *inode, struct list_head *head)
+ 
+ static bool ext4_io_end_defer_completion(ext4_io_end_t *io_end)
+ {
+-	if (io_end->flag & EXT4_IO_END_UNWRITTEN)
++	if (io_end->flag & EXT4_IO_END_UNWRITTEN &&
++	    !list_empty(&io_end->list_vec))
+ 		return true;
+ 	if (test_opt(io_end->inode->i_sb, DATA_ERR_ABORT) &&
+-	    io_end->flag & EXT4_IO_END_FAILED)
++	    io_end->flag & EXT4_IO_END_FAILED &&
++	    !ext4_emergency_state(io_end->inode->i_sb))
+ 		return true;
+ 	return false;
+ }
+@@ -256,6 +258,7 @@ static void ext4_add_complete_io(ext4_io_end_t *io_end)
+ 	WARN_ON(!(io_end->flag & EXT4_IO_END_DEFER_COMPLETION));
+ 	WARN_ON(io_end->flag & EXT4_IO_END_UNWRITTEN &&
+ 		!io_end->handle && sbi->s_journal);
++	WARN_ON(!io_end->bio);
+ 
+ 	spin_lock_irqsave(&ei->i_completed_io_lock, flags);
+ 	wq = sbi->rsv_conversion_wq;
+@@ -318,12 +321,9 @@ ext4_io_end_t *ext4_init_io_end(struct inode *inode, gfp_t flags)
+ void ext4_put_io_end_defer(ext4_io_end_t *io_end)
+ {
+ 	if (refcount_dec_and_test(&io_end->count)) {
+-		if (io_end->flag & EXT4_IO_END_FAILED ||
+-		    (io_end->flag & EXT4_IO_END_UNWRITTEN &&
+-		     !list_empty(&io_end->list_vec))) {
+-			ext4_add_complete_io(io_end);
+-			return;
+-		}
++		if (ext4_io_end_defer_completion(io_end))
++			return ext4_add_complete_io(io_end);
++
+ 		ext4_release_io_end(io_end);
+ 	}
+ }
+-- 
+2.50.1
+
+
+From d88e5e7291c4494a89d9326a701f72298302f153 Mon Sep 17 00:00:00 2001
+From: Jan Kara <jack@suse.cz>
+Date: Wed, 9 Jul 2025 10:48:32 +0200
+Subject: [PATCH 17/40] ext4: Make sure BH_New bit is cleared in ->write_end
+ handler
+
+Currently we clear BH_New bit in case of error and also in the standard
+ext4_write_end() handler (in block_commit_write()). However
+ext4_journalled_write_end() misses this clearing and thus we are leaving
+stale BH_New bits behind. Generally ext4_block_write_begin() clears
+these bits before any harm can be done but in case blocksize < pagesize
+and we hit some error when processing a page with these stale bits,
+we'll try to zero buffers with these stale BH_New bits and jbd2 will
+complain (as buffers were not prepared for writing in this transaction).
+Fix the problem by clearing BH_New bits in ext4_journalled_write_end()
+and WARN if ext4_block_write_begin() sees stale BH_New bits.
+
+Reported-by: Baolin Liu <liubaolin12138@163.com>
+Reported-by: Zhi Long <longzhi@sangfor.com.cn>
+Fixes: 3910b513fcdf ("ext4: persist the new uptodate buffers in ext4_journalled_zero_new_buffers")
+Signed-off-by: Jan Kara <jack@suse.cz>
+Link: https://patch.msgid.link/20250709084831.23876-2-jack@suse.cz
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inline.c | 2 ++
+ fs/ext4/inode.c  | 3 ++-
+ 2 files changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/fs/ext4/inline.c b/fs/ext4/inline.c
+index d5b32d242495a..121279f84bef3 100644
+--- a/fs/ext4/inline.c
++++ b/fs/ext4/inline.c
+@@ -612,6 +612,7 @@ static int ext4_convert_inline_data_to_extent(struct address_space *mapping,
+ 	} else
+ 		ret = ext4_block_write_begin(handle, folio, from, to,
+ 					     ext4_get_block);
++	clear_buffer_new(folio_buffers(folio));
+ 
+ 	if (!ret && ext4_should_journal_data(inode)) {
+ 		ret = ext4_walk_page_buffers(handle, inode,
+@@ -891,6 +892,7 @@ static int ext4_da_convert_inline_data_to_extent(struct address_space *mapping,
+ 		return ret;
+ 	}
+ 
++	clear_buffer_new(folio_buffers(folio));
+ 	folio_mark_dirty(folio);
+ 	folio_mark_uptodate(folio);
+ 	ext4_clear_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
+diff --git a/fs/ext4/inode.c b/fs/ext4/inode.c
+index 8bdf2029ebc74..eeccb6f588f99 100644
+--- a/fs/ext4/inode.c
++++ b/fs/ext4/inode.c
+@@ -1189,7 +1189,7 @@ int ext4_block_write_begin(handle_t *handle, struct folio *folio,
+ 			}
+ 			continue;
+ 		}
+-		if (buffer_new(bh))
++		if (WARN_ON_ONCE(buffer_new(bh)))
+ 			clear_buffer_new(bh);
+ 		if (!buffer_mapped(bh)) {
+ 			WARN_ON(bh->b_size != blocksize);
+@@ -1417,6 +1417,7 @@ static int write_end_fn(handle_t *handle, struct inode *inode,
+ 	ret = ext4_dirty_journalled_data(handle, bh);
+ 	clear_buffer_meta(bh);
+ 	clear_buffer_prio(bh);
++	clear_buffer_new(bh);
+ 	return ret;
+ }
+ 
+-- 
+2.50.1
+
+
+From 378f7935248a0653d854757052cc9aa4597c15e1 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Sat, 12 Jul 2025 14:12:47 -0400
+Subject: [PATCH 18/40] ext4: replace strcmp with direct comparison for '.' and
+ '..'
+
+In a discussion over a proposed patch, "ext4: replace strcpy() with
+'.' assignment"[1], I had asserted that directory entries in ext4 were
+not NUL terminated, and hence it was safe to replace strcpy() with a
+direct assignment.  As it turns out, this was incorrect.  It's true
+for all all directory entries *except* for '.' and '..' where the
+kernel was using strcmp() and where e2fsck actually checks and offers
+to fix things if '.'  and '..' are not NUL terminated.
+
+[1] https://lore.kernel.org/r/202505191316.JJMnPobO-lkp@intel.com
+
+We can't change this without breaking old kernel versions, but in the
+spirit of "be liberal in what you receive", use direct comparison of
+de->name_len and de->name[0,1] instead of strcmp().  This has the side
+benefit of reducing the compiled text size by 96 bytes on x86_64.
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+Link: https://patch.msgid.link/20250712181249.434530-1-tytso@mit.edu
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/namei.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
+index a178ac2294895..b82f5841c65a9 100644
+--- a/fs/ext4/namei.c
++++ b/fs/ext4/namei.c
+@@ -3082,7 +3082,8 @@ bool ext4_empty_dir(struct inode *inode)
+ 	de = (struct ext4_dir_entry_2 *) bh->b_data;
+ 	if (ext4_check_dir_entry(inode, NULL, de, bh, bh->b_data, bh->b_size,
+ 				 0) ||
+-	    le32_to_cpu(de->inode) != inode->i_ino || strcmp(".", de->name)) {
++	    le32_to_cpu(de->inode) != inode->i_ino || de->name_len != 1 ||
++	    de->name[0] != '.') {
+ 		ext4_warning_inode(inode, "directory missing '.'");
+ 		brelse(bh);
+ 		return false;
+@@ -3091,7 +3092,8 @@ bool ext4_empty_dir(struct inode *inode)
+ 	de = ext4_next_entry(de, sb->s_blocksize);
+ 	if (ext4_check_dir_entry(inode, NULL, de, bh, bh->b_data, bh->b_size,
+ 				 offset) ||
+-	    le32_to_cpu(de->inode) == 0 || strcmp("..", de->name)) {
++	    le32_to_cpu(de->inode) == 0 || de->name_len != 2 ||
++	    de->name[0] != '.' || de->name[1] != '.') {
+ 		ext4_warning_inode(inode, "directory missing '..'");
+ 		brelse(bh);
+ 		return false;
+@@ -3532,7 +3534,7 @@ static struct buffer_head *ext4_get_first_dir_block(handle_t *handle,
+ 		if (ext4_check_dir_entry(inode, NULL, de, bh, bh->b_data,
+ 					 bh->b_size, 0) ||
+ 		    le32_to_cpu(de->inode) != inode->i_ino ||
+-		    strcmp(".", de->name)) {
++		    de->name_len != 1 || de->name[0] != '.') {
+ 			EXT4_ERROR_INODE(inode, "directory missing '.'");
+ 			brelse(bh);
+ 			*retval = -EFSCORRUPTED;
+@@ -3543,7 +3545,8 @@ static struct buffer_head *ext4_get_first_dir_block(handle_t *handle,
+ 		de = ext4_next_entry(de, inode->i_sb->s_blocksize);
+ 		if (ext4_check_dir_entry(inode, NULL, de, bh, bh->b_data,
+ 					 bh->b_size, offset) ||
+-		    le32_to_cpu(de->inode) == 0 || strcmp("..", de->name)) {
++		    le32_to_cpu(de->inode) == 0 || de->name_len != 2 ||
++		    de->name[0] != '.' || de->name[1] != '.') {
+ 			EXT4_ERROR_INODE(inode, "directory missing '..'");
+ 			brelse(bh);
+ 			*retval = -EFSCORRUPTED;
+-- 
+2.50.1
+
+
+From 763854d27b30f5124ec8caf28e0f5ce21d7b831f Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Sat, 12 Jul 2025 14:12:48 -0400
+Subject: [PATCH 19/40] ext4: use memcpy() instead of strcpy()
+
+The strcpy() function is considered dangerous and eeeevil by people
+who are using sophisticated code analysis tools such as "grep".  This
+is true even when a quick inspection would show that the source is a
+constant string ("." or "..") and the destination is a fixed array
+which is guaranteed to have enough space.  Make the "grep" code
+analysis tool happy by using memcpy() isstead of strcpy().  :-)
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+Link: https://patch.msgid.link/20250712181249.434530-2-tytso@mit.edu
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inline.c | 4 ++--
+ fs/ext4/namei.c  | 4 ++--
+ 2 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/fs/ext4/inline.c b/fs/ext4/inline.c
+index 121279f84bef3..77e8b7707650e 100644
+--- a/fs/ext4/inline.c
++++ b/fs/ext4/inline.c
+@@ -1317,7 +1317,7 @@ int ext4_inlinedir_to_tree(struct file *dir_file,
+ 		if (pos == 0) {
+ 			fake.inode = cpu_to_le32(inode->i_ino);
+ 			fake.name_len = 1;
+-			strcpy(fake.name, ".");
++			memcpy(fake.name, ".", 2);
+ 			fake.rec_len = ext4_rec_len_to_disk(
+ 					  ext4_dir_rec_len(fake.name_len, NULL),
+ 					  inline_size);
+@@ -1327,7 +1327,7 @@ int ext4_inlinedir_to_tree(struct file *dir_file,
+ 		} else if (pos == EXT4_INLINE_DOTDOT_OFFSET) {
+ 			fake.inode = cpu_to_le32(parent_ino);
+ 			fake.name_len = 2;
+-			strcpy(fake.name, "..");
++			memcpy(fake.name, "..", 3);
+ 			fake.rec_len = ext4_rec_len_to_disk(
+ 					  ext4_dir_rec_len(fake.name_len, NULL),
+ 					  inline_size);
+diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
+index b82f5841c65a9..9913a94b6a6d3 100644
+--- a/fs/ext4/namei.c
++++ b/fs/ext4/namei.c
+@@ -2924,7 +2924,7 @@ struct ext4_dir_entry_2 *ext4_init_dot_dotdot(struct inode *inode,
+ 	de->name_len = 1;
+ 	de->rec_len = ext4_rec_len_to_disk(ext4_dir_rec_len(de->name_len, NULL),
+ 					   blocksize);
+-	strcpy(de->name, ".");
++	memcpy(de->name, ".", 2);
+ 	ext4_set_de_type(inode->i_sb, de, S_IFDIR);
+ 
+ 	de = ext4_next_entry(de, blocksize);
+@@ -2938,7 +2938,7 @@ struct ext4_dir_entry_2 *ext4_init_dot_dotdot(struct inode *inode,
+ 		de->rec_len = ext4_rec_len_to_disk(
+ 					ext4_dir_rec_len(de->name_len, NULL),
+ 					blocksize);
+-	strcpy(de->name, "..");
++	memcpy(de->name, "..", 3);
+ 	ext4_set_de_type(inode->i_sb, de, S_IFDIR);
+ 
+ 	return ext4_next_entry(de, blocksize);
+-- 
+2.50.1
+
+
+From 3218e07a5f6d7e9cac1fdcb9b966c081ac3f1494 Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Sat, 12 Jul 2025 14:12:49 -0400
+Subject: [PATCH 20/40] ext4: refactor the inline directory conversion and new
+ directory codepaths
+
+There was a lot of common code in the codepaths used to convert an
+inline directory and to creaet a new directory.  To address this,
+rename ext4_init_dot_dotdot() to ext4_init_dirblock() and then move
+common code into that function.
+
+This reduces the lines of code count in fs/ext4/inline.c and
+fs/ext4/namei.c, as well as reducing the size of their object files.
+
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+Link: https://patch.msgid.link/20250712181249.434530-3-tytso@mit.edu
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h   |  9 ++++----
+ fs/ext4/inline.c | 60 ++++++++++--------------------------------------
+ fs/ext4/namei.c  | 56 ++++++++++++++++++++++++--------------------
+ 3 files changed, 48 insertions(+), 77 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 9ac0a7d4fa0cd..d377e02c9767a 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -3612,6 +3612,7 @@ extern loff_t ext4_llseek(struct file *file, loff_t offset, int origin);
+ extern int ext4_get_max_inline_size(struct inode *inode);
+ extern int ext4_find_inline_data_nolock(struct inode *inode);
+ extern int ext4_destroy_inline_data(handle_t *handle, struct inode *inode);
++extern void ext4_update_final_de(void *de_buf, int old_size, int new_size);
+ 
+ int ext4_readpage_inline(struct inode *inode, struct folio *folio);
+ extern int ext4_try_to_write_inline_data(struct address_space *mapping,
+@@ -3671,10 +3672,10 @@ static inline int ext4_has_inline_data(struct inode *inode)
+ extern const struct inode_operations ext4_dir_inode_operations;
+ extern const struct inode_operations ext4_special_inode_operations;
+ extern struct dentry *ext4_get_parent(struct dentry *child);
+-extern struct ext4_dir_entry_2 *ext4_init_dot_dotdot(struct inode *inode,
+-				 struct ext4_dir_entry_2 *de,
+-				 int blocksize, int csum_size,
+-				 unsigned int parent_ino, int dotdot_real_len);
++extern int ext4_init_dirblock(handle_t *handle, struct inode *inode,
++			      struct buffer_head *dir_block,
++			      unsigned int parent_ino, void *inline_buf,
++			      int inline_size);
+ extern void ext4_initialize_dirent_tail(struct buffer_head *bh,
+ 					unsigned int blocksize);
+ extern int ext4_handle_dirty_dirblock(handle_t *handle, struct inode *inode,
+diff --git a/fs/ext4/inline.c b/fs/ext4/inline.c
+index 77e8b7707650e..640133adef380 100644
+--- a/fs/ext4/inline.c
++++ b/fs/ext4/inline.c
+@@ -997,7 +997,7 @@ static void *ext4_get_inline_xattr_pos(struct inode *inode,
+ }
+ 
+ /* Set the final de to cover the whole block. */
+-static void ext4_update_final_de(void *de_buf, int old_size, int new_size)
++void ext4_update_final_de(void *de_buf, int old_size, int new_size)
+ {
+ 	struct ext4_dir_entry_2 *de, *prev_de;
+ 	void *limit;
+@@ -1061,51 +1061,6 @@ static void ext4_restore_inline_data(handle_t *handle, struct inode *inode,
+ 	ext4_set_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA);
+ }
+ 
+-static int ext4_finish_convert_inline_dir(handle_t *handle,
+-					  struct inode *inode,
+-					  struct buffer_head *dir_block,
+-					  void *buf,
+-					  int inline_size)
+-{
+-	int err, csum_size = 0, header_size = 0;
+-	struct ext4_dir_entry_2 *de;
+-	void *target = dir_block->b_data;
+-
+-	/*
+-	 * First create "." and ".." and then copy the dir information
+-	 * back to the block.
+-	 */
+-	de = target;
+-	de = ext4_init_dot_dotdot(inode, de,
+-		inode->i_sb->s_blocksize, csum_size,
+-		le32_to_cpu(((struct ext4_dir_entry_2 *)buf)->inode), 1);
+-	header_size = (void *)de - target;
+-
+-	memcpy((void *)de, buf + EXT4_INLINE_DOTDOT_SIZE,
+-		inline_size - EXT4_INLINE_DOTDOT_SIZE);
+-
+-	if (ext4_has_feature_metadata_csum(inode->i_sb))
+-		csum_size = sizeof(struct ext4_dir_entry_tail);
+-
+-	inode->i_size = inode->i_sb->s_blocksize;
+-	i_size_write(inode, inode->i_sb->s_blocksize);
+-	EXT4_I(inode)->i_disksize = inode->i_sb->s_blocksize;
+-	ext4_update_final_de(dir_block->b_data,
+-			inline_size - EXT4_INLINE_DOTDOT_SIZE + header_size,
+-			inode->i_sb->s_blocksize - csum_size);
+-
+-	if (csum_size)
+-		ext4_initialize_dirent_tail(dir_block,
+-					    inode->i_sb->s_blocksize);
+-	set_buffer_uptodate(dir_block);
+-	unlock_buffer(dir_block);
+-	err = ext4_handle_dirty_dirblock(handle, inode, dir_block);
+-	if (err)
+-		return err;
+-	set_buffer_verified(dir_block);
+-	return ext4_mark_inode_dirty(handle, inode);
+-}
+-
+ static int ext4_convert_inline_data_nolock(handle_t *handle,
+ 					   struct inode *inode,
+ 					   struct ext4_iloc *iloc)
+@@ -1177,8 +1132,17 @@ static int ext4_convert_inline_data_nolock(handle_t *handle,
+ 		error = ext4_handle_dirty_metadata(handle,
+ 						   inode, data_bh);
+ 	} else {
+-		error = ext4_finish_convert_inline_dir(handle, inode, data_bh,
+-						       buf, inline_size);
++		unlock_buffer(data_bh);
++		inode->i_size = inode->i_sb->s_blocksize;
++		i_size_write(inode, inode->i_sb->s_blocksize);
++		EXT4_I(inode)->i_disksize = inode->i_sb->s_blocksize;
++
++		error = ext4_init_dirblock(handle, inode, data_bh,
++			  le32_to_cpu(((struct ext4_dir_entry_2 *)buf)->inode),
++			  buf + EXT4_INLINE_DOTDOT_SIZE,
++			  inline_size - EXT4_INLINE_DOTDOT_SIZE);
++		if (!error)
++			error = ext4_mark_inode_dirty(handle, inode);
+ 	}
+ 
+ out_restore:
+diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
+index 9913a94b6a6d3..d83f91b623174 100644
+--- a/fs/ext4/namei.c
++++ b/fs/ext4/namei.c
+@@ -2915,11 +2915,17 @@ static int ext4_tmpfile(struct mnt_idmap *idmap, struct inode *dir,
+ 	return err;
+ }
+ 
+-struct ext4_dir_entry_2 *ext4_init_dot_dotdot(struct inode *inode,
+-			  struct ext4_dir_entry_2 *de,
+-			  int blocksize, int csum_size,
+-			  unsigned int parent_ino, int dotdot_real_len)
++int ext4_init_dirblock(handle_t *handle, struct inode *inode,
++		       struct buffer_head *bh, unsigned int parent_ino,
++		       void *inline_buf, int inline_size)
+ {
++	struct ext4_dir_entry_2 *de = (struct ext4_dir_entry_2 *) bh->b_data;
++	size_t			blocksize = bh->b_size;
++	int			csum_size = 0, header_size;
++
++	if (ext4_has_feature_metadata_csum(inode->i_sb))
++		csum_size = sizeof(struct ext4_dir_entry_tail);
++
+ 	de->inode = cpu_to_le32(inode->i_ino);
+ 	de->name_len = 1;
+ 	de->rec_len = ext4_rec_len_to_disk(ext4_dir_rec_len(de->name_len, NULL),
+@@ -2930,18 +2936,29 @@ struct ext4_dir_entry_2 *ext4_init_dot_dotdot(struct inode *inode,
+ 	de = ext4_next_entry(de, blocksize);
+ 	de->inode = cpu_to_le32(parent_ino);
+ 	de->name_len = 2;
+-	if (!dotdot_real_len)
+-		de->rec_len = ext4_rec_len_to_disk(blocksize -
+-					(csum_size + ext4_dir_rec_len(1, NULL)),
+-					blocksize);
+-	else
++	memcpy(de->name, "..", 3);
++	ext4_set_de_type(inode->i_sb, de, S_IFDIR);
++	if (inline_buf) {
+ 		de->rec_len = ext4_rec_len_to_disk(
+ 					ext4_dir_rec_len(de->name_len, NULL),
+ 					blocksize);
+-	memcpy(de->name, "..", 3);
+-	ext4_set_de_type(inode->i_sb, de, S_IFDIR);
++		de = ext4_next_entry(de, blocksize);
++		header_size = (char *)de - bh->b_data;
++		memcpy((void *)de, inline_buf, inline_size);
++		ext4_update_final_de(bh->b_data, inline_size + header_size,
++			blocksize - csum_size);
++	} else {
++		de->rec_len = ext4_rec_len_to_disk(blocksize -
++					(csum_size + ext4_dir_rec_len(1, NULL)),
++					blocksize);
++	}
+ 
+-	return ext4_next_entry(de, blocksize);
++	if (csum_size)
++		ext4_initialize_dirent_tail(bh, blocksize);
++	BUFFER_TRACE(dir_block, "call ext4_handle_dirty_metadata");
++	set_buffer_uptodate(bh);
++	set_buffer_verified(bh);
++	return ext4_handle_dirty_dirblock(handle, inode, bh);
+ }
+ 
+ int ext4_init_new_dir(handle_t *handle, struct inode *dir,
+@@ -2950,13 +2967,8 @@ int ext4_init_new_dir(handle_t *handle, struct inode *dir,
+ 	struct buffer_head *dir_block = NULL;
+ 	struct ext4_dir_entry_2 *de;
+ 	ext4_lblk_t block = 0;
+-	unsigned int blocksize = dir->i_sb->s_blocksize;
+-	int csum_size = 0;
+ 	int err;
+ 
+-	if (ext4_has_feature_metadata_csum(dir->i_sb))
+-		csum_size = sizeof(struct ext4_dir_entry_tail);
+-
+ 	if (ext4_test_inode_state(inode, EXT4_STATE_MAY_INLINE_DATA)) {
+ 		err = ext4_try_create_inline_dir(handle, dir, inode);
+ 		if (err < 0 && err != -ENOSPC)
+@@ -2965,21 +2977,15 @@ int ext4_init_new_dir(handle_t *handle, struct inode *dir,
+ 			goto out;
+ 	}
+ 
++	set_nlink(inode, 2);
+ 	inode->i_size = 0;
+ 	dir_block = ext4_append(handle, inode, &block);
+ 	if (IS_ERR(dir_block))
+ 		return PTR_ERR(dir_block);
+ 	de = (struct ext4_dir_entry_2 *)dir_block->b_data;
+-	ext4_init_dot_dotdot(inode, de, blocksize, csum_size, dir->i_ino, 0);
+-	set_nlink(inode, 2);
+-	if (csum_size)
+-		ext4_initialize_dirent_tail(dir_block, blocksize);
+-
+-	BUFFER_TRACE(dir_block, "call ext4_handle_dirty_metadata");
+-	err = ext4_handle_dirty_dirblock(handle, inode, dir_block);
++	err = ext4_init_dirblock(handle, inode, dir_block, dir->i_ino, NULL, 0);
+ 	if (err)
+ 		goto out;
+-	set_buffer_verified(dir_block);
+ out:
+ 	brelse(dir_block);
+ 	return err;
+-- 
+2.50.1
+
+
+From 5be234ee9b16d5fd9864623d18fa7b5b70c8b1f1 Mon Sep 17 00:00:00 2001
+From: Zhang Yi <yi.zhang@huawei.com>
+Date: Fri, 25 Jul 2025 10:15:50 +0800
+Subject: [PATCH 21/40] ext4: initialize superblock fields in the
+ kballoc-test.c kunit tests
+
+Various changes in the "ext4: better scalability for ext4 block
+allocation" patch series have resulted in kunit test failures, most
+notably in the test_new_blocks_simple and the test_mb_mark_used tests.
+The root cause of these failures is that various in-memory ext4 data
+structures were not getting initialized, and while previous versions
+of the functions exercised by the unit tests didn't use these
+structure members, this was arguably a test bug.
+
+Since one of the patches in the block allocation scalability patches
+is a fix which is has a cc:stable tag, this commit also has a
+cc:stable tag.
+
+CC: stable@vger.kernel.org
+Link: https://lore.kernel.org/r/20250714130327.1830534-1-libaokun1@huawei.com
+Link: https://patch.msgid.link/20250725021550.3177573-1-yi.zhang@huaweicloud.com
+Link: https://patch.msgid.link/20250725021654.3188798-1-yi.zhang@huaweicloud.com
+Reported-by: Guenter Roeck <linux@roeck-us.net>
+Closes: https://lore.kernel.org/linux-ext4/b0635ad0-7ebf-4152-a69b-58e7e87d5085@roeck-us.net/
+Tested-by: Guenter Roeck <linux@roeck-us.net>
+Signed-off-by: Zhang Yi <yi.zhang@huawei.com>
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc-test.c | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/fs/ext4/mballoc-test.c b/fs/ext4/mballoc-test.c
+index d634c12f19847..f018bc8424c7c 100644
+--- a/fs/ext4/mballoc-test.c
++++ b/fs/ext4/mballoc-test.c
+@@ -155,6 +155,7 @@ static struct super_block *mbt_ext4_alloc_super_block(void)
+ 	bgl_lock_init(sbi->s_blockgroup_lock);
+ 
+ 	sbi->s_es = &fsb->es;
++	sbi->s_sb = sb;
+ 	sb->s_fs_info = sbi;
+ 
+ 	up_write(&sb->s_umount);
+@@ -802,6 +803,10 @@ static void test_mb_mark_used(struct kunit *test)
+ 	KUNIT_ASSERT_EQ(test, ret, 0);
+ 
+ 	grp->bb_free = EXT4_CLUSTERS_PER_GROUP(sb);
++	grp->bb_largest_free_order = -1;
++	grp->bb_avg_fragment_size_order = -1;
++	INIT_LIST_HEAD(&grp->bb_largest_free_order_node);
++	INIT_LIST_HEAD(&grp->bb_avg_fragment_size_node);
+ 	mbt_generate_test_ranges(sb, ranges, TEST_RANGE_COUNT);
+ 	for (i = 0; i < TEST_RANGE_COUNT; i++)
+ 		test_mb_mark_used_range(test, &e4b, ranges[i].start,
+@@ -875,6 +880,10 @@ static void test_mb_free_blocks(struct kunit *test)
+ 	ext4_unlock_group(sb, TEST_GOAL_GROUP);
+ 
+ 	grp->bb_free = 0;
++	grp->bb_largest_free_order = -1;
++	grp->bb_avg_fragment_size_order = -1;
++	INIT_LIST_HEAD(&grp->bb_largest_free_order_node);
++	INIT_LIST_HEAD(&grp->bb_avg_fragment_size_node);
+ 	memset(bitmap, 0xff, sb->s_blocksize);
+ 
+ 	mbt_generate_test_ranges(sb, ranges, TEST_RANGE_COUNT);
+-- 
+2.50.1
+
+
+From c36bb99755a4d38e424ea4b84a748d61c35c3951 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:11 +0800
+Subject: [PATCH 22/40] ext4: add ext4_try_lock_group() to skip busy groups
+
+When ext4 allocates blocks, we used to just go through the block groups
+one by one to find a good one. But when there are tons of block groups
+(like hundreds of thousands or even millions) and not many have free space
+(meaning they're mostly full), it takes a really long time to check them
+all, and performance gets bad. So, we added the "mb_optimize_scan" mount
+option (which is on by default now). It keeps track of some group lists,
+so when we need a free block, we can just grab a likely group from the
+right list. This saves time and makes block allocation much faster.
+
+But when multiple processes or containers are doing similar things, like
+constantly allocating 8k blocks, they all try to use the same block group
+in the same list. Even just two processes doing this can cut the IOPS in
+half. For example, one container might do 300,000 IOPS, but if you run two
+at the same time, the total is only 150,000.
+
+Since we can already look at block groups in a non-linear way, the first
+and last groups in the same list are basically the same for finding a block
+right now. Therefore, add an ext4_try_lock_group() helper function to skip
+the current group when it is locked by another process, thereby avoiding
+contention with other processes. This helps ext4 make better use of having
+multiple block groups.
+
+Also, to make sure we don't skip all the groups that have free space
+when allocating blocks, we won't try to skip busy groups anymore when
+ac_criteria is CR_ANY_FREE.
+
+Performance test data follows:
+
+Test: Running will-it-scale/fallocate2 on CPU-bound containers.
+Observation: Average fallocate operations per container per second.
+
+|CPU: Kunpeng 920   |          P80            |
+|Memory: 512GB      |-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched      |
+|-------------------|-------|-----------------|
+|mb_optimize_scan=0 | 2667  | 4821  (+80.7%)  |
+|mb_optimize_scan=1 | 2643  | 4784  (+81.0%)  |
+
+|CPU: AMD 9654 * 2  |          P96            |
+|Memory: 1536GB     |-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched      |
+|-------------------|-------|-----------------|
+|mb_optimize_scan=0 | 3450  | 15371 (+345%)   |
+|mb_optimize_scan=1 | 3209  | 6101  (+90.0%)  |
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Ojaswin Mujoo <ojaswin@linux.ibm.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-2-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h    | 23 ++++++++++++++---------
+ fs/ext4/mballoc.c | 19 ++++++++++++++++---
+ 2 files changed, 30 insertions(+), 12 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index d377e02c9767a..b014f86951e92 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -3541,23 +3541,28 @@ static inline int ext4_fs_is_busy(struct ext4_sb_info *sbi)
+ 	return (atomic_read(&sbi->s_lock_busy) > EXT4_CONTENTION_THRESHOLD);
+ }
+ 
++static inline bool ext4_try_lock_group(struct super_block *sb, ext4_group_t group)
++{
++	if (!spin_trylock(ext4_group_lock_ptr(sb, group)))
++		return false;
++	/*
++	 * We're able to grab the lock right away, so drop the lock
++	 * contention counter.
++	 */
++	atomic_add_unless(&EXT4_SB(sb)->s_lock_busy, -1, 0);
++	return true;
++}
++
+ static inline void ext4_lock_group(struct super_block *sb, ext4_group_t group)
+ {
+-	spinlock_t *lock = ext4_group_lock_ptr(sb, group);
+-	if (spin_trylock(lock))
+-		/*
+-		 * We're able to grab the lock right away, so drop the
+-		 * lock contention counter.
+-		 */
+-		atomic_add_unless(&EXT4_SB(sb)->s_lock_busy, -1, 0);
+-	else {
++	if (!ext4_try_lock_group(sb, group)) {
+ 		/*
+ 		 * The lock is busy, so bump the contention counter,
+ 		 * and then wait on the spin lock.
+ 		 */
+ 		atomic_add_unless(&EXT4_SB(sb)->s_lock_busy, 1,
+ 				  EXT4_MAX_CONTENTION);
+-		spin_lock(lock);
++		spin_lock(ext4_group_lock_ptr(sb, group));
+ 	}
+ }
+ 
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 1e98c5be4e0ad..336d65c4f6a20 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -896,7 +896,8 @@ static void ext4_mb_choose_next_group_p2_aligned(struct ext4_allocation_context
+ 				    bb_largest_free_order_node) {
+ 			if (sbi->s_mb_stats)
+ 				atomic64_inc(&sbi->s_bal_cX_groups_considered[CR_POWER2_ALIGNED]);
+-			if (likely(ext4_mb_good_group(ac, iter->bb_group, CR_POWER2_ALIGNED))) {
++			if (!spin_is_locked(ext4_group_lock_ptr(ac->ac_sb, iter->bb_group)) &&
++			    likely(ext4_mb_good_group(ac, iter->bb_group, CR_POWER2_ALIGNED))) {
+ 				*group = iter->bb_group;
+ 				ac->ac_flags |= EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED;
+ 				read_unlock(&sbi->s_mb_largest_free_orders_locks[i]);
+@@ -932,7 +933,8 @@ ext4_mb_find_good_group_avg_frag_lists(struct ext4_allocation_context *ac, int o
+ 	list_for_each_entry(iter, frag_list, bb_avg_fragment_size_node) {
+ 		if (sbi->s_mb_stats)
+ 			atomic64_inc(&sbi->s_bal_cX_groups_considered[cr]);
+-		if (likely(ext4_mb_good_group(ac, iter->bb_group, cr))) {
++		if (!spin_is_locked(ext4_group_lock_ptr(ac->ac_sb, iter->bb_group)) &&
++		    likely(ext4_mb_good_group(ac, iter->bb_group, cr))) {
+ 			grp = iter;
+ 			break;
+ 		}
+@@ -2899,6 +2901,11 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 							nr, &prefetch_ios);
+ 			}
+ 
++			/* prevent unnecessary buddy loading. */
++			if (cr < CR_ANY_FREE &&
++			    spin_is_locked(ext4_group_lock_ptr(sb, group)))
++				continue;
++
+ 			/* This now checks without needing the buddy page */
+ 			ret = ext4_mb_good_group_nolock(ac, group, cr);
+ 			if (ret <= 0) {
+@@ -2911,7 +2918,13 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 			if (err)
+ 				goto out;
+ 
+-			ext4_lock_group(sb, group);
++			/* skip busy group */
++			if (cr >= CR_ANY_FREE) {
++				ext4_lock_group(sb, group);
++			} else if (!ext4_try_lock_group(sb, group)) {
++				ext4_mb_unload_buddy(&e4b);
++				continue;
++			}
+ 
+ 			/*
+ 			 * We need to check again after locking the
+-- 
+2.50.1
+
+
+From 3ef33b2f9b85496348911eb786b6f38e5c0bf45a Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:12 +0800
+Subject: [PATCH 23/40] ext4: separate stream goal hits from s_bal_goals for
+ better tracking
+
+In ext4_mb_regular_allocator(), after the call to ext4_mb_find_by_goal()
+fails to achieve the inode goal, allocation continues with the stream
+allocation global goal. Currently, hits for both are combined in
+sbi->s_bal_goals, hindering accurate optimization.
+
+This commit separates global goal hits into sbi->s_bal_stream_goals. Since
+stream allocation doesn't use ac->ac_g_ex.fe_start, set fe_start to -1.
+This prevents stream allocations from being counted in s_bal_goals. Also
+clear EXT4_MB_HINT_TRY_GOAL to avoid calling ext4_mb_find_by_goal again.
+
+After adding `stream_goal_hits`, `/proc/fs/ext4/sdx/mb_stats` will show:
+
+mballoc:
+	reqs: 840347
+	success: 750992
+	groups_scanned: 1230506
+	cr_p2_aligned_stats:
+		hits: 21531
+		groups_considered: 411664
+		extents_scanned: 21531
+		useless_loops: 0
+		bad_suggestions: 6
+	cr_goal_fast_stats:
+		hits: 111222
+		groups_considered: 1806728
+		extents_scanned: 467908
+		useless_loops: 0
+		bad_suggestions: 13
+	cr_best_avail_stats:
+		hits: 36267
+		groups_considered: 1817631
+		extents_scanned: 156143
+		useless_loops: 0
+		bad_suggestions: 204
+	cr_goal_slow_stats:
+		hits: 106396
+		groups_considered: 5671710
+		extents_scanned: 22540056
+		useless_loops: 123747
+	cr_any_free_stats:
+		hits: 138071
+		groups_considered: 724692
+		extents_scanned: 23615593
+		useless_loops: 585
+	extents_scanned: 46804261
+		goal_hits: 1307
+		stream_goal_hits: 236317
+		len_goal_hits: 155549
+		2^n_hits: 21531
+		breaks: 225096
+		lost: 35062
+	buddies_generated: 40/40
+	buddies_time_used: 48004
+	preallocated: 5962467
+	discarded: 4847560
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-3-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h    |  1 +
+ fs/ext4/mballoc.c | 11 +++++++++--
+ 2 files changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index b014f86951e92..ea518791b3172 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1646,6 +1646,7 @@ struct ext4_sb_info {
+ 	atomic_t s_bal_cX_ex_scanned[EXT4_MB_NUM_CRS];	/* total extents scanned */
+ 	atomic_t s_bal_groups_scanned;	/* number of groups scanned */
+ 	atomic_t s_bal_goals;	/* goal hits */
++	atomic_t s_bal_stream_goals;	/* stream allocation global goal hits */
+ 	atomic_t s_bal_len_goals;	/* len goal hits */
+ 	atomic_t s_bal_breaks;	/* too long searches */
+ 	atomic_t s_bal_2orders;	/* 2^order hits */
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 336d65c4f6a20..f56ac477c464d 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2849,8 +2849,9 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 		/* TBD: may be hot point */
+ 		spin_lock(&sbi->s_md_lock);
+ 		ac->ac_g_ex.fe_group = sbi->s_mb_last_group;
+-		ac->ac_g_ex.fe_start = sbi->s_mb_last_start;
+ 		spin_unlock(&sbi->s_md_lock);
++		ac->ac_g_ex.fe_start = -1;
++		ac->ac_flags &= ~EXT4_MB_HINT_TRY_GOAL;
+ 	}
+ 
+ 	/*
+@@ -3000,8 +3001,12 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 		}
+ 	}
+ 
+-	if (sbi->s_mb_stats && ac->ac_status == AC_STATUS_FOUND)
++	if (sbi->s_mb_stats && ac->ac_status == AC_STATUS_FOUND) {
+ 		atomic64_inc(&sbi->s_bal_cX_hits[ac->ac_criteria]);
++		if (ac->ac_flags & EXT4_MB_STREAM_ALLOC &&
++		    ac->ac_b_ex.fe_group == ac->ac_g_ex.fe_group)
++			atomic_inc(&sbi->s_bal_stream_goals);
++	}
+ out:
+ 	if (!err && ac->ac_status != AC_STATUS_FOUND && first_err)
+ 		err = first_err;
+@@ -3194,6 +3199,8 @@ int ext4_seq_mb_stats_show(struct seq_file *seq, void *offset)
+ 	seq_printf(seq, "\textents_scanned: %u\n",
+ 		   atomic_read(&sbi->s_bal_ex_scanned));
+ 	seq_printf(seq, "\t\tgoal_hits: %u\n", atomic_read(&sbi->s_bal_goals));
++	seq_printf(seq, "\t\tstream_goal_hits: %u\n",
++		   atomic_read(&sbi->s_bal_stream_goals));
+ 	seq_printf(seq, "\t\tlen_goal_hits: %u\n",
+ 		   atomic_read(&sbi->s_bal_len_goals));
+ 	seq_printf(seq, "\t\t2^n_hits: %u\n", atomic_read(&sbi->s_bal_2orders));
+-- 
+2.50.1
+
+
+From 0d3d746b1fa167da51b9056e646a01aa9823952c Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:13 +0800
+Subject: [PATCH 24/40] ext4: remove unnecessary s_mb_last_start
+
+Since stream allocation does not use ac->ac_f_ex.fe_start, it is set to -1
+by default, so the no longer needed sbi->s_mb_last_start is removed.
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Ojaswin Mujoo <ojaswin@linux.ibm.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-4-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h    | 1 -
+ fs/ext4/mballoc.c | 1 -
+ 2 files changed, 2 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index ea518791b3172..a0908037ced78 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1631,7 +1631,6 @@ struct ext4_sb_info {
+ 	unsigned int s_max_dir_size_kb;
+ 	/* where last allocation was done - for stream allocation */
+ 	unsigned long s_mb_last_group;
+-	unsigned long s_mb_last_start;
+ 	unsigned int s_mb_prefetch;
+ 	unsigned int s_mb_prefetch_limit;
+ 	unsigned int s_mb_best_avail_max_trim_order;
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index f56ac477c464d..e3a5103e1620e 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2171,7 +2171,6 @@ static void ext4_mb_use_best_found(struct ext4_allocation_context *ac,
+ 	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
+ 		spin_lock(&sbi->s_md_lock);
+ 		sbi->s_mb_last_group = ac->ac_f_ex.fe_group;
+-		sbi->s_mb_last_start = ac->ac_f_ex.fe_start;
+ 		spin_unlock(&sbi->s_md_lock);
+ 	}
+ 	/*
+-- 
+2.50.1
+
+
+From 6c805f955f5046dea3792be6b94a5c2982a6ae23 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:14 +0800
+Subject: [PATCH 25/40] ext4: remove unnecessary s_md_lock on update
+ s_mb_last_group
+
+After we optimized the block group lock, we found another lock
+contention issue when running will-it-scale/fallocate2 with multiple
+processes. The fallocate's block allocation and the truncate's block
+release were fighting over the s_md_lock. The problem is, this lock
+protects totally different things in those two processes: the list of
+freed data blocks (s_freed_data_list) when releasing, and where to start
+looking for new blocks (mb_last_group) when allocating.
+
+Now we only need to track s_mb_last_group and no longer need to track
+s_mb_last_start, so we don't need the s_md_lock lock to ensure that the
+two are consistent. Since s_mb_last_group is merely a hint and doesn't
+require strong synchronization, READ_ONCE/WRITE_ONCE is sufficient.
+
+Besides, the s_mb_last_group data type only requires ext4_group_t
+(i.e., unsigned int), rendering unsigned long superfluous.
+
+Performance test data follows:
+
+Test: Running will-it-scale/fallocate2 on CPU-bound containers.
+Observation: Average fallocate operations per container per second.
+
+|CPU: Kunpeng 920   |          P80           |            P1           |
+|Memory: 512GB      |------------------------|-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 4821  | 9636  (+99.8%) | 314065 | 337597 (+7.4%) |
+|mb_optimize_scan=1 | 4784  | 4834  (+1.04%) | 316344 | 341440 (+7.9%) |
+
+|CPU: AMD 9654 * 2  |          P96           |             P1          |
+|Memory: 1536GB     |------------------------|-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 15371 | 22341 (+45.3%) | 205851 | 219707 (+6.7%) |
+|mb_optimize_scan=1 | 6101  | 9177  (+50.4%) | 207373 | 215732 (+4.0%) |
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Ojaswin Mujoo <ojaswin@linux.ibm.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-5-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h    |  2 +-
+ fs/ext4/mballoc.c | 12 +++---------
+ 2 files changed, 4 insertions(+), 10 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index a0908037ced78..aae7dac5aca6c 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1630,7 +1630,7 @@ struct ext4_sb_info {
+ 	unsigned int s_mb_group_prealloc;
+ 	unsigned int s_max_dir_size_kb;
+ 	/* where last allocation was done - for stream allocation */
+-	unsigned long s_mb_last_group;
++	ext4_group_t s_mb_last_group;
+ 	unsigned int s_mb_prefetch;
+ 	unsigned int s_mb_prefetch_limit;
+ 	unsigned int s_mb_best_avail_max_trim_order;
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index e3a5103e1620e..025b759ca6437 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2168,11 +2168,8 @@ static void ext4_mb_use_best_found(struct ext4_allocation_context *ac,
+ 	ac->ac_buddy_folio = e4b->bd_buddy_folio;
+ 	folio_get(ac->ac_buddy_folio);
+ 	/* store last allocated for subsequent stream allocation */
+-	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
+-		spin_lock(&sbi->s_md_lock);
+-		sbi->s_mb_last_group = ac->ac_f_ex.fe_group;
+-		spin_unlock(&sbi->s_md_lock);
+-	}
++	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC)
++		WRITE_ONCE(sbi->s_mb_last_group, ac->ac_f_ex.fe_group);
+ 	/*
+ 	 * As we've just preallocated more space than
+ 	 * user requested originally, we store allocated
+@@ -2845,10 +2842,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 
+ 	/* if stream allocation is enabled, use global goal */
+ 	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
+-		/* TBD: may be hot point */
+-		spin_lock(&sbi->s_md_lock);
+-		ac->ac_g_ex.fe_group = sbi->s_mb_last_group;
+-		spin_unlock(&sbi->s_md_lock);
++		ac->ac_g_ex.fe_group = READ_ONCE(sbi->s_mb_last_group);
+ 		ac->ac_g_ex.fe_start = -1;
+ 		ac->ac_flags &= ~EXT4_MB_HINT_TRY_GOAL;
+ 	}
+-- 
+2.50.1
+
+
+From df5d3a6062ef1b6ab0ca62e0556bb84ddd20763b Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:15 +0800
+Subject: [PATCH 26/40] ext4: utilize multiple global goals to reduce
+ contention
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When allocating data blocks, if the first try (goal allocation) fails and
+stream allocation is on, it tries a global goal starting from the last
+group we used (s_mb_last_group). This helps cluster large files together
+to reduce free space fragmentation, and the data block contiguity also
+accelerates write-back to disk.
+
+However, when multiple processes allocate blocks, having just one global
+goal means they all fight over the same group. This drastically lowers
+the chances of extents merging and leads to much worse file fragmentation.
+
+To mitigate this multi-process contention, we now employ multiple global
+goals, with the number of goals being the minimum between the number of
+possible CPUs and one-quarter of the filesystem's total block group count.
+
+To ensure a consistent goal for each inode, we select the corresponding
+goal by taking the inode number modulo the total number of goals.
+
+Performance test data follows:
+
+Test: Running will-it-scale/fallocate2 on CPU-bound containers.
+Observation: Average fallocate operations per container per second.
+
+|CPU: Kunpeng 920   |          P80           |            P1           |
+|Memory: 512GB      |------------------------|-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 9636  | 19628 (+103%)  | 337597 | 320885 (-4.9%) |
+|mb_optimize_scan=1 | 4834  | 7129  (+47.4%) | 341440 | 321275 (-5.9%) |
+
+|CPU: AMD 9654 * 2  |          P96           |             P1          |
+|Memory: 1536GB     |------------------------|-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 22341 | 53760 (+140%)  | 219707 | 213145 (-2.9%) |
+|mb_optimize_scan=1 | 9177  | 12716 (+38.5%) | 215732 | 215262 (+0.2%) |
+
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-6-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h    |  6 ++++--
+ fs/ext4/mballoc.c | 27 +++++++++++++++++++++++----
+ 2 files changed, 27 insertions(+), 6 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index aae7dac5aca6c..b1fa677229ace 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1629,14 +1629,16 @@ struct ext4_sb_info {
+ 	unsigned int s_mb_order2_reqs;
+ 	unsigned int s_mb_group_prealloc;
+ 	unsigned int s_max_dir_size_kb;
+-	/* where last allocation was done - for stream allocation */
+-	ext4_group_t s_mb_last_group;
+ 	unsigned int s_mb_prefetch;
+ 	unsigned int s_mb_prefetch_limit;
+ 	unsigned int s_mb_best_avail_max_trim_order;
+ 	unsigned int s_sb_update_sec;
+ 	unsigned int s_sb_update_kb;
+ 
++	/* where last allocation was done - for stream allocation */
++	ext4_group_t *s_mb_last_groups;
++	unsigned int s_mb_nr_global_goals;
++
+ 	/* stats for buddy allocator */
+ 	atomic_t s_bal_reqs;	/* number of reqs with len > 1 */
+ 	atomic_t s_bal_success;	/* we found long enough chunks */
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 025b759ca6437..b6aa24b485433 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2168,8 +2168,12 @@ static void ext4_mb_use_best_found(struct ext4_allocation_context *ac,
+ 	ac->ac_buddy_folio = e4b->bd_buddy_folio;
+ 	folio_get(ac->ac_buddy_folio);
+ 	/* store last allocated for subsequent stream allocation */
+-	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC)
+-		WRITE_ONCE(sbi->s_mb_last_group, ac->ac_f_ex.fe_group);
++	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
++		int hash = ac->ac_inode->i_ino % sbi->s_mb_nr_global_goals;
++
++		WRITE_ONCE(sbi->s_mb_last_groups[hash], ac->ac_f_ex.fe_group);
++	}
++
+ 	/*
+ 	 * As we've just preallocated more space than
+ 	 * user requested originally, we store allocated
+@@ -2842,7 +2846,9 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 
+ 	/* if stream allocation is enabled, use global goal */
+ 	if (ac->ac_flags & EXT4_MB_STREAM_ALLOC) {
+-		ac->ac_g_ex.fe_group = READ_ONCE(sbi->s_mb_last_group);
++		int hash = ac->ac_inode->i_ino % sbi->s_mb_nr_global_goals;
++
++		ac->ac_g_ex.fe_group = READ_ONCE(sbi->s_mb_last_groups[hash]);
+ 		ac->ac_g_ex.fe_start = -1;
+ 		ac->ac_flags &= ~EXT4_MB_HINT_TRY_GOAL;
+ 	}
+@@ -3722,10 +3728,19 @@ int ext4_mb_init(struct super_block *sb)
+ 			sbi->s_mb_group_prealloc, EXT4_NUM_B2C(sbi, sbi->s_stripe));
+ 	}
+ 
++	sbi->s_mb_nr_global_goals = umin(num_possible_cpus(),
++					 DIV_ROUND_UP(sbi->s_groups_count, 4));
++	sbi->s_mb_last_groups = kcalloc(sbi->s_mb_nr_global_goals,
++					sizeof(ext4_group_t), GFP_KERNEL);
++	if (sbi->s_mb_last_groups == NULL) {
++		ret = -ENOMEM;
++		goto out;
++	}
++
+ 	sbi->s_locality_groups = alloc_percpu(struct ext4_locality_group);
+ 	if (sbi->s_locality_groups == NULL) {
+ 		ret = -ENOMEM;
+-		goto out;
++		goto out_free_last_groups;
+ 	}
+ 	for_each_possible_cpu(i) {
+ 		struct ext4_locality_group *lg;
+@@ -3750,6 +3765,9 @@ int ext4_mb_init(struct super_block *sb)
+ out_free_locality_groups:
+ 	free_percpu(sbi->s_locality_groups);
+ 	sbi->s_locality_groups = NULL;
++out_free_last_groups:
++	kfree(sbi->s_mb_last_groups);
++	sbi->s_mb_last_groups = NULL;
+ out:
+ 	kfree(sbi->s_mb_avg_fragment_size);
+ 	kfree(sbi->s_mb_avg_fragment_size_locks);
+@@ -3854,6 +3872,7 @@ void ext4_mb_release(struct super_block *sb)
+ 	}
+ 
+ 	free_percpu(sbi->s_locality_groups);
++	kfree(sbi->s_mb_last_groups);
+ }
+ 
+ static inline int ext4_issue_discard(struct super_block *sb,
+-- 
+2.50.1
+
+
+From 77e7e3f0dcf1ad61098f068fb8ee561930229bde Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:16 +0800
+Subject: [PATCH 27/40] ext4: get rid of some obsolete EXT4_MB_HINT flags
+
+Since nobody has used these EXT4_MB_HINT flags for ages,
+let's remove them.
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Ojaswin Mujoo <ojaswin@linux.ibm.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-7-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h              | 6 ------
+ include/trace/events/ext4.h | 3 ---
+ 2 files changed, 9 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index b1fa677229ace..6dc6fabf02289 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -185,14 +185,8 @@ enum criteria {
+ 
+ /* prefer goal again. length */
+ #define EXT4_MB_HINT_MERGE		0x0001
+-/* blocks already reserved */
+-#define EXT4_MB_HINT_RESERVED		0x0002
+-/* metadata is being allocated */
+-#define EXT4_MB_HINT_METADATA		0x0004
+ /* first blocks in the file */
+ #define EXT4_MB_HINT_FIRST		0x0008
+-/* search for the best chunk */
+-#define EXT4_MB_HINT_BEST		0x0010
+ /* data is being allocated */
+ #define EXT4_MB_HINT_DATA		0x0020
+ /* don't preallocate (for tails) */
+diff --git a/include/trace/events/ext4.h b/include/trace/events/ext4.h
+index 845451077c418..53dd2cc28fc57 100644
+--- a/include/trace/events/ext4.h
++++ b/include/trace/events/ext4.h
+@@ -23,10 +23,7 @@ struct partial_cluster;
+ 
+ #define show_mballoc_flags(flags) __print_flags(flags, "|",	\
+ 	{ EXT4_MB_HINT_MERGE,		"HINT_MERGE" },		\
+-	{ EXT4_MB_HINT_RESERVED,	"HINT_RESV" },		\
+-	{ EXT4_MB_HINT_METADATA,	"HINT_MDATA" },		\
+ 	{ EXT4_MB_HINT_FIRST,		"HINT_FIRST" },		\
+-	{ EXT4_MB_HINT_BEST,		"HINT_BEST" },		\
+ 	{ EXT4_MB_HINT_DATA,		"HINT_DATA" },		\
+ 	{ EXT4_MB_HINT_NOPREALLOC,	"HINT_NOPREALLOC" },	\
+ 	{ EXT4_MB_HINT_GROUP_ALLOC,	"HINT_GRP_ALLOC" },	\
+-- 
+2.50.1
+
+
+From ae9fab766c39a96776d797af9ee8a98f3a8951e6 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:17 +0800
+Subject: [PATCH 28/40] ext4: fix typo in CR_GOAL_LEN_SLOW comment
+
+Remove the superfluous "find_".
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Ojaswin Mujoo <ojaswin@linux.ibm.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-8-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 6dc6fabf02289..c65aefa19a99d 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -157,7 +157,7 @@ enum criteria {
+ 
+ 	/*
+ 	 * Reads each block group sequentially, performing disk IO if
+-	 * necessary, to find find_suitable block group. Tries to
++	 * necessary, to find suitable block group. Tries to
+ 	 * allocate goal length but might trim the request if nothing
+ 	 * is found after enough tries.
+ 	 */
+-- 
+2.50.1
+
+
+From 561f7e3e55f370154030d38ad9ae70de13731149 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:18 +0800
+Subject: [PATCH 29/40] ext4: convert sbi->s_mb_free_pending to atomic_t
+
+Previously, s_md_lock was used to protect s_mb_free_pending during
+modifications, while smp_mb() ensured fresh reads, so s_md_lock just
+guarantees the atomicity of s_mb_free_pending. Thus we optimized it by
+converting s_mb_free_pending into an atomic variable, thereby eliminating
+s_md_lock and minimizing lock contention. This also prepares for future
+lockless merging of free extents.
+
+Following this modification, s_md_lock is exclusively responsible for
+managing insertions and deletions within s_freed_data_list, along with
+operations involving list_splice.
+
+Performance test data follows:
+
+Test: Running will-it-scale/fallocate2 on CPU-bound containers.
+Observation: Average fallocate operations per container per second.
+
+|CPU: Kunpeng 920   |          P80           |            P1           |
+|Memory: 512GB      |------------------------|-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 19628 | 20043 (+2.1%)  | 320885 | 314331 (-2.0%) |
+|mb_optimize_scan=1 | 7129  | 7290  (+2.2%)  | 321275 | 324226 (+0.9%) |
+
+|CPU: AMD 9654 * 2  |          P96           |             P1          |
+|Memory: 1536GB     |------------------------|-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 53760 | 54999 (+2.3%)  | 213145 | 214380 (+0.5%) |
+|mb_optimize_scan=1 | 12716 | 13497 (+6.1%)  | 215262 | 216276 (+0.4%) |
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-9-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/balloc.c  | 2 +-
+ fs/ext4/ext4.h    | 2 +-
+ fs/ext4/mballoc.c | 9 +++------
+ 3 files changed, 5 insertions(+), 8 deletions(-)
+
+diff --git a/fs/ext4/balloc.c b/fs/ext4/balloc.c
+index c48fd36b2d74c..c9329ed5c094e 100644
+--- a/fs/ext4/balloc.c
++++ b/fs/ext4/balloc.c
+@@ -703,7 +703,7 @@ int ext4_should_retry_alloc(struct super_block *sb, int *retries)
+ 	 * possible we just missed a transaction commit that did so
+ 	 */
+ 	smp_mb();
+-	if (sbi->s_mb_free_pending == 0) {
++	if (atomic_read(&sbi->s_mb_free_pending) == 0) {
+ 		if (test_opt(sb, DISCARD)) {
+ 			atomic_inc(&sbi->s_retry_alloc_pending);
+ 			flush_work(&sbi->s_discard_work);
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index c65aefa19a99d..21507f3999423 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1602,7 +1602,7 @@ struct ext4_sb_info {
+ 	unsigned short *s_mb_offsets;
+ 	unsigned int *s_mb_maxs;
+ 	unsigned int s_group_info_size;
+-	unsigned int s_mb_free_pending;
++	atomic_t s_mb_free_pending;
+ 	struct list_head s_freed_data_list[2];	/* List of blocks to be freed
+ 						   after commit completed */
+ 	struct list_head s_discard_list;
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index b6aa24b485433..ba3cdacbc9f98 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -3687,7 +3687,7 @@ int ext4_mb_init(struct super_block *sb)
+ 	}
+ 
+ 	spin_lock_init(&sbi->s_md_lock);
+-	sbi->s_mb_free_pending = 0;
++	atomic_set(&sbi->s_mb_free_pending, 0);
+ 	INIT_LIST_HEAD(&sbi->s_freed_data_list[0]);
+ 	INIT_LIST_HEAD(&sbi->s_freed_data_list[1]);
+ 	INIT_LIST_HEAD(&sbi->s_discard_list);
+@@ -3903,10 +3903,7 @@ static void ext4_free_data_in_buddy(struct super_block *sb,
+ 	/* we expect to find existing buddy because it's pinned */
+ 	BUG_ON(err != 0);
+ 
+-	spin_lock(&EXT4_SB(sb)->s_md_lock);
+-	EXT4_SB(sb)->s_mb_free_pending -= entry->efd_count;
+-	spin_unlock(&EXT4_SB(sb)->s_md_lock);
+-
++	atomic_sub(entry->efd_count, &EXT4_SB(sb)->s_mb_free_pending);
+ 	db = e4b.bd_info;
+ 	/* there are blocks to put in buddy to make them really free */
+ 	count += entry->efd_count;
+@@ -6401,7 +6398,7 @@ ext4_mb_free_metadata(handle_t *handle, struct ext4_buddy *e4b,
+ 
+ 	spin_lock(&sbi->s_md_lock);
+ 	list_add_tail(&new_entry->efd_list, &sbi->s_freed_data_list[new_entry->efd_tid & 1]);
+-	sbi->s_mb_free_pending += clusters;
++	atomic_add(clusters, &sbi->s_mb_free_pending);
+ 	spin_unlock(&sbi->s_md_lock);
+ }
+ 
+-- 
+2.50.1
+
+
+From 5a215e1a7af6960d73172e7689760c62b38640fa Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:19 +0800
+Subject: [PATCH 30/40] ext4: merge freed extent with existing extents before
+ insertion
+
+Attempt to merge ext4_free_data with already inserted free extents prior
+to adding new ones. This strategy drastically cuts down the number of
+times locks are held.
+
+For example, if prev, new, and next extents are all mergeable, the existing
+code (before this patch) requires acquiring the s_md_lock three times:
+
+  prev merge into new and free prev // hold lock
+  next merge into new and free next // hold lock
+  insert new // hold lock
+
+After the patch, it only needs to be acquired once:
+
+  new merge into next and free new // no lock
+  next merge into prev and free next // hold lock
+
+Performance test data follows:
+
+Test: Running will-it-scale/fallocate2 on CPU-bound containers.
+Observation: Average fallocate operations per container per second.
+
+|CPU: Kunpeng 920   |          P80           |            P1           |
+|Memory: 512GB      |------------------------|-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 20043 | 20097 (+0.2%)  | 314331 | 316141 (+0.5%) |
+|mb_optimize_scan=1 | 7290  | 13318 (+87.4%) | 324226 | 325273 (+0.3%) |
+
+|CPU: AMD 9654 * 2  |          P96           |             P1          |
+|Memory: 1536GB     |------------------------|-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 54999 | 53603 (-2.5%)  | 214380 | 214243 (-0.06%)|
+|mb_optimize_scan=1 | 13497 | 20887 (+54.6%) | 216276 | 213632 (-1.2%) |
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-10-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 113 +++++++++++++++++++++++++++++++---------------
+ 1 file changed, 76 insertions(+), 37 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index ba3cdacbc9f98..6d98f2a5afc4d 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -6307,28 +6307,63 @@ ext4_fsblk_t ext4_mb_new_blocks(handle_t *handle,
+  * are contiguous, AND the extents were freed by the same transaction,
+  * AND the blocks are associated with the same group.
+  */
+-static void ext4_try_merge_freed_extent(struct ext4_sb_info *sbi,
+-					struct ext4_free_data *entry,
+-					struct ext4_free_data *new_entry,
+-					struct rb_root *entry_rb_root)
++static inline bool
++ext4_freed_extents_can_be_merged(struct ext4_free_data *entry1,
++				 struct ext4_free_data *entry2)
+ {
+-	if ((entry->efd_tid != new_entry->efd_tid) ||
+-	    (entry->efd_group != new_entry->efd_group))
+-		return;
+-	if (entry->efd_start_cluster + entry->efd_count ==
+-	    new_entry->efd_start_cluster) {
+-		new_entry->efd_start_cluster = entry->efd_start_cluster;
+-		new_entry->efd_count += entry->efd_count;
+-	} else if (new_entry->efd_start_cluster + new_entry->efd_count ==
+-		   entry->efd_start_cluster) {
+-		new_entry->efd_count += entry->efd_count;
+-	} else
+-		return;
++	if (entry1->efd_tid != entry2->efd_tid)
++		return false;
++	if (entry1->efd_start_cluster + entry1->efd_count !=
++	    entry2->efd_start_cluster)
++		return false;
++	if (WARN_ON_ONCE(entry1->efd_group != entry2->efd_group))
++		return false;
++	return true;
++}
++
++static inline void
++ext4_merge_freed_extents(struct ext4_sb_info *sbi, struct rb_root *root,
++			 struct ext4_free_data *entry1,
++			 struct ext4_free_data *entry2)
++{
++	entry1->efd_count += entry2->efd_count;
+ 	spin_lock(&sbi->s_md_lock);
+-	list_del(&entry->efd_list);
++	list_del(&entry2->efd_list);
+ 	spin_unlock(&sbi->s_md_lock);
+-	rb_erase(&entry->efd_node, entry_rb_root);
+-	kmem_cache_free(ext4_free_data_cachep, entry);
++	rb_erase(&entry2->efd_node, root);
++	kmem_cache_free(ext4_free_data_cachep, entry2);
++}
++
++static inline void
++ext4_try_merge_freed_extent_prev(struct ext4_sb_info *sbi, struct rb_root *root,
++				 struct ext4_free_data *entry)
++{
++	struct ext4_free_data *prev;
++	struct rb_node *node;
++
++	node = rb_prev(&entry->efd_node);
++	if (!node)
++		return;
++
++	prev = rb_entry(node, struct ext4_free_data, efd_node);
++	if (ext4_freed_extents_can_be_merged(prev, entry))
++		ext4_merge_freed_extents(sbi, root, prev, entry);
++}
++
++static inline void
++ext4_try_merge_freed_extent_next(struct ext4_sb_info *sbi, struct rb_root *root,
++				 struct ext4_free_data *entry)
++{
++	struct ext4_free_data *next;
++	struct rb_node *node;
++
++	node = rb_next(&entry->efd_node);
++	if (!node)
++		return;
++
++	next = rb_entry(node, struct ext4_free_data, efd_node);
++	if (ext4_freed_extents_can_be_merged(entry, next))
++		ext4_merge_freed_extents(sbi, root, entry, next);
+ }
+ 
+ static noinline_for_stack void
+@@ -6338,11 +6373,12 @@ ext4_mb_free_metadata(handle_t *handle, struct ext4_buddy *e4b,
+ 	ext4_group_t group = e4b->bd_group;
+ 	ext4_grpblk_t cluster;
+ 	ext4_grpblk_t clusters = new_entry->efd_count;
+-	struct ext4_free_data *entry;
++	struct ext4_free_data *entry = NULL;
+ 	struct ext4_group_info *db = e4b->bd_info;
+ 	struct super_block *sb = e4b->bd_sb;
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+-	struct rb_node **n = &db->bb_free_root.rb_node, *node;
++	struct rb_root *root = &db->bb_free_root;
++	struct rb_node **n = &root->rb_node;
+ 	struct rb_node *parent = NULL, *new_node;
+ 
+ 	BUG_ON(!ext4_handle_valid(handle));
+@@ -6378,27 +6414,30 @@ ext4_mb_free_metadata(handle_t *handle, struct ext4_buddy *e4b,
+ 		}
+ 	}
+ 
+-	rb_link_node(new_node, parent, n);
+-	rb_insert_color(new_node, &db->bb_free_root);
+-
+-	/* Now try to see the extent can be merged to left and right */
+-	node = rb_prev(new_node);
+-	if (node) {
+-		entry = rb_entry(node, struct ext4_free_data, efd_node);
+-		ext4_try_merge_freed_extent(sbi, entry, new_entry,
+-					    &(db->bb_free_root));
++	atomic_add(clusters, &sbi->s_mb_free_pending);
++	if (!entry)
++		goto insert;
++
++	/* Now try to see the extent can be merged to prev and next */
++	if (ext4_freed_extents_can_be_merged(new_entry, entry)) {
++		entry->efd_start_cluster = cluster;
++		entry->efd_count += new_entry->efd_count;
++		kmem_cache_free(ext4_free_data_cachep, new_entry);
++		ext4_try_merge_freed_extent_prev(sbi, root, entry);
++		return;
+ 	}
+-
+-	node = rb_next(new_node);
+-	if (node) {
+-		entry = rb_entry(node, struct ext4_free_data, efd_node);
+-		ext4_try_merge_freed_extent(sbi, entry, new_entry,
+-					    &(db->bb_free_root));
++	if (ext4_freed_extents_can_be_merged(entry, new_entry)) {
++		entry->efd_count += new_entry->efd_count;
++		kmem_cache_free(ext4_free_data_cachep, new_entry);
++		ext4_try_merge_freed_extent_next(sbi, root, entry);
++		return;
+ 	}
++insert:
++	rb_link_node(new_node, parent, n);
++	rb_insert_color(new_node, root);
+ 
+ 	spin_lock(&sbi->s_md_lock);
+ 	list_add_tail(&new_entry->efd_list, &sbi->s_freed_data_list[new_entry->efd_tid & 1]);
+-	atomic_add(clusters, &sbi->s_mb_free_pending);
+ 	spin_unlock(&sbi->s_md_lock);
+ }
+ 
+-- 
+2.50.1
+
+
+From 73a3ea3b64d2d9aa860f5ce2b22ae4d7ea6baff3 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:20 +0800
+Subject: [PATCH 31/40] ext4: fix zombie groups in average fragment size lists
+
+Groups with no free blocks shouldn't be in any average fragment size list.
+However, when all blocks in a group are allocated(i.e., bb_fragments or
+bb_free is 0), we currently skip updating the average fragment size, which
+means the group isn't removed from its previous s_mb_avg_fragment_size[old]
+list.
+
+This created "zombie" groups that were always skipped during traversal as
+they couldn't satisfy any block allocation requests, negatively impacting
+traversal efficiency.
+
+Therefore, when a group becomes completely full, bb_avg_fragment_size_order
+is now set to -1. If the old order was not -1, a removal operation is
+performed; if the new order is not -1, an insertion is performed.
+
+Fixes: 196e402adf2e ("ext4: improve cr 0 / cr 1 group scanning")
+CC: stable@vger.kernel.org
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Jan Kara <jack@suse.cz>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-11-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 6d98f2a5afc4d..72b20fc52bbfe 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -841,30 +841,30 @@ static void
+ mb_update_avg_fragment_size(struct super_block *sb, struct ext4_group_info *grp)
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+-	int new_order;
++	int new, old;
+ 
+-	if (!test_opt2(sb, MB_OPTIMIZE_SCAN) || grp->bb_fragments == 0)
++	if (!test_opt2(sb, MB_OPTIMIZE_SCAN))
+ 		return;
+ 
+-	new_order = mb_avg_fragment_size_order(sb,
+-					grp->bb_free / grp->bb_fragments);
+-	if (new_order == grp->bb_avg_fragment_size_order)
++	old = grp->bb_avg_fragment_size_order;
++	new = grp->bb_fragments == 0 ? -1 :
++	      mb_avg_fragment_size_order(sb, grp->bb_free / grp->bb_fragments);
++	if (new == old)
+ 		return;
+ 
+-	if (grp->bb_avg_fragment_size_order != -1) {
+-		write_lock(&sbi->s_mb_avg_fragment_size_locks[
+-					grp->bb_avg_fragment_size_order]);
++	if (old >= 0) {
++		write_lock(&sbi->s_mb_avg_fragment_size_locks[old]);
+ 		list_del(&grp->bb_avg_fragment_size_node);
+-		write_unlock(&sbi->s_mb_avg_fragment_size_locks[
+-					grp->bb_avg_fragment_size_order]);
+-	}
+-	grp->bb_avg_fragment_size_order = new_order;
+-	write_lock(&sbi->s_mb_avg_fragment_size_locks[
+-					grp->bb_avg_fragment_size_order]);
+-	list_add_tail(&grp->bb_avg_fragment_size_node,
+-		&sbi->s_mb_avg_fragment_size[grp->bb_avg_fragment_size_order]);
+-	write_unlock(&sbi->s_mb_avg_fragment_size_locks[
+-					grp->bb_avg_fragment_size_order]);
++		write_unlock(&sbi->s_mb_avg_fragment_size_locks[old]);
++	}
++
++	grp->bb_avg_fragment_size_order = new;
++	if (new >= 0) {
++		write_lock(&sbi->s_mb_avg_fragment_size_locks[new]);
++		list_add_tail(&grp->bb_avg_fragment_size_node,
++				&sbi->s_mb_avg_fragment_size[new]);
++		write_unlock(&sbi->s_mb_avg_fragment_size_locks[new]);
++	}
+ }
+ 
+ /*
+-- 
+2.50.1
+
+
+From da586be89a0cb919822ac1235edd33a59b8e8e9b Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:21 +0800
+Subject: [PATCH 32/40] ext4: fix largest free orders lists corruption on
+ mb_optimize_scan switch
+
+The grp->bb_largest_free_order is updated regardless of whether
+mb_optimize_scan is enabled. This can lead to inconsistencies between
+grp->bb_largest_free_order and the actual s_mb_largest_free_orders list
+index when mb_optimize_scan is repeatedly enabled and disabled via remount.
+
+For example, if mb_optimize_scan is initially enabled, largest free
+order is 3, and the group is in s_mb_largest_free_orders[3]. Then,
+mb_optimize_scan is disabled via remount, block allocations occur,
+updating largest free order to 2. Finally, mb_optimize_scan is re-enabled
+via remount, more block allocations update largest free order to 1.
+
+At this point, the group would be removed from s_mb_largest_free_orders[3]
+under the protection of s_mb_largest_free_orders_locks[2]. This lock
+mismatch can lead to list corruption.
+
+To fix this, whenever grp->bb_largest_free_order changes, we now always
+attempt to remove the group from its old order list. However, we only
+insert the group into the new order list if `mb_optimize_scan` is enabled.
+This approach helps prevent lock inconsistencies and ensures the data in
+the order lists remains reliable.
+
+Fixes: 196e402adf2e ("ext4: improve cr 0 / cr 1 group scanning")
+CC: stable@vger.kernel.org
+Suggested-by: Jan Kara <jack@suse.cz>
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-12-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 33 ++++++++++++++-------------------
+ 1 file changed, 14 insertions(+), 19 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 72b20fc52bbfe..fada0d1b3fdb2 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -1152,33 +1152,28 @@ static void
+ mb_set_largest_free_order(struct super_block *sb, struct ext4_group_info *grp)
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+-	int i;
++	int new, old = grp->bb_largest_free_order;
+ 
+-	for (i = MB_NUM_ORDERS(sb) - 1; i >= 0; i--)
+-		if (grp->bb_counters[i] > 0)
++	for (new = MB_NUM_ORDERS(sb) - 1; new >= 0; new--)
++		if (grp->bb_counters[new] > 0)
+ 			break;
++
+ 	/* No need to move between order lists? */
+-	if (!test_opt2(sb, MB_OPTIMIZE_SCAN) ||
+-	    i == grp->bb_largest_free_order) {
+-		grp->bb_largest_free_order = i;
++	if (new == old)
+ 		return;
+-	}
+ 
+-	if (grp->bb_largest_free_order >= 0) {
+-		write_lock(&sbi->s_mb_largest_free_orders_locks[
+-					      grp->bb_largest_free_order]);
++	if (old >= 0 && !list_empty(&grp->bb_largest_free_order_node)) {
++		write_lock(&sbi->s_mb_largest_free_orders_locks[old]);
+ 		list_del_init(&grp->bb_largest_free_order_node);
+-		write_unlock(&sbi->s_mb_largest_free_orders_locks[
+-					      grp->bb_largest_free_order]);
++		write_unlock(&sbi->s_mb_largest_free_orders_locks[old]);
+ 	}
+-	grp->bb_largest_free_order = i;
+-	if (grp->bb_largest_free_order >= 0 && grp->bb_free) {
+-		write_lock(&sbi->s_mb_largest_free_orders_locks[
+-					      grp->bb_largest_free_order]);
++
++	grp->bb_largest_free_order = new;
++	if (test_opt2(sb, MB_OPTIMIZE_SCAN) && new >= 0 && grp->bb_free) {
++		write_lock(&sbi->s_mb_largest_free_orders_locks[new]);
+ 		list_add_tail(&grp->bb_largest_free_order_node,
+-		      &sbi->s_mb_largest_free_orders[grp->bb_largest_free_order]);
+-		write_unlock(&sbi->s_mb_largest_free_orders_locks[
+-					      grp->bb_largest_free_order]);
++			      &sbi->s_mb_largest_free_orders[new]);
++		write_unlock(&sbi->s_mb_largest_free_orders_locks[new]);
+ 	}
+ }
+ 
+-- 
+2.50.1
+
+
+From 9c1d45dc4178bd83773cefd733858bea1d8150b0 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:22 +0800
+Subject: [PATCH 33/40] ext4: factor out __ext4_mb_scan_group()
+
+Extract __ext4_mb_scan_group() to make the code clearer and to
+prepare for the later conversion of 'choose group' to 'scan groups'.
+No functional changes.
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-13-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 45 +++++++++++++++++++++++++++------------------
+ fs/ext4/mballoc.h |  2 ++
+ 2 files changed, 29 insertions(+), 18 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index fada0d1b3fdb2..650eb6366eb04 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2568,6 +2568,30 @@ void ext4_mb_scan_aligned(struct ext4_allocation_context *ac,
+ 	}
+ }
+ 
++static void __ext4_mb_scan_group(struct ext4_allocation_context *ac)
++{
++	bool is_stripe_aligned;
++	struct ext4_sb_info *sbi;
++	enum criteria cr = ac->ac_criteria;
++
++	ac->ac_groups_scanned++;
++	if (cr == CR_POWER2_ALIGNED)
++		return ext4_mb_simple_scan_group(ac, ac->ac_e4b);
++
++	sbi = EXT4_SB(ac->ac_sb);
++	is_stripe_aligned = false;
++	if ((sbi->s_stripe >= sbi->s_cluster_ratio) &&
++	    !(ac->ac_g_ex.fe_len % EXT4_NUM_B2C(sbi, sbi->s_stripe)))
++		is_stripe_aligned = true;
++
++	if ((cr == CR_GOAL_LEN_FAST || cr == CR_BEST_AVAIL_LEN) &&
++	    is_stripe_aligned)
++		ext4_mb_scan_aligned(ac, ac->ac_e4b);
++
++	if (ac->ac_status == AC_STATUS_CONTINUE)
++		ext4_mb_complex_scan_group(ac, ac->ac_e4b);
++}
++
+ /*
+  * This is also called BEFORE we load the buddy bitmap.
+  * Returns either 1 or 0 indicating that the group is either suitable
+@@ -2855,6 +2879,8 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 	 */
+ 	if (ac->ac_2order)
+ 		cr = CR_POWER2_ALIGNED;
++
++	ac->ac_e4b = &e4b;
+ repeat:
+ 	for (; cr < EXT4_MB_NUM_CRS && ac->ac_status == AC_STATUS_CONTINUE; cr++) {
+ 		ac->ac_criteria = cr;
+@@ -2932,24 +2958,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 				continue;
+ 			}
+ 
+-			ac->ac_groups_scanned++;
+-			if (cr == CR_POWER2_ALIGNED)
+-				ext4_mb_simple_scan_group(ac, &e4b);
+-			else {
+-				bool is_stripe_aligned =
+-					(sbi->s_stripe >=
+-					 sbi->s_cluster_ratio) &&
+-					!(ac->ac_g_ex.fe_len %
+-					  EXT4_NUM_B2C(sbi, sbi->s_stripe));
+-
+-				if ((cr == CR_GOAL_LEN_FAST ||
+-				     cr == CR_BEST_AVAIL_LEN) &&
+-				    is_stripe_aligned)
+-					ext4_mb_scan_aligned(ac, &e4b);
+-
+-				if (ac->ac_status == AC_STATUS_CONTINUE)
+-					ext4_mb_complex_scan_group(ac, &e4b);
+-			}
++			__ext4_mb_scan_group(ac);
+ 
+ 			ext4_unlock_group(sb, group);
+ 			ext4_mb_unload_buddy(&e4b);
+diff --git a/fs/ext4/mballoc.h b/fs/ext4/mballoc.h
+index f8280de3e8820..7a60b0103e649 100644
+--- a/fs/ext4/mballoc.h
++++ b/fs/ext4/mballoc.h
+@@ -204,6 +204,8 @@ struct ext4_allocation_context {
+ 	__u8 ac_2order;		/* if request is to allocate 2^N blocks and
+ 				 * N > 0, the field stores N, otherwise 0 */
+ 	__u8 ac_op;		/* operation, for history only */
++
++	struct ext4_buddy *ac_e4b;
+ 	struct folio *ac_bitmap_folio;
+ 	struct folio *ac_buddy_folio;
+ 	struct ext4_prealloc_space *ac_pa;
+-- 
+2.50.1
+
+
+From 7947e4cdb40d917b174ce20933aefa6078205a62 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:23 +0800
+Subject: [PATCH 34/40] ext4: factor out ext4_mb_might_prefetch()
+
+Extract ext4_mb_might_prefetch() to make the code clearer and to
+prepare for the later conversion of 'choose group' to 'scan groups'.
+No functional changes.
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-14-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 62 +++++++++++++++++++++++++++++------------------
+ fs/ext4/mballoc.h |  4 +++
+ 2 files changed, 42 insertions(+), 24 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 650eb6366eb04..52ec59f58c363 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2781,6 +2781,37 @@ ext4_group_t ext4_mb_prefetch(struct super_block *sb, ext4_group_t group,
+ 	return group;
+ }
+ 
++/*
++ * Batch reads of the block allocation bitmaps to get
++ * multiple READs in flight; limit prefetching at inexpensive
++ * CR, otherwise mballoc can spend a lot of time loading
++ * imperfect groups
++ */
++static void ext4_mb_might_prefetch(struct ext4_allocation_context *ac,
++				   ext4_group_t group)
++{
++	struct ext4_sb_info *sbi;
++
++	if (ac->ac_prefetch_grp != group)
++		return;
++
++	sbi = EXT4_SB(ac->ac_sb);
++	if (ext4_mb_cr_expensive(ac->ac_criteria) ||
++	    ac->ac_prefetch_ios < sbi->s_mb_prefetch_limit) {
++		unsigned int nr = sbi->s_mb_prefetch;
++
++		if (ext4_has_feature_flex_bg(ac->ac_sb)) {
++			nr = 1 << sbi->s_log_groups_per_flex;
++			nr -= group & (nr - 1);
++			nr = umin(nr, sbi->s_mb_prefetch);
++		}
++
++		ac->ac_prefetch_nr = nr;
++		ac->ac_prefetch_grp = ext4_mb_prefetch(ac->ac_sb, group, nr,
++						       &ac->ac_prefetch_ios);
++	}
++}
++
+ /*
+  * Prefetching reads the block bitmap into the buffer cache; but we
+  * need to make sure that the buddy bitmap in the page cache has been
+@@ -2817,10 +2848,9 @@ void ext4_mb_prefetch_fini(struct super_block *sb, ext4_group_t group,
+ static noinline_for_stack int
+ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ {
+-	ext4_group_t prefetch_grp = 0, ngroups, group, i;
++	ext4_group_t ngroups, group, i;
+ 	enum criteria new_cr, cr = CR_GOAL_LEN_FAST;
+ 	int err = 0, first_err = 0;
+-	unsigned int nr = 0, prefetch_ios = 0;
+ 	struct ext4_sb_info *sbi;
+ 	struct super_block *sb;
+ 	struct ext4_buddy e4b;
+@@ -2881,6 +2911,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 		cr = CR_POWER2_ALIGNED;
+ 
+ 	ac->ac_e4b = &e4b;
++	ac->ac_prefetch_ios = 0;
+ repeat:
+ 	for (; cr < EXT4_MB_NUM_CRS && ac->ac_status == AC_STATUS_CONTINUE; cr++) {
+ 		ac->ac_criteria = cr;
+@@ -2890,8 +2921,8 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 		 */
+ 		group = ac->ac_g_ex.fe_group;
+ 		ac->ac_groups_linear_remaining = sbi->s_mb_max_linear_groups;
+-		prefetch_grp = group;
+-		nr = 0;
++		ac->ac_prefetch_grp = group;
++		ac->ac_prefetch_nr = 0;
+ 
+ 		for (i = 0, new_cr = cr; i < ngroups; i++,
+ 		     ext4_mb_choose_next_group(ac, &new_cr, &group, ngroups)) {
+@@ -2903,24 +2934,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 				goto repeat;
+ 			}
+ 
+-			/*
+-			 * Batch reads of the block allocation bitmaps
+-			 * to get multiple READs in flight; limit
+-			 * prefetching at inexpensive CR, otherwise mballoc
+-			 * can spend a lot of time loading imperfect groups
+-			 */
+-			if ((prefetch_grp == group) &&
+-			    (ext4_mb_cr_expensive(cr) ||
+-			     prefetch_ios < sbi->s_mb_prefetch_limit)) {
+-				nr = sbi->s_mb_prefetch;
+-				if (ext4_has_feature_flex_bg(sb)) {
+-					nr = 1 << sbi->s_log_groups_per_flex;
+-					nr -= group & (nr - 1);
+-					nr = min(nr, sbi->s_mb_prefetch);
+-				}
+-				prefetch_grp = ext4_mb_prefetch(sb, group,
+-							nr, &prefetch_ios);
+-			}
++			ext4_mb_might_prefetch(ac, group);
+ 
+ 			/* prevent unnecessary buddy loading. */
+ 			if (cr < CR_ANY_FREE &&
+@@ -3018,8 +3032,8 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 		 ac->ac_b_ex.fe_len, ac->ac_o_ex.fe_len, ac->ac_status,
+ 		 ac->ac_flags, cr, err);
+ 
+-	if (nr)
+-		ext4_mb_prefetch_fini(sb, prefetch_grp, nr);
++	if (ac->ac_prefetch_nr)
++		ext4_mb_prefetch_fini(sb, ac->ac_prefetch_grp, ac->ac_prefetch_nr);
+ 
+ 	return err;
+ }
+diff --git a/fs/ext4/mballoc.h b/fs/ext4/mballoc.h
+index 7a60b0103e649..9f66b1d5db67a 100644
+--- a/fs/ext4/mballoc.h
++++ b/fs/ext4/mballoc.h
+@@ -192,6 +192,10 @@ struct ext4_allocation_context {
+ 	 */
+ 	ext4_grpblk_t	ac_orig_goal_len;
+ 
++	ext4_group_t ac_prefetch_grp;
++	unsigned int ac_prefetch_ios;
++	unsigned int ac_prefetch_nr;
++
+ 	__u32 ac_flags;		/* allocation hints */
+ 	__u32 ac_groups_linear_remaining;
+ 	__u16 ac_groups_scanned;
+-- 
+2.50.1
+
+
+From d6af1bcdb9c7debb8cb2ad7d976a246ae64a355a Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:24 +0800
+Subject: [PATCH 35/40] ext4: factor out ext4_mb_scan_group()
+
+Extract ext4_mb_scan_group() to make the code clearer and to
+prepare for the later conversion of 'choose group' to 'scan groups'.
+No functional changes.
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-15-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 93 +++++++++++++++++++++++++----------------------
+ fs/ext4/mballoc.h |  2 +
+ 2 files changed, 51 insertions(+), 44 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 52ec59f58c363..0c3cbc7e2e854 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -2845,12 +2845,56 @@ void ext4_mb_prefetch_fini(struct super_block *sb, ext4_group_t group,
+ 	}
+ }
+ 
++static int ext4_mb_scan_group(struct ext4_allocation_context *ac,
++			      ext4_group_t group)
++{
++	int ret;
++	struct super_block *sb = ac->ac_sb;
++	enum criteria cr = ac->ac_criteria;
++
++	ext4_mb_might_prefetch(ac, group);
++
++	/* prevent unnecessary buddy loading. */
++	if (cr < CR_ANY_FREE && spin_is_locked(ext4_group_lock_ptr(sb, group)))
++		return 0;
++
++	/* This now checks without needing the buddy page */
++	ret = ext4_mb_good_group_nolock(ac, group, cr);
++	if (ret <= 0) {
++		if (!ac->ac_first_err)
++			ac->ac_first_err = ret;
++		return 0;
++	}
++
++	ret = ext4_mb_load_buddy(sb, group, ac->ac_e4b);
++	if (ret)
++		return ret;
++
++	/* skip busy group */
++	if (cr >= CR_ANY_FREE)
++		ext4_lock_group(sb, group);
++	else if (!ext4_try_lock_group(sb, group))
++		goto out_unload;
++
++	/* We need to check again after locking the block group. */
++	if (unlikely(!ext4_mb_good_group(ac, group, cr)))
++		goto out_unlock;
++
++	__ext4_mb_scan_group(ac);
++
++out_unlock:
++	ext4_unlock_group(sb, group);
++out_unload:
++	ext4_mb_unload_buddy(ac->ac_e4b);
++	return ret;
++}
++
+ static noinline_for_stack int
+ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ {
+ 	ext4_group_t ngroups, group, i;
+ 	enum criteria new_cr, cr = CR_GOAL_LEN_FAST;
+-	int err = 0, first_err = 0;
++	int err = 0;
+ 	struct ext4_sb_info *sbi;
+ 	struct super_block *sb;
+ 	struct ext4_buddy e4b;
+@@ -2912,6 +2956,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 
+ 	ac->ac_e4b = &e4b;
+ 	ac->ac_prefetch_ios = 0;
++	ac->ac_first_err = 0;
+ repeat:
+ 	for (; cr < EXT4_MB_NUM_CRS && ac->ac_status == AC_STATUS_CONTINUE; cr++) {
+ 		ac->ac_criteria = cr;
+@@ -2926,7 +2971,6 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 
+ 		for (i = 0, new_cr = cr; i < ngroups; i++,
+ 		     ext4_mb_choose_next_group(ac, &new_cr, &group, ngroups)) {
+-			int ret = 0;
+ 
+ 			cond_resched();
+ 			if (new_cr != cr) {
+@@ -2934,49 +2978,10 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 				goto repeat;
+ 			}
+ 
+-			ext4_mb_might_prefetch(ac, group);
+-
+-			/* prevent unnecessary buddy loading. */
+-			if (cr < CR_ANY_FREE &&
+-			    spin_is_locked(ext4_group_lock_ptr(sb, group)))
+-				continue;
+-
+-			/* This now checks without needing the buddy page */
+-			ret = ext4_mb_good_group_nolock(ac, group, cr);
+-			if (ret <= 0) {
+-				if (!first_err)
+-					first_err = ret;
+-				continue;
+-			}
+-
+-			err = ext4_mb_load_buddy(sb, group, &e4b);
++			err = ext4_mb_scan_group(ac, group);
+ 			if (err)
+ 				goto out;
+ 
+-			/* skip busy group */
+-			if (cr >= CR_ANY_FREE) {
+-				ext4_lock_group(sb, group);
+-			} else if (!ext4_try_lock_group(sb, group)) {
+-				ext4_mb_unload_buddy(&e4b);
+-				continue;
+-			}
+-
+-			/*
+-			 * We need to check again after locking the
+-			 * block group
+-			 */
+-			ret = ext4_mb_good_group(ac, group, cr);
+-			if (ret == 0) {
+-				ext4_unlock_group(sb, group);
+-				ext4_mb_unload_buddy(&e4b);
+-				continue;
+-			}
+-
+-			__ext4_mb_scan_group(ac);
+-
+-			ext4_unlock_group(sb, group);
+-			ext4_mb_unload_buddy(&e4b);
+-
+ 			if (ac->ac_status != AC_STATUS_CONTINUE)
+ 				break;
+ 		}
+@@ -3025,8 +3030,8 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 			atomic_inc(&sbi->s_bal_stream_goals);
+ 	}
+ out:
+-	if (!err && ac->ac_status != AC_STATUS_FOUND && first_err)
+-		err = first_err;
++	if (!err && ac->ac_status != AC_STATUS_FOUND && ac->ac_first_err)
++		err = ac->ac_first_err;
+ 
+ 	mb_debug(sb, "Best len %d, origin len %d, ac_status %u, ac_flags 0x%x, cr %d ret %d\n",
+ 		 ac->ac_b_ex.fe_len, ac->ac_o_ex.fe_len, ac->ac_status,
+diff --git a/fs/ext4/mballoc.h b/fs/ext4/mballoc.h
+index 9f66b1d5db67a..83886fc9521b7 100644
+--- a/fs/ext4/mballoc.h
++++ b/fs/ext4/mballoc.h
+@@ -196,6 +196,8 @@ struct ext4_allocation_context {
+ 	unsigned int ac_prefetch_ios;
+ 	unsigned int ac_prefetch_nr;
+ 
++	int ac_first_err;
++
+ 	__u32 ac_flags;		/* allocation hints */
+ 	__u32 ac_groups_linear_remaining;
+ 	__u16 ac_groups_scanned;
+-- 
+2.50.1
+
+
+From 990cf5a3058b65fc608df0a846c8d950d181b8e5 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:25 +0800
+Subject: [PATCH 36/40] ext4: convert free groups order lists to xarrays
+
+While traversing the list, holding a spin_lock prevents load_buddy, making
+direct use of ext4_try_lock_group impossible. This can lead to a bouncing
+scenario where spin_is_locked(grp_A) succeeds, but ext4_try_lock_group()
+fails, forcing the list traversal to repeatedly restart from grp_A.
+
+In contrast, linear traversal directly uses ext4_try_lock_group(),
+avoiding this bouncing. Therefore, we need a lockless, ordered traversal
+to achieve linear-like efficiency.
+
+Therefore, this commit converts both average fragment size lists and
+largest free order lists into ordered xarrays.
+
+In an xarray, the index represents the block group number and the value
+holds the block group information; a non-empty value indicates the block
+group's presence.
+
+While insertion and deletion complexity remain O(1), lookup complexity
+changes from O(1) to O(nlogn), which may slightly reduce single-threaded
+performance.
+
+Additionally, xarray insertions might fail, potentially due to memory
+allocation issues. However, since we have linear traversal as a fallback,
+this isn't a major problem. Therefore, we've only added a warning message
+for insertion failures here.
+
+A helper function ext4_mb_find_good_group_xarray() is added to find good
+groups in the specified xarray starting at the specified position start,
+and when it reaches ngroups-1, it wraps around to 0 and then to start-1.
+This ensures an ordered traversal within the xarray.
+
+Performance test results are as follows: Single-process operations
+on an empty disk show negligible impact, while multi-process workloads
+demonstrate a noticeable performance gain.
+
+|CPU: Kunpeng 920   |          P80           |            P1           |
+|Memory: 512GB      |------------------------|-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 20097 | 19555 (-2.6%)  | 316141 | 315636 (-0.2%) |
+|mb_optimize_scan=1 | 13318 | 15496 (+16.3%) | 325273 | 323569 (-0.5%) |
+
+|CPU: AMD 9654 * 2  |          P96           |             P1          |
+|Memory: 1536GB     |------------------------|-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 53603 | 53192 (-0.7%)  | 214243 | 212678 (-0.7%) |
+|mb_optimize_scan=1 | 20887 | 37636 (+80.1%) | 213632 | 214189 (+0.2%) |
+
+[ Applied spelling fixes per discussion on the ext4-list see thread
+  referened in the Link tag. --tytso]
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-16-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h         |   8 +-
+ fs/ext4/mballoc-test.c |   4 -
+ fs/ext4/mballoc.c      | 254 ++++++++++++++++++++++-------------------
+ 3 files changed, 140 insertions(+), 126 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index 21507f3999423..c5e5efa374ff8 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -1608,10 +1608,8 @@ struct ext4_sb_info {
+ 	struct list_head s_discard_list;
+ 	struct work_struct s_discard_work;
+ 	atomic_t s_retry_alloc_pending;
+-	struct list_head *s_mb_avg_fragment_size;
+-	rwlock_t *s_mb_avg_fragment_size_locks;
+-	struct list_head *s_mb_largest_free_orders;
+-	rwlock_t *s_mb_largest_free_orders_locks;
++	struct xarray *s_mb_avg_fragment_size;
++	struct xarray *s_mb_largest_free_orders;
+ 
+ 	/* tunables */
+ 	unsigned long s_stripe;
+@@ -3485,8 +3483,6 @@ struct ext4_group_info {
+ 	void            *bb_bitmap;
+ #endif
+ 	struct rw_semaphore alloc_sem;
+-	struct list_head bb_avg_fragment_size_node;
+-	struct list_head bb_largest_free_order_node;
+ 	ext4_grpblk_t	bb_counters[];	/* Nr of free power-of-two-block
+ 					 * regions, index is order.
+ 					 * bb_counters[3] = 5 means
+diff --git a/fs/ext4/mballoc-test.c b/fs/ext4/mballoc-test.c
+index f018bc8424c7c..a9416b20ff64c 100644
+--- a/fs/ext4/mballoc-test.c
++++ b/fs/ext4/mballoc-test.c
+@@ -805,8 +805,6 @@ static void test_mb_mark_used(struct kunit *test)
+ 	grp->bb_free = EXT4_CLUSTERS_PER_GROUP(sb);
+ 	grp->bb_largest_free_order = -1;
+ 	grp->bb_avg_fragment_size_order = -1;
+-	INIT_LIST_HEAD(&grp->bb_largest_free_order_node);
+-	INIT_LIST_HEAD(&grp->bb_avg_fragment_size_node);
+ 	mbt_generate_test_ranges(sb, ranges, TEST_RANGE_COUNT);
+ 	for (i = 0; i < TEST_RANGE_COUNT; i++)
+ 		test_mb_mark_used_range(test, &e4b, ranges[i].start,
+@@ -882,8 +880,6 @@ static void test_mb_free_blocks(struct kunit *test)
+ 	grp->bb_free = 0;
+ 	grp->bb_largest_free_order = -1;
+ 	grp->bb_avg_fragment_size_order = -1;
+-	INIT_LIST_HEAD(&grp->bb_largest_free_order_node);
+-	INIT_LIST_HEAD(&grp->bb_avg_fragment_size_node);
+ 	memset(bitmap, 0xff, sb->s_blocksize);
+ 
+ 	mbt_generate_test_ranges(sb, ranges, TEST_RANGE_COUNT);
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index 0c3cbc7e2e854..c61955cba370d 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -132,25 +132,30 @@
+  * If "mb_optimize_scan" mount option is set, we maintain in memory group info
+  * structures in two data structures:
+  *
+- * 1) Array of largest free order lists (sbi->s_mb_largest_free_orders)
++ * 1) Array of largest free order xarrays (sbi->s_mb_largest_free_orders)
+  *
+- *    Locking: sbi->s_mb_largest_free_orders_locks(array of rw locks)
++ *    Locking: Writers use xa_lock, readers use rcu_read_lock.
+  *
+- *    This is an array of lists where the index in the array represents the
++ *    This is an array of xarrays where the index in the array represents the
+  *    largest free order in the buddy bitmap of the participating group infos of
+- *    that list. So, there are exactly MB_NUM_ORDERS(sb) (which means total
+- *    number of buddy bitmap orders possible) number of lists. Group-infos are
+- *    placed in appropriate lists.
++ *    that xarray. So, there are exactly MB_NUM_ORDERS(sb) (which means total
++ *    number of buddy bitmap orders possible) number of xarrays. Group-infos are
++ *    placed in appropriate xarrays.
+  *
+- * 2) Average fragment size lists (sbi->s_mb_avg_fragment_size)
++ * 2) Average fragment size xarrays (sbi->s_mb_avg_fragment_size)
+  *
+- *    Locking: sbi->s_mb_avg_fragment_size_locks(array of rw locks)
++ *    Locking: Writers use xa_lock, readers use rcu_read_lock.
+  *
+- *    This is an array of lists where in the i-th list there are groups with
++ *    This is an array of xarrays where in the i-th xarray there are groups with
+  *    average fragment size >= 2^i and < 2^(i+1). The average fragment size
+  *    is computed as ext4_group_info->bb_free / ext4_group_info->bb_fragments.
+- *    Note that we don't bother with a special list for completely empty groups
+- *    so we only have MB_NUM_ORDERS(sb) lists.
++ *    Note that we don't bother with a special xarray for completely empty
++ *    groups so we only have MB_NUM_ORDERS(sb) xarrays. Group-infos are placed
++ *    in appropriate xarrays.
++ *
++ * In xarray, the index is the block group number, the value is the block group
++ * information, and a non-empty value indicates the block group is present in
++ * the current xarray.
+  *
+  * When "mb_optimize_scan" mount option is set, mballoc consults the above data
+  * structures to decide the order in which groups are to be traversed for
+@@ -852,19 +857,73 @@ mb_update_avg_fragment_size(struct super_block *sb, struct ext4_group_info *grp)
+ 	if (new == old)
+ 		return;
+ 
+-	if (old >= 0) {
+-		write_lock(&sbi->s_mb_avg_fragment_size_locks[old]);
+-		list_del(&grp->bb_avg_fragment_size_node);
+-		write_unlock(&sbi->s_mb_avg_fragment_size_locks[old]);
+-	}
++	if (old >= 0)
++		xa_erase(&sbi->s_mb_avg_fragment_size[old], grp->bb_group);
+ 
+ 	grp->bb_avg_fragment_size_order = new;
+ 	if (new >= 0) {
+-		write_lock(&sbi->s_mb_avg_fragment_size_locks[new]);
+-		list_add_tail(&grp->bb_avg_fragment_size_node,
+-				&sbi->s_mb_avg_fragment_size[new]);
+-		write_unlock(&sbi->s_mb_avg_fragment_size_locks[new]);
++		/*
++		 * Cannot use __GFP_NOFAIL because we hold the group lock.
++		 * Although allocation for insertion may fails, it's not fatal
++		 * as we have linear traversal to fall back on.
++		 */
++		int err = xa_insert(&sbi->s_mb_avg_fragment_size[new],
++				    grp->bb_group, grp, GFP_ATOMIC);
++		if (err)
++			mb_debug(sb, "insert group: %u to s_mb_avg_fragment_size[%d] failed, err %d",
++				 grp->bb_group, new, err);
++	}
++}
++
++static struct ext4_group_info *
++ext4_mb_find_good_group_xarray(struct ext4_allocation_context *ac,
++			       struct xarray *xa, ext4_group_t start)
++{
++	struct super_block *sb = ac->ac_sb;
++	struct ext4_sb_info *sbi = EXT4_SB(sb);
++	enum criteria cr = ac->ac_criteria;
++	ext4_group_t ngroups = ext4_get_groups_count(sb);
++	unsigned long group = start;
++	ext4_group_t end = ngroups;
++	struct ext4_group_info *grp;
++
++	if (WARN_ON_ONCE(start >= end))
++		return NULL;
++
++wrap_around:
++	xa_for_each_range(xa, group, grp, start, end - 1) {
++		if (sbi->s_mb_stats)
++			atomic64_inc(&sbi->s_bal_cX_groups_considered[cr]);
++
++		if (!spin_is_locked(ext4_group_lock_ptr(sb, group)) &&
++		    likely(ext4_mb_good_group(ac, group, cr)))
++			return grp;
++
++		cond_resched();
+ 	}
++
++	if (start) {
++		end = start;
++		start = 0;
++		goto wrap_around;
++	}
++
++	return NULL;
++}
++
++/*
++ * Find a suitable group of given order from the largest free orders xarray.
++ */
++static struct ext4_group_info *
++ext4_mb_find_good_group_largest_free_order(struct ext4_allocation_context *ac,
++					   int order, ext4_group_t start)
++{
++	struct xarray *xa = &EXT4_SB(ac->ac_sb)->s_mb_largest_free_orders[order];
++
++	if (xa_empty(xa))
++		return NULL;
++
++	return ext4_mb_find_good_group_xarray(ac, xa, start);
+ }
+ 
+ /*
+@@ -875,7 +934,7 @@ static void ext4_mb_choose_next_group_p2_aligned(struct ext4_allocation_context
+ 			enum criteria *new_cr, ext4_group_t *group)
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+-	struct ext4_group_info *iter;
++	struct ext4_group_info *grp;
+ 	int i;
+ 
+ 	if (ac->ac_status == AC_STATUS_FOUND)
+@@ -885,26 +944,12 @@ static void ext4_mb_choose_next_group_p2_aligned(struct ext4_allocation_context
+ 		atomic_inc(&sbi->s_bal_p2_aligned_bad_suggestions);
+ 
+ 	for (i = ac->ac_2order; i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+-		if (list_empty(&sbi->s_mb_largest_free_orders[i]))
+-			continue;
+-		read_lock(&sbi->s_mb_largest_free_orders_locks[i]);
+-		if (list_empty(&sbi->s_mb_largest_free_orders[i])) {
+-			read_unlock(&sbi->s_mb_largest_free_orders_locks[i]);
+-			continue;
+-		}
+-		list_for_each_entry(iter, &sbi->s_mb_largest_free_orders[i],
+-				    bb_largest_free_order_node) {
+-			if (sbi->s_mb_stats)
+-				atomic64_inc(&sbi->s_bal_cX_groups_considered[CR_POWER2_ALIGNED]);
+-			if (!spin_is_locked(ext4_group_lock_ptr(ac->ac_sb, iter->bb_group)) &&
+-			    likely(ext4_mb_good_group(ac, iter->bb_group, CR_POWER2_ALIGNED))) {
+-				*group = iter->bb_group;
+-				ac->ac_flags |= EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED;
+-				read_unlock(&sbi->s_mb_largest_free_orders_locks[i]);
+-				return;
+-			}
++		grp = ext4_mb_find_good_group_largest_free_order(ac, i, *group);
++		if (grp) {
++			*group = grp->bb_group;
++			ac->ac_flags |= EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED;
++			return;
+ 		}
+-		read_unlock(&sbi->s_mb_largest_free_orders_locks[i]);
+ 	}
+ 
+ 	/* Increment cr and search again if no group is found */
+@@ -912,35 +957,18 @@ static void ext4_mb_choose_next_group_p2_aligned(struct ext4_allocation_context
+ }
+ 
+ /*
+- * Find a suitable group of given order from the average fragments list.
++ * Find a suitable group of given order from the average fragments xarray.
+  */
+ static struct ext4_group_info *
+-ext4_mb_find_good_group_avg_frag_lists(struct ext4_allocation_context *ac, int order)
++ext4_mb_find_good_group_avg_frag_xarray(struct ext4_allocation_context *ac,
++					int order, ext4_group_t start)
+ {
+-	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+-	struct list_head *frag_list = &sbi->s_mb_avg_fragment_size[order];
+-	rwlock_t *frag_list_lock = &sbi->s_mb_avg_fragment_size_locks[order];
+-	struct ext4_group_info *grp = NULL, *iter;
+-	enum criteria cr = ac->ac_criteria;
++	struct xarray *xa = &EXT4_SB(ac->ac_sb)->s_mb_avg_fragment_size[order];
+ 
+-	if (list_empty(frag_list))
+-		return NULL;
+-	read_lock(frag_list_lock);
+-	if (list_empty(frag_list)) {
+-		read_unlock(frag_list_lock);
++	if (xa_empty(xa))
+ 		return NULL;
+-	}
+-	list_for_each_entry(iter, frag_list, bb_avg_fragment_size_node) {
+-		if (sbi->s_mb_stats)
+-			atomic64_inc(&sbi->s_bal_cX_groups_considered[cr]);
+-		if (!spin_is_locked(ext4_group_lock_ptr(ac->ac_sb, iter->bb_group)) &&
+-		    likely(ext4_mb_good_group(ac, iter->bb_group, cr))) {
+-			grp = iter;
+-			break;
+-		}
+-	}
+-	read_unlock(frag_list_lock);
+-	return grp;
++
++	return ext4_mb_find_good_group_xarray(ac, xa, start);
+ }
+ 
+ /*
+@@ -961,7 +989,7 @@ static void ext4_mb_choose_next_group_goal_fast(struct ext4_allocation_context *
+ 
+ 	for (i = mb_avg_fragment_size_order(ac->ac_sb, ac->ac_g_ex.fe_len);
+ 	     i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+-		grp = ext4_mb_find_good_group_avg_frag_lists(ac, i);
++		grp = ext4_mb_find_good_group_avg_frag_xarray(ac, i, *group);
+ 		if (grp) {
+ 			*group = grp->bb_group;
+ 			ac->ac_flags |= EXT4_MB_CR_GOAL_LEN_FAST_OPTIMIZED;
+@@ -1057,7 +1085,8 @@ static void ext4_mb_choose_next_group_best_avail(struct ext4_allocation_context
+ 		frag_order = mb_avg_fragment_size_order(ac->ac_sb,
+ 							ac->ac_g_ex.fe_len);
+ 
+-		grp = ext4_mb_find_good_group_avg_frag_lists(ac, frag_order);
++		grp = ext4_mb_find_good_group_avg_frag_xarray(ac, frag_order,
++							      *group);
+ 		if (grp) {
+ 			*group = grp->bb_group;
+ 			ac->ac_flags |= EXT4_MB_CR_BEST_AVAIL_LEN_OPTIMIZED;
+@@ -1162,18 +1191,25 @@ mb_set_largest_free_order(struct super_block *sb, struct ext4_group_info *grp)
+ 	if (new == old)
+ 		return;
+ 
+-	if (old >= 0 && !list_empty(&grp->bb_largest_free_order_node)) {
+-		write_lock(&sbi->s_mb_largest_free_orders_locks[old]);
+-		list_del_init(&grp->bb_largest_free_order_node);
+-		write_unlock(&sbi->s_mb_largest_free_orders_locks[old]);
++	if (old >= 0) {
++		struct xarray *xa = &sbi->s_mb_largest_free_orders[old];
++
++		if (!xa_empty(xa) && xa_load(xa, grp->bb_group))
++			xa_erase(xa, grp->bb_group);
+ 	}
+ 
+ 	grp->bb_largest_free_order = new;
+ 	if (test_opt2(sb, MB_OPTIMIZE_SCAN) && new >= 0 && grp->bb_free) {
+-		write_lock(&sbi->s_mb_largest_free_orders_locks[new]);
+-		list_add_tail(&grp->bb_largest_free_order_node,
+-			      &sbi->s_mb_largest_free_orders[new]);
+-		write_unlock(&sbi->s_mb_largest_free_orders_locks[new]);
++		/*
++		 * Cannot use __GFP_NOFAIL because we hold the group lock.
++		 * Although allocation for insertion may fails, it's not fatal
++		 * as we have linear traversal to fall back on.
++		 */
++		int err = xa_insert(&sbi->s_mb_largest_free_orders[new],
++				    grp->bb_group, grp, GFP_ATOMIC);
++		if (err)
++			mb_debug(sb, "insert group: %u to s_mb_largest_free_orders[%d] failed, err %d",
++				 grp->bb_group, new, err);
+ 	}
+ }
+ 
+@@ -3269,6 +3305,7 @@ static int ext4_mb_seq_structs_summary_show(struct seq_file *seq, void *v)
+ 	unsigned long position = ((unsigned long) v);
+ 	struct ext4_group_info *grp;
+ 	unsigned int count;
++	unsigned long idx;
+ 
+ 	position--;
+ 	if (position >= MB_NUM_ORDERS(sb)) {
+@@ -3277,11 +3314,8 @@ static int ext4_mb_seq_structs_summary_show(struct seq_file *seq, void *v)
+ 			seq_puts(seq, "avg_fragment_size_lists:\n");
+ 
+ 		count = 0;
+-		read_lock(&sbi->s_mb_avg_fragment_size_locks[position]);
+-		list_for_each_entry(grp, &sbi->s_mb_avg_fragment_size[position],
+-				    bb_avg_fragment_size_node)
++		xa_for_each(&sbi->s_mb_avg_fragment_size[position], idx, grp)
+ 			count++;
+-		read_unlock(&sbi->s_mb_avg_fragment_size_locks[position]);
+ 		seq_printf(seq, "\tlist_order_%u_groups: %u\n",
+ 					(unsigned int)position, count);
+ 		return 0;
+@@ -3293,11 +3327,8 @@ static int ext4_mb_seq_structs_summary_show(struct seq_file *seq, void *v)
+ 		seq_puts(seq, "max_free_order_lists:\n");
+ 	}
+ 	count = 0;
+-	read_lock(&sbi->s_mb_largest_free_orders_locks[position]);
+-	list_for_each_entry(grp, &sbi->s_mb_largest_free_orders[position],
+-			    bb_largest_free_order_node)
++	xa_for_each(&sbi->s_mb_largest_free_orders[position], idx, grp)
+ 		count++;
+-	read_unlock(&sbi->s_mb_largest_free_orders_locks[position]);
+ 	seq_printf(seq, "\tlist_order_%u_groups: %u\n",
+ 		   (unsigned int)position, count);
+ 
+@@ -3417,8 +3448,6 @@ int ext4_mb_add_groupinfo(struct super_block *sb, ext4_group_t group,
+ 	INIT_LIST_HEAD(&meta_group_info[i]->bb_prealloc_list);
+ 	init_rwsem(&meta_group_info[i]->alloc_sem);
+ 	meta_group_info[i]->bb_free_root = RB_ROOT;
+-	INIT_LIST_HEAD(&meta_group_info[i]->bb_largest_free_order_node);
+-	INIT_LIST_HEAD(&meta_group_info[i]->bb_avg_fragment_size_node);
+ 	meta_group_info[i]->bb_largest_free_order = -1;  /* uninit */
+ 	meta_group_info[i]->bb_avg_fragment_size_order = -1;  /* uninit */
+ 	meta_group_info[i]->bb_group = group;
+@@ -3628,6 +3657,20 @@ static void ext4_discard_work(struct work_struct *work)
+ 		ext4_mb_unload_buddy(&e4b);
+ }
+ 
++static inline void ext4_mb_avg_fragment_size_destroy(struct ext4_sb_info *sbi)
++{
++	for (int i = 0; i < MB_NUM_ORDERS(sbi->s_sb); i++)
++		xa_destroy(&sbi->s_mb_avg_fragment_size[i]);
++	kfree(sbi->s_mb_avg_fragment_size);
++}
++
++static inline void ext4_mb_largest_free_orders_destroy(struct ext4_sb_info *sbi)
++{
++	for (int i = 0; i < MB_NUM_ORDERS(sbi->s_sb); i++)
++		xa_destroy(&sbi->s_mb_largest_free_orders[i]);
++	kfree(sbi->s_mb_largest_free_orders);
++}
++
+ int ext4_mb_init(struct super_block *sb)
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+@@ -3673,41 +3716,24 @@ int ext4_mb_init(struct super_block *sb)
+ 	} while (i < MB_NUM_ORDERS(sb));
+ 
+ 	sbi->s_mb_avg_fragment_size =
+-		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(struct list_head),
++		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(struct xarray),
+ 			GFP_KERNEL);
+ 	if (!sbi->s_mb_avg_fragment_size) {
+ 		ret = -ENOMEM;
+ 		goto out;
+ 	}
+-	sbi->s_mb_avg_fragment_size_locks =
+-		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(rwlock_t),
+-			GFP_KERNEL);
+-	if (!sbi->s_mb_avg_fragment_size_locks) {
+-		ret = -ENOMEM;
+-		goto out;
+-	}
+-	for (i = 0; i < MB_NUM_ORDERS(sb); i++) {
+-		INIT_LIST_HEAD(&sbi->s_mb_avg_fragment_size[i]);
+-		rwlock_init(&sbi->s_mb_avg_fragment_size_locks[i]);
+-	}
++	for (i = 0; i < MB_NUM_ORDERS(sb); i++)
++		xa_init(&sbi->s_mb_avg_fragment_size[i]);
++
+ 	sbi->s_mb_largest_free_orders =
+-		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(struct list_head),
++		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(struct xarray),
+ 			GFP_KERNEL);
+ 	if (!sbi->s_mb_largest_free_orders) {
+ 		ret = -ENOMEM;
+ 		goto out;
+ 	}
+-	sbi->s_mb_largest_free_orders_locks =
+-		kmalloc_array(MB_NUM_ORDERS(sb), sizeof(rwlock_t),
+-			GFP_KERNEL);
+-	if (!sbi->s_mb_largest_free_orders_locks) {
+-		ret = -ENOMEM;
+-		goto out;
+-	}
+-	for (i = 0; i < MB_NUM_ORDERS(sb); i++) {
+-		INIT_LIST_HEAD(&sbi->s_mb_largest_free_orders[i]);
+-		rwlock_init(&sbi->s_mb_largest_free_orders_locks[i]);
+-	}
++	for (i = 0; i < MB_NUM_ORDERS(sb); i++)
++		xa_init(&sbi->s_mb_largest_free_orders[i]);
+ 
+ 	spin_lock_init(&sbi->s_md_lock);
+ 	atomic_set(&sbi->s_mb_free_pending, 0);
+@@ -3792,10 +3818,8 @@ int ext4_mb_init(struct super_block *sb)
+ 	kfree(sbi->s_mb_last_groups);
+ 	sbi->s_mb_last_groups = NULL;
+ out:
+-	kfree(sbi->s_mb_avg_fragment_size);
+-	kfree(sbi->s_mb_avg_fragment_size_locks);
+-	kfree(sbi->s_mb_largest_free_orders);
+-	kfree(sbi->s_mb_largest_free_orders_locks);
++	ext4_mb_avg_fragment_size_destroy(sbi);
++	ext4_mb_largest_free_orders_destroy(sbi);
+ 	kfree(sbi->s_mb_offsets);
+ 	sbi->s_mb_offsets = NULL;
+ 	kfree(sbi->s_mb_maxs);
+@@ -3862,10 +3886,8 @@ void ext4_mb_release(struct super_block *sb)
+ 		kvfree(group_info);
+ 		rcu_read_unlock();
+ 	}
+-	kfree(sbi->s_mb_avg_fragment_size);
+-	kfree(sbi->s_mb_avg_fragment_size_locks);
+-	kfree(sbi->s_mb_largest_free_orders);
+-	kfree(sbi->s_mb_largest_free_orders_locks);
++	ext4_mb_avg_fragment_size_destroy(sbi);
++	ext4_mb_largest_free_orders_destroy(sbi);
+ 	kfree(sbi->s_mb_offsets);
+ 	kfree(sbi->s_mb_maxs);
+ 	iput(sbi->s_buddy_cache);
+-- 
+2.50.1
+
+
+From d4d8c6254fdba7e9a98582432493dfbf68d52c46 Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:26 +0800
+Subject: [PATCH 37/40] ext4: refactor choose group to scan group
+
+This commit converts the `choose group` logic to `scan group` using
+previously prepared helper functions. This allows us to leverage xarrays
+for ordered non-linear traversal, thereby mitigating the "bouncing" issue
+inherent in the `choose group` mechanism.
+
+This also decouples linear and non-linear traversals, leading to cleaner
+and more readable code.
+
+Key changes:
+
+ * ext4_mb_choose_next_group() is refactored to ext4_mb_scan_groups().
+
+ * Replaced ext4_mb_good_group() with ext4_mb_scan_group() in non-linear
+   traversals, and related functions now return error codes instead of
+   group info.
+
+ * Added ext4_mb_scan_groups_linear() for performing linear scans starting
+   from a specific group for a set number of times.
+
+ * Linear scans now execute up to sbi->s_mb_max_linear_groups times,
+   so ac_groups_linear_remaining is removed as it's no longer used.
+
+ * ac->ac_criteria is now used directly instead of passing cr around.
+   Also, ac->ac_criteria is incremented directly after groups scan fails
+   for the corresponding criteria.
+
+ * Since we're now directly scanning groups instead of finding a good group
+   then scanning, the following variables and flags are no longer needed,
+   s_bal_cX_groups_considered is sufficient.
+
+    s_bal_p2_aligned_bad_suggestions
+    s_bal_goal_fast_bad_suggestions
+    s_bal_best_avail_bad_suggestions
+    EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED
+    EXT4_MB_CR_GOAL_LEN_FAST_OPTIMIZED
+    EXT4_MB_CR_BEST_AVAIL_LEN_OPTIMIZED
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-17-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/ext4.h    |  12 --
+ fs/ext4/mballoc.c | 292 +++++++++++++++++++++-------------------------
+ fs/ext4/mballoc.h |   1 -
+ 3 files changed, 131 insertions(+), 174 deletions(-)
+
+diff --git a/fs/ext4/ext4.h b/fs/ext4/ext4.h
+index c5e5efa374ff8..1064847399321 100644
+--- a/fs/ext4/ext4.h
++++ b/fs/ext4/ext4.h
+@@ -207,15 +207,6 @@ enum criteria {
+ #define EXT4_MB_USE_RESERVED		0x2000
+ /* Do strict check for free blocks while retrying block allocation */
+ #define EXT4_MB_STRICT_CHECK		0x4000
+-/* Large fragment size list lookup succeeded at least once for
+- * CR_POWER2_ALIGNED */
+-#define EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED		0x8000
+-/* Avg fragment size rb tree lookup succeeded at least once for
+- * CR_GOAL_LEN_FAST */
+-#define EXT4_MB_CR_GOAL_LEN_FAST_OPTIMIZED		0x00010000
+-/* Avg fragment size rb tree lookup succeeded at least once for
+- * CR_BEST_AVAIL_LEN */
+-#define EXT4_MB_CR_BEST_AVAIL_LEN_OPTIMIZED		0x00020000
+ 
+ struct ext4_allocation_request {
+ 	/* target inode for block we're allocating */
+@@ -1643,9 +1634,6 @@ struct ext4_sb_info {
+ 	atomic_t s_bal_len_goals;	/* len goal hits */
+ 	atomic_t s_bal_breaks;	/* too long searches */
+ 	atomic_t s_bal_2orders;	/* 2^order hits */
+-	atomic_t s_bal_p2_aligned_bad_suggestions;
+-	atomic_t s_bal_goal_fast_bad_suggestions;
+-	atomic_t s_bal_best_avail_bad_suggestions;
+ 	atomic64_t s_bal_cX_groups_considered[EXT4_MB_NUM_CRS];
+ 	atomic64_t s_bal_cX_hits[EXT4_MB_NUM_CRS];
+ 	atomic64_t s_bal_cX_failed[EXT4_MB_NUM_CRS];		/* cX loop didn't find blocks */
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index c61955cba370d..a75a6bd6bbae0 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -425,8 +425,8 @@ static void ext4_mb_generate_from_pa(struct super_block *sb, void *bitmap,
+ 					ext4_group_t group);
+ static void ext4_mb_new_preallocation(struct ext4_allocation_context *ac);
+ 
+-static bool ext4_mb_good_group(struct ext4_allocation_context *ac,
+-			       ext4_group_t group, enum criteria cr);
++static int ext4_mb_scan_group(struct ext4_allocation_context *ac,
++			      ext4_group_t group);
+ 
+ static int ext4_try_to_trim_range(struct super_block *sb,
+ 		struct ext4_buddy *e4b, ext4_grpblk_t start,
+@@ -875,9 +875,8 @@ mb_update_avg_fragment_size(struct super_block *sb, struct ext4_group_info *grp)
+ 	}
+ }
+ 
+-static struct ext4_group_info *
+-ext4_mb_find_good_group_xarray(struct ext4_allocation_context *ac,
+-			       struct xarray *xa, ext4_group_t start)
++static int ext4_mb_scan_groups_xarray(struct ext4_allocation_context *ac,
++				      struct xarray *xa, ext4_group_t start)
+ {
+ 	struct super_block *sb = ac->ac_sb;
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+@@ -888,16 +887,18 @@ ext4_mb_find_good_group_xarray(struct ext4_allocation_context *ac,
+ 	struct ext4_group_info *grp;
+ 
+ 	if (WARN_ON_ONCE(start >= end))
+-		return NULL;
++		return 0;
+ 
+ wrap_around:
+ 	xa_for_each_range(xa, group, grp, start, end - 1) {
++		int err;
++
+ 		if (sbi->s_mb_stats)
+ 			atomic64_inc(&sbi->s_bal_cX_groups_considered[cr]);
+ 
+-		if (!spin_is_locked(ext4_group_lock_ptr(sb, group)) &&
+-		    likely(ext4_mb_good_group(ac, group, cr)))
+-			return grp;
++		err = ext4_mb_scan_group(ac, grp->bb_group);
++		if (err || ac->ac_status != AC_STATUS_CONTINUE)
++			return err;
+ 
+ 		cond_resched();
+ 	}
+@@ -908,95 +909,82 @@ ext4_mb_find_good_group_xarray(struct ext4_allocation_context *ac,
+ 		goto wrap_around;
+ 	}
+ 
+-	return NULL;
++	return 0;
+ }
+ 
+ /*
+  * Find a suitable group of given order from the largest free orders xarray.
+  */
+-static struct ext4_group_info *
+-ext4_mb_find_good_group_largest_free_order(struct ext4_allocation_context *ac,
+-					   int order, ext4_group_t start)
++static int
++ext4_mb_scan_groups_largest_free_order(struct ext4_allocation_context *ac,
++				       int order, ext4_group_t start)
+ {
+ 	struct xarray *xa = &EXT4_SB(ac->ac_sb)->s_mb_largest_free_orders[order];
+ 
+ 	if (xa_empty(xa))
+-		return NULL;
++		return 0;
+ 
+-	return ext4_mb_find_good_group_xarray(ac, xa, start);
++	return ext4_mb_scan_groups_xarray(ac, xa, start);
+ }
+ 
+ /*
+  * Choose next group by traversing largest_free_order lists. Updates *new_cr if
+  * cr level needs an update.
+  */
+-static void ext4_mb_choose_next_group_p2_aligned(struct ext4_allocation_context *ac,
+-			enum criteria *new_cr, ext4_group_t *group)
++static int ext4_mb_scan_groups_p2_aligned(struct ext4_allocation_context *ac,
++					  ext4_group_t group)
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+-	struct ext4_group_info *grp;
+ 	int i;
+-
+-	if (ac->ac_status == AC_STATUS_FOUND)
+-		return;
+-
+-	if (unlikely(sbi->s_mb_stats && ac->ac_flags & EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED))
+-		atomic_inc(&sbi->s_bal_p2_aligned_bad_suggestions);
++	int ret = 0;
+ 
+ 	for (i = ac->ac_2order; i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+-		grp = ext4_mb_find_good_group_largest_free_order(ac, i, *group);
+-		if (grp) {
+-			*group = grp->bb_group;
+-			ac->ac_flags |= EXT4_MB_CR_POWER2_ALIGNED_OPTIMIZED;
+-			return;
+-		}
++		ret = ext4_mb_scan_groups_largest_free_order(ac, i, group);
++		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
++			return ret;
+ 	}
+ 
++	if (sbi->s_mb_stats)
++		atomic64_inc(&sbi->s_bal_cX_failed[ac->ac_criteria]);
++
+ 	/* Increment cr and search again if no group is found */
+-	*new_cr = CR_GOAL_LEN_FAST;
++	ac->ac_criteria = CR_GOAL_LEN_FAST;
++	return ret;
+ }
+ 
+ /*
+  * Find a suitable group of given order from the average fragments xarray.
+  */
+-static struct ext4_group_info *
+-ext4_mb_find_good_group_avg_frag_xarray(struct ext4_allocation_context *ac,
+-					int order, ext4_group_t start)
++static int ext4_mb_scan_groups_avg_frag_order(struct ext4_allocation_context *ac,
++					      int order, ext4_group_t start)
+ {
+ 	struct xarray *xa = &EXT4_SB(ac->ac_sb)->s_mb_avg_fragment_size[order];
+ 
+ 	if (xa_empty(xa))
+-		return NULL;
++		return 0;
+ 
+-	return ext4_mb_find_good_group_xarray(ac, xa, start);
++	return ext4_mb_scan_groups_xarray(ac, xa, start);
+ }
+ 
+ /*
+  * Choose next group by traversing average fragment size list of suitable
+  * order. Updates *new_cr if cr level needs an update.
+  */
+-static void ext4_mb_choose_next_group_goal_fast(struct ext4_allocation_context *ac,
+-		enum criteria *new_cr, ext4_group_t *group)
++static int ext4_mb_scan_groups_goal_fast(struct ext4_allocation_context *ac,
++					 ext4_group_t group)
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+-	struct ext4_group_info *grp = NULL;
+-	int i;
++	int i, ret = 0;
+ 
+-	if (unlikely(ac->ac_flags & EXT4_MB_CR_GOAL_LEN_FAST_OPTIMIZED)) {
+-		if (sbi->s_mb_stats)
+-			atomic_inc(&sbi->s_bal_goal_fast_bad_suggestions);
+-	}
+-
+-	for (i = mb_avg_fragment_size_order(ac->ac_sb, ac->ac_g_ex.fe_len);
+-	     i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+-		grp = ext4_mb_find_good_group_avg_frag_xarray(ac, i, *group);
+-		if (grp) {
+-			*group = grp->bb_group;
+-			ac->ac_flags |= EXT4_MB_CR_GOAL_LEN_FAST_OPTIMIZED;
+-			return;
+-		}
++	i = mb_avg_fragment_size_order(ac->ac_sb, ac->ac_g_ex.fe_len);
++	for (; i < MB_NUM_ORDERS(ac->ac_sb); i++) {
++		ret = ext4_mb_scan_groups_avg_frag_order(ac, i, group);
++		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
++			return ret;
+ 	}
+ 
++	if (sbi->s_mb_stats)
++		atomic64_inc(&sbi->s_bal_cX_failed[ac->ac_criteria]);
+ 	/*
+ 	 * CR_BEST_AVAIL_LEN works based on the concept that we have
+ 	 * a larger normalized goal len request which can be trimmed to
+@@ -1006,9 +994,11 @@ static void ext4_mb_choose_next_group_goal_fast(struct ext4_allocation_context *
+ 	 * See function ext4_mb_normalize_request() (EXT4_MB_HINT_DATA).
+ 	 */
+ 	if (ac->ac_flags & EXT4_MB_HINT_DATA)
+-		*new_cr = CR_BEST_AVAIL_LEN;
++		ac->ac_criteria = CR_BEST_AVAIL_LEN;
+ 	else
+-		*new_cr = CR_GOAL_LEN_SLOW;
++		ac->ac_criteria = CR_GOAL_LEN_SLOW;
++
++	return ret;
+ }
+ 
+ /*
+@@ -1020,19 +1010,14 @@ static void ext4_mb_choose_next_group_goal_fast(struct ext4_allocation_context *
+  * preallocations. However, we make sure that we don't trim the request too
+  * much and fall to CR_GOAL_LEN_SLOW in that case.
+  */
+-static void ext4_mb_choose_next_group_best_avail(struct ext4_allocation_context *ac,
+-		enum criteria *new_cr, ext4_group_t *group)
++static int ext4_mb_scan_groups_best_avail(struct ext4_allocation_context *ac,
++					  ext4_group_t group)
+ {
++	int ret = 0;
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+-	struct ext4_group_info *grp = NULL;
+ 	int i, order, min_order;
+ 	unsigned long num_stripe_clusters = 0;
+ 
+-	if (unlikely(ac->ac_flags & EXT4_MB_CR_BEST_AVAIL_LEN_OPTIMIZED)) {
+-		if (sbi->s_mb_stats)
+-			atomic_inc(&sbi->s_bal_best_avail_bad_suggestions);
+-	}
+-
+ 	/*
+ 	 * mb_avg_fragment_size_order() returns order in a way that makes
+ 	 * retrieving back the length using (1 << order) inaccurate. Hence, use
+@@ -1085,18 +1070,18 @@ static void ext4_mb_choose_next_group_best_avail(struct ext4_allocation_context
+ 		frag_order = mb_avg_fragment_size_order(ac->ac_sb,
+ 							ac->ac_g_ex.fe_len);
+ 
+-		grp = ext4_mb_find_good_group_avg_frag_xarray(ac, frag_order,
+-							      *group);
+-		if (grp) {
+-			*group = grp->bb_group;
+-			ac->ac_flags |= EXT4_MB_CR_BEST_AVAIL_LEN_OPTIMIZED;
+-			return;
+-		}
++		ret = ext4_mb_scan_groups_avg_frag_order(ac, frag_order, group);
++		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
++			return ret;
+ 	}
+ 
+ 	/* Reset goal length to original goal length before falling into CR_GOAL_LEN_SLOW */
+ 	ac->ac_g_ex.fe_len = ac->ac_orig_goal_len;
+-	*new_cr = CR_GOAL_LEN_SLOW;
++	if (sbi->s_mb_stats)
++		atomic64_inc(&sbi->s_bal_cX_failed[ac->ac_criteria]);
++	ac->ac_criteria = CR_GOAL_LEN_SLOW;
++
++	return ret;
+ }
+ 
+ static inline int should_optimize_scan(struct ext4_allocation_context *ac)
+@@ -1111,59 +1096,82 @@ static inline int should_optimize_scan(struct ext4_allocation_context *ac)
+ }
+ 
+ /*
+- * Return next linear group for allocation.
++ * next linear group for allocation.
+  */
+-static ext4_group_t
+-next_linear_group(ext4_group_t group, ext4_group_t ngroups)
++static void next_linear_group(ext4_group_t *group, ext4_group_t ngroups)
+ {
+ 	/*
+ 	 * Artificially restricted ngroups for non-extent
+ 	 * files makes group > ngroups possible on first loop.
+ 	 */
+-	return group + 1 >= ngroups ? 0 : group + 1;
++	*group =  *group + 1 >= ngroups ? 0 : *group + 1;
+ }
+ 
+-/*
+- * ext4_mb_choose_next_group: choose next group for allocation.
+- *
+- * @ac        Allocation Context
+- * @new_cr    This is an output parameter. If the there is no good group
+- *            available at current CR level, this field is updated to indicate
+- *            the new cr level that should be used.
+- * @group     This is an input / output parameter. As an input it indicates the
+- *            next group that the allocator intends to use for allocation. As
+- *            output, this field indicates the next group that should be used as
+- *            determined by the optimization functions.
+- * @ngroups   Total number of groups
+- */
+-static void ext4_mb_choose_next_group(struct ext4_allocation_context *ac,
+-		enum criteria *new_cr, ext4_group_t *group, ext4_group_t ngroups)
++static int ext4_mb_scan_groups_linear(struct ext4_allocation_context *ac,
++		ext4_group_t ngroups, ext4_group_t *start, ext4_group_t count)
+ {
+-	*new_cr = ac->ac_criteria;
++	int ret, i;
++	enum criteria cr = ac->ac_criteria;
++	struct super_block *sb = ac->ac_sb;
++	struct ext4_sb_info *sbi = EXT4_SB(sb);
++	ext4_group_t group = *start;
+ 
+-	if (!should_optimize_scan(ac)) {
+-		*group = next_linear_group(*group, ngroups);
+-		return;
++	for (i = 0; i < count; i++, next_linear_group(&group, ngroups)) {
++		ret = ext4_mb_scan_group(ac, group);
++		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
++			return ret;
++		cond_resched();
+ 	}
+ 
++	*start = group;
++	if (count == ngroups)
++		ac->ac_criteria++;
++
++	/* Processed all groups and haven't found blocks */
++	if (sbi->s_mb_stats && i == ngroups)
++		atomic64_inc(&sbi->s_bal_cX_failed[cr]);
++
++	return 0;
++}
++
++static int ext4_mb_scan_groups(struct ext4_allocation_context *ac)
++{
++	int ret = 0;
++	ext4_group_t start;
++	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
++	ext4_group_t ngroups = ext4_get_groups_count(ac->ac_sb);
++
++	/* non-extent files are limited to low blocks/groups */
++	if (!(ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS)))
++		ngroups = sbi->s_blockfile_groups;
++
++	/* searching for the right group start from the goal value specified */
++	start = ac->ac_g_ex.fe_group;
++	ac->ac_prefetch_grp = start;
++	ac->ac_prefetch_nr = 0;
++
++	if (!should_optimize_scan(ac))
++		return ext4_mb_scan_groups_linear(ac, ngroups, &start, ngroups);
++
+ 	/*
+ 	 * Optimized scanning can return non adjacent groups which can cause
+ 	 * seek overhead for rotational disks. So try few linear groups before
+ 	 * trying optimized scan.
+ 	 */
+-	if (ac->ac_groups_linear_remaining) {
+-		*group = next_linear_group(*group, ngroups);
+-		ac->ac_groups_linear_remaining--;
+-		return;
+-	}
++	if (sbi->s_mb_max_linear_groups)
++		ret = ext4_mb_scan_groups_linear(ac, ngroups, &start,
++						 sbi->s_mb_max_linear_groups);
++	if (ret || ac->ac_status != AC_STATUS_CONTINUE)
++		return ret;
+ 
+-	if (*new_cr == CR_POWER2_ALIGNED) {
+-		ext4_mb_choose_next_group_p2_aligned(ac, new_cr, group);
+-	} else if (*new_cr == CR_GOAL_LEN_FAST) {
+-		ext4_mb_choose_next_group_goal_fast(ac, new_cr, group);
+-	} else if (*new_cr == CR_BEST_AVAIL_LEN) {
+-		ext4_mb_choose_next_group_best_avail(ac, new_cr, group);
+-	} else {
++	switch (ac->ac_criteria) {
++	case CR_POWER2_ALIGNED:
++		return ext4_mb_scan_groups_p2_aligned(ac, start);
++	case CR_GOAL_LEN_FAST:
++		return ext4_mb_scan_groups_goal_fast(ac, start);
++	case CR_BEST_AVAIL_LEN:
++		return ext4_mb_scan_groups_best_avail(ac, start);
++	default:
+ 		/*
+ 		 * TODO: For CR_GOAL_LEN_SLOW, we can arrange groups in an
+ 		 * rb tree sorted by bb_free. But until that happens, we should
+@@ -1171,6 +1179,8 @@ static void ext4_mb_choose_next_group(struct ext4_allocation_context *ac,
+ 		 */
+ 		WARN_ON(1);
+ 	}
++
++	return 0;
+ }
+ 
+ /*
+@@ -2928,20 +2938,11 @@ static int ext4_mb_scan_group(struct ext4_allocation_context *ac,
+ static noinline_for_stack int
+ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ {
+-	ext4_group_t ngroups, group, i;
+-	enum criteria new_cr, cr = CR_GOAL_LEN_FAST;
++	ext4_group_t i;
+ 	int err = 0;
+-	struct ext4_sb_info *sbi;
+-	struct super_block *sb;
++	struct super_block *sb = ac->ac_sb;
++	struct ext4_sb_info *sbi = EXT4_SB(sb);
+ 	struct ext4_buddy e4b;
+-	int lost;
+-
+-	sb = ac->ac_sb;
+-	sbi = EXT4_SB(sb);
+-	ngroups = ext4_get_groups_count(sb);
+-	/* non-extent files are limited to low blocks/groups */
+-	if (!(ext4_test_inode_flag(ac->ac_inode, EXT4_INODE_EXTENTS)))
+-		ngroups = sbi->s_blockfile_groups;
+ 
+ 	BUG_ON(ac->ac_status == AC_STATUS_FOUND);
+ 
+@@ -2987,48 +2988,21 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 	 * start with CR_GOAL_LEN_FAST, unless it is power of 2
+ 	 * aligned, in which case let's do that faster approach first.
+ 	 */
++	ac->ac_criteria = CR_GOAL_LEN_FAST;
+ 	if (ac->ac_2order)
+-		cr = CR_POWER2_ALIGNED;
++		ac->ac_criteria = CR_POWER2_ALIGNED;
+ 
+ 	ac->ac_e4b = &e4b;
+ 	ac->ac_prefetch_ios = 0;
+ 	ac->ac_first_err = 0;
+ repeat:
+-	for (; cr < EXT4_MB_NUM_CRS && ac->ac_status == AC_STATUS_CONTINUE; cr++) {
+-		ac->ac_criteria = cr;
+-		/*
+-		 * searching for the right group start
+-		 * from the goal value specified
+-		 */
+-		group = ac->ac_g_ex.fe_group;
+-		ac->ac_groups_linear_remaining = sbi->s_mb_max_linear_groups;
+-		ac->ac_prefetch_grp = group;
+-		ac->ac_prefetch_nr = 0;
+-
+-		for (i = 0, new_cr = cr; i < ngroups; i++,
+-		     ext4_mb_choose_next_group(ac, &new_cr, &group, ngroups)) {
+-
+-			cond_resched();
+-			if (new_cr != cr) {
+-				cr = new_cr;
+-				goto repeat;
+-			}
+-
+-			err = ext4_mb_scan_group(ac, group);
+-			if (err)
+-				goto out;
+-
+-			if (ac->ac_status != AC_STATUS_CONTINUE)
+-				break;
+-		}
+-		/* Processed all groups and haven't found blocks */
+-		if (sbi->s_mb_stats && i == ngroups)
+-			atomic64_inc(&sbi->s_bal_cX_failed[cr]);
++	while (ac->ac_criteria < EXT4_MB_NUM_CRS) {
++		err = ext4_mb_scan_groups(ac);
++		if (err)
++			goto out;
+ 
+-		if (i == ngroups && ac->ac_criteria == CR_BEST_AVAIL_LEN)
+-			/* Reset goal length to original goal length before
+-			 * falling into CR_GOAL_LEN_SLOW */
+-			ac->ac_g_ex.fe_len = ac->ac_orig_goal_len;
++		if (ac->ac_status != AC_STATUS_CONTINUE)
++			break;
+ 	}
+ 
+ 	if (ac->ac_b_ex.fe_len > 0 && ac->ac_status != AC_STATUS_FOUND &&
+@@ -3039,6 +3013,8 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 		 */
+ 		ext4_mb_try_best_found(ac, &e4b);
+ 		if (ac->ac_status != AC_STATUS_FOUND) {
++			int lost;
++
+ 			/*
+ 			 * Someone more lucky has already allocated it.
+ 			 * The only thing we can do is just take first
+@@ -3054,7 +3030,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 			ac->ac_b_ex.fe_len = 0;
+ 			ac->ac_status = AC_STATUS_CONTINUE;
+ 			ac->ac_flags |= EXT4_MB_HINT_FIRST;
+-			cr = CR_ANY_FREE;
++			ac->ac_criteria = CR_ANY_FREE;
+ 			goto repeat;
+ 		}
+ 	}
+@@ -3071,7 +3047,7 @@ ext4_mb_regular_allocator(struct ext4_allocation_context *ac)
+ 
+ 	mb_debug(sb, "Best len %d, origin len %d, ac_status %u, ac_flags 0x%x, cr %d ret %d\n",
+ 		 ac->ac_b_ex.fe_len, ac->ac_o_ex.fe_len, ac->ac_status,
+-		 ac->ac_flags, cr, err);
++		 ac->ac_flags, ac->ac_criteria, err);
+ 
+ 	if (ac->ac_prefetch_nr)
+ 		ext4_mb_prefetch_fini(sb, ac->ac_prefetch_grp, ac->ac_prefetch_nr);
+@@ -3197,8 +3173,6 @@ int ext4_seq_mb_stats_show(struct seq_file *seq, void *offset)
+ 		   atomic_read(&sbi->s_bal_cX_ex_scanned[CR_POWER2_ALIGNED]));
+ 	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+ 		   atomic64_read(&sbi->s_bal_cX_failed[CR_POWER2_ALIGNED]));
+-	seq_printf(seq, "\t\tbad_suggestions: %u\n",
+-		   atomic_read(&sbi->s_bal_p2_aligned_bad_suggestions));
+ 
+ 	/* CR_GOAL_LEN_FAST stats */
+ 	seq_puts(seq, "\tcr_goal_fast_stats:\n");
+@@ -3211,8 +3185,6 @@ int ext4_seq_mb_stats_show(struct seq_file *seq, void *offset)
+ 		   atomic_read(&sbi->s_bal_cX_ex_scanned[CR_GOAL_LEN_FAST]));
+ 	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+ 		   atomic64_read(&sbi->s_bal_cX_failed[CR_GOAL_LEN_FAST]));
+-	seq_printf(seq, "\t\tbad_suggestions: %u\n",
+-		   atomic_read(&sbi->s_bal_goal_fast_bad_suggestions));
+ 
+ 	/* CR_BEST_AVAIL_LEN stats */
+ 	seq_puts(seq, "\tcr_best_avail_stats:\n");
+@@ -3226,8 +3198,6 @@ int ext4_seq_mb_stats_show(struct seq_file *seq, void *offset)
+ 		   atomic_read(&sbi->s_bal_cX_ex_scanned[CR_BEST_AVAIL_LEN]));
+ 	seq_printf(seq, "\t\tuseless_loops: %llu\n",
+ 		   atomic64_read(&sbi->s_bal_cX_failed[CR_BEST_AVAIL_LEN]));
+-	seq_printf(seq, "\t\tbad_suggestions: %u\n",
+-		   atomic_read(&sbi->s_bal_best_avail_bad_suggestions));
+ 
+ 	/* CR_GOAL_LEN_SLOW stats */
+ 	seq_puts(seq, "\tcr_goal_slow_stats:\n");
+diff --git a/fs/ext4/mballoc.h b/fs/ext4/mballoc.h
+index 83886fc9521b7..15a049f05d04a 100644
+--- a/fs/ext4/mballoc.h
++++ b/fs/ext4/mballoc.h
+@@ -199,7 +199,6 @@ struct ext4_allocation_context {
+ 	int ac_first_err;
+ 
+ 	__u32 ac_flags;		/* allocation hints */
+-	__u32 ac_groups_linear_remaining;
+ 	__u16 ac_groups_scanned;
+ 	__u16 ac_found;
+ 	__u16 ac_cX_found[EXT4_MB_NUM_CRS];
+-- 
+2.50.1
+
+
+From 80f43790221cda25d8e151a713ffb92fd3d41e3a Mon Sep 17 00:00:00 2001
+From: Baokun Li <libaokun1@huawei.com>
+Date: Mon, 14 Jul 2025 21:03:27 +0800
+Subject: [PATCH 38/40] ext4: implement linear-like traversal across order
+ xarrays
+
+Although we now perform ordered traversal within an xarray, this is
+currently limited to a single xarray. However, we have multiple such
+xarrays, which prevents us from guaranteeing a linear-like traversal
+where all groups on the right are visited before all groups on the left.
+
+For example, suppose we have 128 block groups, with a target group of 64,
+a target length corresponding to an order of 1, and available free groups
+of 16 (order 1) and group 65 (order 8):
+
+For linear traversal, when no suitable free block is found in group 64, it
+will search in the next block group until group 127, then start searching
+from 0 up to block group 63. It ensures continuous forward traversal, which
+is consistent with the unidirectional rotation behavior of HDD platters.
+
+Additionally, the block group lock contention during freeing block is
+unavoidable. The goal increasing from 0 to 64 indicates that previously
+scanned groups (which had no suitable free space and are likely to free
+blocks later) and skipped groups (which are currently in use) have newly
+freed some used blocks. If we allocate blocks in these groups, the
+probability of competing with other processes increases.
+
+For non-linear traversal, we first traverse all groups in order_1. If only
+group 16 has free space in this list, we first traverse [63, 128), then
+traverse [0, 64) to find the available group 16, and then allocate blocks
+in group 16. Therefore, it cannot guarantee continuous traversal in one
+direction, thus increasing the probability of contention.
+
+So refactor ext4_mb_scan_groups_xarray() to ext4_mb_scan_groups_xa_range()
+to only traverse a fixed range of groups, and move the logic for handling
+wrap around to the caller. The caller first iterates through all xarrays
+in the range [start, ngroups) and then through the range [0, start). This
+approach simulates a linear scan, which reduces contention between freeing
+blocks and allocating blocks.
+
+Assume we have the following groups, where "|" denotes the xarray traversal
+start position:
+
+order_1_groups: AB | CD
+order_2_groups: EF | GH
+
+Traversal order:
+Before: C > D > A > B > G > H > E > F
+After:  C > D > G > H > A > B > E > F
+
+Performance test data follows:
+
+|CPU: Kunpeng 920   |          P80           |            P1           |
+|Memory: 512GB      |------------------------|-------------------------|
+|960GB SSD (0.5GB/s)| base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 19555 | 20049 (+2.5%)  | 315636 | 316724 (-0.3%) |
+|mb_optimize_scan=1 | 15496 | 19342 (+24.8%) | 323569 | 328324 (+1.4%) |
+
+|CPU: AMD 9654 * 2  |          P96           |             P1          |
+|Memory: 1536GB     |------------------------|-------------------------|
+|960GB SSD (1GB/s)  | base  |    patched     | base   |    patched     |
+|-------------------|-------|----------------|--------|----------------|
+|mb_optimize_scan=0 | 53192 | 52125 (-2.0%)  | 212678 | 215136 (+1.1%) |
+|mb_optimize_scan=1 | 37636 | 50331 (+33.7%) | 214189 | 209431 (-2.2%) |
+
+Signed-off-by: Baokun Li <libaokun1@huawei.com>
+Reviewed-by: Zhang Yi <yi.zhang@huawei.com>
+Link: https://patch.msgid.link/20250714130327.1830534-18-libaokun1@huawei.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/mballoc.c | 68 ++++++++++++++++++++++++++++++++---------------
+ 1 file changed, 47 insertions(+), 21 deletions(-)
+
+diff --git a/fs/ext4/mballoc.c b/fs/ext4/mballoc.c
+index a75a6bd6bbae0..5898d92ba19f1 100644
+--- a/fs/ext4/mballoc.c
++++ b/fs/ext4/mballoc.c
+@@ -875,21 +875,20 @@ mb_update_avg_fragment_size(struct super_block *sb, struct ext4_group_info *grp)
+ 	}
+ }
+ 
+-static int ext4_mb_scan_groups_xarray(struct ext4_allocation_context *ac,
+-				      struct xarray *xa, ext4_group_t start)
++static int ext4_mb_scan_groups_xa_range(struct ext4_allocation_context *ac,
++					struct xarray *xa,
++					ext4_group_t start, ext4_group_t end)
+ {
+ 	struct super_block *sb = ac->ac_sb;
+ 	struct ext4_sb_info *sbi = EXT4_SB(sb);
+ 	enum criteria cr = ac->ac_criteria;
+ 	ext4_group_t ngroups = ext4_get_groups_count(sb);
+ 	unsigned long group = start;
+-	ext4_group_t end = ngroups;
+ 	struct ext4_group_info *grp;
+ 
+-	if (WARN_ON_ONCE(start >= end))
++	if (WARN_ON_ONCE(end > ngroups || start >= end))
+ 		return 0;
+ 
+-wrap_around:
+ 	xa_for_each_range(xa, group, grp, start, end - 1) {
+ 		int err;
+ 
+@@ -903,28 +902,23 @@ static int ext4_mb_scan_groups_xarray(struct ext4_allocation_context *ac,
+ 		cond_resched();
+ 	}
+ 
+-	if (start) {
+-		end = start;
+-		start = 0;
+-		goto wrap_around;
+-	}
+-
+ 	return 0;
+ }
+ 
+ /*
+  * Find a suitable group of given order from the largest free orders xarray.
+  */
+-static int
+-ext4_mb_scan_groups_largest_free_order(struct ext4_allocation_context *ac,
+-				       int order, ext4_group_t start)
++static inline int
++ext4_mb_scan_groups_largest_free_order_range(struct ext4_allocation_context *ac,
++					     int order, ext4_group_t start,
++					     ext4_group_t end)
+ {
+ 	struct xarray *xa = &EXT4_SB(ac->ac_sb)->s_mb_largest_free_orders[order];
+ 
+ 	if (xa_empty(xa))
+ 		return 0;
+ 
+-	return ext4_mb_scan_groups_xarray(ac, xa, start);
++	return ext4_mb_scan_groups_xa_range(ac, xa, start, end);
+ }
+ 
+ /*
+@@ -937,12 +931,22 @@ static int ext4_mb_scan_groups_p2_aligned(struct ext4_allocation_context *ac,
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+ 	int i;
+ 	int ret = 0;
++	ext4_group_t start, end;
+ 
++	start = group;
++	end = ext4_get_groups_count(ac->ac_sb);
++wrap_around:
+ 	for (i = ac->ac_2order; i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+-		ret = ext4_mb_scan_groups_largest_free_order(ac, i, group);
++		ret = ext4_mb_scan_groups_largest_free_order_range(ac, i,
++								   start, end);
+ 		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
+ 			return ret;
+ 	}
++	if (start) {
++		end = start;
++		start = 0;
++		goto wrap_around;
++	}
+ 
+ 	if (sbi->s_mb_stats)
+ 		atomic64_inc(&sbi->s_bal_cX_failed[ac->ac_criteria]);
+@@ -955,15 +959,17 @@ static int ext4_mb_scan_groups_p2_aligned(struct ext4_allocation_context *ac,
+ /*
+  * Find a suitable group of given order from the average fragments xarray.
+  */
+-static int ext4_mb_scan_groups_avg_frag_order(struct ext4_allocation_context *ac,
+-					      int order, ext4_group_t start)
++static int
++ext4_mb_scan_groups_avg_frag_order_range(struct ext4_allocation_context *ac,
++					 int order, ext4_group_t start,
++					 ext4_group_t end)
+ {
+ 	struct xarray *xa = &EXT4_SB(ac->ac_sb)->s_mb_avg_fragment_size[order];
+ 
+ 	if (xa_empty(xa))
+ 		return 0;
+ 
+-	return ext4_mb_scan_groups_xarray(ac, xa, start);
++	return ext4_mb_scan_groups_xa_range(ac, xa, start, end);
+ }
+ 
+ /*
+@@ -975,13 +981,23 @@ static int ext4_mb_scan_groups_goal_fast(struct ext4_allocation_context *ac,
+ {
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+ 	int i, ret = 0;
++	ext4_group_t start, end;
+ 
++	start = group;
++	end = ext4_get_groups_count(ac->ac_sb);
++wrap_around:
+ 	i = mb_avg_fragment_size_order(ac->ac_sb, ac->ac_g_ex.fe_len);
+ 	for (; i < MB_NUM_ORDERS(ac->ac_sb); i++) {
+-		ret = ext4_mb_scan_groups_avg_frag_order(ac, i, group);
++		ret = ext4_mb_scan_groups_avg_frag_order_range(ac, i,
++							       start, end);
+ 		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
+ 			return ret;
+ 	}
++	if (start) {
++		end = start;
++		start = 0;
++		goto wrap_around;
++	}
+ 
+ 	if (sbi->s_mb_stats)
+ 		atomic64_inc(&sbi->s_bal_cX_failed[ac->ac_criteria]);
+@@ -1017,6 +1033,7 @@ static int ext4_mb_scan_groups_best_avail(struct ext4_allocation_context *ac,
+ 	struct ext4_sb_info *sbi = EXT4_SB(ac->ac_sb);
+ 	int i, order, min_order;
+ 	unsigned long num_stripe_clusters = 0;
++	ext4_group_t start, end;
+ 
+ 	/*
+ 	 * mb_avg_fragment_size_order() returns order in a way that makes
+@@ -1048,6 +1065,9 @@ static int ext4_mb_scan_groups_best_avail(struct ext4_allocation_context *ac,
+ 	if (1 << min_order < ac->ac_o_ex.fe_len)
+ 		min_order = fls(ac->ac_o_ex.fe_len);
+ 
++	start = group;
++	end = ext4_get_groups_count(ac->ac_sb);
++wrap_around:
+ 	for (i = order; i >= min_order; i--) {
+ 		int frag_order;
+ 		/*
+@@ -1070,10 +1090,16 @@ static int ext4_mb_scan_groups_best_avail(struct ext4_allocation_context *ac,
+ 		frag_order = mb_avg_fragment_size_order(ac->ac_sb,
+ 							ac->ac_g_ex.fe_len);
+ 
+-		ret = ext4_mb_scan_groups_avg_frag_order(ac, frag_order, group);
++		ret = ext4_mb_scan_groups_avg_frag_order_range(ac, frag_order,
++							       start, end);
+ 		if (ret || ac->ac_status != AC_STATUS_CONTINUE)
+ 			return ret;
+ 	}
++	if (start) {
++		end = start;
++		start = 0;
++		goto wrap_around;
++	}
+ 
+ 	/* Reset goal length to original goal length before falling into CR_GOAL_LEN_SLOW */
+ 	ac->ac_g_ex.fe_len = ac->ac_orig_goal_len;
+-- 
+2.50.1
+
+
+From 14b9b72d281463a44e788048f4c85b1a7d435a6a Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Thu, 17 Jul 2025 10:54:34 -0400
+Subject: [PATCH 39/40] ext4: do not BUG when INLINE_DATA_FL lacks system.data
+ xattr
+
+A syzbot fuzzed image triggered a BUG_ON in ext4_update_inline_data()
+when an inode had the INLINE_DATA_FL flag set but was missing the
+system.data extended attribute.
+
+Since this can happen due to a maiciouly fuzzed file system, we
+shouldn't BUG, but rather, report it as a corrupted file system.
+
+Add similar replacements of BUG_ON with EXT4_ERROR_INODE() ii
+ext4_create_inline_data() and ext4_inline_data_truncate().
+
+Reported-by: syzbot+544248a761451c0df72f@syzkaller.appspotmail.com
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/inline.c | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
+
+diff --git a/fs/ext4/inline.c b/fs/ext4/inline.c
+index 640133adef380..1b094a4f38663 100644
+--- a/fs/ext4/inline.c
++++ b/fs/ext4/inline.c
+@@ -303,7 +303,11 @@ static int ext4_create_inline_data(handle_t *handle,
+ 	if (error)
+ 		goto out;
+ 
+-	BUG_ON(!is.s.not_found);
++	if (!is.s.not_found) {
++		EXT4_ERROR_INODE(inode, "unexpected inline data xattr");
++		error = -EFSCORRUPTED;
++		goto out;
++	}
+ 
+ 	error = ext4_xattr_ibody_set(handle, inode, &i, &is);
+ 	if (error) {
+@@ -354,7 +358,11 @@ static int ext4_update_inline_data(handle_t *handle, struct inode *inode,
+ 	if (error)
+ 		goto out;
+ 
+-	BUG_ON(is.s.not_found);
++	if (is.s.not_found) {
++		EXT4_ERROR_INODE(inode, "missing inline data xattr");
++		error = -EFSCORRUPTED;
++		goto out;
++	}
+ 
+ 	len -= EXT4_MIN_INLINE_DATA_SIZE;
+ 	value = kzalloc(len, GFP_NOFS);
+@@ -1869,7 +1877,12 @@ int ext4_inline_data_truncate(struct inode *inode, int *has_inline)
+ 			if ((err = ext4_xattr_ibody_find(inode, &i, &is)) != 0)
+ 				goto out_error;
+ 
+-			BUG_ON(is.s.not_found);
++			if (is.s.not_found) {
++				EXT4_ERROR_INODE(inode,
++						 "missing inline data xattr");
++				err = -EFSCORRUPTED;
++				goto out_error;
++			}
+ 
+ 			value_len = le32_to_cpu(is.s.here->e_value_size);
+ 			value = kmalloc(value_len, GFP_NOFS);
+-- 
+2.50.1
+
+
+From 353f043f24b25a366b73453686236c34e25a3bdb Mon Sep 17 00:00:00 2001
+From: Theodore Ts'o <tytso@mit.edu>
+Date: Thu, 31 Jul 2025 16:00:07 -0400
+Subject: [PATCH 40/40] ext4: fix unused variable warning in ext4_init_new_dir
+
+Fixes: 90f097b1403f ("ext4: refactor the inline directory conversion and...")
+Signed-off-by: Theodore Ts'o <tytso@mit.edu>
+---
+ fs/ext4/namei.c | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/fs/ext4/namei.c b/fs/ext4/namei.c
+index d83f91b623174..bb23708299281 100644
+--- a/fs/ext4/namei.c
++++ b/fs/ext4/namei.c
+@@ -2965,7 +2965,6 @@ int ext4_init_new_dir(handle_t *handle, struct inode *dir,
+ 			     struct inode *inode)
+ {
+ 	struct buffer_head *dir_block = NULL;
+-	struct ext4_dir_entry_2 *de;
+ 	ext4_lblk_t block = 0;
+ 	int err;
+ 
+@@ -2982,7 +2981,6 @@ int ext4_init_new_dir(handle_t *handle, struct inode *dir,
+ 	dir_block = ext4_append(handle, inode, &block);
+ 	if (IS_ERR(dir_block))
+ 		return PTR_ERR(dir_block);
+-	de = (struct ext4_dir_entry_2 *)dir_block->b_data;
+ 	err = ext4_init_dirblock(handle, inode, dir_block, dir->i_ino, NULL, 0);
+ 	if (err)
+ 		goto out;
+-- 
+2.50.1
+
