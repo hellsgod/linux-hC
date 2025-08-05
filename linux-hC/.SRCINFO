@@ -1,7 +1,7 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
 	pkgver = 6.16.0
-	pkgrel = 1
+	pkgrel = 2
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
 	license = GPL-2.0-only
@@ -81,7 +81,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia
 	pkgdesc = nvidia module of 575.64.05 driver for the linux-hC kernel
 	license = custom
-	depends = linux-hC=6.16.0-1
+	depends = linux-hC=6.16.0-2
 	depends = nvidia-utils=575.64.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE
