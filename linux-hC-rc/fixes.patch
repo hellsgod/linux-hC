@@ -1,7 +1,7 @@
-From 8e2058b991cd039834db3ce2d50e6b967dc25bf5 Mon Sep 17 00:00:00 2001
+From b300c7e80c1450e183f867ca63507b1bdf979a19 Mon Sep 17 00:00:00 2001
 From: Peter Jung <admin@ptr1337.dev>
 Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/6] kbuild: add resolve_btfids to pacman PKGBUILD
+Subject: [PATCH 1/2] kbuild: add resolve_btfids to pacman PKGBUILD
 
 If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
 Compiling dkms modules will fail otherwise.
@@ -33,313 +33,108 @@ index 452374d63c24..08f80d7c5df0 100644
 2.50.1
 
 
-From 3109a7a39230b0f93cf54cf473a451d70ed84f9a Mon Sep 17 00:00:00 2001
-From: En-Wei Wu <en-wei.wu@canonical.com>
-Date: Wed, 15 Jan 2025 11:50:14 +0800
-Subject: [PATCH 2/6] Bluetooth: btusb: Add new VID/PID 0489/e14e for MT7925
+From 970ce18433179a97f27e0d9ca8839b88468354c9 Mon Sep 17 00:00:00 2001
+From: Xaver Hugl <xaver.hugl@kde.org>
+Date: Fri, 1 Aug 2025 15:10:53 +0200
+Subject: [PATCH 2/2] drm: don't run atomic_async_check for disabled planes
 
-Add VID 0489 & PID e14e for MediaTek MT7925 USB Bluetooth chip.
+It's entirely valid and correct for compositors to include disabled
+planes in the atomic commit, and doing that should not prevent async
+flips from working. To fix that, this commit moves the plane check
+to after all the properties of the object have been set, and skips
+the async checks if the plane was and still is not visible.
 
-The information in /sys/kernel/debug/usb/devices about the Bluetooth
-device is listed as the below.
+Fixes: fd40a63c drm/atomic (Let drivers decide which planes to async flip)
+Closes: https://gitlab.freedesktop.org/drm/amd/-/issues/4263
 
-T:  Bus=01 Lev=01 Prnt=01 Port=03 Cnt=03 Dev#=  4 Spd=480  MxCh= 0
-D:  Ver= 2.10 Cls=ef(misc ) Sub=02 Prot=01 MxPS=64 #Cfgs=  1
-P:  Vendor=0489 ProdID=e14e Rev= 1.00
-S:  Manufacturer=MediaTek Inc.
-S:  Product=Wireless_Device
-S:  SerialNumber=000000000
-C:* #Ifs= 3 Cfg#= 1 Atr=e0 MxPwr=100mA
-A:  FirstIf#= 0 IfCount= 3 Cls=e0(wlcon) Sub=01 Prot=01
-I:* If#= 0 Alt= 0 #EPs= 3 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=81(I) Atr=03(Int.) MxPS=  16 Ivl=125us
-E:  Ad=82(I) Atr=02(Bulk) MxPS= 512 Ivl=0ms
-E:  Ad=02(O) Atr=02(Bulk) MxPS= 512 Ivl=0ms
-I:* If#= 1 Alt= 0 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=   0 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=   0 Ivl=1ms
-I:  If#= 1 Alt= 1 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=   9 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=   9 Ivl=1ms
-I:  If#= 1 Alt= 2 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=  17 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=  17 Ivl=1ms
-I:  If#= 1 Alt= 3 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=  25 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=  25 Ivl=1ms
-I:  If#= 1 Alt= 4 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=  33 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=  33 Ivl=1ms
-I:  If#= 1 Alt= 5 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=  49 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=  49 Ivl=1ms
-I:  If#= 1 Alt= 6 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=83(I) Atr=01(Isoc) MxPS=  63 Ivl=1ms
-E:  Ad=03(O) Atr=01(Isoc) MxPS=  63 Ivl=1ms
-I:  If#= 2 Alt= 0 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=8a(I) Atr=03(Int.) MxPS=  64 Ivl=125us
-E:  Ad=0a(O) Atr=03(Int.) MxPS=  64 Ivl=125us
-I:* If#= 2 Alt= 1 #EPs= 2 Cls=e0(wlcon) Sub=01 Prot=01 Driver=btusb
-E:  Ad=8a(I) Atr=03(Int.) MxPS= 512 Ivl=125us
-E:  Ad=0a(O) Atr=03(Int.) MxPS= 512 Ivl=125us
-
-Signed-off-by: En-Wei Wu <en-wei.wu@canonical.com>
+Signed-off-by: Xaver Hugl <xaver.hugl@kde.org>
 ---
- drivers/bluetooth/btusb.c | 2 ++
- 1 file changed, 2 insertions(+)
+ drivers/gpu/drm/drm_atomic_uapi.c | 51 +++++++++++++++++++++----------
+ 1 file changed, 35 insertions(+), 16 deletions(-)
 
-diff --git a/drivers/bluetooth/btusb.c b/drivers/bluetooth/btusb.c
-index f9eeec0aed57..6b12b44f3a0d 100644
---- a/drivers/bluetooth/btusb.c
-+++ b/drivers/bluetooth/btusb.c
-@@ -705,6 +705,8 @@ static const struct usb_device_id quirks_table[] = {
- 						     BTUSB_WIDEBAND_SPEECH },
- 	{ USB_DEVICE(0x0489, 0xe139), .driver_info = BTUSB_MEDIATEK |
- 						     BTUSB_WIDEBAND_SPEECH },
-+	{ USB_DEVICE(0x0489, 0xe14e), .driver_info = BTUSB_MEDIATEK |
-+						     BTUSB_WIDEBAND_SPEECH },
- 	{ USB_DEVICE(0x0489, 0xe14f), .driver_info = BTUSB_MEDIATEK |
- 						     BTUSB_WIDEBAND_SPEECH },
- 	{ USB_DEVICE(0x0489, 0xe150), .driver_info = BTUSB_MEDIATEK |
--- 
-2.50.1
-
-
-From 3aa51509a0e81c26801464b2c4eb0a766784b667 Mon Sep 17 00:00:00 2001
-From: Uros Bizjak <ubizjak@gmail.com>
-Date: Wed, 9 Jul 2025 15:19:03 +0200
-Subject: [PATCH 3/6] workqueue: Use atomic_try_cmpxchg_relaxed() in
- tryinc_node_nr_active()
-
-Use try_cmpxchg() family of locking primitives instead of
-cmpxchg(*ptr, old, new) == old.
-
-The x86 CMPXCHG instruction returns success in the ZF flag, so this
-change saves a compare after CMPXCHG (and related move instruction
-in front of CMPXCHG).
-
-Also, try_cmpxchg() implicitly assigns old *ptr value to "old" when
-CMPXCHG fails. There is no need to re-read the value in the loop.
-
-The generated assembly improves from:
-
-     3f7:	44 8b 0a             	mov    (%rdx),%r9d
-     3fa:	eb 12                	jmp    40e <...>
-     3fc:	8d 79 01             	lea    0x1(%rcx),%edi
-     3ff:	89 c8                	mov    %ecx,%eax
-     401:	f0 0f b1 7a 04       	lock cmpxchg %edi,0x4(%rdx)
-     406:	39 c1                	cmp    %eax,%ecx
-     408:	0f 84 83 00 00 00    	je     491 <...>
-     40e:	8b 4a 04             	mov    0x4(%rdx),%ecx
-     411:	41 39 c9             	cmp    %ecx,%r9d
-     414:	7f e6                	jg     3fc <...>
-
-to:
-
-    256b:	45 8b 08             	mov    (%r8),%r9d
-    256e:	41 8b 40 04          	mov    0x4(%r8),%eax
-    2572:	41 39 c1             	cmp    %eax,%r9d
-    2575:	7e 10                	jle    2587 <...>
-    2577:	8d 78 01             	lea    0x1(%rax),%edi
-    257a:	f0 41 0f b1 78 04    	lock cmpxchg %edi,0x4(%r8)
-    2580:	75 f0                	jne    2572 <...>
-
-No functional change intended.
-
-Signed-off-by: Uros Bizjak <ubizjak@gmail.com>
-Cc: Tejun Heo <tj@kernel.org>
-Cc: Lai Jiangshan <jiangshanlai@gmail.com>
----
- kernel/workqueue.c | 13 +++++--------
- 1 file changed, 5 insertions(+), 8 deletions(-)
-
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 9f9148075828..f0bd688bb88b 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1686,17 +1686,14 @@ static void __pwq_activate_work(struct pool_workqueue *pwq,
- static bool tryinc_node_nr_active(struct wq_node_nr_active *nna)
- {
- 	int max = READ_ONCE(nna->max);
-+	int old = atomic_read(&nna->nr);
+diff --git a/drivers/gpu/drm/drm_atomic_uapi.c b/drivers/gpu/drm/drm_atomic_uapi.c
+index ecc73d52bfae..e8b6c87bdd45 100644
+--- a/drivers/gpu/drm/drm_atomic_uapi.c
++++ b/drivers/gpu/drm/drm_atomic_uapi.c
+@@ -1069,7 +1069,6 @@ int drm_atomic_set_property(struct drm_atomic_state *state,
+ 		struct drm_plane *plane = obj_to_plane(obj);
+ 		struct drm_plane_state *plane_state;
+ 		struct drm_mode_config *config = &plane->dev->mode_config;
+-		const struct drm_plane_helper_funcs *plane_funcs = plane->helper_private;
  
--	while (true) {
--		int old, tmp;
+ 		plane_state = drm_atomic_get_plane_state(state, plane);
+ 		if (IS_ERR(plane_state)) {
+@@ -1085,21 +1084,8 @@ int drm_atomic_set_property(struct drm_atomic_state *state,
+ 				ret = drm_atomic_plane_get_property(plane, plane_state,
+ 								    prop, &old_val);
+ 				ret = drm_atomic_check_prop_changes(ret, old_val, prop_value, prop);
+-			}
 -
--		old = atomic_read(&nna->nr);
-+	do {
- 		if (old >= max)
- 			return false;
--		tmp = atomic_cmpxchg_relaxed(&nna->nr, old, old + 1);
--		if (tmp == old)
--			return true;
--	}
-+	} while (!atomic_try_cmpxchg_relaxed(&nna->nr, &old, old + 1));
-+
-+	return true;
- }
- 
- /**
--- 
-2.50.1
-
-
-From 29dbc1782b12ecf4f3d752656363351800c1227b Mon Sep 17 00:00:00 2001
-From: Fernand Sieber <sieberf@amazon.com>
-Date: Tue, 1 Apr 2025 14:36:20 +0200
-Subject: [PATCH 4/6] sched/fair: Only increment deadline once on yield
-
-If a task yields, the scheduler may decide to pick it again. The task in
-turn may decide to yield immediately or shortly after, leading to a tight
-loop of yields.
-
-If there's another runnable task as this point, the deadline will be
-increased by the slice at each loop. This can cause the deadline to runaway
-pretty quickly, and subsequent elevated run delays later on as the task
-doesn't get picked again. The reason the scheduler can pick the same task
-again and again despite its deadline increasing is because it may be the
-only eligible task at that point.
-
-Fix this by updating the deadline only to one slice ahead.
-
-Note, we might want to consider iterating on the implementation of yield as
-follow up:
-* the yielding task could be forfeiting its remaining slice by
-  incrementing its vruntime correspondingly
-* in case of yield_to the yielding task could be donating its remaining
-  slice to the target task
-
-Signed-off-by: Fernand Sieber <sieberf@amazon.com>
-Fixes: 147f3efaa24182 ("sched/fair: Implement an EEVDF-like scheduling  policy")
-Reviewed-by: Madadi Vineeth Reddy <vineethr@linux.ibm.com>
----
- kernel/sched/fair.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 7a14da5396fb..2535a616547f 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -9036,7 +9036,7 @@ static void yield_task_fair(struct rq *rq)
- 	 */
- 	rq_clock_skip_update(rq);
- 
--	se->deadline += calc_delta_fair(se->slice, se);
-+	se->deadline = se->vruntime + calc_delta_fair(se->slice, se);
- }
- 
- static bool yield_to_task_fair(struct rq *rq, struct task_struct *p)
--- 
-2.50.1
-
-
-From af661bea6266c70d8d68f3e3a53eaed8acc2a30a Mon Sep 17 00:00:00 2001
-From: Huang Shijie <shijie@os.amperecomputing.com>
-Date: Tue, 22 Jul 2025 18:26:00 +0800
-Subject: [PATCH 5/6] sched/fair: do not scan twice in detach_tasks()
-
-detach_tasks() uses struct lb_env.loop_max as an env.src_rq->cfs_tasks
-iteration count limit. It is however set without the source RQ lock held.
-
-This means that env.loop_max and the actual length of env.src_rq->cfs_tasks
-as observed within detach_tasks() can differ. This can cause some tasks to
-be unnecessarily iterated over more than once, for instance:
-
-  env.loop_max := 4
-  detach_tasks()
-    // Here env.src->cfs_tasks only contains two tasks which can't be
-    // migrated anywhere, so they're put back in the list each time.
-    env.src->cfs_tasks := [p1, p0]
-    // The iteration goes:
-    p0; cfs_tasks := [p0, p1]
-    p1; cfs_tasks := [p1, p0]
-    p0; cfs_tasks := [p0, p1]
-    p1; cfs_tasks := [p1, p0]
-
-    // IOW we iterate over each task twice
-
-In the Specjbb test, the similar issues can be caught many times.
-(Over 330,000 times in a 30-minites Specjbb test)
-
-This patch sets env.loop_max only once RQ lock is taken,
-and uses busiest->cfs.h_nr_queued for setting the env.loop_max.
-
-After this patch, I cannot catch any above issue in the Specjbb test.
-
-Signed-off-by: Huang Shijie <shijie@os.amperecomputing.com>
-Reviewed-by: Vincent Guittot <vincent.guittot@linaro.org>
-Reviewed-by: Valentin Schneider <vschneid@redhat.com>
----
- kernel/sched/fair.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 2535a616547f..7f9209dc49d8 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -11809,12 +11809,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
- 		 * still unbalanced. ld_moved simply stays zero, so it is
- 		 * correctly treated as an imbalance.
- 		 */
--		env.loop_max  = min(sysctl_sched_nr_migrate, busiest->nr_running);
+-			/* ask the driver if this non-primary plane is supported */
+-			if (plane->type != DRM_PLANE_TYPE_PRIMARY) {
+-				ret = -EINVAL;
 -
- more_balance:
- 		rq_lock_irqsave(busiest, &rf);
- 		update_rq_clock(busiest);
+-				if (plane_funcs && plane_funcs->atomic_async_check)
+-					ret = plane_funcs->atomic_async_check(plane, state, true);
+-
+-				if (ret) {
+-					drm_dbg_atomic(prop->dev,
+-						       "[PLANE:%d:%s] does not support async flips\n",
+-						       obj->id, plane->name);
+-					break;
+-				}
++				if (ret)
++				    break;
+ 			}
+ 		}
  
-+		if (!env.loop_max)
-+			env.loop_max  = min(sysctl_sched_nr_migrate, busiest->cfs.h_nr_queued);
-+		else
-+			env.loop_max  = min(env.loop_max, busiest->cfs.h_nr_queued);
+@@ -1395,6 +1381,10 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
+ 	int ret = 0;
+ 	unsigned int i, j, num_fences;
+ 	bool async_flip = false;
++	struct drm_plane *plane;
++	struct drm_plane_state *old_plane_state = NULL;
++	struct drm_plane_state *new_plane_state = NULL;
++	u64 fb_id = 0;
+ 
+ 	/* disallow for drivers not supporting atomic: */
+ 	if (!drm_core_check_feature(dev, DRIVER_ATOMIC))
+@@ -1522,6 +1512,35 @@ int drm_mode_atomic_ioctl(struct drm_device *dev,
+ 			copied_props++;
+ 		}
+ 
++		if (async_flip && obj->type == DRM_MODE_OBJECT_PLANE &&
++		    obj_to_plane(obj)->type != DRM_PLANE_TYPE_PRIMARY) {
++			/* need to ask the driver if this plane is supported */
++			plane = obj_to_plane(obj);
++			old_plane_state = drm_atomic_get_old_plane_state(state, plane);
++			new_plane_state = drm_atomic_get_new_plane_state(state, plane);
++			ret = drm_atomic_plane_get_property(plane, new_plane_state,
++							    dev->mode_config.prop_fb_id,
++							    &fb_id);
++			if (ret)
++				break;
++			/*
++			 * Only do the check if the plane was or is enabled.
++			 * Note that the new state doesn't have "visible" set yet,
++			 * so this uses fb_id instead.
++			 */
++			if (old_plane_state->visible || fb_id)
++				ret = -EINVAL;
++			if (ret && plane->helper_private &&
++			    plane->helper_private->atomic_async_check) {
++				ret = plane->helper_private->atomic_async_check(plane, state, true);
++			}
++			if (ret) {
++				drm_dbg_atomic(dev, "[PLANE:%d:%s] does not support async flips\n",
++						obj->id, plane->name);
++				break;
++			}
++		}
 +
- 		/*
- 		 * cur_ld_moved - load moved in current iteration
- 		 * ld_moved     - cumulative load moved across iterations
--- 
-2.50.1
-
-
-From 5b7780163c6a88166f7a316c6acb238f238c866e Mon Sep 17 00:00:00 2001
-From: Dave Hansen <dave.hansen@linux.intel.com>
-Date: Tue, 23 Jan 2024 08:36:23 -0800
-Subject: [PATCH 6/6] x86/mm: Simplify redundant overlap calculation
-
-There have been a couple of reports that the two sides of the
-overlaps() calculation are redundant.  I spent way too much time
-looking at this, but I became convinced that they are redundant
-when a little test program of mine produced identical disassembly
-for both versions of the check.
-
-Remove the second condition.  It is exactly the same as the first.
-
-Fixes: 91ee8f5c1f50 ("x86/mm/cpa: Allow range check for static protections")
-Reported-by: David Binderman <dcb314@hotmail.com>
-Cc: Andy Lutomirski <luto@kernel.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: x86@kernel.org
-Reviewed-by: Sohil Mehta <sohil.mehta@intel.com>
-Signed-off-by: Dave Hansen <dave.hansen@linux.intel.com>
----
- arch/x86/mm/pat/set_memory.c | 3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
-
-diff --git a/arch/x86/mm/pat/set_memory.c b/arch/x86/mm/pat/set_memory.c
-index 8834c76f91c9..4042c341ac00 100644
---- a/arch/x86/mm/pat/set_memory.c
-+++ b/arch/x86/mm/pat/set_memory.c
-@@ -484,8 +484,7 @@ static void cpa_flush(struct cpa_data *cpa, int cache)
- static bool overlaps(unsigned long r1_start, unsigned long r1_end,
- 		     unsigned long r2_start, unsigned long r2_end)
- {
--	return (r1_start <= r2_end && r1_end >= r2_start) ||
--		(r2_start <= r1_end && r2_end >= r1_start);
-+	return (r1_start <= r2_end && r1_end >= r2_start);
- }
+ 		drm_mode_object_put(obj);
+ 	}
  
- #ifdef CONFIG_PCI_BIOS
 -- 
 2.50.1
 
