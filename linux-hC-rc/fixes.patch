@@ -1,59 +1,5 @@
-From b300c7e80c1450e183f867ca63507b1bdf979a19 Mon Sep 17 00:00:00 2001
-From: Peter Jung <admin@ptr1337.dev>
-Date: Sat, 2 Nov 2024 11:04:43 +0100
-Subject: [PATCH 1/2] kbuild: add resolve_btfids to pacman PKGBUILD
-
-If the config is using DEBUG_INFO_BTF, it is required to package resolve_btfids with.
-Compiling dkms modules will fail otherwise.
-
-Add a check, if resolve_btfids is present and then package if required.
-
-Signed-off-by: Peter Jung <admin@ptr1337.dev>
----
- scripts/package/PKGBUILD | 5 +++++
- 1 file changed, 5 insertions(+)
-
-diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
---- a/scripts/package/PKGBUILD
-+++ b/scripts/package/PKGBUILD
-@@ -90,6 +90,11 @@ _package-headers() {
- 		"${srctree}/scripts/package/install-extmod-build" "${builddir}"
- 	fi
- 
-+	# required when DEBUG_INFO_BTF_MODULES is enabled
-+	if [ -f tools/bpf/resolve_btfids/resolve_btfids ]; then
-+		install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
-+	fi
-+
- 	echo "Installing System.map and config..."
- 	mkdir -p "${builddir}"
- 	cp System.map "${builddir}/System.map"
--- 
-2.50.1
-
-
-From 970ce18433179a97f27e0d9ca8839b88468354c9 Mon Sep 17 00:00:00 2001
-From: Xaver Hugl <xaver.hugl@kde.org>
-Date: Fri, 1 Aug 2025 15:10:53 +0200
-Subject: [PATCH 2/2] drm: don't run atomic_async_check for disabled planes
-
-It's entirely valid and correct for compositors to include disabled
-planes in the atomic commit, and doing that should not prevent async
-flips from working. To fix that, this commit moves the plane check
-to after all the properties of the object have been set, and skips
-the async checks if the plane was and still is not visible.
-
-Fixes: fd40a63c drm/atomic (Let drivers decide which planes to async flip)
-Closes: https://gitlab.freedesktop.org/drm/amd/-/issues/4263
-
-Signed-off-by: Xaver Hugl <xaver.hugl@kde.org>
----
- drivers/gpu/drm/drm_atomic_uapi.c | 51 +++++++++++++++++++++----------
- 1 file changed, 35 insertions(+), 16 deletions(-)
-
 diff --git a/drivers/gpu/drm/drm_atomic_uapi.c b/drivers/gpu/drm/drm_atomic_uapi.c
-index ecc73d52bfae..e8b6c87bdd45 100644
+index ecc73d52bfae4..e8b6c87bdd452 100644
 --- a/drivers/gpu/drm/drm_atomic_uapi.c
 +++ b/drivers/gpu/drm/drm_atomic_uapi.c
 @@ -1069,7 +1069,6 @@ int drm_atomic_set_property(struct drm_atomic_state *state,
@@ -135,6 +81,19 @@ index ecc73d52bfae..e8b6c87bdd45 100644
  		drm_mode_object_put(obj);
  	}
  
--- 
-2.50.1
-
+diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
+index 452374d63c244..08f80d7c5df05 100644
+--- a/scripts/package/PKGBUILD
++++ b/scripts/package/PKGBUILD
+@@ -90,6 +90,11 @@ _package-headers() {
+ 		"${srctree}/scripts/package/install-extmod-build" "${builddir}"
+ 	fi
+ 
++	# required when DEBUG_INFO_BTF_MODULES is enabled
++	if [ -f tools/bpf/resolve_btfids/resolve_btfids ]; then
++		install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
++	fi
++
+ 	echo "Installing System.map and config..."
+ 	mkdir -p "${builddir}"
+ 	cp System.map "${builddir}/System.map"
