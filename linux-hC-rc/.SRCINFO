@@ -52,7 +52,7 @@ pkgbase = linux-hC-rc
 	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
 	b2sums = 42181a387fdbe1fcb4e74bc5829e7f495be917380838cff6dd19db61767a161799cd023c0de7524a7758d4673fe2faee82ece6fdfa56fbf9dc41a8e268ba774a
-	b2sums = 53090269d6f8b4c0e84bdd630721b57ca01b345c92920e65dc83bf3076d5427ef5a27ffd15768a4f406b72825968fc7c0a405a9b1904c3bd143c663ccd1ec4fe
+	b2sums = f427c633a0aa5428d4a9d21eb35eb0cfed1638ded5bca837078cf634dc76909c084d7e699a3d0326e68ebba350d2c010a4ace7db7abe8164881fb9ace6755671
 
 pkgname = linux-hC-rc
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel and modules
