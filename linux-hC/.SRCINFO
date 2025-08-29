@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 6.16.3
+	pkgver = 6.16.4
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.16.3.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.16.4.tar.xz
 	source = config
 	source = 0001-linux6.15.y-le9uo-1.15.patch
 	source = 0002-sched-fair-Prefer-full-idle-SMT-cores.patch
@@ -36,7 +36,7 @@ pkgbase = linux-hC
 	source = https://us.download.nvidia.com/XFree86/Linux-x86_64/580.76.05/NVIDIA-Linux-x86_64-580.76.05.run
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.16/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.16/sched/0001-bore.patch
-	b2sums = 3053226fdec6b69c3bb0a4c9cae0a2595c05a74e99a78d5a0fd9f5d016d192a3b057e72b8cb8471e5f4d021d7a1887bcd7713d33b00ba02ea7eee5f6a981db19
+	b2sums = 251feef2f995c155850eac2fce5b89f37f39e9f13b6a4e6873370fdc69654692c6bf6c92f04ca7c0b5fd6088d74442afb68db71d2cc18691e23c61b0be714f34
 	b2sums = 8960de90f8e5c28f5d5d5377e75a9a6aae54dbb03a328f07874f51b3e972775ba147c61a56401d047f22284fde9b839be25128b0e316a56604422bbec834cb46
 	b2sums = 8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c
 	b2sums = cc85e6e84845a148d8241d7b1de88888e2b624595564d125704067dfb4e63eedb1377803dc1d696b7d78f9e1ad2e551494591a1f7fcc87bac6cda3f457f63013
@@ -77,7 +77,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia
 	pkgdesc = nvidia module of 580.76.05 driver for the linux-hC kernel
 	license = custom
-	depends = linux-hC=6.16.3-1
+	depends = linux-hC=6.16.4-1
 	depends = nvidia-utils=580.76.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE
