@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 6.17.rc3
+	pkgver = 6.17.rc4
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v6.17-rc3.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v6.17-rc4.tar.gz
 	source = config
 	source = 0001-linux6.15.y-le9uo-1.15.patch
 	source = 0002-sched-fair-Prefer-full-idle-SMT-cores.patch
@@ -37,14 +37,14 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/6.17.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/sched/0001-bore.patch
-	b2sums = 0f6fb62796d5120685c2f1420d03b38332e1c25dae6c52b9b1b07ebf621907626cc9312098341a0b2a9af9a220bf0afbf6c8d23c9f335a93293ba6940c412912
+	b2sums = cc1c4c4a4411263b4d2c6d312bc4ce6987b4447b7981b8f748efbd8f6a17cdde9a5a2ef1f96bd2a60ca8265dfafb68baa1574543fa9d637fa714d50f1dbce803
 	b2sums = 12742590fe26eb02852135e896239716015683f532ffc674f4f6a5e5f07209476c584b86dde16603b132d11e7287c24362f5f8b40d14422ef6c8f76a73e53ea6
 	b2sums = 8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c
 	b2sums = 007e9d28d104a4cb2875af0e61762e165302a6602414f7079953635c83191d760731518a63ff244d30fae66dff1efc736249e836d9d0148b7280f2ab3c517192
 	b2sums = 54d38bb68ec2adb476ce4b1e958f3c537185ee26eb38bcb9d3c5313c21d6801862a1873f9b360cb5d70b14ac1dc642c2f76bf206b78a2378b27814b8fff49b02
 	b2sums = b7049883754959dfca06b6bf41b287e4f9a6aefa339a17090ae83d8604a2f870077306fde34d0c1ecc9cbb0f28e96b17e629ba16c3411061b0cdc509f6ca1d1d
 	b2sums = 5f6fdbe1a8aebffd51f8c3dd793c9309a2046e4f80c5ed1aacfef1bb122983f1104365e42865bb4b327df5c945b2d24cb4461a59587cebf9895d37145cf519fa
-	b2sums = a9cabb581c0d6f4367401be7cc6934654ade524f819617a10e8ecaa82432638a900903fad5f999040ef6a7ac3429a9adc66454ce62679ce83dd71197476b03c6
+	b2sums = 800806242cea13c095cfe5454f53ca04cfba30c674514dfa887fee19d9a58a1e674e15dded1f2a2a8528d0989c8485170a95932247de0ded759727ff44f569ca
 	b2sums = b7e17d281a858f9d81c07e2b2bc7c6679509c8969faac241d80d15d1d5332571bc7cb7ded83f970eae5fd351ce765f9f583d3ef452af2791aa68645670dbd0b9
 	b2sums = 0bdc3a42e3c30bbc9714e755f4182b94974900a75e80810851dec7cc6a5bdb578e53f8e36158f70fd0545552eaceb3d5a87a2ebdbcf4583cc1b997c78c378104
 	b2sums = c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452
@@ -79,7 +79,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 580.76.05 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.17.rc3-1
+	depends = linux-hC-rc=6.17.rc4-1
 	depends = nvidia-utils=580.76.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE
