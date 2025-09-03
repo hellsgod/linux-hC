@@ -32,10 +32,9 @@ pkgbase = linux-hC-rc
 	source = kbuild.patch
 	source = tweaks.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/dkms-clang.patch
-	source = nvidia-open-580.76.05.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/580.76.05.tar.gz
+	source = nvidia-open-580.82.07.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/580.82.07.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0002-Add-IBT-support.patch
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/6.17.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/sched/0001-bore.patch
 	b2sums = cc1c4c4a4411263b4d2c6d312bc4ce6987b4447b7981b8f748efbd8f6a17cdde9a5a2ef1f96bd2a60ca8265dfafb68baa1574543fa9d637fa714d50f1dbce803
 	b2sums = 12742590fe26eb02852135e896239716015683f532ffc674f4f6a5e5f07209476c584b86dde16603b132d11e7287c24362f5f8b40d14422ef6c8f76a73e53ea6
@@ -48,10 +47,9 @@ pkgbase = linux-hC-rc
 	b2sums = b7e17d281a858f9d81c07e2b2bc7c6679509c8969faac241d80d15d1d5332571bc7cb7ded83f970eae5fd351ce765f9f583d3ef452af2791aa68645670dbd0b9
 	b2sums = 0bdc3a42e3c30bbc9714e755f4182b94974900a75e80810851dec7cc6a5bdb578e53f8e36158f70fd0545552eaceb3d5a87a2ebdbcf4583cc1b997c78c378104
 	b2sums = c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452
-	b2sums = fbd7beaebd636d6e3f3d9d4d8c7f03df9d68373daf132e079907a04e9a8bd4d84c50ba61ff66352ece601802205c06387c64b3af9c351e5e17b907a9ab97b673
+	b2sums = 81269781be7f5ed0b02d22492b4562bea5f11e9796d3be7a4cbd522aba5d3d6d010d13ea9a47c67763ba11d1669cf66290fe12e319a689c7ea888e5599019bc2
 	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
-	b2sums = 42181a387fdbe1fcb4e74bc5829e7f495be917380838cff6dd19db61767a161799cd023c0de7524a7758d4673fe2faee82ece6fdfa56fbf9dc41a8e268ba774a
 	b2sums = f427c633a0aa5428d4a9d21eb35eb0cfed1638ded5bca837078cf634dc76909c084d7e699a3d0326e68ebba350d2c010a4ace7db7abe8164881fb9ace6755671
 
 pkgname = linux-hC-rc
@@ -77,10 +75,10 @@ pkgname = linux-hC-rc-headers
 	depends = lld
 
 pkgname = linux-hC-rc-nvidia-open
-	pkgdesc = nvidia open modules of 580.76.05 driver for the linux-hC-rc kernel
+	pkgdesc = nvidia open modules of 580.82.07 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
 	depends = linux-hC-rc=6.17.rc4-1
-	depends = nvidia-utils=580.76.05
+	depends = nvidia-utils=580.82.07
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-rc-nvidia
