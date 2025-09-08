@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 6.17.rc4
+	pkgver = 6.17.rc5
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v6.17-rc4.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v6.17-rc5.tar.gz
 	source = config
 	source = 0001-linux6.15.y-le9uo-1.15.patch
 	source = 0002-sched-fair-Prefer-full-idle-SMT-cores.patch
@@ -36,7 +36,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/sched/0001-bore.patch
-	b2sums = cc1c4c4a4411263b4d2c6d312bc4ce6987b4447b7981b8f748efbd8f6a17cdde9a5a2ef1f96bd2a60ca8265dfafb68baa1574543fa9d637fa714d50f1dbce803
+	b2sums = d350f648dd581e269adb378eaa4bc8e8351b0c236c0fb82c96f0bb29aa10170a06a94e37957c49dc3967f818e90d1ae97816a248c5140360a13bd8412a367bfe
 	b2sums = 12742590fe26eb02852135e896239716015683f532ffc674f4f6a5e5f07209476c584b86dde16603b132d11e7287c24362f5f8b40d14422ef6c8f76a73e53ea6
 	b2sums = 8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c
 	b2sums = 007e9d28d104a4cb2875af0e61762e165302a6602414f7079953635c83191d760731518a63ff244d30fae66dff1efc736249e836d9d0148b7280f2ab3c517192
@@ -77,7 +77,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 580.82.07 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.17.rc4-1
+	depends = linux-hC-rc=6.17.rc5-1
 	depends = nvidia-utils=580.82.07
 	depends = libglvnd
 	provides = NVIDIA-MODULE
