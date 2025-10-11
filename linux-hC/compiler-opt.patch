@@ -1,15 +1,5 @@
-From 18335a37e83a2f70532616a6c68442cfa6a78ab1 Mon Sep 17 00:00:00 2001
-From: hellsgod <hellsgod@gmx.ch>
-Date: Sat, 12 Jul 2025 12:11:51 +0200
-Subject: [PATCH] Makefile: Rework my Optimizations
-
----
- Makefile     | 153 +++++++++++++++++++++++++++++++++++++++++++++++++--
- init/Kconfig |   4 +-
- 2 files changed, 149 insertions(+), 8 deletions(-)
-
 diff --git a/Makefile b/Makefile
-index 35e6e5240c61a..85f7170e68789 100644
+index 35e6e5240c61a..a18ec0ba07b21 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -464,9 +464,106 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
@@ -130,7 +120,7 @@ index 35e6e5240c61a..85f7170e68789 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -576,7 +673,51 @@ LINUXINCLUDE    := \
+@@ -576,7 +673,50 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -151,7 +141,6 @@ index 35e6e5240c61a..85f7170e68789 100644
 +  -mllvm -vectorize-slp \
 +  -mllvm -slp-vectorize-hor \
 +  -mllvm -slp-vectorize-hor-store \
-+  -mllvm -loop-rotate-multi \
 +  -mllvm -enable-loop-distribute \
 +  -mllvm -allow-unroll-and-jam \
 +  -mllvm -simplifycfg-merge-cond-stores \
@@ -183,7 +172,7 @@ index 35e6e5240c61a..85f7170e68789 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -860,8 +1001,8 @@ endif # need-config
+@@ -860,8 +1000,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -211,6 +200,3 @@ index af4c2f0854554..775c659a7b1f1 100644
  	  helpful compile-time warnings.
  
  config CC_OPTIMIZE_FOR_SIZE
--- 
-2.50.1
-
