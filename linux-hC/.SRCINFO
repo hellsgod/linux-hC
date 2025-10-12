@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 6.17.1
+	pkgver = 6.17.2
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.1.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.17.2.tar.xz
 	source = config
 	source = 0001-linux6.15.y-le9uo-1.15.patch
 	source = amd-pstate.patch
@@ -36,7 +36,7 @@ pkgbase = linux-hC
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.17/sched/0001-bore.patch
-	b2sums = 44fa5ec3e5471d33171830e8890f41118daa27f10eedb8dd0fe57250463a596a6fdefbc0ee68d8afab252e7635c9ca9eb3009b1849442e3f6de6231f47d1d7df
+	b2sums = e9f32436b44976f6cca6b577226c8b2128043d0ae9b65f422bebb72de063d1f48ee93c4be08316a87a362d5a6941ee614b6a75a8a0c831f87c8a9d2141f91d78
 	b2sums = a131ff528fa7e24437bb7692b82e681e10d7a465c0774fa1fb36b56ea579b52c3d2af533c9d2731ff0d2cffe4151985893da2f274b3ed74e9a609af892393104
 	b2sums = 8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c
 	b2sums = e57b835fc5e1041a9db281a66dcdf7d03bb8fb6e7e7f441f5d21475f08b207307c9a5c164e86c3010b51ee1a436bf9f506e381be997d2e8fca72c829f97d5702
@@ -77,7 +77,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia-open
 	pkgdesc = nvidia open modules of 580.95.05 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=6.17.1-1
+	depends = linux-hC=6.17.2-1
 	depends = nvidia-utils=580.95.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE
