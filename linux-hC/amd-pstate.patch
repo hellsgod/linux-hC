@@ -1,5 +1,5 @@
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index b4c79fde1979b..79b1c494e1547 100644
+index b44f0f7a5ba1c..b3dad7cde46f0 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
 @@ -65,13 +65,13 @@ static const char * const amd_pstate_mode_string[] = {
@@ -105,16 +105,3 @@ index b4c79fde1979b..79b1c494e1547 100644
  
  	if (mode_state_machine[cppc_state][mode_idx]) {
  		guard(mutex)(&amd_pstate_driver_lock);
-@@ -1614,7 +1609,11 @@ static int amd_pstate_cpu_offline(struct cpufreq_policy *policy)
- 	 * min_perf value across kexec reboots. If this CPU is just onlined normally after this, the
- 	 * limits, epp and desired perf will get reset to the cached values in cpudata struct
- 	 */
--	return amd_pstate_update_perf(policy, perf.bios_min_perf, 0U, 0U, 0U, false);
-+	return amd_pstate_update_perf(policy, perf.bios_min_perf,
-+				     FIELD_GET(AMD_CPPC_DES_PERF_MASK, cpudata->cppc_req_cached),
-+				     FIELD_GET(AMD_CPPC_MAX_PERF_MASK, cpudata->cppc_req_cached),
-+				     FIELD_GET(AMD_CPPC_EPP_PERF_MASK, cpudata->cppc_req_cached),
-+				     false);
- }
- 
- static int amd_pstate_suspend(struct cpufreq_policy *policy)
