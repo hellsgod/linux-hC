@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index 17cfa11ca716..c0e0e1c00c09 100644
+index 17cfa11ca716..f725e7aac1cf 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -464,9 +464,55 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
+@@ -464,9 +464,56 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
  export KERNELDOC
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -55,12 +55,13 @@ index 17cfa11ca716..c0e0e1c00c09 100644
 +  -plugin-opt=enable-spill-copy-elim \
 +  -plugin-opt=enable-indvars-post-increment-ranges \
 +  -plugin-opt=lsr-drop-solution -plugin-opt=lsr-exp-narrow -plugin-opt=lsr-insns-cost \
++  -plugin-opt=loop-version-annotate-no-alias \
 +  -plugin-opt=hot-cold-static-analysis \
 +  -plugin-opt=enable-tail-merge $(USERLDFLAGS)
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -498,7 +544,7 @@ export rust_common_flags := --edition=2021 \
+@@ -498,7 +545,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -69,7 +70,7 @@ index 17cfa11ca716..c0e0e1c00c09 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -583,7 +629,29 @@ LINUXINCLUDE    := \
+@@ -583,7 +630,29 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -100,7 +101,7 @@ index 17cfa11ca716..c0e0e1c00c09 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -867,8 +935,8 @@ endif # need-config
+@@ -867,8 +936,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
