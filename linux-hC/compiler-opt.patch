@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index 17cfa11ca716..76258e19020f 100644
+index 17cfa11ca716..c0e0e1c00c09 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -464,9 +464,54 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
+@@ -464,9 +464,55 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
  export KERNELDOC
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -36,8 +36,9 @@ index 17cfa11ca716..76258e19020f 100644
 +  -plugin-opt=slp-threshold=8 -plugin-opt=slp-schedule-budget=32 -plugin-opt=slp-split-alternate-instructions \
 +  -plugin-opt=enable-vplan-native-path \
 +  -plugin-opt=loop-vectorize-with-block-frequency \
++  -plugin-opt=vectorizer-consider-reg-pressure \
 +  -plugin-opt=enable-interleaved-mem-accesses \
-+  -plugin-opt=enable-masked-interleaved-mem-accesses \
++  -plugin-opt=enable-masked-interleaved-mem-accesses -plugin-opt=lower-interleaved-accesses \
 +  -plugin-opt=gvn-add-phi-translation -plugin-opt=enable-gvn-sink -plugin-opt=enable-gvn-hoist \
 +  -plugin-opt=enable-memcpy-dag-opt \
 +  -plugin-opt=enable-memcpyopt-without-libcalls \
@@ -59,7 +60,7 @@ index 17cfa11ca716..76258e19020f 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -498,7 +543,7 @@ export rust_common_flags := --edition=2021 \
+@@ -498,7 +544,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -68,7 +69,7 @@ index 17cfa11ca716..76258e19020f 100644
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
  			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -583,7 +628,29 @@ LINUXINCLUDE    := \
+@@ -583,7 +629,29 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -99,7 +100,7 @@ index 17cfa11ca716..76258e19020f 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -867,8 +934,8 @@ endif # need-config
+@@ -867,8 +935,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
