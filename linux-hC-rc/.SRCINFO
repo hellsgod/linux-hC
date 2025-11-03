@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 6.18.rc3
+	pkgver = 6.18.rc4
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v6.18-rc3.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v6.18-rc4.tar.gz
 	source = config
 	source = 0001-linux6.15.y-le9uo-1.15.patch
 	source = 0002-Prefer-the-previous-cpu-for-wakeup-v6.patch
@@ -38,7 +38,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/misc/nvidia/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/sched/0001-bore.patch
-	b2sums = 4033770952e055a4633cf0d52ebe4856af1d203f26417edbdef4d87faed9ea7960fac3f3a9c0668042f18fe7e44eea13c97cd3f6e911037b2cda9e86b8edfee5
+	b2sums = 0dfdb698f6a66bd614e75371c61ff53a66fcebd42c0ed4cc3dc8601e17282a90251a1c652f0a6625bb3820e21cfe6726ef08a4a251fb2354f8dbadac42edd2b1
 	b2sums = 61cb5a35a837c50f65402f58b7dfb5c0f81d16722858ce1e34d5fb53c2c123e66f95d2237f7da58d8bc409235e8d81f79d1b92012e843274ffaad51c009ceb0b
 	b2sums = 8af48c81a9894941bb88148d1cdfcfa1a4913aba926d01d48a1e0cd8bd9667cd2bffaf1a4969dbab52932d3d4229fd3ee34ccdf61d5b3f7e2ff1c483fb37958c
 	b2sums = b95f9dcb059e6f0f78acd883a646c418cd09f9f0d6ed59902b7189f8df1c72a80fd05154595bc9a342884090013887db58660691a43db92a3b9b0b82d272cb59
@@ -81,7 +81,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 580.95.05 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.18.rc3-1
+	depends = linux-hC-rc=6.18.rc4-1
 	depends = nvidia-utils=580.95.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE
