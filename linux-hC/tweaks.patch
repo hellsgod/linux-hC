@@ -33,6 +33,22 @@ index 6c79ee7c0957..ecd2a7d80fbe 100644
  
  /* Interface to notify scheduler that system supports ITMT */
  int sched_set_itmt_support(void);
+diff --git a/arch/x86/kernel/cpu/bus_lock.c b/arch/x86/kernel/cpu/bus_lock.c
+index 981f8b1f0792..c355c1bddc84 100644
+--- a/arch/x86/kernel/cpu/bus_lock.c
++++ b/arch/x86/kernel/cpu/bus_lock.c
+@@ -46,7 +46,11 @@ static const struct {
+ 
+ static struct ratelimit_state bld_ratelimit;
+ 
++#ifdef CONFIG_HELLS
++static unsigned int sysctl_sld_mitigate = 0;
++#else
+ static unsigned int sysctl_sld_mitigate = 1;
++#endif /* CONFIG_HELLS */
+ static DEFINE_SEMAPHORE(buslock_sem, 1);
+ 
+ #ifdef CONFIG_PROC_SYSCTL
 diff --git a/arch/x86/kernel/cpu/intel_epb.c b/arch/x86/kernel/cpu/intel_epb.c
 index bc7671f920a7..c69afdb06d2c 100644
 --- a/arch/x86/kernel/cpu/intel_epb.c
