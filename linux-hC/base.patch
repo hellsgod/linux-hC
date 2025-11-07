@@ -319,6 +319,472 @@ index 87e749106dda..0388a7173104 100644
  	sibling = cpumask_any_but(mask, cpu);
  	if (sibling < nr_cpu_ids)
  		return cpu_data(sibling).loops_per_jiffy;
+diff --git a/block/bfq-iosched.c b/block/bfq-iosched.c
+index 4a8d3d96bfe4..4f34e122e8d8 100644
+--- a/block/bfq-iosched.c
++++ b/block/bfq-iosched.c
+@@ -460,6 +460,21 @@ static struct bfq_io_cq *bfq_bic_lookup(struct request_queue *q)
+ 	return icq_to_bic(ioc_lookup_icq(q));
+ }
+ 
++static struct bfq_io_cq *bfq_bic_try_lookup(struct request_queue *q)
++{
++	if (!current->io_context)
++		return NULL;
++	if (spin_trylock_irq(&q->queue_lock)) {
++		struct bfq_io_cq *icq;
++
++		icq = icq_to_bic(ioc_lookup_icq(q));
++		spin_unlock_irq(&q->queue_lock);
++		return icq;
++	}
++
++	return NULL;
++}
++
+ /*
+  * Scheduler run of queue, if there are requests pending and no one in the
+  * driver that will restart queueing.
+@@ -2452,7 +2467,18 @@ static bool bfq_bio_merge(struct request_queue *q, struct bio *bio,
+ 	struct request *free = NULL;
+ 	bool ret;
+ 
+-	spin_lock_irq(&bfqd->lock);
++	/*
++	 * bio merging is called for every bio queued, and it's very easy
++	 * to run into contention because of that. If we fail getting
++	 * the dd lock, just skip this merge attempt. For related IO, the
++	 * plug will be the successful merging point. If we get here, we
++	 * already failed doing the obvious merge. Chances of actually
++	 * getting a merge off this path is a lot slimmer, so skipping an
++	 * occassional lookup that will most likely not succeed anyway should
++	 * not be a problem.
++	 */
++	if (!spin_trylock_irq(&bfqd->lock))
++		return false;
+ 
+ 	if (bic) {
+ 		/*
+@@ -5145,6 +5171,10 @@ static bool bfq_has_work(struct blk_mq_hw_ctx *hctx)
+ {
+ 	struct bfq_data *bfqd = hctx->queue->elevator->elevator_data;
+ 
++	if (!list_empty_careful(&bfqd->at_head) ||
++	    !list_empty_careful(&bfqd->at_tail))
++		return true;
++
+ 	/*
+ 	 * Avoiding lock: a race on bfqd->queued should cause at
+ 	 * most a call to dispatch for nothing
+@@ -5294,15 +5324,61 @@ static inline void bfq_update_dispatch_stats(struct request_queue *q,
+ 					     bool idle_timer_disabled) {}
+ #endif /* CONFIG_BFQ_CGROUP_DEBUG */
+ 
++static void bfq_insert_request(struct request_queue *q, struct request *rq,
++			       blk_insert_t flags, struct list_head *free);
++
++static void __bfq_do_insert(struct request_queue *q, blk_insert_t flags,
++			    struct list_head *list, struct list_head *free)
++{
++	while (!list_empty(list)) {
++		struct request *rq;
++
++		rq = list_first_entry(list, struct request, queuelist);
++		list_del_init(&rq->queuelist);
++		bfq_insert_request(q, rq, flags, free);
++	}
++}
++
++static void bfq_do_insert(struct request_queue *q, struct list_head *free)
++{
++	struct bfq_data *bfqd = q->elevator->elevator_data;
++	LIST_HEAD(at_head);
++	LIST_HEAD(at_tail);
++
++	spin_lock(&bfqd->insert_lock);
++	list_splice_init(&bfqd->at_head, &at_head);
++	list_splice_init(&bfqd->at_tail, &at_tail);
++	spin_unlock(&bfqd->insert_lock);
++
++	__bfq_do_insert(q, BLK_MQ_INSERT_AT_HEAD, &at_head, free);
++	__bfq_do_insert(q, 0, &at_tail, free);
++}
++
+ static struct request *bfq_dispatch_request(struct blk_mq_hw_ctx *hctx)
+ {
+-	struct bfq_data *bfqd = hctx->queue->elevator->elevator_data;
++	struct request_queue *q = hctx->queue;
++	struct bfq_data *bfqd = q->elevator->elevator_data;
+ 	struct request *rq;
+ 	struct bfq_queue *in_serv_queue;
+ 	bool waiting_rq, idle_timer_disabled = false;
++	LIST_HEAD(free);
++
++	/*
++	 * If someone else is already dispatching, skip this one. This will
++	 * defer the next dispatch event to when something completes, and could
++	 * potentially lower the queue depth for contended cases.
++	 *
++	 * See the logic in blk_mq_do_dispatch_sched(), which loops and
++	 * retries if nothing is dispatched.
++	 */
++	if (test_bit(BFQ_DISPATCHING, &bfqd->run_state) ||
++	    test_and_set_bit_lock(BFQ_DISPATCHING, &bfqd->run_state))
++		return NULL;
+ 
+ 	spin_lock_irq(&bfqd->lock);
+ 
++	bfq_do_insert(hctx->queue, &free);
++
+ 	in_serv_queue = bfqd->in_service_queue;
+ 	waiting_rq = in_serv_queue && bfq_bfqq_wait_request(in_serv_queue);
+ 
+@@ -5312,7 +5388,9 @@ static struct request *bfq_dispatch_request(struct blk_mq_hw_ctx *hctx)
+ 			waiting_rq && !bfq_bfqq_wait_request(in_serv_queue);
+ 	}
+ 
++	clear_bit_unlock(BFQ_DISPATCHING, &bfqd->run_state);
+ 	spin_unlock_irq(&bfqd->lock);
++	blk_mq_free_requests(&free);
+ 	bfq_update_dispatch_stats(hctx->queue, rq,
+ 			idle_timer_disabled ? in_serv_queue : NULL,
+ 				idle_timer_disabled);
+@@ -6233,27 +6311,21 @@ static inline void bfq_update_insert_stats(struct request_queue *q,
+ 
+ static struct bfq_queue *bfq_init_rq(struct request *rq);
+ 
+-static void bfq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
+-			       blk_insert_t flags)
++static void bfq_insert_request(struct request_queue *q, struct request *rq,
++			       blk_insert_t flags, struct list_head *free)
+ {
+-	struct request_queue *q = hctx->queue;
+ 	struct bfq_data *bfqd = q->elevator->elevator_data;
+ 	struct bfq_queue *bfqq;
+ 	bool idle_timer_disabled = false;
+ 	blk_opf_t cmd_flags;
+-	LIST_HEAD(free);
+ 
+ #ifdef CONFIG_BFQ_GROUP_IOSCHED
+ 	if (!cgroup_subsys_on_dfl(io_cgrp_subsys) && rq->bio)
+ 		bfqg_stats_update_legacy_io(q, rq);
+ #endif
+-	spin_lock_irq(&bfqd->lock);
+ 	bfqq = bfq_init_rq(rq);
+-	if (blk_mq_sched_try_insert_merge(q, rq, &free)) {
+-		spin_unlock_irq(&bfqd->lock);
+-		blk_mq_free_requests(&free);
++	if (blk_mq_sched_try_insert_merge(q, rq, free))
+ 		return;
+-	}
+ 
+ 	trace_block_rq_insert(rq);
+ 
+@@ -6283,8 +6355,6 @@ static void bfq_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
+ 	 * merge).
+ 	 */
+ 	cmd_flags = rq->cmd_flags;
+-	spin_unlock_irq(&bfqd->lock);
+-
+ 	bfq_update_insert_stats(q, bfqq, idle_timer_disabled,
+ 				cmd_flags);
+ }
+@@ -6293,13 +6363,15 @@ static void bfq_insert_requests(struct blk_mq_hw_ctx *hctx,
+ 				struct list_head *list,
+ 				blk_insert_t flags)
+ {
+-	while (!list_empty(list)) {
+-		struct request *rq;
++	struct request_queue *q = hctx->queue;
++	struct bfq_data *bfqd = q->elevator->elevator_data;
+ 
+-		rq = list_first_entry(list, struct request, queuelist);
+-		list_del_init(&rq->queuelist);
+-		bfq_insert_request(hctx, rq, flags);
+-	}
++	spin_lock_irq(&bfqd->insert_lock);
++	if (flags & BLK_MQ_INSERT_AT_HEAD)
++		list_splice_init(list, &bfqd->at_head);
++	else
++		list_splice_init(list, &bfqd->at_tail);
++	spin_unlock_irq(&bfqd->insert_lock);
+ }
+ 
+ static void bfq_update_hw_tag(struct bfq_data *bfqd)
+@@ -7218,6 +7290,12 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ 	q->elevator = eq;
+ 	spin_unlock_irq(&q->queue_lock);
+ 
++	spin_lock_init(&bfqd->lock);
++	spin_lock_init(&bfqd->insert_lock);
++
++	INIT_LIST_HEAD(&bfqd->at_head);
++	INIT_LIST_HEAD(&bfqd->at_tail);
++
+ 	/*
+ 	 * Our fallback bfqq if bfq_find_alloc_queue() runs into OOM issues.
+ 	 * Grab a permanent reference to it, so that the normal code flow
+@@ -7335,8 +7413,6 @@ static int bfq_init_queue(struct request_queue *q, struct elevator_queue *eq)
+ 	/* see comments on the definition of next field inside bfq_data */
+ 	bfqd->actuator_load_threshold = 4;
+ 
+-	spin_lock_init(&bfqd->lock);
+-
+ 	/*
+ 	 * The invocation of the next bfq_create_group_hierarchy
+ 	 * function is the head of a chain of function calls
+diff --git a/block/bfq-iosched.h b/block/bfq-iosched.h
+index 34a498e6b2a5..3e72c84edf69 100644
+--- a/block/bfq-iosched.h
++++ b/block/bfq-iosched.h
+@@ -504,12 +504,26 @@ struct bfq_io_cq {
+ 	unsigned int requests;	/* Number of requests this process has in flight */
+ };
+ 
++enum {
++	BFQ_DISPATCHING	= 0,
++};
++
+ /**
+  * struct bfq_data - per-device data structure.
+  *
+  * All the fields are protected by @lock.
+  */
+ struct bfq_data {
++	struct {
++		spinlock_t lock;
++		spinlock_t insert_lock;
++	} ____cacheline_aligned_in_smp;
++
++	unsigned long run_state;
++
++	struct list_head at_head;
++	struct list_head at_tail;
++
+ 	/* device request queue */
+ 	struct request_queue *queue;
+ 	/* dispatch queue */
+@@ -795,8 +809,6 @@ struct bfq_data {
+ 	/* fallback dummy bfqq for extreme OOM conditions */
+ 	struct bfq_queue oom_bfqq;
+ 
+-	spinlock_t lock;
+-
+ 	/*
+ 	 * bic associated with the task issuing current bio for
+ 	 * merging. This and the next field are used as a support to
+diff --git a/block/mq-deadline.c b/block/mq-deadline.c
+index 2e689b2c4021..a749130c095a 100644
+--- a/block/mq-deadline.c
++++ b/block/mq-deadline.c
+@@ -79,10 +79,23 @@ struct dd_per_prio {
+ 	struct io_stats_per_prio stats;
+ };
+ 
++enum {
++	DD_DISPATCHING	= 0,
++};
++
+ struct deadline_data {
+ 	/*
+ 	 * run time data
+ 	 */
++	struct {
++		spinlock_t lock;
++		spinlock_t insert_lock;
++	} ____cacheline_aligned_in_smp;
++
++	unsigned long run_state;
++
++	struct list_head at_head;
++	struct list_head at_tail;
+ 
+ 	struct dd_per_prio per_prio[DD_PRIO_COUNT];
+ 
+@@ -100,8 +113,6 @@ struct deadline_data {
+ 	int front_merges;
+ 	u32 async_depth;
+ 	int prio_aging_expire;
+-
+-	spinlock_t lock;
+ };
+ 
+ /* Maps an I/O priority class to a deadline scheduler priority. */
+@@ -112,6 +123,9 @@ static const enum dd_prio ioprio_class_to_prio[] = {
+ 	[IOPRIO_CLASS_IDLE]	= DD_IDLE_PRIO,
+ };
+ 
++static void dd_insert_request(struct request_queue *q, struct request *rq,
++			      blk_insert_t flags, struct list_head *free);
++
+ static inline struct rb_root *
+ deadline_rb_root(struct dd_per_prio *per_prio, struct request *rq)
+ {
+@@ -451,6 +465,33 @@ static struct request *dd_dispatch_prio_aged_requests(struct deadline_data *dd,
+ 	return NULL;
+ }
+ 
++static void __dd_do_insert(struct request_queue *q, blk_insert_t flags,
++			   struct list_head *list, struct list_head *free)
++{
++	while (!list_empty(list)) {
++		struct request *rq;
++
++		rq = list_first_entry(list, struct request, queuelist);
++		list_del_init(&rq->queuelist);
++		dd_insert_request(q, rq, flags, free);
++	}
++}
++
++static void dd_do_insert(struct request_queue *q, struct list_head *free)
++{
++	struct deadline_data *dd = q->elevator->elevator_data;
++	LIST_HEAD(at_head);
++	LIST_HEAD(at_tail);
++
++	spin_lock(&dd->insert_lock);
++	list_splice_init(&dd->at_head, &at_head);
++	list_splice_init(&dd->at_tail, &at_tail);
++	spin_unlock(&dd->insert_lock);
++
++	__dd_do_insert(q, BLK_MQ_INSERT_AT_HEAD, &at_head, free);
++	__dd_do_insert(q, 0, &at_tail, free);
++}
++
+ /*
+  * Called from blk_mq_run_hw_queue() -> __blk_mq_sched_dispatch_requests().
+  *
+@@ -461,12 +502,27 @@ static struct request *dd_dispatch_prio_aged_requests(struct deadline_data *dd,
+  */
+ static struct request *dd_dispatch_request(struct blk_mq_hw_ctx *hctx)
+ {
+-	struct deadline_data *dd = hctx->queue->elevator->elevator_data;
++	struct request_queue *q = hctx->queue;
++	struct deadline_data *dd = q->elevator->elevator_data;
+ 	const unsigned long now = jiffies;
+ 	struct request *rq;
+ 	enum dd_prio prio;
++	LIST_HEAD(free);
++
++	/*
++	 * If someone else is already dispatching, skip this one. This will
++	 * defer the next dispatch event to when something completes, and could
++	 * potentially lower the queue depth for contended cases.
++	 *
++	 * See the logic in blk_mq_do_dispatch_sched(), which loops and
++	 * retries if nothing is dispatched.
++	 */
++	if (test_bit(DD_DISPATCHING, &dd->run_state) ||
++	    test_and_set_bit_lock(DD_DISPATCHING, &dd->run_state))
++		return NULL;
+ 
+ 	spin_lock(&dd->lock);
++	dd_do_insert(q, &free);
+ 	rq = dd_dispatch_prio_aged_requests(dd, now);
+ 	if (rq)
+ 		goto unlock;
+@@ -482,8 +538,10 @@ static struct request *dd_dispatch_request(struct blk_mq_hw_ctx *hctx)
+ 	}
+ 
+ unlock:
++	clear_bit_unlock(DD_DISPATCHING, &dd->run_state);
+ 	spin_unlock(&dd->lock);
+ 
++	blk_mq_free_requests(&free);
+ 	return rq;
+ }
+ 
+@@ -555,6 +613,12 @@ static int dd_init_sched(struct request_queue *q, struct elevator_queue *eq)
+ 
+ 	eq->elevator_data = dd;
+ 
++	spin_lock_init(&dd->lock);
++	spin_lock_init(&dd->insert_lock);
++
++	INIT_LIST_HEAD(&dd->at_head);
++	INIT_LIST_HEAD(&dd->at_tail);
++
+ 	for (prio = 0; prio <= DD_PRIO_MAX; prio++) {
+ 		struct dd_per_prio *per_prio = &dd->per_prio[prio];
+ 
+@@ -571,7 +635,6 @@ static int dd_init_sched(struct request_queue *q, struct elevator_queue *eq)
+ 	dd->last_dir = DD_WRITE;
+ 	dd->fifo_batch = fifo_batch;
+ 	dd->prio_aging_expire = prio_aging_expire;
+-	spin_lock_init(&dd->lock);
+ 
+ 	/* We dispatch from request queue wide instead of hw queue */
+ 	blk_queue_flag_set(QUEUE_FLAG_SQ_SCHED, q);
+@@ -624,7 +687,19 @@ static bool dd_bio_merge(struct request_queue *q, struct bio *bio,
+ 	struct request *free = NULL;
+ 	bool ret;
+ 
+-	spin_lock(&dd->lock);
++	/*
++	 * bio merging is called for every bio queued, and it's very easy
++	 * to run into contention because of that. If we fail getting
++	 * the dd lock, just skip this merge attempt. For related IO, the
++	 * plug will be the successful merging point. If we get here, we
++	 * already failed doing the obvious merge. Chances of actually
++	 * getting a merge off this path is a lot slimmer, so skipping an
++	 * occassional lookup that will most likely not succeed anyway should
++	 * not be a problem.
++	 */
++	if (!spin_trylock(&dd->lock))
++		return false;
++
+ 	ret = blk_mq_sched_try_merge(q, bio, nr_segs, &free);
+ 	spin_unlock(&dd->lock);
+ 
+@@ -637,10 +712,9 @@ static bool dd_bio_merge(struct request_queue *q, struct bio *bio,
+ /*
+  * add rq to rbtree and fifo
+  */
+-static void dd_insert_request(struct blk_mq_hw_ctx *hctx, struct request *rq,
++static void dd_insert_request(struct request_queue *q, struct request *rq,
+ 			      blk_insert_t flags, struct list_head *free)
+ {
+-	struct request_queue *q = hctx->queue;
+ 	struct deadline_data *dd = q->elevator->elevator_data;
+ 	const enum dd_data_dir data_dir = rq_data_dir(rq);
+ 	u16 ioprio = req_get_ioprio(rq);
+@@ -690,19 +764,13 @@ static void dd_insert_requests(struct blk_mq_hw_ctx *hctx,
+ {
+ 	struct request_queue *q = hctx->queue;
+ 	struct deadline_data *dd = q->elevator->elevator_data;
+-	LIST_HEAD(free);
+-
+-	spin_lock(&dd->lock);
+-	while (!list_empty(list)) {
+-		struct request *rq;
+-
+-		rq = list_first_entry(list, struct request, queuelist);
+-		list_del_init(&rq->queuelist);
+-		dd_insert_request(hctx, rq, flags, &free);
+-	}
+-	spin_unlock(&dd->lock);
+ 
+-	blk_mq_free_requests(&free);
++	spin_lock(&dd->insert_lock);
++	if (flags & BLK_MQ_INSERT_AT_HEAD)
++		list_splice_init(list, &dd->at_head);
++	else
++		list_splice_init(list, &dd->at_tail);
++	spin_unlock(&dd->insert_lock);
+ }
+ 
+ /* Callback from inside blk_mq_rq_ctx_init(). */
+@@ -739,6 +807,10 @@ static bool dd_has_work(struct blk_mq_hw_ctx *hctx)
+ 	struct deadline_data *dd = hctx->queue->elevator->elevator_data;
+ 	enum dd_prio prio;
+ 
++	if (!list_empty_careful(&dd->at_head) ||
++	    !list_empty_careful(&dd->at_tail))
++		return true;
++
+ 	for (prio = 0; prio <= DD_PRIO_MAX; prio++)
+ 		if (dd_has_work_for_prio(&dd->per_prio[prio]))
+ 			return true;
 diff --git a/drivers/Makefile b/drivers/Makefile
 index b5749cf67044..5beba9f57254 100644
 --- a/drivers/Makefile
@@ -415,6 +881,278 @@ index fc02a3542f65..0d7594f5a04b 100644
  	else if (!strcmp(str, "active"))
  		default_driver = &intel_pstate;
  	else if (!strcmp(str, "passive"))
+diff --git a/drivers/cpuidle/Kconfig b/drivers/cpuidle/Kconfig
+index cac5997dca50..ae67a464025a 100644
+--- a/drivers/cpuidle/Kconfig
++++ b/drivers/cpuidle/Kconfig
+@@ -5,7 +5,7 @@ config CPU_IDLE
+ 	bool "CPU idle PM support"
+ 	default y if ACPI || PPC_PSERIES
+ 	select CPU_IDLE_GOV_LADDER if (!NO_HZ && !NO_HZ_IDLE)
+-	select CPU_IDLE_GOV_MENU if (NO_HZ || NO_HZ_IDLE) && !CPU_IDLE_GOV_TEO
++	select CPU_IDLE_GOV_TEO if (NO_HZ || NO_HZ_IDLE) && !CPU_IDLE_GOV_MENU
+ 	help
+ 	  CPU idle is a generic framework for supporting software-controlled
+ 	  idle processor power management.  It includes modular cross-platform
+@@ -30,9 +30,6 @@ config CPU_IDLE_GOV_TEO
+ 	  This governor implements a simplified idle state selection method
+ 	  focused on timer events and does not do any interactivity boosting.
+ 
+-	  Some workloads benefit from using it and it generally should be safe
+-	  to use.  Say Y here if you are not happy with the alternatives.
+-
+ config CPU_IDLE_GOV_HALTPOLL
+ 	bool "Haltpoll governor (for virtualized systems)"
+ 	depends on KVM_GUEST
+diff --git a/drivers/cpuidle/governors/menu.c b/drivers/cpuidle/governors/menu.c
+index d54a60a024e4..5ddd00fe1161 100644
+--- a/drivers/cpuidle/governors/menu.c
++++ b/drivers/cpuidle/governors/menu.c
+@@ -518,7 +518,7 @@ static int menu_enable_device(struct cpuidle_driver *drv,
+ 
+ static struct cpuidle_governor menu_governor = {
+ 	.name =		"menu",
+-	.rating =	20,
++	.rating =	19,
+ 	.enable =	menu_enable_device,
+ 	.select =	menu_select,
+ 	.reflect =	menu_reflect,
+diff --git a/drivers/cpuidle/governors/teo.c b/drivers/cpuidle/governors/teo.c
+index bfa55c1eab5b..a9c189aa83f3 100644
+--- a/drivers/cpuidle/governors/teo.c
++++ b/drivers/cpuidle/governors/teo.c
+@@ -259,6 +259,77 @@ static int teo_find_shallower_state(struct cpuidle_driver *drv,
+ 	return state_idx;
+ }
+ 
++static int teo_get_candidate(struct cpuidle_driver *drv,
++			     struct cpuidle_device *dev,
++			     struct teo_cpu *cpu_data, int constraint_idx,
++			     int idx, unsigned int idx_events,
++			     bool count_all_events)
++{
++	int first_suitable_idx = idx;
++	unsigned int events = 0;
++	int i;
++
++	/*
++	 * Look for the deepest idle state whose target residency had
++	 * not exceeded the idle duration in over a half of the relevant
++	 * cases in the past.
++	 *
++	 * Take the possible duration limitation present if the tick
++	 * has been stopped already into account.
++	 */
++	for (i = idx - 1; i >= 0; i--) {
++		events += cpu_data->state_bins[i].intercepts;
++		if (count_all_events)
++			events += cpu_data->state_bins[i].hits;
++
++		if (2 * events > idx_events) {
++			/*
++			 * Use the current state unless it is too
++			 * shallow or disabled, in which case take the
++			 * first enabled state that is deep enough.
++			 */
++			if (teo_state_ok(i, drv) && !dev->states_usage[i].disable) {
++				idx = i;
++				break;
++			}
++
++			idx = first_suitable_idx;
++			break;
++		}
++
++		if (dev->states_usage[i].disable)
++			continue;
++
++		if (teo_state_ok(i, drv)) {
++			/*
++			 * The current state is deep enough, but still
++			 * there may be a better one.
++			 */
++			first_suitable_idx = i;
++			continue;
++		}
++
++		/*
++		 * The current state is too shallow, so if no suitable
++		 * states other than the initial candidate have been
++		 * found, give up (the remaining states to check are
++		 * shallower still), but otherwise the first suitable
++		 * state other than the initial candidate may turn out
++		 * to be preferable.
++		 */
++		if (first_suitable_idx == idx)
++			break;
++	}
++	/*
++	 * If there is a latency constraint, it may be necessary to select an
++	 * idle state shallower than the current candidate one.
++	 */
++	if (idx > constraint_idx)
++		return constraint_idx;
++
++	return idx;
++}
++
+ /**
+  * teo_select - Selects the next idle state to enter.
+  * @drv: cpuidle driver containing state data.
+@@ -349,104 +420,50 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
+ 	}
+ 
+ 	/*
+-	 * If the sum of the intercepts metric for all of the idle states
+-	 * shallower than the current candidate one (idx) is greater than the
+-	 * sum of the intercepts and hits metrics for the candidate state and
+-	 * all of the deeper states, a shallower idle state is likely to be a
+-	 * better choice.
+-	 */
+-	if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum) {
+-		int first_suitable_idx = idx;
+-
+-		/*
+-		 * Look for the deepest idle state whose target residency had
+-		 * not exceeded the idle duration in over a half of the relevant
+-		 * cases in the past.
+-		 *
+-		 * Take the possible duration limitation present if the tick
+-		 * has been stopped already into account.
+-		 */
+-		intercept_sum = 0;
+-
+-		for (i = idx - 1; i >= 0; i--) {
+-			struct teo_bin *bin = &cpu_data->state_bins[i];
+-
+-			intercept_sum += bin->intercepts;
+-
+-			if (2 * intercept_sum > idx_intercept_sum) {
+-				/*
+-				 * Use the current state unless it is too
+-				 * shallow or disabled, in which case take the
+-				 * first enabled state that is deep enough.
+-				 */
+-				if (teo_state_ok(i, drv) &&
+-				    !dev->states_usage[i].disable) {
+-					idx = i;
+-					break;
+-				}
+-				idx = first_suitable_idx;
+-				break;
+-			}
+-
+-			if (dev->states_usage[i].disable)
+-				continue;
+-
+-			if (teo_state_ok(i, drv)) {
+-				/*
+-				 * The current state is deep enough, but still
+-				 * there may be a better one.
+-				 */
+-				first_suitable_idx = i;
+-				continue;
+-			}
+-
+-			/*
+-			 * The current state is too shallow, so if no suitable
+-			 * states other than the initial candidate have been
+-			 * found, give up (the remaining states to check are
+-			 * shallower still), but otherwise the first suitable
+-			 * state other than the initial candidate may turn out
+-			 * to be preferable.
+-			 */
+-			if (first_suitable_idx == idx)
+-				break;
+-		}
+-	}
+-
+-	/*
+-	 * If there is a latency constraint, it may be necessary to select an
+-	 * idle state shallower than the current candidate one.
+-	 */
+-	if (idx > constraint_idx)
+-		idx = constraint_idx;
+-
+-	/*
+-	 * If either the candidate state is state 0 or its target residency is
+-	 * low enough, there is basically nothing more to do, but if the sleep
+-	 * length is not updated, the subsequent wakeup will be counted as an
+-	 * "intercept" which may be problematic in the cases when timer wakeups
+-	 * are dominant.  Namely, it may effectively prevent deeper idle states
+-	 * from being selected at one point even if no imminent timers are
+-	 * scheduled.
+-	 *
+-	 * However, frequent timers in the RESIDENCY_THRESHOLD_NS range on one
+-	 * CPU are unlikely (user space has a default 50 us slack value for
+-	 * hrtimers and there are relatively few timers with a lower deadline
+-	 * value in the kernel), and even if they did happen, the potential
+-	 * benefit from using a deep idle state in that case would be
+-	 * questionable anyway for latency reasons.  Thus if the measured idle
+-	 * duration falls into that range in the majority of cases, assume
+-	 * non-timer wakeups to be dominant and skip updating the sleep length
+-	 * to reduce latency.
++	 * If the measured idle duration has fallen into the
++	 * RESIDENCY_THRESHOLD_NS range in the majority of recent cases, it is
++	 * likely to fall into that range next time, so it is better to avoid
++	 * adding latency to the idle state selection path.  Accordingly, aim
++	 * for skipping the sleep length update in that case.
+ 	 *
+ 	 * Also, if the latency constraint is sufficiently low, it will force
+ 	 * shallow idle states regardless of the wakeup type, so the sleep
+-	 * length need not be known in that case.
++	 * length need not be known in that case either.
+ 	 */
+-	if ((!idx || drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS) &&
+-	    (2 * cpu_data->short_idles >= cpu_data->total ||
+-	     latency_req < LATENCY_THRESHOLD_NS))
+-		goto out_tick;
++	if (2 * cpu_data->short_idles >= cpu_data->total ||
++	    latency_req < LATENCY_THRESHOLD_NS) {
++		/*
++		 * Look for a new candidate idle state and use all events (both
++		 * "intercepts" and "hits") because the sleep length update is
++		 * likely to be skipped and timer wakeups need to be taken into
++		 * account in a different way in case they are significant.
++		 */
++		idx = teo_get_candidate(drv, dev, cpu_data, idx, constraint_idx,
++					idx_intercept_sum + idx_hit_sum, true);
++		/*
++		 * If the new candidate state is state 0 or its target residency
++		 * is low enough, return it right away without stopping the
++		 * scheduler tick.
++		 */
++		if (!idx || drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS)
++			goto out_tick;
++	} else if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum) {
++		/*
++		 * Look for a new candidate state because the current one is
++		 * likely too deep, but use the "intercepts" metric only because
++		 * the sleep length is going to be determined later and for now
++		 * it is only necessary to find a state that will be suitable
++		 * in case the CPU is "intercepted".
++		 */
++		idx = teo_get_candidate(drv, dev, cpu_data, idx, constraint_idx,
++					idx_intercept_sum, false);
++	} else if (idx > constraint_idx) {
++		/*
++		 * The current candidate state is too deep for the latency
++		 * constraint at hand, so change it to a suitable one.
++		 */
++		idx = constraint_idx;
++	}
+ 
+ 	duration_ns = tick_nohz_get_sleep_length(&delta_tick);
+ 	cpu_data->sleep_length_ns = duration_ns;
+@@ -537,7 +554,7 @@ static int teo_enable_device(struct cpuidle_driver *drv,
+ 
+ static struct cpuidle_governor teo_governor = {
+ 	.name =		"teo",
+-	.rating =	19,
++	.rating =	20,
+ 	.enable =	teo_enable_device,
+ 	.select =	teo_select,
+ 	.reflect =	teo_reflect,
 diff --git a/drivers/firmware/sysfb.c b/drivers/firmware/sysfb.c
 index 889e5b05c739..676f363d536c 100644
 --- a/drivers/firmware/sysfb.c
