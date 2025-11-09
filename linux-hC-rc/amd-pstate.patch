@@ -1,5 +1,5 @@
 diff --git a/drivers/cpufreq/amd-pstate.c b/drivers/cpufreq/amd-pstate.c
-index b44f0f7a5ba1c..b3dad7cde46f0 100644
+index b44f0f7a5ba1c..c45bc98721d24 100644
 --- a/drivers/cpufreq/amd-pstate.c
 +++ b/drivers/cpufreq/amd-pstate.c
 @@ -65,13 +65,13 @@ static const char * const amd_pstate_mode_string[] = {
@@ -92,6 +92,15 @@ index b44f0f7a5ba1c..b3dad7cde46f0 100644
 +	ret = sysfs_match_string(energy_perf_strings, buf);
  	if (ret < 0)
  		return -EINVAL;
+ 
+@@ -1282,7 +1278,7 @@ static int amd_pstate_change_mode_without_dvr_change(int mode)
+ 	if (cpu_feature_enabled(X86_FEATURE_CPPC) || cppc_state == AMD_PSTATE_ACTIVE)
+ 		return 0;
+ 
+-	for_each_present_cpu(cpu) {
++	for_each_online_cpu(cpu) {
+ 		cppc_set_auto_sel(cpu, (cppc_state == AMD_PSTATE_PASSIVE) ? 0 : 1);
+ 	}
  
 @@ -1353,9 +1349,8 @@ int amd_pstate_update_status(const char *buf, size_t size)
  		return -EINVAL;
