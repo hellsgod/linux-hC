@@ -201,16 +201,17 @@ index 08ed5a2e46a5f..3bcf9f180c21d 100644
  static inline void indirect_branch_prediction_barrier(void)
  {
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 8e36964a77212..c00b7572292ad 100644
+index 2ba9f2d42d8c9..c00b7572292ad 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
-@@ -1035,18 +1035,8 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+@@ -1035,19 +1035,8 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
  	}
  }
  
 -static const struct x86_cpu_id zen5_rdseed_microcode[] = {
 -	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
 -	ZEN_MODEL_STEP_UCODE(0x1a, 0x11, 0x0, 0x0b101054),
+-	{},
 -};
 -
  static void init_amd_zen5(struct cpuinfo_x86 *c)
@@ -398,103 +399,6 @@ index 22602c32faa5b..fa995e235d9b4 100644
  }
  
  u8 iwl_mvm_mac80211_ac_to_ucode_ac(enum ieee80211_ac_numbers ac)
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index 177e57c1a362f..6e4af974ef7c8 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -11773,7 +11773,8 @@ static enum hrtimer_restart perf_swevent_hrtimer(struct hrtimer *hrtimer)
- 
- 	event = container_of(hrtimer, struct perf_event, hw.hrtimer);
- 
--	if (event->state != PERF_EVENT_STATE_ACTIVE)
-+	if (event->state != PERF_EVENT_STATE_ACTIVE ||
-+	    event->hw.state & PERF_HES_STOPPED)
- 		return HRTIMER_NORESTART;
- 
- 	event->pmu->read(event);
-@@ -11819,15 +11820,18 @@ static void perf_swevent_cancel_hrtimer(struct perf_event *event)
- 	struct hw_perf_event *hwc = &event->hw;
- 
- 	/*
--	 * The throttle can be triggered in the hrtimer handler.
--	 * The HRTIMER_NORESTART should be used to stop the timer,
--	 * rather than hrtimer_cancel(). See perf_swevent_hrtimer()
-+	 * The event stop can be triggered in the hrtimer handler.
-+	 * So use hrtimer_try_to_cancel() instead of hrtimer_cancel()
-+	 * to stop the hrtimer() to avoid trapping into a dead loop.
-+	 * Simultaneously the event would be set PERF_HES_STOPPED flag,
-+	 * perf_swevent_hrtimer() would stop the event hrtimer once it
-+	 * detects the PERF_HES_STOPPED flag.
- 	 */
- 	if (is_sampling_event(event) && (hwc->interrupts != MAX_INTERRUPTS)) {
- 		ktime_t remaining = hrtimer_get_remaining(&hwc->hrtimer);
- 		local64_set(&hwc->period_left, ktime_to_ns(remaining));
- 
--		hrtimer_cancel(&hwc->hrtimer);
-+		hrtimer_try_to_cancel(&hwc->hrtimer);
- 	}
- }
- 
-@@ -11871,12 +11875,14 @@ static void cpu_clock_event_update(struct perf_event *event)
- 
- static void cpu_clock_event_start(struct perf_event *event, int flags)
- {
-+	event->hw.state = 0;
- 	local64_set(&event->hw.prev_count, local_clock());
- 	perf_swevent_start_hrtimer(event);
- }
- 
- static void cpu_clock_event_stop(struct perf_event *event, int flags)
- {
-+	event->hw.state = PERF_HES_STOPPED;
- 	perf_swevent_cancel_hrtimer(event);
- 	if (flags & PERF_EF_UPDATE)
- 		cpu_clock_event_update(event);
-@@ -11950,12 +11956,14 @@ static void task_clock_event_update(struct perf_event *event, u64 now)
- 
- static void task_clock_event_start(struct perf_event *event, int flags)
- {
-+	event->hw.state = 0;
- 	local64_set(&event->hw.prev_count, event->ctx->time);
- 	perf_swevent_start_hrtimer(event);
- }
- 
- static void task_clock_event_stop(struct perf_event *event, int flags)
- {
-+	event->hw.state = PERF_HES_STOPPED;
- 	perf_swevent_cancel_hrtimer(event);
- 	if (flags & PERF_EF_UPDATE)
- 		task_clock_event_update(event, event->ctx->time);
-diff --git a/scripts/Makefile.vmlinux b/scripts/Makefile.vmlinux
-index ced4379550d76..cd788cac9d91d 100644
---- a/scripts/Makefile.vmlinux
-+++ b/scripts/Makefile.vmlinux
-@@ -102,11 +102,24 @@ vmlinux: vmlinux.unstripped FORCE
- # modules.builtin.modinfo
- # ---------------------------------------------------------------------------
- 
-+# .modinfo in vmlinux.unstripped is aligned to 8 bytes for compatibility with
-+# tools that expect vmlinux to have sufficiently aligned sections but the
-+# additional bytes used for padding .modinfo to satisfy this requirement break
-+# certain versions of kmod with
-+#
-+#   depmod: ERROR: kmod_builtin_iter_next: unexpected string without modname prefix
-+#
-+# Strip the trailing padding bytes after extracting .modinfo to comply with
-+# what kmod expects to parse.
-+quiet_cmd_modules_builtin_modinfo = GEN     $@
-+      cmd_modules_builtin_modinfo = $(cmd_objcopy); \
-+                                    sed -i 's/\x00\+$$/\x00/g' $@
-+
- OBJCOPYFLAGS_modules.builtin.modinfo := -j .modinfo -O binary
- 
- targets += modules.builtin.modinfo
- modules.builtin.modinfo: vmlinux.unstripped FORCE
--	$(call if_changed,objcopy)
-+	$(call if_changed,modules_builtin_modinfo)
- 
- # modules.builtin
- # ---------------------------------------------------------------------------
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
