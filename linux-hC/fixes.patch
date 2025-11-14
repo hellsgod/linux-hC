@@ -1,5 +1,29 @@
+diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
+index 3fbb86fa669f..a11e17f3b4b1 100644
+--- a/arch/x86/kernel/cpu/amd.c
++++ b/arch/x86/kernel/cpu/amd.c
+@@ -1018,19 +1018,8 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+ 	}
+ }
+ 
+-static const struct x86_cpu_id zen5_rdseed_microcode[] = {
+-	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
+-	ZEN_MODEL_STEP_UCODE(0x1a, 0x11, 0x0, 0x0b101054),
+-	{},
+-};
+-
+ static void init_amd_zen5(struct cpuinfo_x86 *c)
+ {
+-	if (!x86_match_min_microcode_rev(zen5_rdseed_microcode)) {
+-		clear_cpu_cap(c, X86_FEATURE_RDSEED);
+-		msr_clear_bit(MSR_AMD64_CPUID_FN_7, 18);
+-		pr_emerg_once("RDSEED32 is broken. Disabling the corresponding CPUID bit.\n");
+-	}
+ }
+ 
+ static void init_amd(struct cpuinfo_x86 *c)
 diff --git a/drivers/gpu/drm/i915/display/intel_psr.c b/drivers/gpu/drm/i915/display/intel_psr.c
-index 41988e193a415..d19e3e7a94511 100644
+index 41988e193a41..d19e3e7a9451 100644
 --- a/drivers/gpu/drm/i915/display/intel_psr.c
 +++ b/drivers/gpu/drm/i915/display/intel_psr.c
 @@ -3364,6 +3364,7 @@ static void _psr_flush_handle(struct intel_dp *intel_dp)
@@ -33,7 +57,7 @@ index 41988e193a415..d19e3e7a94511 100644
  }
  
 diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/mac-ctxt.c b/drivers/net/wireless/intel/iwlwifi/mvm/mac-ctxt.c
-index 8805ab344895a..0065c2ead56b1 100644
+index 8805ab344895..0065c2ead56b 100644
 --- a/drivers/net/wireless/intel/iwlwifi/mvm/mac-ctxt.c
 +++ b/drivers/net/wireless/intel/iwlwifi/mvm/mac-ctxt.c
 @@ -938,19 +938,12 @@ u8 iwl_mvm_mac_ctxt_get_lowest_rate(struct iwl_mvm *mvm,
@@ -60,7 +84,7 @@ index 8805ab344895a..0065c2ead56b1 100644
  	return flags;
  }
 diff --git a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
-index 62da0132f3838..a62f5288dfd06 100644
+index 62da0132f383..a62f5288dfd0 100644
 --- a/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
 +++ b/drivers/net/wireless/intel/iwlwifi/mvm/utils.c
 @@ -169,9 +169,15 @@ int iwl_mvm_legacy_rate_to_mac80211_idx(u32 rate_n_flags,
@@ -83,7 +107,7 @@ index 62da0132f3838..a62f5288dfd06 100644
  
  u8 iwl_mvm_mac80211_ac_to_ucode_ac(enum ieee80211_ac_numbers ac)
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
