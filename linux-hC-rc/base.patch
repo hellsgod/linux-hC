@@ -183,7 +183,7 @@ index f928cf6e3252..d4ce964d9713 100644
  	bool "Generic x86 support"
  	depends on X86_32
 diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 8fbff3106c56..6116da77bbf3 100644
+index 1a27efcf3c20..6826d0203fb0 100644
 --- a/arch/x86/Makefile
 +++ b/arch/x86/Makefile
 @@ -165,10 +165,22 @@ else
@@ -918,233 +918,10 @@ index 23239b0c04f9..a197bcb9ebcd 100644
  	.select =	menu_select,
  	.reflect =	menu_reflect,
 diff --git a/drivers/cpuidle/governors/teo.c b/drivers/cpuidle/governors/teo.c
-index bfa55c1eab5b..a9c189aa83f3 100644
+index bfa55c1eab5b..65fe6856be85 100644
 --- a/drivers/cpuidle/governors/teo.c
 +++ b/drivers/cpuidle/governors/teo.c
-@@ -259,6 +259,77 @@ static int teo_find_shallower_state(struct cpuidle_driver *drv,
- 	return state_idx;
- }
- 
-+static int teo_get_candidate(struct cpuidle_driver *drv,
-+			     struct cpuidle_device *dev,
-+			     struct teo_cpu *cpu_data, int constraint_idx,
-+			     int idx, unsigned int idx_events,
-+			     bool count_all_events)
-+{
-+	int first_suitable_idx = idx;
-+	unsigned int events = 0;
-+	int i;
-+
-+	/*
-+	 * Look for the deepest idle state whose target residency had
-+	 * not exceeded the idle duration in over a half of the relevant
-+	 * cases in the past.
-+	 *
-+	 * Take the possible duration limitation present if the tick
-+	 * has been stopped already into account.
-+	 */
-+	for (i = idx - 1; i >= 0; i--) {
-+		events += cpu_data->state_bins[i].intercepts;
-+		if (count_all_events)
-+			events += cpu_data->state_bins[i].hits;
-+
-+		if (2 * events > idx_events) {
-+			/*
-+			 * Use the current state unless it is too
-+			 * shallow or disabled, in which case take the
-+			 * first enabled state that is deep enough.
-+			 */
-+			if (teo_state_ok(i, drv) && !dev->states_usage[i].disable) {
-+				idx = i;
-+				break;
-+			}
-+
-+			idx = first_suitable_idx;
-+			break;
-+		}
-+
-+		if (dev->states_usage[i].disable)
-+			continue;
-+
-+		if (teo_state_ok(i, drv)) {
-+			/*
-+			 * The current state is deep enough, but still
-+			 * there may be a better one.
-+			 */
-+			first_suitable_idx = i;
-+			continue;
-+		}
-+
-+		/*
-+		 * The current state is too shallow, so if no suitable
-+		 * states other than the initial candidate have been
-+		 * found, give up (the remaining states to check are
-+		 * shallower still), but otherwise the first suitable
-+		 * state other than the initial candidate may turn out
-+		 * to be preferable.
-+		 */
-+		if (first_suitable_idx == idx)
-+			break;
-+	}
-+	/*
-+	 * If there is a latency constraint, it may be necessary to select an
-+	 * idle state shallower than the current candidate one.
-+	 */
-+	if (idx > constraint_idx)
-+		return constraint_idx;
-+
-+	return idx;
-+}
-+
- /**
-  * teo_select - Selects the next idle state to enter.
-  * @drv: cpuidle driver containing state data.
-@@ -349,104 +420,50 @@ static int teo_select(struct cpuidle_driver *drv, struct cpuidle_device *dev,
- 	}
- 
- 	/*
--	 * If the sum of the intercepts metric for all of the idle states
--	 * shallower than the current candidate one (idx) is greater than the
--	 * sum of the intercepts and hits metrics for the candidate state and
--	 * all of the deeper states, a shallower idle state is likely to be a
--	 * better choice.
--	 */
--	if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum) {
--		int first_suitable_idx = idx;
--
--		/*
--		 * Look for the deepest idle state whose target residency had
--		 * not exceeded the idle duration in over a half of the relevant
--		 * cases in the past.
--		 *
--		 * Take the possible duration limitation present if the tick
--		 * has been stopped already into account.
--		 */
--		intercept_sum = 0;
--
--		for (i = idx - 1; i >= 0; i--) {
--			struct teo_bin *bin = &cpu_data->state_bins[i];
--
--			intercept_sum += bin->intercepts;
--
--			if (2 * intercept_sum > idx_intercept_sum) {
--				/*
--				 * Use the current state unless it is too
--				 * shallow or disabled, in which case take the
--				 * first enabled state that is deep enough.
--				 */
--				if (teo_state_ok(i, drv) &&
--				    !dev->states_usage[i].disable) {
--					idx = i;
--					break;
--				}
--				idx = first_suitable_idx;
--				break;
--			}
--
--			if (dev->states_usage[i].disable)
--				continue;
--
--			if (teo_state_ok(i, drv)) {
--				/*
--				 * The current state is deep enough, but still
--				 * there may be a better one.
--				 */
--				first_suitable_idx = i;
--				continue;
--			}
--
--			/*
--			 * The current state is too shallow, so if no suitable
--			 * states other than the initial candidate have been
--			 * found, give up (the remaining states to check are
--			 * shallower still), but otherwise the first suitable
--			 * state other than the initial candidate may turn out
--			 * to be preferable.
--			 */
--			if (first_suitable_idx == idx)
--				break;
--		}
--	}
--
--	/*
--	 * If there is a latency constraint, it may be necessary to select an
--	 * idle state shallower than the current candidate one.
--	 */
--	if (idx > constraint_idx)
--		idx = constraint_idx;
--
--	/*
--	 * If either the candidate state is state 0 or its target residency is
--	 * low enough, there is basically nothing more to do, but if the sleep
--	 * length is not updated, the subsequent wakeup will be counted as an
--	 * "intercept" which may be problematic in the cases when timer wakeups
--	 * are dominant.  Namely, it may effectively prevent deeper idle states
--	 * from being selected at one point even if no imminent timers are
--	 * scheduled.
--	 *
--	 * However, frequent timers in the RESIDENCY_THRESHOLD_NS range on one
--	 * CPU are unlikely (user space has a default 50 us slack value for
--	 * hrtimers and there are relatively few timers with a lower deadline
--	 * value in the kernel), and even if they did happen, the potential
--	 * benefit from using a deep idle state in that case would be
--	 * questionable anyway for latency reasons.  Thus if the measured idle
--	 * duration falls into that range in the majority of cases, assume
--	 * non-timer wakeups to be dominant and skip updating the sleep length
--	 * to reduce latency.
-+	 * If the measured idle duration has fallen into the
-+	 * RESIDENCY_THRESHOLD_NS range in the majority of recent cases, it is
-+	 * likely to fall into that range next time, so it is better to avoid
-+	 * adding latency to the idle state selection path.  Accordingly, aim
-+	 * for skipping the sleep length update in that case.
- 	 *
- 	 * Also, if the latency constraint is sufficiently low, it will force
- 	 * shallow idle states regardless of the wakeup type, so the sleep
--	 * length need not be known in that case.
-+	 * length need not be known in that case either.
- 	 */
--	if ((!idx || drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS) &&
--	    (2 * cpu_data->short_idles >= cpu_data->total ||
--	     latency_req < LATENCY_THRESHOLD_NS))
--		goto out_tick;
-+	if (2 * cpu_data->short_idles >= cpu_data->total ||
-+	    latency_req < LATENCY_THRESHOLD_NS) {
-+		/*
-+		 * Look for a new candidate idle state and use all events (both
-+		 * "intercepts" and "hits") because the sleep length update is
-+		 * likely to be skipped and timer wakeups need to be taken into
-+		 * account in a different way in case they are significant.
-+		 */
-+		idx = teo_get_candidate(drv, dev, cpu_data, idx, constraint_idx,
-+					idx_intercept_sum + idx_hit_sum, true);
-+		/*
-+		 * If the new candidate state is state 0 or its target residency
-+		 * is low enough, return it right away without stopping the
-+		 * scheduler tick.
-+		 */
-+		if (!idx || drv->states[idx].target_residency_ns < RESIDENCY_THRESHOLD_NS)
-+			goto out_tick;
-+	} else if (2 * idx_intercept_sum > cpu_data->total - idx_hit_sum) {
-+		/*
-+		 * Look for a new candidate state because the current one is
-+		 * likely too deep, but use the "intercepts" metric only because
-+		 * the sleep length is going to be determined later and for now
-+		 * it is only necessary to find a state that will be suitable
-+		 * in case the CPU is "intercepted".
-+		 */
-+		idx = teo_get_candidate(drv, dev, cpu_data, idx, constraint_idx,
-+					idx_intercept_sum, false);
-+	} else if (idx > constraint_idx) {
-+		/*
-+		 * The current candidate state is too deep for the latency
-+		 * constraint at hand, so change it to a suitable one.
-+		 */
-+		idx = constraint_idx;
-+	}
- 
- 	duration_ns = tick_nohz_get_sleep_length(&delta_tick);
- 	cpu_data->sleep_length_ns = duration_ns;
-@@ -537,7 +554,7 @@ static int teo_enable_device(struct cpuidle_driver *drv,
+@@ -537,7 +537,7 @@ static int teo_enable_device(struct cpuidle_driver *drv,
  
  static struct cpuidle_governor teo_governor = {
  	.name =		"teo",
@@ -1202,7 +979,7 @@ index 6f5b4a0e0a34..56c1140a6a4a 100644
  extern int amdgpu_gart_size;
  extern int amdgpu_gtt_size;
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-index 61268aa82df4..60a10e8410cb 100644
+index 7333e19291cf..8410822097b7 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 @@ -149,6 +149,7 @@ enum AMDGPU_DEBUG_MASK {
@@ -1245,10 +1022,10 @@ index abd3b6564373..46937e6fa78d 100644
 +
  endmenu
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-index bfa3199591b6..f8f776d54c0d 100644
+index 91c0188a29b2..ccd450a3eba8 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-@@ -4723,7 +4723,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
+@@ -4731,7 +4731,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
  		return r;
  	}
  
@@ -1333,7 +1110,7 @@ index e027798ece03..daee9ece63c0 100644
  #endif
  	/* Create (reset) the plane state */
 diff --git a/drivers/gpu/drm/amd/pm/amdgpu_pm.c b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-index b5fbb0fd1dc0..b684695e268a 100644
+index a7e6d7854b7b..f0e6631b8346 100644
 --- a/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 +++ b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 @@ -3333,6 +3333,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
@@ -1347,10 +1124,10 @@ index b5fbb0fd1dc0..b684695e268a 100644
  }
  
 diff --git a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-index fb8086859857..f718359b3a02 100644
+index 244b8c364d45..65e04c9fffc4 100644
 --- a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 +++ b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-@@ -2948,7 +2948,10 @@ int smu_get_power_limit(void *handle,
+@@ -2954,7 +2954,10 @@ int smu_get_power_limit(void *handle,
  			*limit = smu->max_power_limit;
  			break;
  		case SMU_PPT_LIMIT_MIN:
@@ -1362,7 +1139,7 @@ index fb8086859857..f718359b3a02 100644
  			break;
  		default:
  			return -EINVAL;
-@@ -2972,7 +2975,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
+@@ -2978,7 +2981,14 @@ static int smu_set_power_limit(void *handle, uint32_t limit)
  		if (smu->ppt_funcs->set_power_limit)
  			return smu->ppt_funcs->set_power_limit(smu, limit_type, limit);
  
@@ -1823,10 +1600,10 @@ index d85763336b3c..ab336ac58d60 100644
  	wake_up_process(t); /* get to TASK_INTERRUPTIBLE quickly. */
  }
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 25970dbbb279..6c4a6e87a77a 100644
+index 5b752324270b..09d909c8b2ec 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12850,7 +12850,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12847,7 +12847,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  		update_next_balance(sd, &next_balance);
  
