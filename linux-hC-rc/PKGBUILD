@@ -242,7 +242,8 @@ if [ "$_build_nvidia_open" = "yes" ]; then
     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
              "${_patchsource}/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch"
              "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch"
-             "${_patchsource}/misc/nvidia/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch")
+             "${_patchsource}/misc/nvidia/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch"
+             "${_patchsource}/misc/nvidia/0004-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -500,6 +501,7 @@ prepare() {
         patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" -d "${srcdir}/${_nv_open_pkg}/kernel-open"
         patch -Np1 -i "${srcdir}/0002-Add-IBT-support.patch" -d "${srcdir}/${_nv_open_pkg}/"
         patch -Np1 -i "${srcdir}/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch" -d "${srcdir}/${_nv_open_pkg}/"
+        patch -Np1 -i "${srcdir}/0004-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch" -d "${srcdir}/${_nv_open_pkg}/"
     fi
 }
 
@@ -751,4 +753,5 @@ b2sums=('bc876ec3afacb23df423ec07bbe770b52ee84c7c51c4f693c9e73c8f0c25d4507718ecf
         '05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b'
         'bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f'
         'c07929b145c8f8edcf70423d7f8fd3b47b4acba98776a802165fba125844e8c58801f1f0844aed052881b4a29376be69f7f901e2e75840bcd64b3a3e011f1149'
+        '9ae0a90608694ec45d0d686ec38d82412cfc74becbc485b7f91810ac9c1b0063fb1d33c76e46803ececdfdaaad5e46fd600212feca61ffaf8cd1d2e3b19522d2'
         'bab7d6f1c04f4135d148d4e4f41cdcc63f115e1370d09086cd92c62c9ac79266727118a1323b1677aed1f373672f189210b0e29f705e32a2089a81c847546a00')

@@ -33,6 +33,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/misc/nvidia/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/misc/nvidia/0004-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.18/sched/0001-bore.patch
 	b2sums = bc876ec3afacb23df423ec07bbe770b52ee84c7c51c4f693c9e73c8f0c25d4507718ecf7b033c9dc89c7228a3d11d7f50f2e0e8d11327f6a1bed4ecb12a9fb8c
 	b2sums = 61cb5a35a837c50f65402f58b7dfb5c0f81d16722858ce1e34d5fb53c2c123e66f95d2237f7da58d8bc409235e8d81f79d1b92012e843274ffaad51c009ceb0b
@@ -46,6 +47,7 @@ pkgbase = linux-hC-rc
 	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
 	b2sums = c07929b145c8f8edcf70423d7f8fd3b47b4acba98776a802165fba125844e8c58801f1f0844aed052881b4a29376be69f7f901e2e75840bcd64b3a3e011f1149
+	b2sums = 9ae0a90608694ec45d0d686ec38d82412cfc74becbc485b7f91810ac9c1b0063fb1d33c76e46803ececdfdaaad5e46fd600212feca61ffaf8cd1d2e3b19522d2
 	b2sums = bab7d6f1c04f4135d148d4e4f41cdcc63f115e1370d09086cd92c62c9ac79266727118a1323b1677aed1f373672f189210b0e29f705e32a2089a81c847546a00
 
 pkgname = linux-hC-rc
