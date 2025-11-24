@@ -38,57 +38,6 @@ index 6c42061ca20e5..4b4711ced5e18 100644
  
  	vsyscall=	[X86-64,EARLY]
  			Controls the behavior of vsyscalls (i.e. calls to
-diff --git a/arch/arm64/include/asm/page.h b/arch/arm64/include/asm/page.h
-index 2312e6ee595fd..258cca4b48734 100644
---- a/arch/arm64/include/asm/page.h
-+++ b/arch/arm64/include/asm/page.h
-@@ -33,8 +33,8 @@ struct folio *vma_alloc_zeroed_movable_folio(struct vm_area_struct *vma,
- 						unsigned long vaddr);
- #define vma_alloc_zeroed_movable_folio vma_alloc_zeroed_movable_folio
- 
--void tag_clear_highpage(struct page *to);
--#define __HAVE_ARCH_TAG_CLEAR_HIGHPAGE
-+bool tag_clear_highpages(struct page *to, int numpages);
-+#define __HAVE_ARCH_TAG_CLEAR_HIGHPAGES
- 
- #define clear_user_page(page, vaddr, pg)	clear_page(page)
- #define copy_user_page(to, from, vaddr, pg)	copy_page(to, from)
-diff --git a/arch/arm64/mm/fault.c b/arch/arm64/mm/fault.c
-index 125dfa6c613b2..a193b6a5d1e65 100644
---- a/arch/arm64/mm/fault.c
-+++ b/arch/arm64/mm/fault.c
-@@ -967,20 +967,21 @@ struct folio *vma_alloc_zeroed_movable_folio(struct vm_area_struct *vma,
- 	return vma_alloc_folio(flags, 0, vma, vaddr);
- }
- 
--void tag_clear_highpage(struct page *page)
-+bool tag_clear_highpages(struct page *page, int numpages)
- {
- 	/*
- 	 * Check if MTE is supported and fall back to clear_highpage().
- 	 * get_huge_zero_folio() unconditionally passes __GFP_ZEROTAGS and
--	 * post_alloc_hook() will invoke tag_clear_highpage().
-+	 * post_alloc_hook() will invoke tag_clear_highpages().
- 	 */
--	if (!system_supports_mte()) {
--		clear_highpage(page);
--		return;
--	}
-+	if (!system_supports_mte())
-+		return false;
- 
--	/* Newly allocated page, shouldn't have been tagged yet */
--	WARN_ON_ONCE(!try_page_mte_tagging(page));
--	mte_zero_clear_page_tags(page_address(page));
--	set_page_mte_tagged(page);
-+	/* Newly allocated pages, shouldn't have been tagged yet */
-+	for (int i = 0; i < numpages; i++, page++) {
-+		WARN_ON_ONCE(!try_page_mte_tagging(page));
-+		mte_zero_clear_page_tags(page_address(page));
-+		set_page_mte_tagged(page);
-+	}
-+	return true;
- }
 diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
 index ed04a968cc7d0..bb456a3c652e9 100644
 --- a/arch/x86/entry/entry_64.S
@@ -400,46 +349,6 @@ index c9c2aa6f4705e..ef18c31c402d4 100644
  
  	/*
  	 * Consume any pending interrupts, including the possible source of
-diff --git a/include/linux/highmem.h b/include/linux/highmem.h
-index 105cc4c00cc34..abc20f9810fd4 100644
---- a/include/linux/highmem.h
-+++ b/include/linux/highmem.h
-@@ -249,10 +249,12 @@ static inline void clear_highpage_kasan_tagged(struct page *page)
- 	kunmap_local(kaddr);
- }
- 
--#ifndef __HAVE_ARCH_TAG_CLEAR_HIGHPAGE
-+#ifndef __HAVE_ARCH_TAG_CLEAR_HIGHPAGES
- 
--static inline void tag_clear_highpage(struct page *page)
-+/* Return false to let people know we did not initialize the pages */
-+static inline bool tag_clear_highpages(struct page *page, int numpages)
- {
-+	return false;
- }
- 
- #endif
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 600d9e981c23d..ed82ee55e66af 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -1822,14 +1822,9 @@ inline void post_alloc_hook(struct page *page, unsigned int order,
- 	 * If memory tags should be zeroed
- 	 * (which happens only when memory should be initialized as well).
- 	 */
--	if (zero_tags) {
--		/* Initialize both memory and memory tags. */
--		for (i = 0; i != 1 << order; ++i)
--			tag_clear_highpage(page + i);
-+	if (zero_tags)
-+		init = !tag_clear_highpages(page, 1 << order);
- 
--		/* Take note that memory was initialized by the loop above. */
--		init = false;
--	}
- 	if (!should_skip_kasan_unpoison(gfp_flags) &&
- 	    kasan_unpoison_pages(page, order, init)) {
- 		/* Take note that memory was initialized by KASAN. */
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
