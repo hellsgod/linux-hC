@@ -158,13 +158,13 @@ else
 fi
 
 pkgbase="linux-$_pkgsuffix"
-_major=6.17
-_minor=9
+_major=6.18
+_minor=0
 #_minorc=$((_minor+1))
 #_rcver=rc8
 pkgver=${_major}.${_minor}
-_stable=${_major}.${_minor}
-#_stable=${_major}
+#_stable=${_major}.${_minor}
+_stable=${_major}
 #_stablerc=${_major}-${_rcver}
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
@@ -200,6 +200,8 @@ source=(
     "amd-pstate.patch"
     "base.patch"
     "compiler-opt.patch"
+    "cpuidle.patch"
+    "crypto.patch"
     "fixes.patch")
 
 # LLVM makedepends
@@ -243,7 +245,8 @@ if [ "$_build_nvidia_open" = "yes" ]; then
     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
              "${_patchsource}/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch"
              "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch"
-             "${_patchsource}/misc/nvidia/0006-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch")
+             "${_patchsource}/misc/nvidia/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch"
+             "${_patchsource}/misc/nvidia/0004-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -500,7 +503,8 @@ prepare() {
     if [ "$_build_nvidia_open" = "yes" ]; then
         patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" -d "${srcdir}/${_nv_open_pkg}/kernel-open"
         patch -Np1 -i "${srcdir}/0002-Add-IBT-support.patch" -d "${srcdir}/${_nv_open_pkg}/"
-        patch -Np1 -i "${srcdir}/0006-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch" -d "${srcdir}/${_nv_open_pkg}/"
+        patch -Np1 -i "${srcdir}/0003-nvidia-uvm-Remove-unused-get_devmap_page-parameter.patch" -d "${srcdir}/${_nv_open_pkg}/"
+        patch -Np1 -i "${srcdir}/0004-nvkms-Limit-default-maximum-TMDS-character-rate-to-3.patch" -d "${srcdir}/${_nv_open_pkg}/"
     fi
 }
 
@@ -740,16 +744,19 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('1e8e226364a85f3fd66e51495a99a76e377389aa48c708953aaa28b6ec669f05aab6d240365965eec5643e2fa6aee15796005b2873e8fea748e432b1d799eabc'
-        'a131ff528fa7e24437bb7692b82e681e10d7a465c0774fa1fb36b56ea579b52c3d2af533c9d2731ff0d2cffe4151985893da2f274b3ed74e9a609af892393104'
+b2sums=('b94b7b9bf18aca0c3e50baf79b009a1448fc6cd9c3ee019f641cc247dcf53a4abef4274ee0608ad8cd4943af69854363a95d26e117ff23620bb07dccb158859f'
+        'b0fb332bd522bcf6bf0c65bd91398b0803ce832a6fee3190af669e407a507c9f4fa254aa32d57f94fc035026b932488d5ca5cebd0fff21fa59c017b9dc7b99ee'
         'e88a38385a8652d66503f96d1ca68a344c482b600299ff1c136d4571ac9728be8237d19e47e00c305d7123118d4e021c898a74b839b86790fecb2e9c896aa45a'
-        '5b428273ee75228f409d47c023696a71ba4b43863723f4ce857f164678470c91539c14668bac6ab7a24987be603f8544bea99fbd9410c9d22f1817b4831df779'
-        '8a002dc02d919d10cdf0a5eb815dbc13305264cadbba9c1b5d8e0c27da1a867969628ae343e97109ebdc18e6bceb250e1055a24f16317509f5d76e8aa0d5e8ea'
+        'e4e7ad351e1d0716b448507a512d09979fb6cd0219451a1ec675c97866c23789419b11e4a54851f40dcd3ea62c1c5c26ec01abe678770f89b43ed7f218383ef1'
+        '40deb70f4f70bd4d122597497e58e89a6144be229801fb5e2b97092f2270b66ac509334aea48ba66add765114416652c0792e822770ba2bb6bb1c78da62d5e82'
         '45b838cefa53d9fe4beae6ad0bcca84a669a99f8d9e89539089dcf1db15ecbdbd995672905d8b9760965e5b4bad6bc63613de8e9932e07e0d22954b24c57a1f4'
-        '416f88d2ece390e85039efa14b3f2335c0dfaaaaccddf7a54b34fd5b88477b3df5557145a8846741ee7b2fc721c837ac9e33d21cdf8ecc4242c759539e68f8cb'
+        'cd3bfac5ed4ed2e7913ad618d236360930c834a1bf72b8bc8f3c865aab27d4522431bb74a4e9e3274f528c3960b4a1c4a48e204158b7e6087852c38c88b4f034'
+        '8b8cfcb0fe1223e69340a2a26e5ee36d7ed8076976cca309ce83391f017b46cfe08a07294269c2392e1133041565493dfde920d7774f657a770db5e79b98d5dc'
+        'd4eb9551bf6dc370eb1002bd85771ab5dfddf254a2c989063052d0ed0c5283b9571ec0b63d1039e57c9fa0a1733e868280a7b23b8f7c892a2432fe2099aa717a'
         'c7294a689f70b2a44b0c4e9f00c61dbd59dd7063ecbe18655c4e7f12e21ed7c5bb4f5169f5aa8623b1c59de7b2667facb024913ecb9f4c650dabce4e8a7e5452'
         '308d6d2c29292820c48cafb8992786738b75a10dca5ccb877dfae2b9280705d91a13d0c9f813d2c4c64d30fc3dcbc8c4b09f5e344f988bdeb67fb4847b84da80'
         '05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b'
         'bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f'
+        'c07929b145c8f8edcf70423d7f8fd3b47b4acba98776a802165fba125844e8c58801f1f0844aed052881b4a29376be69f7f901e2e75840bcd64b3a3e011f1149'
         'de416a62816c5e2bb06791e87a51691a6c9d2e21bf46d30b5c27b9404474ea2bed6b4699167d28025067c1ae99c0c876ce678f699c9ecc337e2bb9e8773c4e23'
         '85c771a3727333161d779af81be261e26ed469781feb070c7c342213985aa139bbc295efbb72e914c10066e5a149b9eb135b27a37163d76f5e9760055ea9fdea')
