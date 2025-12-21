@@ -189,7 +189,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=580.105.08
+_nv_ver=590.48.01
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -240,7 +240,8 @@ fi
 if [ "$_build_nvidia_open" = "yes" ]; then
     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
              "${_patchsource}/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch"
-             "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch")
+             "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch"
+             "${_patchsource}/misc/nvidia/0003-Fix-compile-for-6.19.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -497,6 +498,7 @@ prepare() {
     if [ "$_build_nvidia_open" = "yes" ]; then
         patch -Np1 -i "${srcdir}/0001-Enable-atomic-kernel-modesetting-by-default.patch" -d "${srcdir}/${_nv_open_pkg}/kernel-open"
         patch -Np1 -i "${srcdir}/0002-Add-IBT-support.patch" -d "${srcdir}/${_nv_open_pkg}/"
+        patch -Np1 -i "${srcdir}/0003-Fix-compile-for-6.19.patch" -d "${srcdir}/${_nv_open_pkg}/"
     fi
 }
 
@@ -737,13 +739,14 @@ for _p in "${pkgname[@]}"; do
 done
 
 b2sums=('3e03007705e94018c45aa08affce77b146dda0435fc4baf8a4646b2445c456d1416e965d4582fef7016eb30bbb308663386ddb5fb94e50923b0b59ef55694acb'
-        'b83c435e7b206a2d53cda5f265c81335c191a00471c2a025046cd61e075096706453dd938957a7b730610c2ab5d7e7452a86d34b9835123eaaaee83c2fc7d6e1'
+        '63884e6f493d49b6c177024bc4fced988b6ad8684aa72e8c34b6343b925e313c6c017f1fc463ef6a2f2cab9a32dfcadb9934aa9bfaa4a04a3bfaa523d746cba3'
         'e88a38385a8652d66503f96d1ca68a344c482b600299ff1c136d4571ac9728be8237d19e47e00c305d7123118d4e021c898a74b839b86790fecb2e9c896aa45a'
         '6720ec6bc8e6c7c883defa170eeade9aad4ccf051345411bc57ef6acf7ca835f3e59ae54f5963507f0ef024b408057ec626457c5d446f030440c635e43c19d36'
         '45b838cefa53d9fe4beae6ad0bcca84a669a99f8d9e89539089dcf1db15ecbdbd995672905d8b9760965e5b4bad6bc63613de8e9932e07e0d22954b24c57a1f4'
-        'e04dfcd61f0d211da37075e7391e1261846455b08c864d1304c1db4839451b596f35aa3a2d799cc705620c96249e21caf9a54e730472ce24c6fa9a3b904ed4fd'
+        '786a02f742015903c6c6fd852552d272912f4740e15847618a86e217f71f5419d25e1031afee585313896444934eb04b903a685b1448b755d56f701afe9be2ce'
         'ea26c88950fc06b6ffab93b30e3beacc7d26571a70262334ca8b001dc7899bf96b47d703fbaa7f4e47765c3dafccc23c58a4d4da2169b8ee50012afcb7a1dd96'
-        '308d6d2c29292820c48cafb8992786738b75a10dca5ccb877dfae2b9280705d91a13d0c9f813d2c4c64d30fc3dcbc8c4b09f5e344f988bdeb67fb4847b84da80'
+        '59f505ace6c5df5968a2c6a899af0d6a71c6b1c59687b4b6afd7ef86ca2dadbbd56eb3b66a41f216afbe1fad20309127c3247bf688658567ef80ff542848bd50'
         '05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b'
         'bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f'
+        '1df6855a4783a08eb110384b0dd94eb68ab0fb9eac1f843dd3dbc44c5e7bb8bcb2ab569500457e5b18f618d823a7dc4d4bc9acd0d9ee7484811825b66283703f'
         'c335b7631faf9360deb655c9c6ce524b28c72da1772d20fb9d4ad2535a07130b2b3aacb61be9ac337be1c6410d3e78b96e4b91ae2d97528249505131e3f178fa')
