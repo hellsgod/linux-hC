@@ -398,7 +398,7 @@ index 41ba0be169117..9f3e8fe0c5b88 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index da46c31645378..fd8e589f6fdbf 100644
+index da46c31645378..6c89c5a49f100 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -3693,7 +3693,7 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
@@ -586,6 +586,61 @@ index da46c31645378..fd8e589f6fdbf 100644
  
  	add_tg_cfs_propagate(cfs_rq, -se->avg.load_sum);
  
+@@ -9949,15 +9907,11 @@ static unsigned long task_h_load(struct task_struct *p)
+ }
+ #endif /* !CONFIG_FAIR_GROUP_SCHED */
+ 
+-static void sched_balance_update_blocked_averages(int cpu)
++static void __sched_balance_update_blocked_averages(struct rq *rq)
+ {
+ 	bool decayed = false, done = true;
+-	struct rq *rq = cpu_rq(cpu);
+-	struct rq_flags rf;
+ 
+-	rq_lock_irqsave(rq, &rf);
+ 	update_blocked_load_tick(rq);
+-	update_rq_clock(rq);
+ 
+ 	decayed |= __update_blocked_others(rq, &done);
+ 	decayed |= __update_blocked_fair(rq, &done);
+@@ -9965,7 +9919,15 @@ static void sched_balance_update_blocked_averages(int cpu)
+ 	update_blocked_load_status(rq, !done);
+ 	if (decayed)
+ 		cpufreq_update_util(rq, 0);
+-	rq_unlock_irqrestore(rq, &rf);
++}
++
++static void sched_balance_update_blocked_averages(int cpu)
++{
++	struct rq *rq = cpu_rq(cpu);
++
++	guard(rq_lock_irqsave)(rq);
++	update_rq_clock(rq);
++	__sched_balance_update_blocked_averages(rq);
+ }
+ 
+ /********** Helpers for sched_balance_find_src_group ************************/
+@@ -12912,12 +12874,17 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+ 	}
+ 	rcu_read_unlock();
+ 
++	/*
++	 * Include sched_balance_update_blocked_averages() in the cost
++	 * calculation because it can be quite costly -- this ensures we skip
++	 * it when avg_idle gets to be very low.
++	 */
++	t0 = sched_clock_cpu(this_cpu);
++	__sched_balance_update_blocked_averages(this_rq);
++
+ 	rq_modified_clear(this_rq);
+ 	raw_spin_rq_unlock(this_rq);
+ 
+-	t0 = sched_clock_cpu(this_cpu);
+-	sched_balance_update_blocked_averages(this_cpu);
+-
+ 	rcu_read_lock();
+ 	for_each_domain(this_cpu, sd) {
+ 		u64 domain_cost;
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
 index d30cca6870f5f..4ba122a15fb2e 100644
 --- a/kernel/sched/sched.h
