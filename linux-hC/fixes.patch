@@ -1,5 +1,5 @@
 diff --git a/Documentation/admin-guide/hw-vuln/vmscape.rst b/Documentation/admin-guide/hw-vuln/vmscape.rst
-index d9b9a2b6c114..580f288ae8bf 100644
+index d9b9a2b6c114c..580f288ae8bfc 100644
 --- a/Documentation/admin-guide/hw-vuln/vmscape.rst
 +++ b/Documentation/admin-guide/hw-vuln/vmscape.rst
 @@ -86,6 +86,10 @@ The possible values in this file are:
@@ -22,7 +22,7 @@ index d9b9a2b6c114..580f288ae8bf 100644
 +
 +   Choose the mitigation based on the VMSCAPE variant the CPU is affected by.
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 6c42061ca20e..d2ccec6e10f3 100644
+index 6c42061ca20e5..d2ccec6e10f3e 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
 @@ -8104,9 +8104,11 @@
@@ -39,7 +39,7 @@ index 6c42061ca20e..d2ccec6e10f3 100644
  	vsyscall=	[X86-64,EARLY]
  			Controls the behavior of vsyscalls (i.e. calls to
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf..bebde469f81a 100644
+index db2cb06aa8cf5..bebde469f81ae 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -52,7 +52,7 @@ index db2cb06aa8cf..bebde469f81a 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f1..2fe6b7fe6b12 100644
+index 9153016da8f14..2fe6b7fe6b12d 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -65,7 +65,7 @@ index 9153016da8f1..2fe6b7fe6b12 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index d9b8501bc93d..c124ef6a01b3 100644
+index d9b8501bc93d0..c124ef6a01b38 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -97,7 +97,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -78,7 +78,7 @@ index d9b8501bc93d..c124ef6a01b3 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d..d1967214ef25 100644
+index 78bbacc14d2d9..d1967214ef25f 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -91,7 +91,7 @@ index 78bbacc14d2d..d1967214ef25 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index fa3b616af03a..066f62f15e67 100644
+index fa3b616af03a2..066f62f15e67e 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
 @@ -2706,6 +2706,7 @@ config MITIGATION_TSA
@@ -103,7 +103,7 @@ index fa3b616af03a..066f62f15e67 100644
  	help
  	  Enable mitigation for VMSCAPE attacks. VMSCAPE is a hardware security
 diff --git a/arch/x86/entry/entry_64.S b/arch/x86/entry/entry_64.S
-index ed04a968cc7d..9f6f4a7c5baf 100644
+index ed04a968cc7d0..9f6f4a7c5baf1 100644
 --- a/arch/x86/entry/entry_64.S
 +++ b/arch/x86/entry/entry_64.S
 @@ -1528,12 +1528,19 @@ SYM_CODE_END(rewind_stack_and_make_dead)
@@ -146,7 +146,7 @@ index ed04a968cc7d..9f6f4a7c5baf 100644
  	RET
  SYM_FUNC_END(clear_bhb_loop)
 diff --git a/arch/x86/include/asm/cpufeatures.h b/arch/x86/include/asm/cpufeatures.h
-index 4091a776e37a..02871318c999 100644
+index 4091a776e37aa..02871318c999f 100644
 --- a/arch/x86/include/asm/cpufeatures.h
 +++ b/arch/x86/include/asm/cpufeatures.h
 @@ -496,7 +496,7 @@
@@ -159,7 +159,7 @@ index 4091a776e37a..02871318c999 100644
  #define X86_FEATURE_MSR_IMM		(21*32+16) /* MSR immediate form instructions */
  
 diff --git a/arch/x86/include/asm/entry-common.h b/arch/x86/include/asm/entry-common.h
-index ce3eb6d5fdf9..783e7cb50cae 100644
+index ce3eb6d5fdf9f..783e7cb50caeb 100644
 --- a/arch/x86/include/asm/entry-common.h
 +++ b/arch/x86/include/asm/entry-common.h
 @@ -4,6 +4,7 @@
@@ -186,7 +186,7 @@ index ce3eb6d5fdf9..783e7cb50cae 100644
  }
  #define arch_exit_to_user_mode_prepare arch_exit_to_user_mode_prepare
 diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 73bf3b1b44e8..ecd134dcfb34 100644
+index 73bf3b1b44e85..ecd134dcfb341 100644
 --- a/arch/x86/include/asm/mmu_context.h
 +++ b/arch/x86/include/asm/mmu_context.h
 @@ -136,8 +136,29 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
@@ -221,7 +221,7 @@ index 73bf3b1b44e8..ecd134dcfb34 100644
  #define mm_init_global_asid mm_init_global_asid
  extern void mm_init_global_asid(struct mm_struct *mm);
 diff --git a/arch/x86/include/asm/nospec-branch.h b/arch/x86/include/asm/nospec-branch.h
-index 08ed5a2e46a5..1e8c26c37dbe 100644
+index 08ed5a2e46a5f..1e8c26c37dbed 100644
 --- a/arch/x86/include/asm/nospec-branch.h
 +++ b/arch/x86/include/asm/nospec-branch.h
 @@ -329,11 +329,11 @@
@@ -267,7 +267,7 @@ index 08ed5a2e46a5..1e8c26c37dbe 100644
  extern u64 x86_spec_ctrl_base;
  DECLARE_PER_CPU(u64, x86_spec_ctrl_current);
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee..4b55fa353bb5 100644
+index 96bda43538ee7..4b55fa353bb5f 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -280,7 +280,7 @@ index 96bda43538ee..4b55fa353bb5 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 5d46709c58d0..21705cd3949e 100644
+index 5d46709c58d0b..21705cd3949e3 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1035,6 +1035,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
@@ -304,7 +304,7 @@ index 5d46709c58d0..21705cd3949e 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/arch/x86/kernel/cpu/bugs.c b/arch/x86/kernel/cpu/bugs.c
-index d7fa03bf51b4..5870bb67baf3 100644
+index d7fa03bf51b45..5870bb67baf3b 100644
 --- a/arch/x86/kernel/cpu/bugs.c
 +++ b/arch/x86/kernel/cpu/bugs.c
 @@ -109,12 +109,11 @@ DEFINE_PER_CPU(u64, x86_spec_ctrl_current);
@@ -439,10 +439,10 @@ index d7fa03bf51b4..5870bb67baf3 100644
  		 * Hypervisors can be attacked across-threads, warn for SMT when
  		 * STIBP is not already enabled system-wide.
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index e6f2e34ec97d..89f1a3272663 100644
+index 19d2d6d9e64ab..a88b1068d2f75 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -11417,8 +11417,8 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
+@@ -11413,8 +11413,8 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
  	 * set for the CPU that actually ran the guest, and not the CPU that it
  	 * may migrate to.
  	 */
@@ -454,7 +454,7 @@ index e6f2e34ec97d..89f1a3272663 100644
  	/*
  	 * Consume any pending interrupts, including the possible source of
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 5d221709353e..cb715e8e75e4 100644
+index 5d221709353e0..cb715e8e75e49 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -970,27 +970,6 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
@@ -486,7 +486,7 @@ index 5d221709353e..cb715e8e75e4 100644
   * Using a temporary mm allows to set temporary mappings that are not accessible
   * by other CPUs. Such mappings are needed to perform sensitive memory writes
 diff --git a/arch/x86/net/bpf_jit_comp.c b/arch/x86/net/bpf_jit_comp.c
-index de5083cb1d37..c1ec14c55911 100644
+index de5083cb1d374..c1ec14c559119 100644
 --- a/arch/x86/net/bpf_jit_comp.c
 +++ b/arch/x86/net/bpf_jit_comp.c
 @@ -1603,6 +1603,8 @@ static int emit_spectre_bhb_barrier(u8 **pprog, u8 *ip,
@@ -499,7 +499,7 @@ index de5083cb1d37..c1ec14c55911 100644
  		EMIT1(0x58); /* pop rax */
  	}
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_ids.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_ids.c
-index 3ef5bc95642c..9cab36322c16 100644
+index 3ef5bc95642ca..9cab36322c165 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_ids.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_ids.c
 @@ -201,58 +201,34 @@ static int amdgpu_vmid_grab_idle(struct amdgpu_ring *ring,
@@ -603,7 +603,7 @@ index 3ef5bc95642c..9cab36322c16 100644
  				goto error;
  
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
-index 676e24fb8864..c8f2a7a0d1cb 100644
+index 676e24fb88647..c8f2a7a0d1cbd 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.c
 @@ -1066,7 +1066,9 @@ amdgpu_vm_tlb_flush(struct amdgpu_vm_update_params *params,
@@ -639,7 +639,7 @@ index 676e24fb8864..c8f2a7a0d1cb 100644
  	atomic_set(&adev->vm_manager.num_prt_users, 0);
  
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.h b/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.h
-index cf0ec94e8a07..15d757c016cb 100644
+index cf0ec94e8a075..15d757c016cbb 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.h
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_vm.h
 @@ -453,10 +453,6 @@ struct amdgpu_vm_manager {
@@ -653,147 +653,8 @@ index cf0ec94e8a07..15d757c016cb 100644
  	uint64_t				max_pfn;
  	uint32_t				num_level;
  	uint32_t				block_size;
-diff --git a/fs/btrfs/ioctl.c b/fs/btrfs/ioctl.c
-index 8cb7d5a462ef..9a34d6530658 100644
---- a/fs/btrfs/ioctl.c
-+++ b/fs/btrfs/ioctl.c
-@@ -1913,10 +1913,8 @@ static int btrfs_search_path_in_tree_user(struct mnt_idmap *idmap,
- 			ret = inode_permission(idmap, &temp_inode->vfs_inode,
- 					       MAY_READ | MAY_EXEC);
- 			iput(&temp_inode->vfs_inode);
--			if (ret) {
--				ret = -EACCES;
-+			if (ret)
- 				goto out_put;
--			}
- 
- 			if (key.offset == upper_limit)
- 				break;
-diff --git a/fs/fuse/dev.c b/fs/fuse/dev.c
-index 132f38619d70..49b18d7accb3 100644
---- a/fs/fuse/dev.c
-+++ b/fs/fuse/dev.c
-@@ -846,7 +846,7 @@ void fuse_copy_init(struct fuse_copy_state *cs, bool write,
- }
- 
- /* Unmap and put previous page of userspace buffer */
--static void fuse_copy_finish(struct fuse_copy_state *cs)
-+void fuse_copy_finish(struct fuse_copy_state *cs)
- {
- 	if (cs->currbuf) {
- 		struct pipe_buffer *buf = cs->currbuf;
-diff --git a/fs/fuse/dev_uring.c b/fs/fuse/dev_uring.c
-index f6b12aebb8bb..f0846694822d 100644
---- a/fs/fuse/dev_uring.c
-+++ b/fs/fuse/dev_uring.c
-@@ -86,6 +86,7 @@ static void fuse_uring_req_end(struct fuse_ring_ent *ent, struct fuse_req *req,
- 	lockdep_assert_not_held(&queue->lock);
- 	spin_lock(&queue->lock);
- 	ent->fuse_req = NULL;
-+	list_del_init(&req->list);
- 	if (test_bit(FR_BACKGROUND, &req->flags)) {
- 		queue->active_background--;
- 		spin_lock(&fc->bg_lock);
-@@ -598,7 +599,9 @@ static int fuse_uring_copy_from_ring(struct fuse_ring *ring,
- 	cs.is_uring = true;
- 	cs.req = req;
- 
--	return fuse_copy_out_args(&cs, args, ring_in_out.payload_sz);
-+	err = fuse_copy_out_args(&cs, args, ring_in_out.payload_sz);
-+	fuse_copy_finish(&cs);
-+	return err;
- }
- 
-  /*
-@@ -649,6 +652,7 @@ static int fuse_uring_args_to_ring(struct fuse_ring *ring, struct fuse_req *req,
- 	/* copy the payload */
- 	err = fuse_copy_args(&cs, num_args, args->in_pages,
- 			     (struct fuse_arg *)in_args, 0);
-+	fuse_copy_finish(&cs);
- 	if (err) {
- 		pr_info_ratelimited("%s fuse_copy_args failed\n", __func__);
- 		return err;
-diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index f1ef77a0be05..4d96e684d736 100644
---- a/fs/fuse/file.c
-+++ b/fs/fuse/file.c
-@@ -110,7 +110,9 @@ static void fuse_file_put(struct fuse_file *ff, bool sync)
- 			fuse_file_io_release(ff, ra->inode);
- 
- 		if (!args) {
--			/* Do nothing when server does not implement 'open' */
-+			/* Do nothing when server does not implement 'opendir' */
-+		} else if (args->opcode == FUSE_RELEASE && ff->fm->fc->no_open) {
-+			fuse_release_end(ff->fm, args, 0);
- 		} else if (sync) {
- 			fuse_simple_request(ff->fm, args);
- 			fuse_release_end(ff->fm, args, 0);
-@@ -131,8 +133,17 @@ struct fuse_file *fuse_file_open(struct fuse_mount *fm, u64 nodeid,
- 	struct fuse_file *ff;
- 	int opcode = isdir ? FUSE_OPENDIR : FUSE_OPEN;
- 	bool open = isdir ? !fc->no_opendir : !fc->no_open;
-+	bool release = !isdir || open;
- 
--	ff = fuse_file_alloc(fm, open);
-+	/*
-+	 * ff->args->release_args still needs to be allocated (so we can hold an
-+	 * inode reference while there are pending inflight file operations when
-+	 * ->release() is called, see fuse_prepare_release()) even if
-+	 * fc->no_open is set else it becomes possible for reclaim to deadlock
-+	 * if while servicing the readahead request the server triggers reclaim
-+	 * and reclaim evicts the inode of the file being read ahead.
-+	 */
-+	ff = fuse_file_alloc(fm, release);
- 	if (!ff)
- 		return ERR_PTR(-ENOMEM);
- 
-@@ -152,13 +163,14 @@ struct fuse_file *fuse_file_open(struct fuse_mount *fm, u64 nodeid,
- 			fuse_file_free(ff);
- 			return ERR_PTR(err);
- 		} else {
--			/* No release needed */
--			kfree(ff->args);
--			ff->args = NULL;
--			if (isdir)
-+			if (isdir) {
-+				/* No release needed */
-+				kfree(ff->args);
-+				ff->args = NULL;
- 				fc->no_opendir = 1;
--			else
-+			} else {
- 				fc->no_open = 1;
-+			}
- 		}
- 	}
- 
-diff --git a/fs/fuse/fuse_dev_i.h b/fs/fuse/fuse_dev_i.h
-index 6e8373f97040..134bf44aff0d 100644
---- a/fs/fuse/fuse_dev_i.h
-+++ b/fs/fuse/fuse_dev_i.h
-@@ -62,6 +62,7 @@ void fuse_dev_end_requests(struct list_head *head);
- 
- void fuse_copy_init(struct fuse_copy_state *cs, bool write,
- 			   struct iov_iter *iter);
-+void fuse_copy_finish(struct fuse_copy_state *cs);
- int fuse_copy_args(struct fuse_copy_state *cs, unsigned int numargs,
- 		   unsigned int argpages, struct fuse_arg *args,
- 		   int zeroing);
-diff --git a/fs/super.c b/fs/super.c
-index 277b84e5c279..4c79f170ac0d 100644
---- a/fs/super.c
-+++ b/fs/super.c
-@@ -1188,7 +1188,7 @@ static void filesystems_freeze_callback(struct super_block *sb, void *freeze_all
- 	if (!sb->s_op->freeze_fs && !sb->s_op->freeze_super)
- 		return;
- 
--	if (freeze_all_ptr && !(sb->s_type->fs_flags & FS_POWER_FREEZE))
-+	if (!freeze_all_ptr && !(sb->s_type->fs_flags & FS_POWER_FREEZE))
- 		return;
- 
- 	if (!get_active_super(sb))
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index fd1d91017b99..2b1c752af207 100644
+index fd1d91017b99b..2b1c752af207f 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1624,7 +1624,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -806,7 +667,7 @@ index fd1d91017b99..2b1c752af207 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 0232d983b715..650164baddae 100644
+index 0232d983b7153..650164baddae1 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -44,7 +44,7 @@ static inline void smp_mb__after_mmgrab(void)
@@ -854,7 +715,7 @@ index 0232d983b715..650164baddae 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index ac76ae9fa36d..fce16aa10ba2 100644
+index ac76ae9fa36df..fce16aa10ba23 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -175,7 +175,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -876,7 +737,7 @@ index ac76ae9fa36d..fce16aa10ba2 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d..428464bb81b3 100644
+index 29dd5b91dd7d6..428464bb81b34 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -909,7 +770,7 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f754a60de848..d90b290aad66 100644
+index f754a60de8484..d90b290aad66b 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -677,11 +677,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
@@ -988,7 +849,7 @@ index f754a60de848..d90b290aad66 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index adfb6e3409d7..a44a009b33ce 100644
+index adfb6e3409d72..a44a009b33ce1 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1373,12 +1373,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
@@ -1068,28 +929,8 @@ index adfb6e3409d7..a44a009b33ce 100644
  {
  	raw_spin_rq_unlock(rq);
  	local_irq_enable();
-diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 6cba1cb14b23..f66a4b15cb33 100644
---- a/mm/huge_memory.c
-+++ b/mm/huge_memory.c
-@@ -1233,6 +1233,7 @@ static void map_anon_folio_pmd(struct folio *folio, pmd_t *pmd,
- 	count_vm_event(THP_FAULT_ALLOC);
- 	count_mthp_stat(HPAGE_PMD_ORDER, MTHP_STAT_ANON_FAULT_ALLOC);
- 	count_memcg_event_mm(vma->vm_mm, THP_FAULT_ALLOC);
-+	deferred_split_folio(folio, false);
- }
- 
- static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf)
-@@ -1273,7 +1274,6 @@ static vm_fault_t __do_huge_pmd_anonymous_page(struct vm_fault *vmf)
- 		pgtable_trans_huge_deposit(vma->vm_mm, vmf->pmd, pgtable);
- 		map_anon_folio_pmd(folio, vmf->pmd, vma, haddr);
- 		mm_inc_nr_ptes(vma->vm_mm);
--		deferred_split_folio(folio, false);
- 		spin_unlock(vmf->ptl);
- 	}
- 
 diff --git a/mm/swapfile.c b/mm/swapfile.c
-index a1b4b9d80e3b..82524f8595ed 100644
+index a1b4b9d80e3b5..82524f8595eda 100644
 --- a/mm/swapfile.c
 +++ b/mm/swapfile.c
 @@ -1101,13 +1101,6 @@ static unsigned long cluster_alloc_swap_entry(struct swap_info_struct *si, int o
@@ -1159,7 +1000,7 @@ index a1b4b9d80e3b..82524f8595ed 100644
  	if (mem_cgroup_try_charge_swap(folio, entry))
  		goto out_free;
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
