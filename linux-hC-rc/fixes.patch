@@ -154,19 +154,6 @@ index f5b93e01e347..71abaf0bdb91 100644
  /*
   * Using a temporary mm allows to set temporary mappings that are not accessible
   * by other CPUs. Such mappings are needed to perform sensitive memory writes
-diff --git a/drivers/android/binder/page_range.rs b/drivers/android/binder/page_range.rs
-index 9379038f61f5..fdd97112ef5c 100644
---- a/drivers/android/binder/page_range.rs
-+++ b/drivers/android/binder/page_range.rs
-@@ -727,8 +727,5 @@ fn drop(self: Pin<&mut Self>) {
-     drop(mm);
-     drop(page);
- 
--    // SAFETY: We just unlocked the lru lock, but it should be locked when we return.
--    unsafe { bindings::spin_lock(&raw mut (*lru).lock) };
--
-     LRU_REMOVED_ENTRY
- }
 diff --git a/drivers/android/binder/thread.rs b/drivers/android/binder/thread.rs
 index 1a8e6fdc0dc4..dcd47e10aeb8 100644
 --- a/drivers/android/binder/thread.rs
@@ -274,65 +261,6 @@ index 1a8e6fdc0dc4..dcd47e10aeb8 100644
                      if let Err(err) = res {
                          pr_warn!("Failed copying ptr into alloc: {:?}", err);
                          return Err(err.into());
-diff --git a/fs/btrfs/delayed-inode.c b/fs/btrfs/delayed-inode.c
-index ce6e9f8812e0..4b7d9015e0da 100644
---- a/fs/btrfs/delayed-inode.c
-+++ b/fs/btrfs/delayed-inode.c
-@@ -152,37 +152,39 @@ static struct btrfs_delayed_node *btrfs_get_or_create_delayed_node(
- 		return ERR_PTR(-ENOMEM);
- 	btrfs_init_delayed_node(node, root, ino);
- 
-+	/* Cached in the inode and can be accessed. */
-+	refcount_set(&node->refs, 2);
-+	btrfs_delayed_node_ref_tracker_alloc(node, tracker, GFP_NOFS);
-+	btrfs_delayed_node_ref_tracker_alloc(node, &node->inode_cache_tracker, GFP_NOFS);
-+
- 	/* Allocate and reserve the slot, from now it can return a NULL from xa_load(). */
- 	ret = xa_reserve(&root->delayed_nodes, ino, GFP_NOFS);
--	if (ret == -ENOMEM) {
--		btrfs_delayed_node_ref_tracker_dir_exit(node);
--		kmem_cache_free(delayed_node_cache, node);
--		return ERR_PTR(-ENOMEM);
--	}
-+	if (ret == -ENOMEM)
-+		goto cleanup;
-+
- 	xa_lock(&root->delayed_nodes);
- 	ptr = xa_load(&root->delayed_nodes, ino);
- 	if (ptr) {
- 		/* Somebody inserted it, go back and read it. */
- 		xa_unlock(&root->delayed_nodes);
--		btrfs_delayed_node_ref_tracker_dir_exit(node);
--		kmem_cache_free(delayed_node_cache, node);
--		node = NULL;
--		goto again;
-+		goto cleanup;
- 	}
- 	ptr = __xa_store(&root->delayed_nodes, ino, node, GFP_ATOMIC);
- 	ASSERT(xa_err(ptr) != -EINVAL);
- 	ASSERT(xa_err(ptr) != -ENOMEM);
- 	ASSERT(ptr == NULL);
--
--	/* Cached in the inode and can be accessed. */
--	refcount_set(&node->refs, 2);
--	btrfs_delayed_node_ref_tracker_alloc(node, tracker, GFP_ATOMIC);
--	btrfs_delayed_node_ref_tracker_alloc(node, &node->inode_cache_tracker, GFP_ATOMIC);
--
- 	btrfs_inode->delayed_node = node;
- 	xa_unlock(&root->delayed_nodes);
- 
- 	return node;
-+cleanup:
-+	btrfs_delayed_node_ref_tracker_free(node, tracker);
-+	btrfs_delayed_node_ref_tracker_free(node, &node->inode_cache_tracker);
-+	btrfs_delayed_node_ref_tracker_dir_exit(node);
-+	kmem_cache_free(delayed_node_cache, node);
-+	if (ret)
-+		return ERR_PTR(ret);
-+	goto again;
- }
- 
- /*
 diff --git a/include/linux/compiler_types.h b/include/linux/compiler_types.h
 index d3318a3c2577..996e9af3f991 100644
 --- a/include/linux/compiler_types.h
@@ -364,7 +292,7 @@ index d3318a3c2577..996e9af3f991 100644
  #define __native_word(t) \
  	(sizeof(t) == sizeof(char) || sizeof(t) == sizeof(short) || \
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 9870d768db4c..d9de20c20f38 100644
+index 9ded2e582c60..fbe94b65b30a 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1624,7 +1624,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -479,8 +407,38 @@ index 29dd5b91dd7d..428464bb81b3 100644
  {
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index 293bbd9ac3f4..2c1c9759e278 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -160,6 +160,7 @@ static void rcu_report_qs_rnp(unsigned long mask, struct rcu_node *rnp,
+ 			      unsigned long gps, unsigned long flags);
+ static void invoke_rcu_core(void);
+ static void rcu_report_exp_rdp(struct rcu_data *rdp);
++static void rcu_report_qs_rdp(struct rcu_data *rdp);
+ static void check_cb_ovld_locked(struct rcu_data *rdp, struct rcu_node *rnp);
+ static bool rcu_rdp_is_offloaded(struct rcu_data *rdp);
+ static bool rcu_rdp_cpu_online(struct rcu_data *rdp);
+@@ -1983,6 +1984,17 @@ static noinline_for_stack bool rcu_gp_init(void)
+ 	if (IS_ENABLED(CONFIG_RCU_STRICT_GRACE_PERIOD))
+ 		on_each_cpu(rcu_strict_gp_boundary, NULL, 0);
+ 
++	/*
++	 * Immediately report QS for the GP kthread's CPU. The GP kthread
++	 * cannot be in an RCU read-side critical section while running
++	 * the FQS scan. This eliminates the need for a second FQS wait
++	 * when all CPUs are idle.
++	 */
++	preempt_disable();
++	rcu_qs();
++	rcu_report_qs_rdp(this_cpu_ptr(&rcu_data));
++	preempt_enable();
++
+ 	return true;
+ }
+ 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 41ba0be16911..9f3e8fe0c5b8 100644
+index 60afadb6eede..cc661e6f8e72 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -678,11 +678,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
@@ -559,10 +517,24 @@ index 41ba0be16911..9f3e8fe0c5b8 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index da46c3164537..6c89c5a49f10 100644
+index e71302282671..da2e697a744b 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -3693,7 +3693,7 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -2458,11 +2458,8 @@ static void task_numa_find_cpu(struct task_numa_env *env,
+ 		maymove = !load_too_imbalanced(src_load, dst_load, env);
+ 	}
+ 
+-	for_each_cpu(cpu, cpumask_of_node(env->dst_nid)) {
+-		/* Skip this CPU if the source task cannot migrate */
+-		if (!cpumask_test_cpu(cpu, env->p->cpus_ptr))
+-			continue;
+-
++	/* Skip CPUs if the source task cannot migrate */
++	for_each_cpu_and(cpu, cpumask_of_node(env->dst_nid), env->p->cpus_ptr) {
+ 		env->dst_cpu = cpu;
+ 		if (task_numa_compare(env, taskimp, groupimp, maymove))
+ 			break;
+@@ -3693,7 +3690,7 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
   */
  #define add_positive(_ptr, _val) do {                           \
  	typeof(_ptr) ptr = (_ptr);                              \
@@ -571,7 +543,7 @@ index da46c3164537..6c89c5a49f10 100644
  	typeof(*ptr) res, var = READ_ONCE(*ptr);                \
  								\
  	res = var + val;                                        \
-@@ -3704,23 +3704,6 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -3704,23 +3701,6 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
  	WRITE_ONCE(*ptr, res);                                  \
  } while (0)
  
@@ -595,7 +567,7 @@ index da46c3164537..6c89c5a49f10 100644
  /*
   * Remove and clamp on negative, from a local variable.
   *
-@@ -3732,21 +3715,39 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -3732,21 +3712,39 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
  	*ptr -= min_t(typeof(*ptr), *ptr, _val);		\
  } while (0)
  
@@ -642,7 +614,7 @@ index da46c3164537..6c89c5a49f10 100644
  }
  
  static void place_entity(struct cfs_rq *cfs_rq, struct sched_entity *se, int flags);
-@@ -4242,7 +4243,6 @@ update_tg_cfs_util(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cfs_rq
+@@ -4242,7 +4240,6 @@ update_tg_cfs_util(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cfs_rq
  	 */
  	divider = get_pelt_divider(&cfs_rq->avg);
  
@@ -650,7 +622,7 @@ index da46c3164537..6c89c5a49f10 100644
  	/* Set new sched_entity's utilization */
  	se->avg.util_avg = gcfs_rq->avg.util_avg;
  	new_sum = se->avg.util_avg * divider;
-@@ -4250,12 +4250,7 @@ update_tg_cfs_util(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cfs_rq
+@@ -4250,12 +4247,7 @@ update_tg_cfs_util(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cfs_rq
  	se->avg.util_sum = new_sum;
  
  	/* Update parent cfs_rq utilization */
@@ -664,7 +636,7 @@ index da46c3164537..6c89c5a49f10 100644
  }
  
  static inline void
-@@ -4281,11 +4276,7 @@ update_tg_cfs_runnable(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cf
+@@ -4281,11 +4273,7 @@ update_tg_cfs_runnable(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cf
  	se->avg.runnable_sum = new_sum;
  
  	/* Update parent cfs_rq runnable */
@@ -677,7 +649,7 @@ index da46c3164537..6c89c5a49f10 100644
  }
  
  static inline void
-@@ -4349,11 +4340,7 @@ update_tg_cfs_load(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cfs_rq
+@@ -4349,11 +4337,7 @@ update_tg_cfs_load(struct cfs_rq *cfs_rq, struct sched_entity *se, struct cfs_rq
  
  	se->avg.load_sum = runnable_sum;
  	se->avg.load_avg = load_avg;
@@ -690,7 +662,7 @@ index da46c3164537..6c89c5a49f10 100644
  }
  
  static inline void add_tg_cfs_propagate(struct cfs_rq *cfs_rq, long runnable_sum)
-@@ -4552,33 +4539,13 @@ update_cfs_rq_load_avg(u64 now, struct cfs_rq *cfs_rq)
+@@ -4552,33 +4536,13 @@ update_cfs_rq_load_avg(u64 now, struct cfs_rq *cfs_rq)
  		raw_spin_unlock(&cfs_rq->removed.lock);
  
  		r = removed_load;
@@ -727,7 +699,7 @@ index da46c3164537..6c89c5a49f10 100644
  
  		/*
  		 * removed_runnable is the unweighted version of removed_load so we
-@@ -4663,17 +4630,8 @@ static void attach_entity_load_avg(struct cfs_rq *cfs_rq, struct sched_entity *s
+@@ -4663,17 +4627,8 @@ static void attach_entity_load_avg(struct cfs_rq *cfs_rq, struct sched_entity *s
  static void detach_entity_load_avg(struct cfs_rq *cfs_rq, struct sched_entity *se)
  {
  	dequeue_load_avg(cfs_rq, se);
@@ -747,7 +719,18 @@ index da46c3164537..6c89c5a49f10 100644
  
  	add_tg_cfs_propagate(cfs_rq, -se->avg.load_sum);
  
-@@ -9949,15 +9907,11 @@ static unsigned long task_h_load(struct task_struct *p)
+@@ -8365,9 +8320,7 @@ static int find_energy_efficient_cpu(struct task_struct *p, int prev_cpu)
+ 		int max_spare_cap_cpu = -1;
+ 		int fits, max_fits = -1;
+ 
+-		cpumask_and(cpus, perf_domain_span(pd), cpu_online_mask);
+-
+-		if (cpumask_empty(cpus))
++		if (!cpumask_and(cpus, perf_domain_span(pd), cpu_online_mask))
+ 			continue;
+ 
+ 		/* Account external pressure for the energy estimation */
+@@ -9949,15 +9902,11 @@ static unsigned long task_h_load(struct task_struct *p)
  }
  #endif /* !CONFIG_FAIR_GROUP_SCHED */
  
@@ -764,7 +747,7 @@ index da46c3164537..6c89c5a49f10 100644
  
  	decayed |= __update_blocked_others(rq, &done);
  	decayed |= __update_blocked_fair(rq, &done);
-@@ -9965,7 +9919,15 @@ static void sched_balance_update_blocked_averages(int cpu)
+@@ -9965,7 +9914,15 @@ static void sched_balance_update_blocked_averages(int cpu)
  	update_blocked_load_status(rq, !done);
  	if (decayed)
  		cpufreq_update_util(rq, 0);
@@ -781,7 +764,7 @@ index da46c3164537..6c89c5a49f10 100644
  }
  
  /********** Helpers for sched_balance_find_src_group ************************/
-@@ -12912,12 +12874,17 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12912,12 +12869,17 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  	}
  	rcu_read_unlock();
  

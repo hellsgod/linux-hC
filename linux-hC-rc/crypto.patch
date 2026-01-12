@@ -8505,7 +8505,7 @@ index 330ab65b29c4..725eef05b758 100644
  libpoly1305-y := poly1305.o
  ifeq ($(CONFIG_ARCH_SUPPORTS_INT128),y)
 diff --git a/lib/crypto/aes.c b/lib/crypto/aes.c
-index b57fda3460f1..e85c905296f1 100644
+index 102aaa76bc8d..09709d351916 100644
 --- a/lib/crypto/aes.c
 +++ b/lib/crypto/aes.c
 @@ -1,19 +1,17 @@
@@ -8526,17 +8526,17 @@ index b57fda3460f1..e85c905296f1 100644
 - * Emit the sbox as volatile const to prevent the compiler from doing
 - * constant folding on sbox references involving fixed indexes.
 - */
--static volatile const u8 __cacheline_aligned aes_sbox[] = {
-+static const u8 __cacheline_aligned aes_sbox[] = {
+-static volatile const u8 ____cacheline_aligned aes_sbox[] = {
++static const u8 ____cacheline_aligned aes_sbox[] = {
  	0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5,
  	0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
  	0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0,
-@@ -48,7 +46,7 @@ static volatile const u8 __cacheline_aligned aes_sbox[] = {
+@@ -48,7 +46,7 @@ static volatile const u8 ____cacheline_aligned aes_sbox[] = {
  	0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16,
  };
  
--static volatile const u8 __cacheline_aligned aes_inv_sbox[] = {
-+static const u8 __cacheline_aligned aes_inv_sbox[] = {
+-static volatile const u8 ____cacheline_aligned aes_inv_sbox[] = {
++static const u8 ____cacheline_aligned aes_inv_sbox[] = {
  	0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38,
  	0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb,
  	0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87,
@@ -14314,7 +14314,7 @@ index 3a1ce04a7a53..bf61e8841535 100644
  }
  
 diff --git a/scripts/crypto/gen-hash-testvecs.py b/scripts/crypto/gen-hash-testvecs.py
-index c1d0517140bd..1e20ecb46314 100755
+index c773294fba64..8eeb650fcada 100755
 --- a/scripts/crypto/gen-hash-testvecs.py
 +++ b/scripts/crypto/gen-hash-testvecs.py
 @@ -184,6 +184,44 @@ def gen_additional_blake2_testvecs(alg):
