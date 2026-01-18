@@ -498,19 +498,6 @@ index de5083cb1d374..c1ec14c559119 100644
  		EMIT1(0x59); /* pop rcx */
  		EMIT1(0x58); /* pop rax */
  	}
-diff --git a/drivers/android/binder/page_range.rs b/drivers/android/binder/page_range.rs
-index 9379038f61f51..fdd97112ef5c8 100644
---- a/drivers/android/binder/page_range.rs
-+++ b/drivers/android/binder/page_range.rs
-@@ -727,8 +727,5 @@ fn drop(self: Pin<&mut Self>) {
-     drop(mm);
-     drop(page);
- 
--    // SAFETY: We just unlocked the lru lock, but it should be locked when we return.
--    unsafe { bindings::spin_lock(&raw mut (*lru).lock) };
--
-     LRU_REMOVED_ENTRY
- }
 diff --git a/drivers/android/binder/thread.rs b/drivers/android/binder/thread.rs
 index 7e34ccd394f80..33a9053b6adf0 100644
 --- a/drivers/android/binder/thread.rs
@@ -762,65 +749,6 @@ index cf0ec94e8a075..15d757c016cbb 100644
  	uint64_t				max_pfn;
  	uint32_t				num_level;
  	uint32_t				block_size;
-diff --git a/fs/btrfs/delayed-inode.c b/fs/btrfs/delayed-inode.c
-index 3df7b9d7fbe8d..59b489d7e4b58 100644
---- a/fs/btrfs/delayed-inode.c
-+++ b/fs/btrfs/delayed-inode.c
-@@ -152,37 +152,39 @@ static struct btrfs_delayed_node *btrfs_get_or_create_delayed_node(
- 		return ERR_PTR(-ENOMEM);
- 	btrfs_init_delayed_node(node, root, ino);
- 
-+	/* Cached in the inode and can be accessed. */
-+	refcount_set(&node->refs, 2);
-+	btrfs_delayed_node_ref_tracker_alloc(node, tracker, GFP_NOFS);
-+	btrfs_delayed_node_ref_tracker_alloc(node, &node->inode_cache_tracker, GFP_NOFS);
-+
- 	/* Allocate and reserve the slot, from now it can return a NULL from xa_load(). */
- 	ret = xa_reserve(&root->delayed_nodes, ino, GFP_NOFS);
--	if (ret == -ENOMEM) {
--		btrfs_delayed_node_ref_tracker_dir_exit(node);
--		kmem_cache_free(delayed_node_cache, node);
--		return ERR_PTR(-ENOMEM);
--	}
-+	if (ret == -ENOMEM)
-+		goto cleanup;
-+
- 	xa_lock(&root->delayed_nodes);
- 	ptr = xa_load(&root->delayed_nodes, ino);
- 	if (ptr) {
- 		/* Somebody inserted it, go back and read it. */
- 		xa_unlock(&root->delayed_nodes);
--		btrfs_delayed_node_ref_tracker_dir_exit(node);
--		kmem_cache_free(delayed_node_cache, node);
--		node = NULL;
--		goto again;
-+		goto cleanup;
- 	}
- 	ptr = __xa_store(&root->delayed_nodes, ino, node, GFP_ATOMIC);
- 	ASSERT(xa_err(ptr) != -EINVAL);
- 	ASSERT(xa_err(ptr) != -ENOMEM);
- 	ASSERT(ptr == NULL);
--
--	/* Cached in the inode and can be accessed. */
--	refcount_set(&node->refs, 2);
--	btrfs_delayed_node_ref_tracker_alloc(node, tracker, GFP_ATOMIC);
--	btrfs_delayed_node_ref_tracker_alloc(node, &node->inode_cache_tracker, GFP_ATOMIC);
--
- 	btrfs_inode->delayed_node = node;
- 	xa_unlock(&root->delayed_nodes);
- 
- 	return node;
-+cleanup:
-+	btrfs_delayed_node_ref_tracker_free(node, tracker);
-+	btrfs_delayed_node_ref_tracker_free(node, &node->inode_cache_tracker);
-+	btrfs_delayed_node_ref_tracker_dir_exit(node);
-+	kmem_cache_free(delayed_node_cache, node);
-+	if (ret)
-+		return ERR_PTR(ret);
-+	goto again;
- }
- 
- /*
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
 index fd1d91017b99b..2b1c752af207f 100644
 --- a/include/linux/perf_event.h
@@ -938,10 +866,10 @@ index 29dd5b91dd7d6..428464bb81b34 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f754a60de8484..d90b290aad66b 100644
+index eb47d294e2c5a..96255e5fe4c27 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -677,11 +677,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
+@@ -678,11 +678,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
  	}
  }
  
@@ -953,7 +881,7 @@ index f754a60de8484..d90b290aad66b 100644
  /*
   * double_rq_lock - safely lock two runqueues
   */
-@@ -4947,7 +4942,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -4948,7 +4943,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -962,7 +890,7 @@ index f754a60de8484..d90b290aad66b 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -4963,7 +4958,7 @@ static inline void finish_task(struct task_struct *prev)
+@@ -4964,7 +4959,7 @@ static inline void finish_task(struct task_struct *prev)
  	smp_store_release(&prev->on_cpu, 0);
  }
  
@@ -971,7 +899,7 @@ index f754a60de8484..d90b290aad66b 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -4998,7 +4993,7 @@ struct balance_callback balance_push_callback = {
+@@ -4999,7 +4994,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -980,7 +908,7 @@ index f754a60de8484..d90b290aad66b 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5028,7 +5023,7 @@ struct balance_callback *splice_balance_callbacks(struct rq *rq)
+@@ -5029,7 +5024,7 @@ struct balance_callback *splice_balance_callbacks(struct rq *rq)
  	return __splice_balance_callbacks(rq, true);
  }
  
@@ -989,7 +917,7 @@ index f754a60de8484..d90b290aad66b 100644
  {
  	do_balance_callbacks(rq, __splice_balance_callbacks(rq, false));
  }
-@@ -5061,7 +5056,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5062,7 +5057,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  #endif
  }
  
@@ -998,7 +926,7 @@ index f754a60de8484..d90b290aad66b 100644
  {
  	/*
  	 * If we are tracking spinlock dependencies then we have to
-@@ -5093,7 +5088,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5094,7 +5089,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -1007,7 +935,7 @@ index f754a60de8484..d90b290aad66b 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5147,7 +5142,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5148,7 +5143,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -1017,10 +945,10 @@ index f754a60de8484..d90b290aad66b 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 92ec751799f55..858caf1ab7340 100644
+index 2f8b06b12a98f..a2c789456671d 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1373,12 +1373,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
+@@ -1380,12 +1380,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
  
  DECLARE_STATIC_KEY_FALSE(__sched_core_enabled);
  
@@ -1035,7 +963,7 @@ index 92ec751799f55..858caf1ab7340 100644
  {
  	return !static_branch_unlikely(&__sched_core_enabled);
  }
-@@ -1387,7 +1387,7 @@ static inline bool sched_core_disabled(void)
+@@ -1394,7 +1394,7 @@ static inline bool sched_core_disabled(void)
   * Be careful with this function; not for general use. The return value isn't
   * stable unless you actually hold a relevant rq->__lock.
   */
@@ -1044,7 +972,7 @@ index 92ec751799f55..858caf1ab7340 100644
  {
  	if (sched_core_enabled(rq))
  		return &rq->core->__lock;
-@@ -1395,7 +1395,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
+@@ -1402,7 +1402,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
  	return &rq->__lock;
  }
  
@@ -1053,7 +981,7 @@ index 92ec751799f55..858caf1ab7340 100644
  {
  	if (rq->core_enabled)
  		return &rq->core->__lock;
-@@ -1486,12 +1486,12 @@ static inline bool sched_core_disabled(void)
+@@ -1493,12 +1493,12 @@ static inline bool sched_core_disabled(void)
  	return true;
  }
  
@@ -1068,7 +996,7 @@ index 92ec751799f55..858caf1ab7340 100644
  {
  	return &rq->__lock;
  }
-@@ -1540,20 +1540,24 @@ static inline void lockdep_assert_rq_held(struct rq *rq)
+@@ -1547,20 +1547,24 @@ static inline void lockdep_assert_rq_held(struct rq *rq)
  
  extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass);
  extern bool raw_spin_rq_trylock(struct rq *rq);
