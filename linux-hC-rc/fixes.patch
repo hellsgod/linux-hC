@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf..bebde469f81a 100644
+index db2cb06aa8cf5..bebde469f81ae 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf..bebde469f81a 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f1..2fe6b7fe6b12 100644
+index 9153016da8f14..2fe6b7fe6b12d 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f1..2fe6b7fe6b12 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index d9b8501bc93d..c124ef6a01b3 100644
+index d9b8501bc93d0..c124ef6a01b38 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -97,7 +97,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index d9b8501bc93d..c124ef6a01b3 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d..d1967214ef25 100644
+index 78bbacc14d2d9..d1967214ef25f 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d..d1967214ef25 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 73bf3b1b44e8..ecd134dcfb34 100644
+index 73bf3b1b44e85..ecd134dcfb341 100644
 --- a/arch/x86/include/asm/mmu_context.h
 +++ b/arch/x86/include/asm/mmu_context.h
 @@ -136,8 +136,29 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
@@ -86,7 +86,7 @@ index 73bf3b1b44e8..ecd134dcfb34 100644
  #define mm_init_global_asid mm_init_global_asid
  extern void mm_init_global_asid(struct mm_struct *mm);
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee..4b55fa353bb5 100644
+index 96bda43538ee7..4b55fa353bb5f 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -99,7 +99,7 @@ index 96bda43538ee..4b55fa353bb5 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index bc94ff1e250a..ce70a9c5baca 100644
+index bc94ff1e250ad..ce70a9c5baca7 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1035,6 +1035,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
@@ -123,7 +123,7 @@ index bc94ff1e250a..ce70a9c5baca 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index f5b93e01e347..71abaf0bdb91 100644
+index f5b93e01e3472..71abaf0bdb915 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -971,27 +971,6 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
@@ -155,7 +155,7 @@ index f5b93e01e347..71abaf0bdb91 100644
   * Using a temporary mm allows to set temporary mappings that are not accessible
   * by other CPUs. Such mappings are needed to perform sensitive memory writes
 diff --git a/drivers/android/binder/thread.rs b/drivers/android/binder/thread.rs
-index 1a8e6fdc0dc4..dcd47e10aeb8 100644
+index 1a8e6fdc0dc42..dcd47e10aeb8c 100644
 --- a/drivers/android/binder/thread.rs
 +++ b/drivers/android/binder/thread.rs
 @@ -69,17 +69,24 @@ struct ScatterGatherEntry {
@@ -262,7 +262,7 @@ index 1a8e6fdc0dc4..dcd47e10aeb8 100644
                          pr_warn!("Failed copying ptr into alloc: {:?}", err);
                          return Err(err.into());
 diff --git a/include/linux/compiler_types.h b/include/linux/compiler_types.h
-index d3318a3c2577..996e9af3f991 100644
+index d3318a3c25777..996e9af3f9917 100644
 --- a/include/linux/compiler_types.h
 +++ b/include/linux/compiler_types.h
 @@ -587,6 +587,25 @@ struct ftrace_likely_data {
@@ -292,7 +292,7 @@ index d3318a3c2577..996e9af3f991 100644
  #define __native_word(t) \
  	(sizeof(t) == sizeof(char) || sizeof(t) == sizeof(short) || \
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 9ded2e582c60..fbe94b65b30a 100644
+index 9ded2e582c602..fbe94b65b30a5 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1624,7 +1624,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -305,7 +305,7 @@ index 9ded2e582c60..fbe94b65b30a 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 0e1d73955fa5..e7787a6e7d22 100644
+index 95d0040df5841..4a279ee2d0262 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -44,7 +44,7 @@ static inline void smp_mb__after_mmgrab(void)
@@ -343,7 +343,7 @@ index 0e1d73955fa5..e7787a6e7d22 100644
  {
  	if (IS_ENABLED(CONFIG_MMU_LAZY_TLB_REFCOUNT))
  		mmdrop_sched(mm);
-@@ -531,7 +531,7 @@ enum {
+@@ -532,7 +532,7 @@ enum {
  #include <asm/membarrier.h>
  #endif
  
@@ -353,7 +353,7 @@ index 0e1d73955fa5..e7787a6e7d22 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index ac76ae9fa36d..fce16aa10ba2 100644
+index ac76ae9fa36df..fce16aa10ba23 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -175,7 +175,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -375,7 +375,7 @@ index ac76ae9fa36d..fce16aa10ba2 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d..428464bb81b3 100644
+index 29dd5b91dd7d6..428464bb81b34 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -408,7 +408,7 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 293bbd9ac3f4..2c1c9759e278 100644
+index 293bbd9ac3f4e..2c1c9759e2788 100644
 --- a/kernel/rcu/tree.c
 +++ b/kernel/rcu/tree.c
 @@ -160,6 +160,7 @@ static void rcu_report_qs_rnp(unsigned long mask, struct rcu_node *rnp,
@@ -438,7 +438,7 @@ index 293bbd9ac3f4..2c1c9759e278 100644
  }
  
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 60afadb6eede..cc661e6f8e72 100644
+index 045f83ad261e2..e51f38edb32e3 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -678,11 +678,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
@@ -484,12 +484,12 @@ index 60afadb6eede..cc661e6f8e72 100644
  	return __splice_balance_callbacks(rq, true);
  }
  
--static void __balance_callbacks(struct rq *rq)
-+static __always_inline void __balance_callbacks(struct rq *rq)
+-void __balance_callbacks(struct rq *rq, struct rq_flags *rf)
++__always_inline void __balance_callbacks(struct rq *rq, struct rq_flags *rf)
  {
- 	do_balance_callbacks(rq, __splice_balance_callbacks(rq, false));
- }
-@@ -4983,7 +4978,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+ 	if (rf)
+ 		rq_unpin_lock(rq, rf);
+@@ -4987,7 +4982,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  #endif
  }
  
@@ -498,7 +498,7 @@ index 60afadb6eede..cc661e6f8e72 100644
  {
  	/*
  	 * If we are tracking spinlock dependencies then we have to
-@@ -5015,7 +5010,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5019,7 +5014,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -507,7 +507,7 @@ index 60afadb6eede..cc661e6f8e72 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5068,7 +5063,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5072,7 +5067,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -517,7 +517,7 @@ index 60afadb6eede..cc661e6f8e72 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e71302282671..da2e697a744b 100644
+index e71302282671c..da2e697a744b8 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -2458,11 +2458,8 @@ static void task_numa_find_cpu(struct task_numa_env *env,
@@ -786,10 +786,10 @@ index e71302282671..da2e697a744b 100644
  	for_each_domain(this_cpu, sd) {
  		u64 domain_cost;
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index d30cca6870f5..4ba122a15fb2 100644
+index 93fce4bbff5ea..48df8001e260d 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1381,12 +1381,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
+@@ -1403,12 +1403,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
  
  DECLARE_STATIC_KEY_FALSE(__sched_core_enabled);
  
@@ -804,7 +804,7 @@ index d30cca6870f5..4ba122a15fb2 100644
  {
  	return !static_branch_unlikely(&__sched_core_enabled);
  }
-@@ -1395,7 +1395,7 @@ static inline bool sched_core_disabled(void)
+@@ -1417,7 +1417,7 @@ static inline bool sched_core_disabled(void)
   * Be careful with this function; not for general use. The return value isn't
   * stable unless you actually hold a relevant rq->__lock.
   */
@@ -813,7 +813,7 @@ index d30cca6870f5..4ba122a15fb2 100644
  {
  	if (sched_core_enabled(rq))
  		return &rq->core->__lock;
-@@ -1403,7 +1403,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
+@@ -1425,7 +1425,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
  	return &rq->__lock;
  }
  
@@ -822,7 +822,7 @@ index d30cca6870f5..4ba122a15fb2 100644
  {
  	if (rq->core_enabled)
  		return &rq->core->__lock;
-@@ -1497,12 +1497,12 @@ static inline bool sched_core_disabled(void)
+@@ -1519,12 +1519,12 @@ static inline bool sched_core_disabled(void)
  	return true;
  }
  
@@ -837,7 +837,7 @@ index d30cca6870f5..4ba122a15fb2 100644
  {
  	return &rq->__lock;
  }
-@@ -1551,20 +1551,24 @@ static inline void lockdep_assert_rq_held(struct rq *rq)
+@@ -1573,20 +1573,24 @@ static inline void lockdep_assert_rq_held(struct rq *rq)
  
  extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass);
  extern bool raw_spin_rq_trylock(struct rq *rq);
@@ -866,38 +866,8 @@ index d30cca6870f5..4ba122a15fb2 100644
  {
  	raw_spin_rq_unlock(rq);
  	local_irq_enable();
-diff --git a/net/ipv4/esp4_offload.c b/net/ipv4/esp4_offload.c
-index 05828d4cb6cd..abd77162f5e7 100644
---- a/net/ipv4/esp4_offload.c
-+++ b/net/ipv4/esp4_offload.c
-@@ -122,8 +122,8 @@ static struct sk_buff *xfrm4_tunnel_gso_segment(struct xfrm_state *x,
- 						struct sk_buff *skb,
- 						netdev_features_t features)
- {
--	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x,
--					XFRM_MODE_SKB_CB(skb)->protocol);
-+	struct xfrm_offload *xo = xfrm_offload(skb);
-+	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x, xo->proto);
- 	__be16 type = inner_mode->family == AF_INET6 ? htons(ETH_P_IPV6)
- 						     : htons(ETH_P_IP);
- 
-diff --git a/net/ipv6/esp6_offload.c b/net/ipv6/esp6_offload.c
-index 22410243ebe8..22895521a57d 100644
---- a/net/ipv6/esp6_offload.c
-+++ b/net/ipv6/esp6_offload.c
-@@ -158,8 +158,8 @@ static struct sk_buff *xfrm6_tunnel_gso_segment(struct xfrm_state *x,
- 						struct sk_buff *skb,
- 						netdev_features_t features)
- {
--	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x,
--					XFRM_MODE_SKB_CB(skb)->protocol);
-+	struct xfrm_offload *xo = xfrm_offload(skb);
-+	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x, xo->proto);
- 	__be16 type = inner_mode->family == AF_INET ? htons(ETH_P_IP)
- 						    : htons(ETH_P_IPV6);
- 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
