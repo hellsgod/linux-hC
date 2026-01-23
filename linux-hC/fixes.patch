@@ -91,10 +91,10 @@ index 78bbacc14d2d9..d1967214ef25f 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/Kconfig b/arch/x86/Kconfig
-index fa3b616af03a2..066f62f15e67e 100644
+index a3700766a8c08..ebccff42d377b 100644
 --- a/arch/x86/Kconfig
 +++ b/arch/x86/Kconfig
-@@ -2706,6 +2706,7 @@ config MITIGATION_TSA
+@@ -2707,6 +2707,7 @@ config MITIGATION_TSA
  config MITIGATION_VMSCAPE
  	bool "Mitigate VMSCAPE"
  	depends on KVM
@@ -439,10 +439,10 @@ index d7fa03bf51b45..5870bb67baf3b 100644
  		 * Hypervisors can be attacked across-threads, warn for SMT when
  		 * STIBP is not already enabled system-wide.
 diff --git a/arch/x86/kvm/x86.c b/arch/x86/kvm/x86.c
-index 19d2d6d9e64ab..a88b1068d2f75 100644
+index 43fb2a05a91c9..b833fd6b693ce 100644
 --- a/arch/x86/kvm/x86.c
 +++ b/arch/x86/kvm/x86.c
-@@ -11413,8 +11413,8 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
+@@ -11422,8 +11422,8 @@ static int vcpu_enter_guest(struct kvm_vcpu *vcpu)
  	 * set for the CPU that actually ran the guest, and not the CPU that it
  	 * may migrate to.
  	 */
@@ -763,7 +763,7 @@ index fd1d91017b99b..2b1c752af207f 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 0232d983b7153..650164baddae1 100644
+index a3094379b5790..03c68d7fd5657 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -44,7 +44,7 @@ static inline void smp_mb__after_mmgrab(void)
@@ -801,7 +801,7 @@ index 0232d983b7153..650164baddae1 100644
  {
  	if (IS_ENABLED(CONFIG_MMU_LAZY_TLB_REFCOUNT))
  		mmdrop_sched(mm);
-@@ -529,7 +529,7 @@ enum {
+@@ -530,7 +530,7 @@ enum {
  #include <asm/membarrier.h>
  #endif
  
@@ -866,7 +866,7 @@ index 29dd5b91dd7d6..428464bb81b34 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index eb47d294e2c5a..96255e5fe4c27 100644
+index e460c22de8ad4..3f02e0846e928 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -678,11 +678,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
@@ -1025,36 +1025,6 @@ index 2f8b06b12a98f..a2c789456671d 100644
  {
  	raw_spin_rq_unlock(rq);
  	local_irq_enable();
-diff --git a/net/ipv4/esp4_offload.c b/net/ipv4/esp4_offload.c
-index 05828d4cb6cdb..abd77162f5e75 100644
---- a/net/ipv4/esp4_offload.c
-+++ b/net/ipv4/esp4_offload.c
-@@ -122,8 +122,8 @@ static struct sk_buff *xfrm4_tunnel_gso_segment(struct xfrm_state *x,
- 						struct sk_buff *skb,
- 						netdev_features_t features)
- {
--	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x,
--					XFRM_MODE_SKB_CB(skb)->protocol);
-+	struct xfrm_offload *xo = xfrm_offload(skb);
-+	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x, xo->proto);
- 	__be16 type = inner_mode->family == AF_INET6 ? htons(ETH_P_IPV6)
- 						     : htons(ETH_P_IP);
- 
-diff --git a/net/ipv6/esp6_offload.c b/net/ipv6/esp6_offload.c
-index 22410243ebe88..22895521a57d0 100644
---- a/net/ipv6/esp6_offload.c
-+++ b/net/ipv6/esp6_offload.c
-@@ -158,8 +158,8 @@ static struct sk_buff *xfrm6_tunnel_gso_segment(struct xfrm_state *x,
- 						struct sk_buff *skb,
- 						netdev_features_t features)
- {
--	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x,
--					XFRM_MODE_SKB_CB(skb)->protocol);
-+	struct xfrm_offload *xo = xfrm_offload(skb);
-+	const struct xfrm_mode *inner_mode = xfrm_ip2inner_mode(x, xo->proto);
- 	__be16 type = inner_mode->family == AF_INET ? htons(ETH_P_IP)
- 						    : htons(ETH_P_IPV6);
- 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
