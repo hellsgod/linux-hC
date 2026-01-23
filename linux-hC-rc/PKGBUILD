@@ -202,16 +202,16 @@ if _is_lto_kernel; then
     makedepends+=(clang llvm lld)
     source+=("${_patchsource}/misc/dkms-clang.patch")
     BUILD_FLAGS=(
-        CC=/home/hellsgod/clang22/bin/clang
-        LD=/home/hellsgod/clang22/bin/ld.lld
-        AR=/home/hellsgod/clang22/bin/llvm-ar
-        NM=/home/hellsgod/clang22/bin/llvm-nm
-        STRIP=/home/hellsgod/clang22/bin/llvm-strip
-        OBJCOPY=/home/hellsgod/clang22/bin/llvm-objcopy
-        OBJDUMP=/home/hellsgod/clang22/bin/llvm-objdump
-        RANLIB=/home/hellsgod/clang22/bin/llvm-ranlib
-        READELF=/home/hellsgod/clang22/bin/llvm-readelf
-        AS=/home/hellsgod/clang22/bin/llvm-as
+        CC=/home/hellsgod/clang23/bin/clang
+        LD=/home/hellsgod/clang23/bin/ld.lld
+        AR=/home/hellsgod/clang23/bin/llvm-ar
+        NM=/home/hellsgod/clang23/bin/llvm-nm
+        STRIP=/home/hellsgod/clang23/bin/llvm-strip
+        OBJCOPY=/home/hellsgod/clang23/bin/llvm-objcopy
+        OBJDUMP=/home/hellsgod/clang23/bin/llvm-objdump
+        RANLIB=/home/hellsgod/clang23/bin/llvm-ranlib
+        READELF=/home/hellsgod/clang23/bin/llvm-readelf
+        AS=/home/hellsgod/clang23/bin/llvm-as
         LLVM=1
         LLVM_IAS=1
     )
