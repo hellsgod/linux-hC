@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 6.19.rc7
+	pkgver = 6.19.rc8
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v6.19-rc7.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v6.19-rc8.tar.gz
 	source = config
 	source = 0002-Prefer-the-previous-cpu-for-wakeup-v7.patch
 	source = base.patch
@@ -34,7 +34,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0003-Fix-compile-for-6.19.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/sched/0001-bore.patch
-	b2sums = a4530306e94463307ece329e0cf3571a0c28a2b601595e07747e87c9831553fb1fd181bf83086ebe7a15676dd2dbad32cc203995df1f86b0fcd40d10389e2030
+	b2sums = 2c7ae476c66a4bf7df5175f548b091c786f00e06f4745dce657d4c417d9fb92625a8e022b4e62c99bd5d435b2eef1b040ea23963439cab5a95e0063aa92a916f
 	b2sums = f4e87b07cc1016190b1214eb352f4334c23788309d1daa9a4222e5085b29f34395e8cf7e0aa585366c62bfeeed75a126c42cf7d0deb5410b8bbe92fd2a6e63e3
 	b2sums = a3643215d6423fe3e0e6680ec994014f89bbb6188a1cc237399cb4685071f9a01e966c1d7f585228e74523b0785b88df67d10523e5020d6191bf9c7e86112252
 	b2sums = 6720ec6bc8e6c7c883defa170eeade9aad4ccf051345411bc57ef6acf7ca835f3e59ae54f5963507f0ef024b408057ec626457c5d446f030440c635e43c19d36
@@ -45,7 +45,7 @@ pkgbase = linux-hC-rc
 	b2sums = 59f505ace6c5df5968a2c6a899af0d6a71c6b1c59687b4b6afd7ef86ca2dadbbd56eb3b66a41f216afbe1fad20309127c3247bf688658567ef80ff542848bd50
 	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
-	b2sums = 1df6855a4783a08eb110384b0dd94eb68ab0fb9eac1f843dd3dbc44c5e7bb8bcb2ab569500457e5b18f618d823a7dc4d4bc9acd0d9ee7484811825b66283703f
+	b2sums = ea69dc26bf4f55e984fb2f3c2c70ccf537307ab2a2c156077202410d7ac989d1552d780928866c177327b4260634ad04946e3ea1f04705d5549e65574bc3e8e2
 	b2sums = 1af9982d75efe4d68ca4e8ca22b358671687176b0aba7567047be75709a364de569b6cfff5278363e7f771ce8e9b0fbe05d65b79c9c965141ddf4ccd0c55fed3
 
 pkgname = linux-hC-rc
@@ -73,7 +73,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=6.19.rc7-1
+	depends = linux-hC-rc=6.19.rc8-1
 	depends = nvidia-utils=590.48.01
 	depends = libglvnd
 	provides = NVIDIA-MODULE
