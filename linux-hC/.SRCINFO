@@ -31,6 +31,7 @@ pkgbase = linux-hC
 	source = nvidia-open-590.48.01.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/590.48.01.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0002-Add-IBT-support.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0003-Fix-compile-for-6.19.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/sched/0001-bore.patch
 	b2sums = d1551c058e9a1201a0fa769b427255f13bb0d73fdd384e2c0302956cc9a1eeba255b013fa87a15fdad508bc00fdae2085590572c76cfe20fe2af31ba87b7d289
 	b2sums = f4e87b07cc1016190b1214eb352f4334c23788309d1daa9a4222e5085b29f34395e8cf7e0aa585366c62bfeeed75a126c42cf7d0deb5410b8bbe92fd2a6e63e3
@@ -42,6 +43,7 @@ pkgbase = linux-hC
 	b2sums = 59f505ace6c5df5968a2c6a899af0d6a71c6b1c59687b4b6afd7ef86ca2dadbbd56eb3b66a41f216afbe1fad20309127c3247bf688658567ef80ff542848bd50
 	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
+	b2sums = ea69dc26bf4f55e984fb2f3c2c70ccf537307ab2a2c156077202410d7ac989d1552d780928866c177327b4260634ad04946e3ea1f04705d5549e65574bc3e8e2
 	b2sums = e4046361f9778c5cab2308dde2d3aa75bd58ecaeb0e173e9985f18d4d9eec6ed87651c12969b5c9bf325192414348f6ad2509ac1d2648bc2383ebe52d27f8bb0
 
 pkgname = linux-hC
