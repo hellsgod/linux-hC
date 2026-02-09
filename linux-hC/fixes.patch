@@ -154,113 +154,6 @@ index f5b93e01e3472..71abaf0bdb915 100644
  /*
   * Using a temporary mm allows to set temporary mappings that are not accessible
   * by other CPUs. Such mappings are needed to perform sensitive memory writes
-diff --git a/drivers/android/binder/thread.rs b/drivers/android/binder/thread.rs
-index 1a8e6fdc0dc42..dcd47e10aeb8c 100644
---- a/drivers/android/binder/thread.rs
-+++ b/drivers/android/binder/thread.rs
-@@ -69,17 +69,24 @@ struct ScatterGatherEntry {
- }
- 
- /// This entry specifies that a fixup should happen at `target_offset` of the
--/// buffer. If `skip` is nonzero, then the fixup is a `binder_fd_array_object`
--/// and is applied later. Otherwise if `skip` is zero, then the size of the
--/// fixup is `sizeof::<u64>()` and `pointer_value` is written to the buffer.
--struct PointerFixupEntry {
--    /// The number of bytes to skip, or zero for a `binder_buffer_object` fixup.
--    skip: usize,
--    /// The translated pointer to write when `skip` is zero.
--    pointer_value: u64,
--    /// The offset at which the value should be written. The offset is relative
--    /// to the original buffer.
--    target_offset: usize,
-+/// buffer.
-+enum PointerFixupEntry {
-+    /// A fixup for a `binder_buffer_object`.
-+    Fixup {
-+        /// The translated pointer to write.
-+        pointer_value: u64,
-+        /// The offset at which the value should be written. The offset is relative
-+        /// to the original buffer.
-+        target_offset: usize,
-+    },
-+    /// A skip for a `binder_fd_array_object`.
-+    Skip {
-+        /// The number of bytes to skip.
-+        skip: usize,
-+        /// The offset at which the skip should happen. The offset is relative
-+        /// to the original buffer.
-+        target_offset: usize,
-+    },
- }
- 
- /// Return type of `apply_and_validate_fixup_in_parent`.
-@@ -762,8 +769,7 @@ fn translate_object(
- 
-                     parent_entry.fixup_min_offset = info.new_min_offset;
-                     parent_entry.pointer_fixups.push(
--                        PointerFixupEntry {
--                            skip: 0,
-+                        PointerFixupEntry::Fixup {
-                             pointer_value: buffer_ptr_in_user_space,
-                             target_offset: info.target_offset,
-                         },
-@@ -807,9 +813,8 @@ fn translate_object(
-                 parent_entry
-                     .pointer_fixups
-                     .push(
--                        PointerFixupEntry {
-+                        PointerFixupEntry::Skip {
-                             skip: fds_len,
--                            pointer_value: 0,
-                             target_offset: info.target_offset,
-                         },
-                         GFP_KERNEL,
-@@ -871,17 +876,21 @@ fn apply_sg(&self, alloc: &mut Allocation, sg_state: &mut ScatterGatherState) ->
-             let mut reader =
-                 UserSlice::new(UserPtr::from_addr(sg_entry.sender_uaddr), sg_entry.length).reader();
-             for fixup in &mut sg_entry.pointer_fixups {
--                let fixup_len = if fixup.skip == 0 {
--                    size_of::<u64>()
--                } else {
--                    fixup.skip
-+                let (fixup_len, fixup_offset) = match fixup {
-+                    PointerFixupEntry::Fixup { target_offset, .. } => {
-+                        (size_of::<u64>(), *target_offset)
-+                    }
-+                    PointerFixupEntry::Skip {
-+                        skip,
-+                        target_offset,
-+                    } => (*skip, *target_offset),
-                 };
- 
--                let target_offset_end = fixup.target_offset.checked_add(fixup_len).ok_or(EINVAL)?;
--                if fixup.target_offset < end_of_previous_fixup || offset_end < target_offset_end {
-+                let target_offset_end = fixup_offset.checked_add(fixup_len).ok_or(EINVAL)?;
-+                if fixup_offset < end_of_previous_fixup || offset_end < target_offset_end {
-                     pr_warn!(
-                         "Fixups oob {} {} {} {}",
--                        fixup.target_offset,
-+                        fixup_offset,
-                         end_of_previous_fixup,
-                         offset_end,
-                         target_offset_end
-@@ -890,13 +899,13 @@ fn apply_sg(&self, alloc: &mut Allocation, sg_state: &mut ScatterGatherState) ->
-                 }
- 
-                 let copy_off = end_of_previous_fixup;
--                let copy_len = fixup.target_offset - end_of_previous_fixup;
-+                let copy_len = fixup_offset - end_of_previous_fixup;
-                 if let Err(err) = alloc.copy_into(&mut reader, copy_off, copy_len) {
-                     pr_warn!("Failed copying into alloc: {:?}", err);
-                     return Err(err.into());
-                 }
--                if fixup.skip == 0 {
--                    let res = alloc.write::<u64>(fixup.target_offset, &fixup.pointer_value);
-+                if let PointerFixupEntry::Fixup { pointer_value, .. } = fixup {
-+                    let res = alloc.write::<u64>(fixup_offset, pointer_value);
-                     if let Err(err) = res {
-                         pr_warn!("Failed copying ptr into alloc: {:?}", err);
-                         return Err(err.into());
 diff --git a/include/linux/compiler_types.h b/include/linux/compiler_types.h
 index d3318a3c25777..996e9af3f9917 100644
 --- a/include/linux/compiler_types.h
@@ -438,7 +331,7 @@ index 293bbd9ac3f4e..2c1c9759e2788 100644
  }
  
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 045f83ad261e2..e51f38edb32e3 100644
+index 854984967fe29..cb1140f0f4d87 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -678,11 +678,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
@@ -517,7 +410,7 @@ index 045f83ad261e2..e51f38edb32e3 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index e71302282671c..da2e697a744b8 100644
+index 3eaeceda71b00..868c37c7a62f7 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -2458,11 +2458,8 @@ static void task_numa_find_cpu(struct task_numa_env *env,
@@ -730,7 +623,7 @@ index e71302282671c..da2e697a744b8 100644
  			continue;
  
  		/* Account external pressure for the energy estimation */
-@@ -9949,15 +9902,11 @@ static unsigned long task_h_load(struct task_struct *p)
+@@ -9933,15 +9886,11 @@ static unsigned long task_h_load(struct task_struct *p)
  }
  #endif /* !CONFIG_FAIR_GROUP_SCHED */
  
@@ -747,7 +640,7 @@ index e71302282671c..da2e697a744b8 100644
  
  	decayed |= __update_blocked_others(rq, &done);
  	decayed |= __update_blocked_fair(rq, &done);
-@@ -9965,7 +9914,15 @@ static void sched_balance_update_blocked_averages(int cpu)
+@@ -9949,7 +9898,15 @@ static void sched_balance_update_blocked_averages(int cpu)
  	update_blocked_load_status(rq, !done);
  	if (decayed)
  		cpufreq_update_util(rq, 0);
@@ -764,7 +657,7 @@ index e71302282671c..da2e697a744b8 100644
  }
  
  /********** Helpers for sched_balance_find_src_group ************************/
-@@ -12912,12 +12869,17 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12896,12 +12853,17 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  	}
  	rcu_read_unlock();
  
@@ -786,7 +679,7 @@ index e71302282671c..da2e697a744b8 100644
  	for_each_domain(this_cpu, sd) {
  		u64 domain_cost;
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 93fce4bbff5ea..48df8001e260d 100644
+index bd350e40859d8..2405a6b38b7dd 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1403,12 +1403,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
