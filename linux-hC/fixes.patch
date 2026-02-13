@@ -300,6 +300,100 @@ index 29dd5b91dd7d6..428464bb81b34 100644
  {
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
+diff --git a/io_uring/io-wq.c b/io_uring/io-wq.c
+index 2fa7d3601edb0..f42d573b5b173 100644
+--- a/io_uring/io-wq.c
++++ b/io_uring/io-wq.c
+@@ -34,6 +34,7 @@ enum {
+ 
+ enum {
+ 	IO_WQ_BIT_EXIT		= 0,	/* wq exiting */
++	IO_WQ_BIT_EXIT_ON_IDLE	= 1,	/* allow all workers to exit on idle */
+ };
+ 
+ enum {
+@@ -706,9 +707,13 @@ static int io_wq_worker(void *data)
+ 		raw_spin_lock(&acct->workers_lock);
+ 		/*
+ 		 * Last sleep timed out. Exit if we're not the last worker,
+-		 * or if someone modified our affinity.
++		 * or if someone modified our affinity. If wq is marked
++		 * idle-exit, drop the worker as well. This is used to avoid
++		 * keeping io-wq workers around for tasks that no longer have
++		 * any active io_uring instances.
+ 		 */
+-		if (last_timeout && (exit_mask || acct->nr_workers > 1)) {
++		if ((last_timeout && (exit_mask || acct->nr_workers > 1)) ||
++		    test_bit(IO_WQ_BIT_EXIT_ON_IDLE, &wq->state)) {
+ 			acct->nr_workers--;
+ 			raw_spin_unlock(&acct->workers_lock);
+ 			__set_current_state(TASK_RUNNING);
+@@ -963,6 +968,24 @@ static bool io_wq_worker_wake(struct io_worker *worker, void *data)
+ 	return false;
+ }
+ 
++void io_wq_set_exit_on_idle(struct io_wq *wq, bool enable)
++{
++	if (!wq->task)
++		return;
++
++	if (!enable) {
++		clear_bit(IO_WQ_BIT_EXIT_ON_IDLE, &wq->state);
++		return;
++	}
++
++	if (test_and_set_bit(IO_WQ_BIT_EXIT_ON_IDLE, &wq->state))
++		return;
++
++	rcu_read_lock();
++	io_wq_for_each_worker(wq, io_wq_worker_wake, NULL);
++	rcu_read_unlock();
++}
++
+ static void io_run_cancel(struct io_wq_work *work, struct io_wq *wq)
+ {
+ 	do {
+diff --git a/io_uring/io-wq.h b/io_uring/io-wq.h
+index 774abab54732e..94b14742b7032 100644
+--- a/io_uring/io-wq.h
++++ b/io_uring/io-wq.h
+@@ -41,6 +41,7 @@ struct io_wq_data {
+ struct io_wq *io_wq_create(unsigned bounded, struct io_wq_data *data);
+ void io_wq_exit_start(struct io_wq *wq);
+ void io_wq_put_and_exit(struct io_wq *wq);
++void io_wq_set_exit_on_idle(struct io_wq *wq, bool enable);
+ 
+ void io_wq_enqueue(struct io_wq *wq, struct io_wq_work *work);
+ void io_wq_hash_work(struct io_wq_work *work, void *val);
+diff --git a/io_uring/tctx.c b/io_uring/tctx.c
+index 6d6f44215ec80..91f4b830b77b9 100644
+--- a/io_uring/tctx.c
++++ b/io_uring/tctx.c
+@@ -122,6 +122,14 @@ int __io_uring_add_tctx_node(struct io_ring_ctx *ctx)
+ 				return ret;
+ 		}
+ 	}
++
++	/*
++	 * Re-activate io-wq keepalive on any new io_uring usage. The wq may have
++	 * been marked for idle-exit when the task temporarily had no active
++	 * io_uring instances.
++	 */
++	if (tctx->io_wq)
++		io_wq_set_exit_on_idle(tctx->io_wq, false);
+ 	if (!xa_load(&tctx->xa, (unsigned long)ctx)) {
+ 		node = kmalloc(sizeof(*node), GFP_KERNEL);
+ 		if (!node)
+@@ -183,6 +191,9 @@ __cold void io_uring_del_tctx_node(unsigned long index)
+ 	if (tctx->last == node->ctx)
+ 		tctx->last = NULL;
+ 	kfree(node);
++
++	if (xa_empty(&tctx->xa) && tctx->io_wq)
++		io_wq_set_exit_on_idle(tctx->io_wq, true);
+ }
+ 
+ __cold void io_uring_clean_tctx(struct io_uring_task *tctx)
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
 index 293bbd9ac3f4e..2c1c9759e2788 100644
 --- a/kernel/rcu/tree.c
@@ -331,7 +425,7 @@ index 293bbd9ac3f4e..2c1c9759e2788 100644
  }
  
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 854984967fe29..cb1140f0f4d87 100644
+index 854984967fe29..9dc6e37dcad19 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -678,11 +678,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
@@ -409,6 +503,20 @@ index 854984967fe29..cb1140f0f4d87 100644
  	__releases(rq->lock)
  {
  	struct rq *rq = this_rq();
+@@ -10729,10 +10724,9 @@ void sched_mm_cid_exit(struct task_struct *t)
+ 					return;
+ 				/*
+ 				 * Mode change. The task has the CID unset
+-				 * already. The CPU CID is still valid and
+-				 * does not have MM_CID_TRANSIT set as the
+-				 * mode change has just taken effect under
+-				 * mm::mm_cid::lock. Drop it.
++				 * already and dealt with an eventually set
++				 * TRANSIT bit. If the CID is owned by the CPU
++				 * then drop it.
+ 				 */
+ 				mm_drop_cid_on_cpu(mm, this_cpu_ptr(mm->mm_cid.pcpu));
+ 			}
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
 index 3eaeceda71b00..868c37c7a62f7 100644
 --- a/kernel/sched/fair.c
@@ -679,7 +787,7 @@ index 3eaeceda71b00..868c37c7a62f7 100644
  	for_each_domain(this_cpu, sd) {
  		u64 domain_cost;
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index bd350e40859d8..2405a6b38b7dd 100644
+index bd350e40859d8..db75b53944878 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1403,12 +1403,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
@@ -759,6 +867,19 @@ index bd350e40859d8..2405a6b38b7dd 100644
  {
  	raw_spin_rq_unlock(rq);
  	local_irq_enable();
+@@ -3758,8 +3762,10 @@ static __always_inline void mm_unset_cid_on_task(struct task_struct *t)
+ static __always_inline void mm_drop_cid_on_cpu(struct mm_struct *mm, struct mm_cid_pcpu *pcp)
+ {
+ 	/* Clear the ONCPU bit, but do not set UNSET in the per CPU storage */
+-	pcp->cid = cpu_cid_to_cid(pcp->cid);
+-	mm_drop_cid(mm, pcp->cid);
++	if (cid_on_cpu(pcp->cid)) {
++		pcp->cid = cpu_cid_to_cid(pcp->cid);
++		mm_drop_cid(mm, pcp->cid);
++	}
+ }
+ 
+ static inline unsigned int __mm_get_cid(struct mm_struct *mm, unsigned int max_cids)
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
