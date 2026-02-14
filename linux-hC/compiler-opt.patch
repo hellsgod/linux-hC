@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index d3a8482bdbd0d..a226e4dec70f0 100644
+index d3a8482bdbd0..66e5ce522992 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -464,9 +464,60 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
@@ -29,7 +29,7 @@ index d3a8482bdbd0d..a226e4dec70f0 100644
 +  -plugin-opt=unroll-max-iteration-count-to-analyze=40 \
 +  -plugin-opt=unroll-allow-partial -plugin-opt=unroll-partial-threshold=240 \
 +  -plugin-opt=enable-unroll-and-jam -plugin-opt=unroll-and-jam-threshold=60 \
-+  -plugin-opt=enable-loop-versioning-licm -plugin-opt=enable-loop-flatten \
++  -plugin-opt=enable-loop-versioning-licm \
 +  -plugin-opt=enable-unswitch-cost-multiplier \
 +  -plugin-opt=extra-vectorizer-passes \
 +  -plugin-opt=enable-epilogue-vectorization -plugin-opt=enable-early-exit-vectorization \
@@ -114,7 +114,7 @@ index d3a8482bdbd0d..a226e4dec70f0 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index fa79feb8fe57b..76d71921a001c 100644
+index fa79feb8fe57..76d71921a001 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -1560,10 +1560,10 @@ choice
