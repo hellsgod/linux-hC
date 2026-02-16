@@ -145,7 +145,7 @@ if _is_lto_kernel && [ "$_use_lto_suffix" = "yes"  ]; then
 elif ! _is_lto_kernel && [ "$_use_gcc_suffix" = "yes" ]; then
     _pkgsuffix=hC-gcc
 else
-    _pkgsuffix=hC
+    _pkgsuffix=hC-reflex
 fi
 
 pkgbase="linux-$_pkgsuffix"
@@ -188,6 +188,7 @@ source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
     "config"
     "0001-poc-selector.patch"
+    "0001-Reflex-CPUFreq-Governor-v0.1.0.patch"
     "base.patch"
     "compiler-opt.patch"
     "cpuidle.patch"
@@ -652,8 +653,9 @@ for _p in "${pkgname[@]}"; do
 done
 
 b2sums=('cbd50ebd08bd10ac95397b61757a330bf670ab32949350e8ed69d82f1b663b37315e31e289b8eb2fea23be9f19c79c2e3b90beadd9349a1c1f8cb0644a699367'
-        '6139f342af488f5de4b7e0bf9d248b9452d0eab7f6184488d454585712959cf5e3017fd8b5c162cbb65e2ae3413f08125ee4d2220332c495c136c8c73fb39ae0'
+        '689bb008da9f85d01d0bb1de78ec7774ce044fb732b9628f648ab90f8bd6e875a8ccfb17d22f8b70bc18b24b64dff5e13f83c57d1e0455e65dfbe22d014daf5a'
         '8b86989d86d7a761df4135b697d0d4792192a05467548f12804114f4d19e236e8a8fdbd4fcc82d607adced5e8f4d35b43b6c759c0c09b8fa3ec6269440d96b69'
+        '94a61354c081c54584f765cecf5b5723a88a858d1ee0a0ba2c2b479b10c7f2b5439d380645d316e851a0461320ece1be9b8bed163f63cdc9074775c6c5c2287a'
         '2c5b957b887fa4d3dbc88016514e75d784ff3c0df4840e2033fa91c719389f34637208044cda881fb7bf0ac6aa140dd6c90b91c574bf803fffd044fd51c46b25'
         '77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4'
         'e16093fa709c72d681fe1d282db39121c0ba9e549afe26b60bed936296073ab68235de4dc0c4b63d5f3fc490a57d779988b825056e667a35890907ffd6519407'

@@ -1,4 +1,4 @@
-pkgbase = linux-hC
+pkgbase = linux-hC-reflex
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
 	pkgver = 6.19.2
 	pkgrel = 1
@@ -24,6 +24,7 @@ pkgbase = linux-hC
 	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.2.tar.xz
 	source = config
 	source = 0001-poc-selector.patch
+	source = 0001-Reflex-CPUFreq-Governor-v0.1.0.patch
 	source = base.patch
 	source = compiler-opt.patch
 	source = cpuidle.patch
@@ -36,8 +37,9 @@ pkgbase = linux-hC
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0003-Fix-compile-for-6.19.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/sched/0001-bore.patch
 	b2sums = cbd50ebd08bd10ac95397b61757a330bf670ab32949350e8ed69d82f1b663b37315e31e289b8eb2fea23be9f19c79c2e3b90beadd9349a1c1f8cb0644a699367
-	b2sums = 6139f342af488f5de4b7e0bf9d248b9452d0eab7f6184488d454585712959cf5e3017fd8b5c162cbb65e2ae3413f08125ee4d2220332c495c136c8c73fb39ae0
+	b2sums = 689bb008da9f85d01d0bb1de78ec7774ce044fb732b9628f648ab90f8bd6e875a8ccfb17d22f8b70bc18b24b64dff5e13f83c57d1e0455e65dfbe22d014daf5a
 	b2sums = 8b86989d86d7a761df4135b697d0d4792192a05467548f12804114f4d19e236e8a8fdbd4fcc82d607adced5e8f4d35b43b6c759c0c09b8fa3ec6269440d96b69
+	b2sums = 94a61354c081c54584f765cecf5b5723a88a858d1ee0a0ba2c2b479b10c7f2b5439d380645d316e851a0461320ece1be9b8bed163f63cdc9074775c6c5c2287a
 	b2sums = 2c5b957b887fa4d3dbc88016514e75d784ff3c0df4840e2033fa91c719389f34637208044cda881fb7bf0ac6aa140dd6c90b91c574bf803fffd044fd51c46b25
 	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
 	b2sums = e16093fa709c72d681fe1d282db39121c0ba9e549afe26b60bed936296073ab68235de4dc0c4b63d5f3fc490a57d779988b825056e667a35890907ffd6519407
@@ -50,7 +52,7 @@ pkgbase = linux-hC
 	b2sums = ea69dc26bf4f55e984fb2f3c2c70ccf537307ab2a2c156077202410d7ac989d1552d780928866c177327b4260634ad04946e3ea1f04705d5549e65574bc3e8e2
 	b2sums = e4046361f9778c5cab2308dde2d3aa75bd58ecaeb0e173e9985f18d4d9eec6ed87651c12969b5c9bf325192414348f6ad2509ac1d2648bc2383ebe52d27f8bb0
 
-pkgname = linux-hC
+pkgname = linux-hC-reflex
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel and modules
 	depends = coreutils
 	depends = kmod
@@ -64,19 +66,19 @@ pkgname = linux-hC
 	provides = KSMBD-MODULE
 	provides = NTSYNC-MODULE
 
-pkgname = linux-hC-headers
+pkgname = linux-hC-reflex-headers
 	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel
 	depends = pahole
-	depends = linux-hC
+	depends = linux-hC-reflex
 	depends = clang
 	depends = llvm
 	depends = lld
 
-pkgname = linux-hC-nvidia-open
-	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC kernel
+pkgname = linux-hC-reflex-nvidia-open
+	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC-reflex kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=6.19.2-1
+	depends = linux-hC-reflex=6.19.2-1
 	depends = nvidia-utils=590.48.01
 	depends = libglvnd
 	provides = NVIDIA-MODULE
-	conflicts = linux-hC-nvidia
+	conflicts = linux-hC-reflex-nvidia
