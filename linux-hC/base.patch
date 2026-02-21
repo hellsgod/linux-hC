@@ -874,38 +874,6 @@ index f648044466d5..61c333708cba 100644
  long prepare_to_wait_event(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry, int state);
  void finish_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
  long wait_woken(struct wait_queue_entry *wq_entry, unsigned mode, long timeout);
-diff --git a/include/net/sock.h b/include/net/sock.h
-index aafe8bdb2c0f..390520828e85 100644
---- a/include/net/sock.h
-+++ b/include/net/sock.h
-@@ -1630,10 +1630,17 @@ static inline void sk_mem_charge(struct sock *sk, int size)
- 
- static inline void sk_mem_uncharge(struct sock *sk, int size)
- {
-+	int reclaimable, reclaim_threshold;
-+
-+	reclaim_threshold = 64 * 1024;
- 	if (!sk_has_account(sk))
- 		return;
- 	sk_forward_alloc_add(sk, size);
--	sk_mem_reclaim(sk);
-+	reclaimable = sk->sk_forward_alloc - sk_unused_reserved_mem(sk);
-+	if (reclaimable > reclaim_threshold) {
-+		reclaimable -= reclaim_threshold;
-+		__sk_mem_reclaim(sk, reclaimable);
-+	}
- }
- 
- void __sk_charge(struct sock *sk, gfp_t gfp);
-@@ -3030,7 +3037,7 @@ void sk_get_meminfo(const struct sock *sk, u32 *meminfo);
-  * platforms.  This makes socket queueing behavior and performance
-  * not depend upon such differences.
-  */
--#define _SK_MEM_PACKETS		256
-+#define _SK_MEM_PACKETS		1024
- #define _SK_MEM_OVERHEAD	SKB_TRUESIZE(256)
- #define SK_WMEM_DEFAULT		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
- #define SK_RMEM_DEFAULT		(_SK_MEM_OVERHEAD * _SK_MEM_PACKETS)
 diff --git a/init/Kconfig b/init/Kconfig
 index fa79feb8fe57..76b3a9f9563b 100644
 --- a/init/Kconfig
