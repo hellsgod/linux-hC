@@ -1,6 +1,6 @@
-## linux-hC
+## linux-hC-mobile
 
-This repository is primarly for my personal use. linux-hC and linux-hC-rc uses the PKGBUILD provided by [CachyOS](https://github.com/CachyOS/linux-cachyos)
+This repository branch master-mobile is primarly for my personal use and uses a compiler-opt Patch optimized for my AMD Ryzen 7 8845HS mobile platform. linux-hC and linux-hC-rc uses the PKGBUILD provided by [CachyOS](https://github.com/CachyOS/linux-cachyos)
 
 I modified it slightly for my personal use and I use patches from ZEN/Cachy/Clear/Xanmod/pf-kernel to build a kernel for my liking. You find the repositories for these patches in my linux kernel [REPO](https://github.com/hellsgod/linux)
 
