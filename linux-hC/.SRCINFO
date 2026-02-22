@@ -1,4 +1,4 @@
-pkgbase = linux-hC
+pkgbase = linux-hC-mobile
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
 	pkgver = 6.19.3
 	pkgrel = 1
@@ -39,7 +39,7 @@ pkgbase = linux-hC
 	b2sums = 6139f342af488f5de4b7e0bf9d248b9452d0eab7f6184488d454585712959cf5e3017fd8b5c162cbb65e2ae3413f08125ee4d2220332c495c136c8c73fb39ae0
 	b2sums = 8b86989d86d7a761df4135b697d0d4792192a05467548f12804114f4d19e236e8a8fdbd4fcc82d607adced5e8f4d35b43b6c759c0c09b8fa3ec6269440d96b69
 	b2sums = f538acb890e5a0306d71f4056a3b8ae4ec0b82d090d490a04e94babf6c3dca85dbe7a326acd1206834f1a45c2e96a74182a849d093e5ecef21c99f053fd3329e
-	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
+	b2sums = 33dab3d67d1339736dceecf2658a85baf8984dbc1f6b1258ce57bc4247e4f0515bb30e289b8bd6c3a717b8a2f54b00ea58709559ab01bf945086fba32a1efd96
 	b2sums = e16093fa709c72d681fe1d282db39121c0ba9e549afe26b60bed936296073ab68235de4dc0c4b63d5f3fc490a57d779988b825056e667a35890907ffd6519407
 	b2sums = 8571cc061a0b461351db55857b329adcd5179e577eb1ea416bdb7fc2bf32c9c5d5239ec8391b5254fcc2979bb4e4e972c9c57dd9e9f1370e55b9f18854672ee3
 	b2sums = 0bdb04a515c04ca857aac07629375514bc9ef4c4becc2ae43b9937d90a229a4ecd5abc345d4b379ca04ce453bb26e6194951bed107c946f16a497c0e2ae053a6
@@ -50,7 +50,7 @@ pkgbase = linux-hC
 	b2sums = ea69dc26bf4f55e984fb2f3c2c70ccf537307ab2a2c156077202410d7ac989d1552d780928866c177327b4260634ad04946e3ea1f04705d5549e65574bc3e8e2
 	b2sums = f28396e0119cdaa5d0eb4124cecee5ae51de178e7418120459437fe57d84721c3ebf08dd02cb91c54e21e77b25e2ed96bd1b2430e1d4d4f407e6b2b86c2d478a
 
-pkgname = linux-hC
+pkgname = linux-hC-mobile
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel and modules
 	depends = coreutils
 	depends = kmod
@@ -64,19 +64,19 @@ pkgname = linux-hC
 	provides = KSMBD-MODULE
 	provides = NTSYNC-MODULE
 
-pkgname = linux-hC-headers
+pkgname = linux-hC-mobile-headers
 	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel
 	depends = pahole
-	depends = linux-hC
+	depends = linux-hC-mobile
 	depends = clang
 	depends = llvm
 	depends = lld
 
-pkgname = linux-hC-nvidia-open
-	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC kernel
+pkgname = linux-hC-mobile-nvidia-open
+	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC-mobile kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=6.19.3-1
+	depends = linux-hC-mobile=6.19.3-1
 	depends = nvidia-utils=590.48.01
 	depends = libglvnd
 	provides = NVIDIA-MODULE
-	conflicts = linux-hC-nvidia
+	conflicts = linux-hC-mobile-nvidia
