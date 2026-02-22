@@ -140,11 +140,11 @@ _is_lto_kernel() {
 }
 
 if _is_lto_kernel && [ "$_use_lto_suffix" = "yes" ]; then
-    _pkgsuffix="hC-rc-lto"
+    _pkgsuffix="hC-rc-mobile-lto"
 elif ! _is_lto_kernel && [ "$_use_gcc_suffix" = "yes" ]; then
-    _pkgsuffix="hC-rc-gcc"
+    _pkgsuffix="hC-rc-mobile-gcc"
 else
-    _pkgsuffix="hC-rc"
+    _pkgsuffix="hC-rc-mobile"
 fi
 
 pkgbase="linux-$_pkgsuffix"
