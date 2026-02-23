@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index 17cfa11ca716..4ddfde19d224 100644
+index d3a8482bdbd0..66e5ce522992 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -464,9 +464,60 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
@@ -29,7 +29,7 @@ index 17cfa11ca716..4ddfde19d224 100644
 +  -plugin-opt=unroll-max-iteration-count-to-analyze=40 \
 +  -plugin-opt=unroll-allow-partial -plugin-opt=unroll-partial-threshold=240 \
 +  -plugin-opt=enable-unroll-and-jam -plugin-opt=unroll-and-jam-threshold=60 \
-+  -plugin-opt=enable-loop-versioning-licm -plugin-opt=enable-loop-flatten \
++  -plugin-opt=enable-loop-versioning-licm \
 +  -plugin-opt=enable-unswitch-cost-multiplier \
 +  -plugin-opt=extra-vectorizer-passes \
 +  -plugin-opt=enable-epilogue-vectorization -plugin-opt=enable-early-exit-vectorization \
@@ -86,7 +86,7 @@ index 17cfa11ca716..4ddfde19d224 100644
 +  -mllvm -basic-aa-recphi -mllvm -basic-aa-separate-storage \
 +  -mllvm -enable-gvn-memoryssa \
 +  -mllvm -dse-optimize-memoryssa \
-+  -mllvm -enable-dse-partial-overwrite-tracking -mllvm -enable-dse-partial-store-merging \
++  -mllvm -enable-dse-partial-overwrite-tracking \
 +  -mllvm -enable-constraint-elimination \
 +  -mllvm -aggressive-instcombine-max-scan-instrs=260 \
 +  -mllvm -memdep-block-scan-limit=40 \
@@ -102,7 +102,7 @@ index 17cfa11ca716..4ddfde19d224 100644
  KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -867,8 +937,8 @@ endif # need-config
+@@ -886,8 +956,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -114,10 +114,10 @@ index 17cfa11ca716..4ddfde19d224 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index cab3ad28ca49..5fe5d2820759 100644
+index fa79feb8fe57..76d71921a001 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1535,10 +1535,10 @@ choice
+@@ -1560,10 +1560,10 @@ choice
  	default CC_OPTIMIZE_FOR_PERFORMANCE
  
  config CC_OPTIMIZE_FOR_PERFORMANCE
