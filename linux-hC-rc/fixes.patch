@@ -395,10 +395,28 @@ index 759777694c78d..6270249e19078 100644
  	 * There's no userspace yet to cause hotplug operations; hence all the
  	 * CPU masks are stable and all blatant races in the below code cannot
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index eea99ec01a3fb..bdc6e5c140297 100644
+index eea99ec01a3fb..44f1c317f7baa 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12209,27 +12209,11 @@ void update_max_interval(void)
+@@ -11862,12 +11862,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+ 		 * still unbalanced. ld_moved simply stays zero, so it is
+ 		 * correctly treated as an imbalance.
+ 		 */
+-		env.loop_max  = min(sysctl_sched_nr_migrate, busiest->nr_running);
+-
+ more_balance:
+ 		rq_lock_irqsave(busiest, &rf);
+ 		update_rq_clock(busiest);
+ 
++		if (!env.loop_max)
++			env.loop_max  = min(sysctl_sched_nr_migrate, busiest->cfs.h_nr_queued);
++		else
++			env.loop_max  = min(env.loop_max, busiest->cfs.h_nr_queued);
++
+ 		/*
+ 		 * cur_ld_moved - load moved in current iteration
+ 		 * ld_moved     - cumulative load moved across iterations
+@@ -12209,27 +12212,11 @@ void update_max_interval(void)
  	max_load_balance_interval = HZ*num_online_cpus()/10;
  }
  
@@ -427,7 +445,7 @@ index eea99ec01a3fb..bdc6e5c140297 100644
  	if (cost > sd->max_newidle_lb_cost) {
  		/*
  		 * Track max cost of a domain to make sure to not delay the
-@@ -12277,7 +12261,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
+@@ -12277,7 +12264,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
  		 * Decay the newidle max times here because this is a regular
  		 * visit to all the domains.
  		 */
@@ -436,7 +454,7 @@ index eea99ec01a3fb..bdc6e5c140297 100644
  		max_cost += sd->max_newidle_lb_cost;
  
  		/*
-@@ -12920,22 +12904,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12920,22 +12907,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  			break;
  
  		if (sd->flags & SD_BALANCE_NEWIDLE) {
@@ -459,7 +477,7 @@ index eea99ec01a3fb..bdc6e5c140297 100644
  
  			pulled_task = sched_balance_rq(this_cpu, this_rq,
  						   sd, CPU_NEWLY_IDLE,
-@@ -12943,14 +12911,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12943,14 +12914,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  			t1 = sched_clock_cpu(this_cpu);
  			domain_cost = t1 - t0;
