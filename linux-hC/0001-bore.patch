@@ -1,7 +1,7 @@
-From bdcb42755b1f20b8be42c3063429979a8f8cad5f Mon Sep 17 00:00:00 2001
+From 17a042debb0ce9cde7ef9396bf615f86dcef24c8 Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Sun, 22 Feb 2026 14:16:05 +0900
-Subject: [PATCH] linux6.19.3-bore-6.7.1
+Date: Tue, 24 Feb 2026 17:03:07 +0900
+Subject: [PATCH] linux6.19.3-bore-6.7.2
 
 ---
  include/linux/sched.h      |  28 +++
@@ -70,7 +70,7 @@ index 5f00b5ed0f..1309df5d7d 100644
  #ifdef CONFIG_SCHED_CORE
 diff --git a/include/linux/sched/bore.h b/include/linux/sched/bore.h
 new file mode 100644
-index 0000000000..f603f7c4b3
+index 0000000000..904b0c35ea
 --- /dev/null
 +++ b/include/linux/sched/bore.h
 @@ -0,0 +1,46 @@
@@ -87,7 +87,7 @@ index 0000000000..f603f7c4b3
 +#define SCHED_BORE_AUTHOR   "Masahito Suzuki"
 +#define SCHED_BORE_PROGNAME "BORE CPU Scheduler modification"
 +
-+#define SCHED_BORE_VERSION  "6.7.1"
++#define SCHED_BORE_VERSION  "6.7.2"
 +
 +extern u8   __read_mostly sched_bore;
 +DECLARE_STATIC_KEY_TRUE(sched_bore_key);
@@ -263,7 +263,7 @@ index 8ae86371dd..b688084bce 100644
 +obj-$(CONFIG_SCHED_BORE) += bore.o
 diff --git a/kernel/sched/bore.c b/kernel/sched/bore.c
 new file mode 100644
-index 0000000000..4d4afe7248
+index 0000000000..11e79d1653
 --- /dev/null
 +++ b/kernel/sched/bore.c
 @@ -0,0 +1,470 @@
@@ -600,7 +600,7 @@ index 0000000000..4d4afe7248
 +		SCHED_BORE_PROGNAME, SCHED_BORE_VERSION, SCHED_BORE_AUTHOR);
 +
 +	for (int i = 1; i <= BURST_CACHE_SAMPLE_LIMIT; i++)
-+		bore_reciprocal_lut[i] = (u32)((0xffffffffULL + i) / i);
++		bore_reciprocal_lut[i] = (u32)div64_u64(0xffffffffULL + i, i);
 +
 +	reset_task_bore(&init_task);
 +	update_inherit_type();
