@@ -1,6 +1,6 @@
 pkgbase = linux-hC-reflex
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 6.19.4
+	pkgver = 6.19.5
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-reflex
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.4.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.5.tar.xz
 	source = config
 	source = 0001-poc-selector.patch
 	source = 0001-Reflex-CPUFreq-Governor.patch
@@ -36,9 +36,9 @@ pkgbase = linux-hC-reflex
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0003-Fix-compile-for-6.19.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/sched/0001-bore.patch
-	b2sums = b0757dd8a2c2bb7b091fb757eb2a7915bf40f9c7c37be8f8ae35b094939c4d287a5ebbc7ff0af4a74cb488f1a4eafd4756167ed51ef1ddaa8726ef1d1083ce3a
+	b2sums = 85caa51c9cbee64462ff8030da0f6e3f098c0114eeb1c60d3ec327a5d9f9bd98d77969b94ea2a7d73e8d95934d441be8118b39c141fc7008c7d2677572afbf89
 	b2sums = 5ed7301a33caf0387ecb94f6aadba4b1bcec6a803506f354c137345078b4232a0d0fc25e17865efd3a064a0d498b7524ac73b0a9d28755340ed3fb716f0aed72
-	b2sums = 75c3675cf06d733022d154c13c034bcde8f904d155576eccb2c7126d1a732970cfc148289b1f124e28334da5a8e3ce2f715b48449b4a0a0271384005af3c1b92
+	b2sums = f778e1121d0714a38464c2a1ecbae3c16b525ed4756340c5b6d251543a5b6c0dc0544979fd38c1c7a6f1f6cf166ce25189940f8d3e7d8e69d271a2807895a0cd
 	b2sums = e998343e94ec6145660abff1b8d29125132aea74d3d143c3066713a35385bc7b4ee8a7355346b99762b8f4d4885bffcf821c4e7fda6f2ee961a28222608ac4e8
 	b2sums = 4d2f86f3d04ae68e174b0a5a9e11357544bed0d2b17a0575642952b76dc0db1c87e9d1141cc0cf5cacd7ac3e366e27e4cda782787314c41c5f854fa00ae7fe10
 	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
@@ -77,7 +77,7 @@ pkgname = linux-hC-reflex-headers
 pkgname = linux-hC-reflex-nvidia-open
 	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC-reflex kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-reflex=6.19.4-1
+	depends = linux-hC-reflex=6.19.5-1
 	depends = nvidia-utils=590.48.01
 	depends = libglvnd
 	provides = NVIDIA-MODULE
