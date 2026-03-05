@@ -1,15 +1,15 @@
-From 17a042debb0ce9cde7ef9396bf615f86dcef24c8 Mon Sep 17 00:00:00 2001
+From 816a7b9e7da48e17972a9133dbfa552a2429782e Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Tue, 24 Feb 2026 17:03:07 +0900
-Subject: [PATCH] linux6.19.3-bore-6.7.2
+Date: Thu, 5 Mar 2026 22:55:23 +0900
+Subject: [PATCH] linux6.19.3-bore-6.7.3
 
 ---
  include/linux/sched.h      |  28 +++
  include/linux/sched/bore.h |  46 ++++
  init/Kconfig               |  17 ++
  kernel/Kconfig.hz          |  17 ++
- kernel/exit.c              |   2 +-
- kernel/fork.c              |  11 +-
+ kernel/exit.c              |   4 +
+ kernel/fork.c              |  13 +
  kernel/futex/waitwake.c    |  11 +
  kernel/sched/Makefile      |   1 +
  kernel/sched/bore.c        | 470 +++++++++++++++++++++++++++++++++++++
@@ -18,12 +18,12 @@ Subject: [PATCH] linux6.19.3-bore-6.7.2
  kernel/sched/fair.c        | 124 +++++++++-
  kernel/sched/features.h    |   7 +
  kernel/sched/sched.h       |   9 +
- 14 files changed, 807 insertions(+), 13 deletions(-)
+ 14 files changed, 813 insertions(+), 11 deletions(-)
  create mode 100644 include/linux/sched/bore.h
  create mode 100644 kernel/sched/bore.c
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 5f00b5ed0f..1309df5d7d 100644
+index 5f00b5ed0f..55f79b60cc 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -816,6 +816,31 @@ struct kmap_ctrl {
@@ -52,7 +52,7 @@ index 5f00b5ed0f..1309df5d7d 100644
 +	bool			futex_waiting;
 +	struct bore_bc	subtree;
 +	struct bore_bc	group;
-+} ____cacheline_aligned;
++};
 +#endif /* CONFIG_SCHED_BORE */
 +
  struct task_struct {
@@ -70,7 +70,7 @@ index 5f00b5ed0f..1309df5d7d 100644
  #ifdef CONFIG_SCHED_CORE
 diff --git a/include/linux/sched/bore.h b/include/linux/sched/bore.h
 new file mode 100644
-index 0000000000..904b0c35ea
+index 0000000000..0d433c4ef2
 --- /dev/null
 +++ b/include/linux/sched/bore.h
 @@ -0,0 +1,46 @@
@@ -87,7 +87,7 @@ index 0000000000..904b0c35ea
 +#define SCHED_BORE_AUTHOR   "Masahito Suzuki"
 +#define SCHED_BORE_PROGNAME "BORE CPU Scheduler modification"
 +
-+#define SCHED_BORE_VERSION  "6.7.2"
++#define SCHED_BORE_VERSION  "6.7.3"
 +
 +extern u8   __read_mostly sched_bore;
 +DECLARE_STATIC_KEY_TRUE(sched_bore_key);
@@ -174,20 +174,23 @@ index ce1435cb08..9eee2005e2 100644
 +	 an unnecessarily large base slice, resulting in high scheduling
 +	 latency and poor system responsiveness.
 diff --git a/kernel/exit.c b/kernel/exit.c
-index 8a87021211..f5e454293c 100644
+index 8a87021211..292ed28203 100644
 --- a/kernel/exit.c
 +++ b/kernel/exit.c
-@@ -147,7 +147,7 @@ static void __unhash_process(struct release_task_post *post, struct task_struct
+@@ -147,7 +147,11 @@ static void __unhash_process(struct release_task_post *post, struct task_struct
  		detach_pid(post->pids, p, PIDTYPE_SID);
  
  		list_del_rcu(&p->tasks);
--		list_del_init(&p->sibling);
++#ifdef CONFIG_SCHED_BORE
 +		list_del_rcu(&p->sibling);
++#else /* !CONFIG_SCHED_BORE */
+ 		list_del_init(&p->sibling);
++#endif /* CONFIG_SCHED_BORE */
  		__this_cpu_dec(process_counts);
  	}
  	list_del_rcu(&p->thread_node);
 diff --git a/kernel/fork.c b/kernel/fork.c
-index b1f3915d5f..573f973f46 100644
+index b1f3915d5f..3699720c67 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -116,6 +116,10 @@
@@ -213,12 +216,15 @@ index b1f3915d5f..573f973f46 100644
  	/*
  	 * Make it visible to the rest of the system, but dont wake it up yet.
  	 * Need tasklist lock for parent etc handling!
-@@ -2433,7 +2442,7 @@ __latent_entropy struct task_struct *copy_process(
+@@ -2433,7 +2442,11 @@ __latent_entropy struct task_struct *copy_process(
  			 */
  			p->signal->has_child_subreaper = p->real_parent->signal->has_child_subreaper ||
  							 p->real_parent->signal->is_child_subreaper;
--			list_add_tail(&p->sibling, &p->real_parent->children);
++#ifdef CONFIG_SCHED_BORE
 +			list_add_tail_rcu(&p->sibling, &p->real_parent->children);
++#else /* !CONFIG_SCHED_BORE */
+ 			list_add_tail(&p->sibling, &p->real_parent->children);
++#endif /* CONFIG_SCHED_BORE */
  			list_add_tail_rcu(&p->tasks, &init_task.tasks);
  			attach_pid(p, PIDTYPE_TGID);
  			attach_pid(p, PIDTYPE_PGID);
