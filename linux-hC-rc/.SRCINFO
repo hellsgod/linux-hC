@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc-reflex
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.0.rc2
+	pkgver = 7.0.rc3
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,12 +21,13 @@ pkgbase = linux-hC-rc-reflex
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc2.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc3.tar.gz
 	source = config
 	source = 0001-Reflex-CPUFreq-Governor.patch
 	source = base.patch
 	source = compiler-opt.patch
 	source = fixes.patch
+	source = nap.patch
 	source = poc-selector.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/dkms-clang.patch
 	source = nvidia-open-590.48.01.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/590.48.01.tar.gz
@@ -35,12 +36,13 @@ pkgbase = linux-hC-rc-reflex
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0003-Fix-compile-for-6.19.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0004-HACK-kernel-open-Makefile-Remove-PAHOLE_VARIABLE.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 930898078f95efb71e234346b09b14e5904e044f1104f1b907cad885cf0948f331bb9981991dc0b5f62a75a66b4329ec1b50b7d40ec128e5d15d4b83e4268b32
-	b2sums = 5ad2c81198fac6e4881eb420567ea2a1b5e9d979ac9083305f208e60dafd38b9f30c85082155850ecedcf4872f4cd3060ae2d78af6447a1f77c5465e3b914248
+	b2sums = 080d36a082e9251275b3ec98c6e88ba9b72f024a99c773fdf6b9292c5b65e7fc3e1acc080351bb91bf80985b0e0e600aa33005040ae228df81378b156937fab4
+	b2sums = f3e022022d27f1c667b1ddf826731165be20e46b056e9f869dba256e64289fedd83b7a19232c966ad439cef4f904b83fe58f1d49a06e4d44f89ba29f378d91c5
 	b2sums = e998343e94ec6145660abff1b8d29125132aea74d3d143c3066713a35385bc7b4ee8a7355346b99762b8f4d4885bffcf821c4e7fda6f2ee961a28222608ac4e8
 	b2sums = 729e8b00355bec61a4bc37bdb6f4516ecb0e809e9941b7e1bdde9da3a2e94a270aa8393c6b2a451297dc5b82ead41e3b2c8a2e3f1d569f97f35fdda14ae31293
 	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
 	b2sums = 4788f338656aab3fa8d6d1ae68af5e9d0d8f520f48a122f05b34a9111b6bfcb56419e51a2c01c8b22ee9d707996cfe5fd23384b425b05e737cb51e062c41493f
+	b2sums = 00ff7469751467a014b553ceb27ed18adc886d7280003c5d19c77c2d749426c1ea23b1b36fc0dde07094296d295886a2ccbd6423247d563a9a900c3fd990bf3f
 	b2sums = 2468fc9d0a7adcccf5b6359606afac64169904a55d97ef433e8751ff47b8570d8d30994408fba88076f22a6bf99ce376a83b725cee407724890db4aab5b5d20d
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
 	b2sums = 59f505ace6c5df5968a2c6a899af0d6a71c6b1c59687b4b6afd7ef86ca2dadbbd56eb3b66a41f216afbe1fad20309127c3247bf688658567ef80ff542848bd50
@@ -75,7 +77,7 @@ pkgname = linux-hC-rc-reflex-headers
 pkgname = linux-hC-rc-reflex-nvidia-open
 	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC-rc-reflex kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc-reflex=7.0.rc2-1
+	depends = linux-hC-rc-reflex=7.0.rc3-1
 	depends = nvidia-utils=590.48.01
 	depends = libglvnd
 	provides = NVIDIA-MODULE
