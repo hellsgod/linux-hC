@@ -1186,7 +1186,7 @@ index dbf4e32a063f7..f12f47869c588 100644
  			scx_cgroup_move_task(tsk);
  		if (scope->running)
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3eaeceda71b00..f9476738b828e 100644
+index 3eaeceda71b00..528d465d363d5 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -1048,7 +1048,7 @@ static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
@@ -1223,7 +1223,7 @@ index 3eaeceda71b00..f9476738b828e 100644
  static inline void set_idle_cores(int cpu, int val)
  {
  	struct sched_domain_shared *sds;
-@@ -7770,13 +7788,26 @@ static inline bool asym_fits_cpu(unsigned long util,
+@@ -7770,13 +7788,29 @@ static inline bool asym_fits_cpu(unsigned long util,
  /*
   * Try and locate an idle core/thread in the LLC cache domain.
   */
@@ -1241,9 +1241,12 @@ index 3eaeceda71b00..f9476738b828e 100644
 +	if (recent_used_cpu != prev &&
 +	    recent_used_cpu != target &&
 +	    cpus_share_cache(recent_used_cpu, target) &&
-+	    is_idle_core(recent_used_cpu) &&
++	    (available_idle_cpu(recent_used_cpu) || sched_idle_cpu(recent_used_cpu)) &&
 +	    cpumask_test_cpu(recent_used_cpu, p->cpus_ptr)) {
-+		return recent_used_cpu;
++
++		if ((unsigned int)recent_used_cpu < nr_cpumask_bits &&
++		    is_idle_core(recent_used_cpu))
++			return recent_used_cpu;
 +	} else {
 +		recent_used_cpu = -1;
 +	}
@@ -1251,7 +1254,7 @@ index 3eaeceda71b00..f9476738b828e 100644
  	/*
  	 * On asymmetric system, update task utilization because we will check
  	 * that the task fits with CPU's capacity.
-@@ -7793,7 +7824,7 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+@@ -7793,7 +7827,7 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
  	 */
  	lockdep_assert_irqs_disabled();
  
@@ -1260,7 +1263,7 @@ index 3eaeceda71b00..f9476738b828e 100644
  	    asym_fits_cpu(task_util, util_min, util_max, target))
  		return target;
  
-@@ -7827,24 +7858,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+@@ -7827,24 +7861,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
  		return prev;
  	}
  
@@ -1285,7 +1288,7 @@ index 3eaeceda71b00..f9476738b828e 100644
  	/*
  	 * For asymmetric CPU capacity systems, our domain of interest is
  	 * sd_asym_cpucapacity rather than sd_llc.
-@@ -8578,7 +8591,14 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
+@@ -8578,7 +8594,14 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
  		new_cpu = sched_balance_find_dst_cpu(sd, p, cpu, prev_cpu, sd_flag);
  	} else if (wake_flags & WF_TTWU) { /* XXX always ? */
  		/* Fast path */
@@ -1301,7 +1304,7 @@ index 3eaeceda71b00..f9476738b828e 100644
  	}
  	rcu_read_unlock();
  
-@@ -10262,7 +10282,7 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
+@@ -10262,7 +10285,7 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
  	if (!sched_smt_active())
  		return true;
  
@@ -1310,7 +1313,7 @@ index 3eaeceda71b00..f9476738b828e 100644
  }
  
  static inline bool sched_asym(struct sched_domain *sd, int dst_cpu, int src_cpu)
-@@ -12908,7 +12928,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12908,7 +12931,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  		update_next_balance(sd, &next_balance);
  
@@ -1554,6 +1557,34 @@ index 2a809cd8e7fae..08cabcca6dd4c 100644
  }
  
  void __init __weak arch_mm_preinit(void)
+diff --git a/mm/page-writeback.c b/mm/page-writeback.c
+index ccdeb0e84d394..a29e260b1887e 100644
+--- a/mm/page-writeback.c
++++ b/mm/page-writeback.c
+@@ -72,7 +72,11 @@ static long ratelimit_pages = 32;
+ /*
+  * Start background writeback (via writeback threads) at this percentage
+  */
++#ifdef CONFIG_HELLS
++static int dirty_background_ratio = 5;
++#else
+ static int dirty_background_ratio = 10;
++#endif
+ 
+ /*
+  * dirty_background_bytes starts at 0 (disabled) so that it is a function of
+@@ -100,7 +104,11 @@ static unsigned long vm_dirty_bytes;
+ /*
+  * The interval between `kupdate'-style writebacks
+  */
++#ifdef CONFIG_HELLS
++unsigned int dirty_writeback_interval = 10 * 100; /* centiseconds */
++#else
+ unsigned int dirty_writeback_interval = 5 * 100; /* centiseconds */
++#endif
+ 
+ EXPORT_SYMBOL_GPL(dirty_writeback_interval);
+ 
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
 index cbf758e27aa2c..1464a7a167bc3 100644
 --- a/mm/page_alloc.c
@@ -1617,6 +1648,29 @@ index cbf758e27aa2c..1464a7a167bc3 100644
  	return page;
  }
  
+diff --git a/mm/swap.c b/mm/swap.c
+index 2260dcd2775e7..7185c700bfbc3 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -1101,6 +1101,10 @@ static const struct ctl_table swap_sysctl_table[] = {
+  */
+ void __init swap_setup(void)
+ {
++#ifdef CONFIG_HELLS
++	/* Only swap-in pages requested, avoid readahead */
++	page_cluster = 0;
++#else
+ 	unsigned long megs = PAGES_TO_MB(totalram_pages());
+ 
+ 	/* Use a smaller cluster for small-memory machines */
+@@ -1108,6 +1112,7 @@ void __init swap_setup(void)
+ 		page_cluster = 2;
+ 	else
+ 		page_cluster = 3;
++#endif /* CONFIG_HELLS */
+ 	/*
+ 	 * Right now other parts of the system means that we
+ 	 * _really_ don't want to cluster much more
 diff --git a/mm/util.c b/mm/util.c
 index 97cae40c0209e..6aa1e89172f80 100644
 --- a/mm/util.c
@@ -1663,7 +1717,7 @@ index 97cae40c0209e..6aa1e89172f80 100644
  
  static int __init init_vm_util_sysctls(void)
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index 614ccf39fe3fa..4433e4f6cc20a 100644
+index 614ccf39fe3fa..7ab96f2bcecb5 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -147,6 +147,15 @@ struct scan_control {
@@ -1682,7 +1736,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  	/* Always discard instead of demoting to lower tier memory */
  	unsigned int no_demotion:1;
  
-@@ -196,6 +205,15 @@ struct scan_control {
+@@ -196,10 +205,23 @@ struct scan_control {
  #define prefetchw_prev_lru_folio(_folio, _base, _field) do { } while (0)
  #endif
  
@@ -1698,7 +1752,15 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  /*
   * From 0 .. MAX_SWAPPINESS.  Higher means more swappy.
   */
-@@ -1135,6 +1153,10 @@ static unsigned int shrink_folio_list(struct list_head *folio_list,
++#ifdef CONFIG_HELLS
++int vm_swappiness = 100;
++#else
+ int vm_swappiness = 60;
++#endif
+ 
+ #ifdef CONFIG_MEMCG
+ 
+@@ -1135,6 +1157,10 @@ static unsigned int shrink_folio_list(struct list_head *folio_list,
  		if (!sc->may_unmap && folio_mapped(folio))
  			goto keep_locked;
  
@@ -1709,7 +1771,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  		/*
  		 * The number of dirty pages determines if a node is marked
  		 * reclaim_congested. kswapd will stall and start writing
-@@ -2572,6 +2594,15 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
+@@ -2572,6 +2598,15 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
  		goto out;
  	}
  
@@ -1725,7 +1787,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  	/*
  	 * If there is enough inactive page cache, we do not reclaim
  	 * anything from the anonymous working right now to make sure
-@@ -2630,6 +2661,14 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
+@@ -2630,6 +2665,14 @@ static void get_scan_count(struct lruvec *lruvec, struct scan_control *sc,
  			BUG();
  		}
  
@@ -1740,7 +1802,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  		nr[lru] = scan;
  	}
  }
-@@ -2650,6 +2689,96 @@ static bool can_age_anon_pages(struct lruvec *lruvec,
+@@ -2650,6 +2693,96 @@ static bool can_age_anon_pages(struct lruvec *lruvec,
  			  lruvec_memcg(lruvec));
  }
  
@@ -1837,7 +1899,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  #ifdef CONFIG_LRU_GEN
  
  #ifdef CONFIG_LRU_GEN_ENABLED
-@@ -4634,11 +4763,21 @@ static int get_tier_idx(struct lruvec *lruvec, int type)
+@@ -4634,11 +4767,21 @@ static int get_tier_idx(struct lruvec *lruvec, int type)
  	return tier - 1;
  }
  
@@ -1861,7 +1923,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  		return LRU_GEN_FILE;
  
  	if (swappiness >= MAX_SWAPPINESS)
-@@ -4658,7 +4797,7 @@ static int isolate_folios(unsigned long nr_to_scan, struct lruvec *lruvec,
+@@ -4658,7 +4801,7 @@ static int isolate_folios(unsigned long nr_to_scan, struct lruvec *lruvec,
  			  int *type_scanned, struct list_head *list)
  {
  	int i;
@@ -1870,7 +1932,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  
  	for_each_evictable_type(i, swappiness) {
  		int scanned;
-@@ -4904,6 +5043,12 @@ static int shrink_one(struct lruvec *lruvec, struct scan_control *sc)
+@@ -4904,6 +5047,12 @@ static int shrink_one(struct lruvec *lruvec, struct scan_control *sc)
  	struct mem_cgroup *memcg = lruvec_memcg(lruvec);
  	struct pglist_data *pgdat = lruvec_pgdat(lruvec);
  
@@ -1883,7 +1945,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  	/* lru_gen_age_node() called mem_cgroup_calculate_protection() */
  	if (mem_cgroup_below_min(NULL, memcg))
  		return MEMCG_LRU_YOUNG;
-@@ -6058,6 +6203,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
+@@ -6058,6 +6207,8 @@ static void shrink_node(pg_data_t *pgdat, struct scan_control *sc)
  
  	prepare_scan_control(pgdat, sc);
  
@@ -1892,7 +1954,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  	shrink_node_memcgs(pgdat, sc);
  
  	flush_reclaim_state(sc);
-@@ -6445,7 +6592,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
+@@ -6445,7 +6596,7 @@ static unsigned long do_try_to_free_pages(struct zonelist *zonelist,
  	return 0;
  }
  
@@ -1901,7 +1963,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  {
  	struct zone *zone;
  	unsigned long pfmemalloc_reserve = 0;
-@@ -6470,6 +6617,10 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
+@@ -6470,6 +6621,10 @@ static bool allow_direct_reclaim(pg_data_t *pgdat)
  
  	wmark_ok = free_pages > pfmemalloc_reserve / 2;
  
@@ -1912,7 +1974,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  	/* kswapd must be awake if processes are being throttled */
  	if (!wmark_ok && waitqueue_active(&pgdat->kswapd_wait)) {
  		if (READ_ONCE(pgdat->kswapd_highest_zoneidx) > ZONE_NORMAL)
-@@ -6535,7 +6686,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+@@ -6535,7 +6690,7 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
  
  		/* Throttle based on the first usable node */
  		pgdat = zone->zone_pgdat;
@@ -1921,7 +1983,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  			goto out;
  		break;
  	}
-@@ -6557,11 +6708,14 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
+@@ -6557,11 +6712,14 @@ static bool throttle_direct_reclaim(gfp_t gfp_mask, struct zonelist *zonelist,
  	 */
  	if (!(gfp_mask & __GFP_FS))
  		wait_event_interruptible_timeout(pgdat->pfmemalloc_wait,
@@ -1938,7 +2000,7 @@ index 614ccf39fe3fa..4433e4f6cc20a 100644
  
  	if (fatal_signal_pending(current))
  		return true;
-@@ -7090,14 +7244,14 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
+@@ -7090,14 +7248,14 @@ static int balance_pgdat(pg_data_t *pgdat, int order, int highest_zoneidx)
  		 * able to safely make forward progress. Wake them
  		 */
  		if (waitqueue_active(&pgdat->pfmemalloc_wait) &&

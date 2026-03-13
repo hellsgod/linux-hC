@@ -38,7 +38,7 @@ pkgbase = linux-hC-rc-mobile
 	b2sums = 00ff7469751467a014b553ceb27ed18adc886d7280003c5d19c77c2d749426c1ea23b1b36fc0dde07094296d295886a2ccbd6423247d563a9a900c3fd990bf3f
 	b2sums = 2468fc9d0a7adcccf5b6359606afac64169904a55d97ef433e8751ff47b8570d8d30994408fba88076f22a6bf99ce376a83b725cee407724890db4aab5b5d20d
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
-	b2sums = ca5076f9fb879b37fafa8e5c259fd479954f49a1984357d3dfada1c27d3c25cbc7af825fd596fd9768beed009472ff544ccfc0e9ddbe89d4f49fba7b40017a45
+	b2sums = 61350d49b3fbbf6d7026c0eb0779b3a9e5d55587ea28c9e75d0f7fc36fa5bd3e10a437471808546fa87d593a895c93689faf33c672f42e0f8be68d59a91d01c4
 
 pkgname = linux-hC-rc-mobile
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel and modules
