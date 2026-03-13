@@ -32,10 +32,8 @@ pkgbase = linux-hC-reflex
 	source = nap.patch
 	source = poc-selector.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/dkms-clang.patch
-	source = nvidia-open-590.48.01.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/590.48.01.tar.gz
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0001-Enable-atomic-kernel-modesetting-by-default.patch
+	source = nvidia-open-595.45.04.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/595.45.04.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0002-Add-IBT-support.patch
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0003-Fix-compile-for-6.19.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/sched/0001-bore.patch
 	b2sums = 612fd1e944194c20bb2e6f9d2b309d5957db5b738bcb7b782c9c25de4c02b341fa5caa9af76d92e88628135b8334f550cc2277d63738098fde950ca05f46e89a
 	b2sums = 6415a095ef13c2a6a23c876b078676553bbab34e37c8890369dfd135d1bf6b6380ae44f486fbf0f25f8781eaf842e4c0b987c07e108d7639eb901184c8263e0b
@@ -48,10 +46,8 @@ pkgbase = linux-hC-reflex
 	b2sums = 00ff7469751467a014b553ceb27ed18adc886d7280003c5d19c77c2d749426c1ea23b1b36fc0dde07094296d295886a2ccbd6423247d563a9a900c3fd990bf3f
 	b2sums = 2468fc9d0a7adcccf5b6359606afac64169904a55d97ef433e8751ff47b8570d8d30994408fba88076f22a6bf99ce376a83b725cee407724890db4aab5b5d20d
 	b2sums = ea26c88950fc06b6ffab93b30e3beacc7d26571a70262334ca8b001dc7899bf96b47d703fbaa7f4e47765c3dafccc23c58a4d4da2169b8ee50012afcb7a1dd96
-	b2sums = 59f505ace6c5df5968a2c6a899af0d6a71c6b1c59687b4b6afd7ef86ca2dadbbd56eb3b66a41f216afbe1fad20309127c3247bf688658567ef80ff542848bd50
-	b2sums = 05a3cc4954a37897d08e93e8ea1726fc395a12cfb1509f09560bdcf0ae14ed4ca518fda566a618c92db0fb6573e3ed7d02172dd76a3b145982060e060525365b
+	b2sums = 116b3db3f8ea4fc000f1a9966e7b6b4b9b615f674b068f07e9d71ccb4162f7c2d793bb9f747cbd9a55964ad3a523319aecf6c991e94e67e2a7ffb607d695dd59
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
-	b2sums = ea69dc26bf4f55e984fb2f3c2c70ccf537307ab2a2c156077202410d7ac989d1552d780928866c177327b4260634ad04946e3ea1f04705d5549e65574bc3e8e2
 	b2sums = 6fb88b3c6227e4422885ff3e505369959e2e0e01a221f93f030ac694373a17f8684da967eec8609fa2ee30d8292e76f2e4811e0bfe8e933ec9a71d3227779841
 
 pkgname = linux-hC-reflex
@@ -75,12 +71,13 @@ pkgname = linux-hC-reflex-headers
 	depends = clang
 	depends = llvm
 	depends = lld
+	provides = LINUX-HEADERS
 
 pkgname = linux-hC-reflex-nvidia-open
-	pkgdesc = nvidia open modules of 590.48.01 driver for the linux-hC-reflex kernel
+	pkgdesc = nvidia open modules of 595.45.04 driver for the linux-hC-reflex kernel
 	license = MIT AND GPL-2.0-only
 	depends = linux-hC-reflex=6.19.6-1
-	depends = nvidia-utils=590.48.01
+	depends = nvidia-utils=595.45.04
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-reflex-nvidia
