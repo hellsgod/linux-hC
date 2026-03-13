@@ -65,3 +65,4 @@ pkgname = linux-hC-mobile-headers
 	depends = clang
 	depends = llvm
 	depends = lld
+	provides = LINUX-HEADERS
