@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.0.rc3
+	pkgver = 7.0.rc4
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc3.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc4.tar.gz
 	source = config
 	source = base.patch
 	source = compiler-opt.patch
@@ -33,7 +33,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0004-HACK-kernel-open-Makefile-Remove-PAHOLE_VARIABLE.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 080d36a082e9251275b3ec98c6e88ba9b72f024a99c773fdf6b9292c5b65e7fc3e1acc080351bb91bf80985b0e0e600aa33005040ae228df81378b156937fab4
+	b2sums = 1de1f48e1a60d3221b1ea54e1a07798ae8fa4e0e460b4370a15459e1bd3aeef679453f78804ab5e817dfcfb81bc2356d66b90241670dbc676d56f3838978b0f9
 	b2sums = 19eb93003ab75cbbc607452da4a71c7cb58203c8252ea3da31bbaa6a1c517ccd2fbed97bcdbcd633bcb49b77b1311186009ca87296655d1799a63231787edf3e
 	b2sums = d7603cd50a87bbad390f7a8cee31b7fb20e804e03769213ad73f3ec2be4525d6d3ed1c05e2508daa270f014c35bc1b380e26135418acbeeab407ee1d09f146cd
 	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
@@ -72,7 +72,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 595.45.04 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=7.0.rc3-1
+	depends = linux-hC-rc=7.0.rc4-1
 	depends = nvidia-utils=595.45.04
 	depends = libglvnd
 	provides = NVIDIA-MODULE
