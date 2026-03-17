@@ -1,17 +1,17 @@
-From 39b057bac966bff10c8eb0151f6c0a338c39da07 Mon Sep 17 00:00:00 2001
+From 9082d92ee8163258fcf925c61f5243d587417c5f Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Sat, 14 Mar 2026 21:59:31 +0900
-Subject: [PATCH] 6.18.3-prefcorev7-poc-selector-v2.4.1
+Date: Tue, 17 Mar 2026 22:11:16 +0900
+Subject: [PATCH] 6.18.3-prefcorev7-poc-selector-v2.4.1r3
 
 ---
  include/linux/sched/topology.h |   33 +-
  init/Kconfig                   |   13 +
- kernel/sched/fair.c            |  107 +++-
+ kernel/sched/fair.c            |  124 +++-
  kernel/sched/idle.c            |   10 +
  kernel/sched/poc_selector.c    | 1084 ++++++++++++++++++++++++++++++++
  kernel/sched/sched.h           |   99 +++
  kernel/sched/topology.c        |  183 ++++++
- 7 files changed, 1512 insertions(+), 17 deletions(-)
+ 7 files changed, 1513 insertions(+), 33 deletions(-)
  create mode 100644 kernel/sched/poc_selector.c
 
 diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
@@ -83,7 +83,7 @@ index 3a664a42ce..3a03aced56 100644
  	bool "Kernel->user space relay support (formerly relayfs)"
  	select IRQ_WORK
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 248aec0af1..ee84220d5d 100644
+index dcbf89e793..c8d41bf363 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -7638,6 +7638,11 @@ static inline bool test_idle_cores(int cpu)
@@ -108,7 +108,30 @@ index 248aec0af1..ee84220d5d 100644
  /*
   * Try and locate an idle core/thread in the LLC cache domain.
   */
-@@ -7826,23 +7834,20 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7797,22 +7805,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+ 	unsigned long task_util, util_min, util_max;
+ 	int i, recent_used_cpu, prev_aff = -1;
+ 
+-	/* Check a recently used CPU as a potential idle candidate: */
+-	recent_used_cpu = p->recent_used_cpu;
+-	p->recent_used_cpu = prev;
+-	if (recent_used_cpu != prev &&
+-	    recent_used_cpu != target &&
+-	    cpus_share_cache(recent_used_cpu, target) &&
+-	    (available_idle_cpu(recent_used_cpu) || sched_idle_cpu(recent_used_cpu)) &&
+-	    cpumask_test_cpu(recent_used_cpu, p->cpus_ptr)) {
+-
+-		if ((unsigned int)recent_used_cpu < nr_cpumask_bits &&
+-		    is_idle_core(recent_used_cpu))
+-			return recent_used_cpu;
+-	} else {
+-		recent_used_cpu = -1;
+-	}
+-
+ 	/*
+ 	 * On asymmetric system, update task utilization because we will check
+ 	 * that the task fits with CPU's capacity.
+@@ -7829,23 +7821,20 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	 */
  	lockdep_assert_irqs_disabled();
  
@@ -144,7 +167,7 @@ index 248aec0af1..ee84220d5d 100644
  
  	/*
  	 * Allow a per-cpu kthread to stack with the wakee if the
-@@ -7884,6 +7889,69 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7887,6 +7876,70 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	if (!sd)
  		return target;
  
@@ -205,7 +228,8 @@ index 248aec0af1..ee84220d5d 100644
 +
 +	/* Gate 4 (recent): 6.18 uses is_idle_core for full-core check */
 +	if ((unsigned int)recent_used_cpu < nr_cpumask_bits &&
-+	    is_idle_core(recent_used_cpu)) {
++	    is_idle_core(recent_used_cpu) &&
++	    (available_idle_cpu(recent_used_cpu) || sched_idle_cpu(recent_used_cpu))) {
 +		return recent_used_cpu;
 +	} else {
 +		recent_used_cpu = -1;
@@ -214,7 +238,7 @@ index 248aec0af1..ee84220d5d 100644
  	if (sched_smt_active()) {
  		has_idle_core = test_idle_cores(target);
  
-@@ -7904,11 +7972,20 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7907,11 +7960,20 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	 * first. But prev_cpu or recent_used_cpu may also be a good candidate,
  	 * use them if possible when no idle CPU found in select_idle_cpu().
  	 */
@@ -1659,3 +1683,4 @@ index c7a4d2fff5..feaac0094d 100644
  	sd->private = sdd;
 -- 
 2.34.1
+
