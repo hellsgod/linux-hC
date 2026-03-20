@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 6.19.8
+	pkgver = 6.19.9
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.8.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.19.9.tar.xz
 	source = config
 	source = base.patch
 	source = cambyses.patch
@@ -35,7 +35,7 @@ pkgbase = linux-hC
 	source = nvidia-open-595.45.04.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/595.45.04.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/6.19/sched/0001-bore.patch
-	b2sums = 1bb4591dd0adb2472f31adbaaa5eae03743edf6e7a970173afb1ea1c659677102832d69e6ce692deee9ee757b36cba3d63b116a5eee81a7e5226462c40ae5ca0
+	b2sums = 6be41037c5b18e9a8d1c58fdd613e37bb5c841b7f43baf95516f3dda461adc6eb20da03e6a8892bd5b8410125ad42dae8ef4634a0eb95b84aaf3882a6ed00074
 	b2sums = 33f100198a99804cb9acc03aba0fea1d945d1993a04902cd82268822765fc7fcd0ce44699ddeef20f0b33720e6b1d988b63df0110abce2bc52086a2b2e77be5a
 	b2sums = 23b524ea903d590e04f321c4684e0b79be0bda16301c2513bfe9590bfb9daa7d8b6a5bd942b888f3471345d4741bd4468db8e79b7191dc6c6f0f17f13a1aa943
 	b2sums = 16fab849ec0a3e7633302348e683d1303c36e87842c4aae82cddbb4f112aff3e29d24541a8414182e4787b96246fc2b19d88c64a19d926635627c0d960938b0c
@@ -76,7 +76,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia-open
 	pkgdesc = nvidia open modules of 595.45.04 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=6.19.8-1
+	depends = linux-hC=6.19.9-1
 	depends = nvidia-utils=595.45.04
 	depends = libglvnd
 	provides = NVIDIA-MODULE
