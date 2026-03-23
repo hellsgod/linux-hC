@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.0.rc4
+	pkgver = 7.0.rc5
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc4.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc5.tar.gz
 	source = config
 	source = base.patch
 	source = cambyses.patch
@@ -36,7 +36,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0004-HACK-kernel-open-Makefile-Remove-PAHOLE_VARIABLE.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 1de1f48e1a60d3221b1ea54e1a07798ae8fa4e0e460b4370a15459e1bd3aeef679453f78804ab5e817dfcfb81bc2356d66b90241670dbc676d56f3838978b0f9
+	b2sums = c2a54efeef05dad9b3d62be9fc617941644bbe728c45b62b96df88ab929c6efc91edda6cfa37c8442095e043f503169a30ae695686a5787e80a1216b7ae1a7dd
 	b2sums = eeb1f86c8757e6c80d242693b49f226b3fa77ee64471726e8207991d135d397e099bfa062ec68b438cdd4e463eba27ec53b11863fe6a4edbe6a2b04f72069c51
 	b2sums = b96a55724fca04c2f4453bac2fc9594b84d1ed65e55eca13ccb58a738248f64cb07492930059d3845d5d7f8a96a9eddb4da2f57b2b2707244aa7d13c6501af32
 	b2sums = 5af8e76ad24b945034990f7694871c5a13095f1ff7cfbb4933648ea115689903ab41b044fa456e665aa9e578a0be3220ca14c32606179f38a6a6259980003052
@@ -78,7 +78,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 595.45.04 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=7.0.rc4-1
+	depends = linux-hC-rc=7.0.rc5-1
 	depends = nvidia-utils=595.45.04
 	depends = libglvnd
 	provides = NVIDIA-MODULE
