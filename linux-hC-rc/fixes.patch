@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf..bebde469f81a 100644
+index db2cb06aa8cf5..bebde469f81ae 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf..bebde469f81a 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f1..2fe6b7fe6b12 100644
+index 9153016da8f14..2fe6b7fe6b12d 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f1..2fe6b7fe6b12 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2eb..95d03be2ce45 100644
+index bd1ef5e2d2ebf..95d03be2ce456 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2eb..95d03be2ce45 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d..d1967214ef25 100644
+index 78bbacc14d2d9..d1967214ef25f 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d..d1967214ef25 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 1acafb1c6a93..ef5b507de34e 100644
+index 1acafb1c6a932..ef5b507de34e2 100644
 --- a/arch/x86/include/asm/mmu_context.h
 +++ b/arch/x86/include/asm/mmu_context.h
 @@ -136,9 +136,6 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
@@ -65,7 +65,7 @@ index 1acafb1c6a93..ef5b507de34e 100644
  extern void mm_free_global_asid(struct mm_struct *mm);
  
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee..4b55fa353bb5 100644
+index 96bda43538ee7..4b55fa353bb5f 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -78,7 +78,7 @@ index 96bda43538ee..4b55fa353bb5 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 5a3cdc439e38..0545fe75c3fa 100644
+index 5a3cdc439e38d..0545fe75c3fa1 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
 @@ -172,6 +172,28 @@ struct tlb_state_shared {
@@ -122,7 +122,7 @@ index 5a3cdc439e38..0545fe75c3fa 100644
  
  static inline void __native_tlb_flush_global(unsigned long cr4)
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 09de584e4c8f..1b7ec3107540 100644
+index 09de584e4c8fa..1b7ec31075408 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1017,6 +1017,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
@@ -146,7 +146,7 @@ index 09de584e4c8f..1b7ec3107540 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 621e09d049cb..af43d177087e 100644
+index 621e09d049cb9..af43d177087e7 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -971,27 +971,6 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
@@ -178,7 +178,7 @@ index 621e09d049cb..af43d177087e 100644
   * Using a temporary mm allows to set temporary mappings that are not accessible
   * by other CPUs. Such mappings are needed to perform sensitive memory writes
 diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
-index 94b8ecb892bb..5d6878604451 100644
+index 94b8ecb892bb1..5d68786044513 100644
 --- a/drivers/dma-buf/udmabuf.c
 +++ b/drivers/dma-buf/udmabuf.c
 @@ -26,10 +26,10 @@ MODULE_PARM_DESC(size_limit_mb, "Max size of a dmabuf, in megabytes. Default is
@@ -308,113 +308,8 @@ index 94b8ecb892bb..5d6878604451 100644
  			++upgcnt;
  
  			if (++cur_pgcnt >= pgcnt)
-diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
-index 8f8069fb76ba..efb9bac9845b 100644
---- a/fs/fs-writeback.c
-+++ b/fs/fs-writeback.c
-@@ -2774,13 +2774,8 @@ static void wait_sb_inodes(struct super_block *sb)
- 		 * The mapping can appear untagged while still on-list since we
- 		 * do not have the mapping lock. Skip it here, wb completion
- 		 * will remove it.
--		 *
--		 * If the mapping does not have data integrity semantics,
--		 * there's no need to wait for the writeout to complete, as the
--		 * mapping cannot guarantee that data is persistently stored.
- 		 */
--		if (!mapping_tagged(mapping, PAGECACHE_TAG_WRITEBACK) ||
--		    mapping_no_data_integrity(mapping))
-+		if (!mapping_tagged(mapping, PAGECACHE_TAG_WRITEBACK))
- 			continue;
- 
- 		spin_unlock_irq(&sb->s_inode_wblist_lock);
-@@ -2915,6 +2910,17 @@ void sync_inodes_sb(struct super_block *sb)
- 	 */
- 	if (bdi == &noop_backing_dev_info)
- 		return;
-+
-+	/*
-+	 * If the superblock has SB_I_NO_DATA_INTEGRITY set, there's no need to
-+	 * wait for the writeout to complete, as the filesystem cannot guarantee
-+	 * data persistence on sync. Just kick off writeback and return.
-+	 */
-+	if (sb->s_iflags & SB_I_NO_DATA_INTEGRITY) {
-+		wakeup_flusher_threads_bdi(bdi, WB_REASON_SYNC);
-+		return;
-+	}
-+
- 	WARN_ON(!rwsem_is_locked(&sb->s_umount));
- 
- 	/* protect against inode wb switch, see inode_switch_wbs_work_fn() */
-diff --git a/fs/fuse/file.c b/fs/fuse/file.c
-index b1bb7153cb78..676fd9856bfb 100644
---- a/fs/fuse/file.c
-+++ b/fs/fuse/file.c
-@@ -3201,10 +3201,8 @@ void fuse_init_file_inode(struct inode *inode, unsigned int flags)
- 
- 	inode->i_fop = &fuse_file_operations;
- 	inode->i_data.a_ops = &fuse_file_aops;
--	if (fc->writeback_cache) {
-+	if (fc->writeback_cache)
- 		mapping_set_writeback_may_deadlock_on_reclaim(&inode->i_data);
--		mapping_set_no_data_integrity(&inode->i_data);
--	}
- 
- 	INIT_LIST_HEAD(&fi->write_files);
- 	INIT_LIST_HEAD(&fi->queued_writes);
-diff --git a/fs/fuse/inode.c b/fs/fuse/inode.c
-index e57b8af06be9..c795abe47a4f 100644
---- a/fs/fuse/inode.c
-+++ b/fs/fuse/inode.c
-@@ -1709,6 +1709,7 @@ static void fuse_sb_defaults(struct super_block *sb)
- 	sb->s_export_op = &fuse_export_operations;
- 	sb->s_iflags |= SB_I_IMA_UNVERIFIABLE_SIGNATURE;
- 	sb->s_iflags |= SB_I_NOIDMAP;
-+	sb->s_iflags |= SB_I_NO_DATA_INTEGRITY;
- 	if (sb->s_user_ns != &init_user_ns)
- 		sb->s_iflags |= SB_I_UNTRUSTED_MOUNTER;
- 	sb->s_flags &= ~(SB_NOSEC | SB_I_VERSION);
-diff --git a/include/linux/fs/super_types.h b/include/linux/fs/super_types.h
-index fa7638b81246..383050e7fdf5 100644
---- a/include/linux/fs/super_types.h
-+++ b/include/linux/fs/super_types.h
-@@ -338,5 +338,6 @@ struct super_block {
- #define SB_I_NOUMASK	0x00001000	/* VFS does not apply umask */
- #define SB_I_NOIDMAP	0x00002000	/* No idmapped mounts on this superblock */
- #define SB_I_ALLOW_HSM	0x00004000	/* Allow HSM events on this superblock */
-+#define SB_I_NO_DATA_INTEGRITY	0x00008000 /* fs cannot guarantee data persistence on sync */
- 
- #endif /* _LINUX_FS_SUPER_TYPES_H */
-diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index ec442af3f886..31a848485ad9 100644
---- a/include/linux/pagemap.h
-+++ b/include/linux/pagemap.h
-@@ -210,7 +210,6 @@ enum mapping_flags {
- 	AS_WRITEBACK_MAY_DEADLOCK_ON_RECLAIM = 9,
- 	AS_KERNEL_FILE = 10,	/* mapping for a fake kernel file that shouldn't
- 				   account usage to user cgroups */
--	AS_NO_DATA_INTEGRITY = 11, /* no data integrity guarantees */
- 	/* Bits 16-25 are used for FOLIO_ORDER */
- 	AS_FOLIO_ORDER_BITS = 5,
- 	AS_FOLIO_ORDER_MIN = 16,
-@@ -346,16 +345,6 @@ static inline bool mapping_writeback_may_deadlock_on_reclaim(const struct addres
- 	return test_bit(AS_WRITEBACK_MAY_DEADLOCK_ON_RECLAIM, &mapping->flags);
- }
- 
--static inline void mapping_set_no_data_integrity(struct address_space *mapping)
--{
--	set_bit(AS_NO_DATA_INTEGRITY, &mapping->flags);
--}
--
--static inline bool mapping_no_data_integrity(const struct address_space *mapping)
--{
--	return test_bit(AS_NO_DATA_INTEGRITY, &mapping->flags);
--}
--
- static inline gfp_t mapping_gfp_mask(const struct address_space *mapping)
- {
- 	return mapping->gfp_mask;
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 48d851fbd8ea..7c1dac8da5e5 100644
+index 48d851fbd8ea5..7c1dac8da5e59 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -427,7 +322,7 @@ index 48d851fbd8ea..7c1dac8da5e5 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 95d0040df584..4a279ee2d026 100644
+index 95d0040df5841..4a279ee2d0262 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -44,7 +44,7 @@ static inline void smp_mb__after_mmgrab(void)
@@ -475,7 +370,7 @@ index 95d0040df584..4a279ee2d026 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
-index 45c0022b91ce..bbcfdf12aa6e 100644
+index 45c0022b91ced..bbcfdf12aa6e5 100644
 --- a/include/linux/sched/topology.h
 +++ b/include/linux/sched/topology.h
 @@ -92,9 +92,6 @@ struct sched_domain {
@@ -489,7 +384,7 @@ index 45c0022b91ce..bbcfdf12aa6e 100644
  	unsigned long last_decay_max_lb_cost;
  
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index 738007d6f577..df9934a60faf 100644
+index 738007d6f577f..df9934a60fafe 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -177,7 +177,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -511,7 +406,7 @@ index 738007d6f577..df9934a60faf 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d..428464bb81b3 100644
+index 29dd5b91dd7d6..428464bb81b34 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -544,7 +439,7 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 759777694c78..6270249e1907 100644
+index 496dff740dcaf..292efc99839b7 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -124,7 +124,6 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(sched_exit_tp);
@@ -567,7 +462,7 @@ index 759777694c78..6270249e1907 100644
  /*
   * double_rq_lock - safely lock two runqueues
   */
-@@ -4894,7 +4888,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -4897,7 +4891,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -576,7 +471,7 @@ index 759777694c78..6270249e1907 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -4910,7 +4904,7 @@ static inline void finish_task(struct task_struct *prev)
+@@ -4913,7 +4907,7 @@ static inline void finish_task(struct task_struct *prev)
  	smp_store_release(&prev->on_cpu, 0);
  }
  
@@ -585,7 +480,7 @@ index 759777694c78..6270249e1907 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -4945,7 +4939,7 @@ struct balance_callback balance_push_callback = {
+@@ -4948,7 +4942,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -594,7 +489,7 @@ index 759777694c78..6270249e1907 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5019,7 +5013,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5022,7 +5016,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -603,7 +498,7 @@ index 759777694c78..6270249e1907 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5052,7 +5046,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5055,7 +5049,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -612,7 +507,7 @@ index 759777694c78..6270249e1907 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5106,7 +5100,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5109,7 +5103,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -621,7 +516,7 @@ index 759777694c78..6270249e1907 100644
  	__releases(__rq_lockp(this_rq()))
  {
  	struct rq *rq = this_rq();
-@@ -8541,8 +8535,6 @@ void __init sched_init_smp(void)
+@@ -8545,8 +8539,6 @@ void __init sched_init_smp(void)
  {
  	sched_init_numa(NUMA_NO_NODE);
  
@@ -631,10 +526,10 @@ index 759777694c78..6270249e1907 100644
  	 * There's no userspace yet to cause hotplug operations; hence all the
  	 * CPU masks are stable and all blatant races in the below code cannot
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index eea99ec01a3f..44f1c317f7ba 100644
+index bf948db905ed1..904e85f845312 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -11862,12 +11862,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -11936,12 +11936,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -652,7 +547,7 @@ index eea99ec01a3f..44f1c317f7ba 100644
  		/*
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
-@@ -12209,27 +12212,11 @@ void update_max_interval(void)
+@@ -12283,27 +12286,11 @@ void update_max_interval(void)
  	max_load_balance_interval = HZ*num_online_cpus()/10;
  }
  
@@ -681,7 +576,7 @@ index eea99ec01a3f..44f1c317f7ba 100644
  	if (cost > sd->max_newidle_lb_cost) {
  		/*
  		 * Track max cost of a domain to make sure to not delay the
-@@ -12277,7 +12264,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
+@@ -12351,7 +12338,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
  		 * Decay the newidle max times here because this is a regular
  		 * visit to all the domains.
  		 */
@@ -690,7 +585,7 @@ index eea99ec01a3f..44f1c317f7ba 100644
  		max_cost += sd->max_newidle_lb_cost;
  
  		/*
-@@ -12920,22 +12907,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12994,22 +12981,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  			break;
  
  		if (sd->flags & SD_BALANCE_NEWIDLE) {
@@ -713,7 +608,7 @@ index eea99ec01a3f..44f1c317f7ba 100644
  
  			pulled_task = sched_balance_rq(this_cpu, this_rq,
  						   sd, CPU_NEWLY_IDLE,
-@@ -12943,14 +12914,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -13017,14 +12988,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  			t1 = sched_clock_cpu(this_cpu);
  			domain_cost = t1 - t0;
@@ -731,7 +626,7 @@ index eea99ec01a3f..44f1c317f7ba 100644
  
  		/*
 diff --git a/kernel/sched/features.h b/kernel/sched/features.h
-index 136a6584be79..3c12d9f93331 100644
+index 136a6584be797..3c12d9f93331d 100644
 --- a/kernel/sched/features.h
 +++ b/kernel/sched/features.h
 @@ -121,8 +121,3 @@ SCHED_FEAT(WA_BIAS, true)
@@ -744,7 +639,7 @@ index 136a6584be79..3c12d9f93331 100644
 - */
 -SCHED_FEAT(NI_RANDOM, true)
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index b82fb70a9d54..c50c59ecc309 100644
+index 43bbf0693cca4..29394e1e156b6 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -5,7 +5,6 @@
@@ -867,7 +762,7 @@ index b82fb70a9d54..c50c59ecc309 100644
  {
  	raw_spin_rq_unlock(rq);
 diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
-index 32dcddaead82..35ae4d1e9ad6 100644
+index 32dcddaead82d..35ae4d1e9ad61 100644
 --- a/kernel/sched/topology.c
 +++ b/kernel/sched/topology.c
 @@ -1674,12 +1674,6 @@ sd_init(struct sched_domain_topology_level *tl,
@@ -884,7 +779,7 @@ index 32dcddaead82..35ae4d1e9ad6 100644
  		.last_decay_max_lb_cost	= jiffies,
  		.child			= child,
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
