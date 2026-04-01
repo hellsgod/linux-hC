@@ -1,17 +1,18 @@
-From c56ab9382041fe22805bac7b65c463c2bbaad8f5 Mon Sep 17 00:00:00 2001
+From ca3d3a3dceddbf75e12130c1ef86b2186b084df0 Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
 Date: Sat, 28 Mar 2026 02:28:50 +0900
-Subject: [PATCH] 6.18.3-prefcorev7-poc-selector-v2.5.0-rc2
+Subject: [PATCH] 6.18.3-prefcorev7-poc-selector-v2.5.0-rc3
 
 ---
  include/linux/sched/topology.h |   37 +-
  init/Kconfig                   |   13 +
+ kernel/sched/ext.c             |    7 +
  kernel/sched/fair.c            |  105 ++-
  kernel/sched/idle.c            |   10 +
- kernel/sched/poc_selector.c    | 1353 ++++++++++++++++++++++++++++++++
- kernel/sched/sched.h           |  102 +++
- kernel/sched/topology.c        |  222 ++++++
- 7 files changed, 1820 insertions(+), 22 deletions(-)
+ kernel/sched/poc_selector.c    | 1401 ++++++++++++++++++++++++++++++++
+ kernel/sched/sched.h           |  105 +++
+ kernel/sched/topology.c        |  222 +++++
+ 8 files changed, 1878 insertions(+), 22 deletions(-)
  create mode 100644 kernel/sched/poc_selector.c
 
 diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
@@ -86,8 +87,33 @@ index 3a664a42ce..3a03aced56 100644
  config RELAY
  	bool "Kernel->user space relay support (formerly relayfs)"
  	select IRQ_WORK
+diff --git a/kernel/sched/ext.c b/kernel/sched/ext.c
+index 0aedbbeb12..debc642e5e 100644
+--- a/kernel/sched/ext.c
++++ b/kernel/sched/ext.c
+@@ -4103,6 +4103,9 @@ static void scx_disable_workfn(struct kthread_work *work)
+ 	mutex_unlock(&scx_enable_mutex);
+ 
+ 	WARN_ON_ONCE(scx_set_enable_state(SCX_DISABLED) != SCX_DISABLING);
++#ifdef CONFIG_SCHED_POC_SELECTOR
++	poc_notify_scx(false);
++#endif
+ done:
+ 	scx_bypass(false);
+ }
+@@ -4849,6 +4852,10 @@ static int scx_enable(struct sched_ext_ops *ops, struct bpf_link *link)
+ 	if (!(ops->flags & SCX_OPS_SWITCH_PARTIAL))
+ 		static_branch_enable(&__scx_switched_all);
+ 
++#ifdef CONFIG_SCHED_POC_SELECTOR
++	poc_notify_scx(true);
++#endif
++
+ 	pr_info("sched_ext: BPF scheduler \"%s\" enabled%s\n",
+ 		sch->ops.name, scx_switched_all() ? "" : " (partial)");
+ 	kobject_uevent(&sch->kobj, KOBJ_ADD);
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index dcbf89e793..d8ea950697 100644
+index dcbf89e793..f265d8e1c9 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -7638,6 +7638,11 @@ static inline bool test_idle_cores(int cpu)
@@ -159,7 +185,7 @@ index dcbf89e793..d8ea950697 100644
 +	{
 +		struct sched_domain_shared *sd_share =
 +			rcu_dereference(per_cpu(sd_llc_shared, target));
-+		if (static_branch_likely(&sched_poc_enabled)
++		if (static_branch_likely(&poc_selector_active)
 +				&& !sched_asym_cpucap_active()
 +				&& sd_share && likely(sd_share->poc_fast_eligible)) {
 +			int poc_cpu = select_idle_cpu_poc(target, prev,
@@ -233,7 +259,7 @@ index dcbf89e793..d8ea950697 100644
  
 +#ifdef CONFIG_SCHED_POC_SELECTOR
 +	/* Last resort: avoid enqueuing behind RT/DL tasks on target */
-+	if (static_branch_likely(&sched_poc_enabled)) {
++	if (static_branch_likely(&poc_selector_active)) {
 +		if (!rt_task(cpu_rq(target)->curr))
 +			return target;
 +
@@ -274,10 +300,10 @@ index ac9690805b..fa271b8ed9 100644
  	 * be set, propagate it into PREEMPT_NEED_RESCHED.
 diff --git a/kernel/sched/poc_selector.c b/kernel/sched/poc_selector.c
 new file mode 100644
-index 0000000000..cb0e37401d
+index 0000000000..7bff4bef26
 --- /dev/null
 +++ b/kernel/sched/poc_selector.c
-@@ -0,0 +1,1353 @@
+@@ -0,0 +1,1401 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Piece-Of-Cake (POC) CPU Selector
@@ -317,18 +343,27 @@ index 0000000000..cb0e37401d
 +#define SCHED_POC_SELECTOR_AUTHOR   "Masahito Suzuki"
 +#define SCHED_POC_SELECTOR_PROGNAME "Piece-Of-Cake (POC) CPU Selector"
 +
-+#define SCHED_POC_SELECTOR_VERSION  "2.5.0-rc2"
++#define SCHED_POC_SELECTOR_VERSION  "2.5.0-rc3"
 +
 +/**************************************************************
 + * Static keys:
 + */
 +
 +/*
-+ * Runtime control: sched_poc_selector (sysctl kernel.sched_poc_selector)
-+ * Static key: enabled by default, toggled via sysctl.
-+ * When disabled, all POC paths are NOPed out at zero cost.
++ * Runtime control: poc_selector_active (static key)
++ * Derived from: sched_poc_selector && !poc_selector_skip
++ *
++ * sched_poc_selector: user-visible sysctl (kernel.sched_poc_selector),
++ *                     plain bool, default true.
++ * poc_selector_skip:  set true while sched_ext is active to avoid
++ *                     idle-bitmap overhead in do_idle.
++ * poc_selector_active: the actual static key gating all POC hot paths.
++ *                      Enabled only when sched_poc_selector && !poc_selector_skip.
++ *                      On enable transition, poc_resync_idle_state() is called.
 + */
-+DEFINE_STATIC_KEY_TRUE(sched_poc_enabled);
++DEFINE_STATIC_KEY_TRUE(poc_selector_active);
++static bool sched_poc_selector = true;
++static bool poc_selector_skip;
 +
 +/*
 + * SMT fallback control: sched_poc_smt_fallback
@@ -706,7 +741,7 @@ index 0000000000..cb0e37401d
 + * On exotic SMT (Tier 3: >2-way or non-uniform), also maintains the
 + * separate poc_idle_cores_mask bitmap for O(1) read-time lookup.
 + *
-+ * Caller (inline wrapper in sched.h) ensures sched_poc_enabled is on
++ * Caller (inline wrapper in sched.h) ensures poc_selector_active is on
 + * and sched_asym_cpucap_active() is false before calling here.
 + */
 +void __set_cpu_idle_state_poc(int cpu, int state)
@@ -905,10 +940,12 @@ index 0000000000..cb0e37401d
 +static __always_inline void poc_commit_selection(int cpu,
 +	struct sched_domain_shared *sd_share)
 +{
-+	if (static_branch_likely(&sched_poc_early_clear)) {
++	if (static_branch_likely(&sched_poc_early_clear) &&
++			cpu_rq(cpu)->nr_running <= 2) {
 +		int bit = cpu - sd_share->poc_cpu_base;
 +
 +		atomic64_andnot(1ULL << bit, &sd_share->poc_idle_cpus_mask);
++		smp_mb__after_atomic();
 +	}
 +}
 +
@@ -1167,11 +1204,11 @@ index 0000000000..cb0e37401d
 + * Sysctl interface and initialization:
 + */
 +
-+#ifdef CONFIG_SYSCTL
++#if defined(CONFIG_SYSCTL) || defined(CONFIG_SCHED_CLASS_EXT)
 +/*
 + * poc_resync_idle_state - Resync POC idle bitmaps after re-enable
 + *
-+ * When POC is re-enabled via sysctl after a period of being disabled,
++ * When POC is re-enabled after a period of being disabled,
 + * the idle bitmaps may be stale.  Walk all online CPUs and push
 + * the current idle state into poc_idle_cpus_mask (and poc_idle_cores_mask
 + * on non-consecutive SMT).
@@ -1188,10 +1225,51 @@ index 0000000000..cb0e37401d
 +		__set_cpu_idle_state_poc(cpu, idle_cpu(cpu));
 +}
 +
++/*
++ * poc_reevaluate_active - Recompute poc_selector_active from inputs
++ *
++ * poc_selector_active = sched_poc_selector && !poc_selector_skip
++ *
++ * On transition to active: enable static key, then resync idle bitmaps.
++ * On transition to inactive: disable static key.
++ * Caller must hold cpus_read_lock().
++ */
++static void poc_reevaluate_active(void)
++{
++	bool want = sched_poc_selector && !poc_selector_skip;
++	bool now  = static_branch_likely(&poc_selector_active);
++
++	if (want == now)
++		return;
++
++	if (want) {
++		static_branch_enable_cpuslocked(&poc_selector_active);
++		poc_resync_idle_state();
++	} else {
++		static_branch_disable_cpuslocked(&poc_selector_active);
++	}
++}
++#endif /* CONFIG_SYSCTL || CONFIG_SCHED_CLASS_EXT */
++
++#ifdef CONFIG_SCHED_CLASS_EXT
++/*
++ * poc_notify_scx - Called by sched_ext on enable/disable transitions
++ * @scx_active: true when scx scheduler is being enabled
++ */
++void poc_notify_scx(bool scx_active)
++{
++	cpus_read_lock();
++	poc_selector_skip = scx_active;
++	poc_reevaluate_active();
++	cpus_read_unlock();
++}
++#endif
++
++#ifdef CONFIG_SYSCTL
 +static int sched_poc_sysctl_handler(const struct ctl_table *table, int write,
 +				    void *buffer, size_t *lenp, loff_t *ppos)
 +{
-+	unsigned int val = static_branch_likely(&sched_poc_enabled) ? 1 : 0;
++	unsigned int val = sched_poc_selector ? 1 : 0;
 +	struct ctl_table tmp = {
 +		.data    = &val,
 +		.maxlen  = sizeof(val),
@@ -1202,12 +1280,8 @@ index 0000000000..cb0e37401d
 +
 +	if (!ret && write) {
 +		cpus_read_lock();
-+		if (val) {
-+			static_branch_enable_cpuslocked(&sched_poc_enabled);
-+			poc_resync_idle_state();
-+		} else {
-+			static_branch_disable_cpuslocked(&sched_poc_enabled);
-+		}
++		sched_poc_selector = !!val;
++		poc_reevaluate_active();
 +		cpus_read_unlock();
 +	}
 +	return ret;
@@ -1428,7 +1502,7 @@ index 0000000000..cb0e37401d
 +static ssize_t active_show(struct kobject *kobj,
 +			   struct kobj_attribute *attr, char *buf)
 +{
-+	bool active = static_branch_likely(&sched_poc_enabled) &&
++	bool active = static_branch_likely(&poc_selector_active) &&
 +		      !sched_asym_cpucap_active() &&
 +		      poc_check_all_llc_eligible();
 +	return sysfs_emit(buf, "%d\n", active ? 1 : 0);
@@ -1632,15 +1706,18 @@ index 0000000000..cb0e37401d
 +#endif /* CONFIG_SYSFS */
 +#endif /* CONFIG_SCHED_POC_SELECTOR */
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index a3f52e493b..ce854fb35f 100644
+index a3f52e493b..8d3809aa45 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -3145,6 +3145,108 @@ extern void nohz_run_idle_balance(int cpu);
+@@ -3145,6 +3145,111 @@ extern void nohz_run_idle_balance(int cpu);
  static inline void nohz_run_idle_balance(int cpu) { }
  #endif
  
 +#ifdef CONFIG_SCHED_POC_SELECTOR
-+extern struct static_key_true sched_poc_enabled;
++extern struct static_key_true poc_selector_active;
++#ifdef CONFIG_SCHED_CLASS_EXT
++extern void poc_notify_scx(bool scx_active);
++#endif
 +extern struct static_key_true sched_poc_aligned;
 +extern struct static_key_true sched_poc_smt_consecutive;
 +extern struct static_key_true sched_poc_smt_uniform;
@@ -1649,7 +1726,7 @@ index a3f52e493b..ce854fb35f 100644
 +extern void __set_cpu_idle_state_poc(int cpu, int state);
 +static __always_inline void set_cpu_idle_state_poc(int cpu, int state)
 +{
-+	if (static_branch_likely(&sched_poc_enabled) &&
++	if (static_branch_likely(&poc_selector_active) &&
 +	    !sched_asym_cpucap_active())
 +		__set_cpu_idle_state_poc(cpu, state);
 +}
