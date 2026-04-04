@@ -1176,25 +1176,25 @@ index 43bbf0693cca..15c8512ceeb5 100644
 2.53.0
 
 
-From 52038636300ba29f08fdbd80afde7fd14efc140c Mon Sep 17 00:00:00 2001
+From 2e8742d2eff9fa2bd38bbd68ed3a9a0b8d39b78f Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Sat, 4 Apr 2026 07:28:35 +0900
-Subject: [PATCH] 6.18.16-bore-cambyses-v0.5.0
+Date: Sat, 4 Apr 2026 20:15:24 +0900
+Subject: [PATCH] 7.0-rc2-bore-6.6.2-cambyses-v0.5.1
 
 ---
  include/linux/sched.h              |    5 +-
  include/linux/svec.h               |  205 ++++++
- init/Kconfig                       |   38 ++
+ init/Kconfig                       |   38 +
  kernel/sched/Makefile              |   30 +
- kernel/sched/cambyses.c            | 1011 ++++++++++++++++++++++++++++
+ kernel/sched/cambyses.c            | 1032 ++++++++++++++++++++++++++++
  kernel/sched/cambyses.h            |  137 ++++
- kernel/sched/cambyses_simd_avx2.c  |  190 ++++++
+ kernel/sched/cambyses_simd_avx2.c  |  190 +++++
  kernel/sched/cambyses_simd_neon.c  |  137 ++++
  kernel/sched/cambyses_simd_ssse3.c |  283 ++++++++
  kernel/sched/core.c                |    7 +
  kernel/sched/fair.c                |  246 ++++++-
  kernel/sched/sched.h               |   12 +
- 12 files changed, 2298 insertions(+), 3 deletions(-)
+ 12 files changed, 2319 insertions(+), 3 deletions(-)
  create mode 100644 include/linux/svec.h
  create mode 100644 kernel/sched/cambyses.c
  create mode 100644 kernel/sched/cambyses.h
@@ -1203,7 +1203,7 @@ Subject: [PATCH] 6.18.16-bore-cambyses-v0.5.0
  create mode 100644 kernel/sched/cambyses_simd_ssse3.c
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index db36c14911..dcd4d52661 100644
+index 5cd20a0614..008864aa40 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
 @@ -45,6 +45,7 @@
@@ -1214,7 +1214,7 @@ index db36c14911..dcd4d52661 100644
  #include <linux/uidgid_types.h>
  #include <linux/tracepoint-defs.h>
  #include <linux/unwind_deferred_types.h>
-@@ -580,7 +581,9 @@ struct sched_entity {
+@@ -586,7 +587,9 @@ struct sched_entity {
  	unsigned char			sched_delayed;
  	unsigned char			rel_deadline;
  	unsigned char			custom_slice;
@@ -1437,10 +1437,10 @@ index 0000000000..fd082d078b
 +
 +#endif /* _LINUX_SVEC_H */
 diff --git a/init/Kconfig b/init/Kconfig
-index 5f7215590b..628ac39700 100644
+index 61397c33a0..23b350ff3a 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1460,6 +1460,44 @@ config SCHED_BORE
+@@ -1463,6 +1463,44 @@ config SCHED_BORE
  
  	  If unsure, say Y here.
  
@@ -1486,10 +1486,10 @@ index 5f7215590b..628ac39700 100644
  	bool "Automatic process group scheduling"
  	select CGROUPS
 diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
-index b688084bce..4c83edfc0b 100644
+index f95a7b3d5a..097b4f030e 100644
 --- a/kernel/sched/Makefile
 +++ b/kernel/sched/Makefile
-@@ -38,3 +38,33 @@ obj-y += fair.o
+@@ -41,3 +41,33 @@ obj-y += fair.o
  obj-y += build_policy.o
  obj-y += build_utility.o
  obj-$(CONFIG_SCHED_BORE) += bore.o
@@ -1525,10 +1525,10 @@ index b688084bce..4c83edfc0b 100644
 +endif # CONFIG_SCHED_CAMBYSES_SIMD
 diff --git a/kernel/sched/cambyses.c b/kernel/sched/cambyses.c
 new file mode 100644
-index 0000000000..017903416e
+index 0000000000..9e77f36c8c
 --- /dev/null
 +++ b/kernel/sched/cambyses.c
-@@ -0,0 +1,1011 @@
+@@ -0,0 +1,1032 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Cambyses — Context-Aware Migration Balancer Yielding Scored Entity Selection
@@ -1553,7 +1553,7 @@ index 0000000000..017903416e
 +#define CAMBYSES_PROGNAME "Cambyses Migration Selector"
 +#define CAMBYSES_AUTHOR   "Masahito Suzuki"
 +
-+#define CAMBYSES_VERSION  "0.5.0"
++#define CAMBYSES_VERSION  "0.5.1"
 +
 +/* Runtime toggle — NOP-patched when disabled */
 +DEFINE_STATIC_KEY_TRUE(sched_cambyses);
@@ -1988,6 +1988,12 @@ index 0000000000..017903416e
 +
 +	scan_nr = min(nr, CAMBYSES_PRESCORE_LIMIT);
 +
++	/*
++	 * SMT siblings share L1/L2 cache, so cache-hot migration
++	 * penalty is negligible.  Skip the hot check entirely.
++	 */
++	bool smt = env->sd->flags & SD_SHARE_CPUCAPACITY;
++
 +	if (static_branch_unlikely(&cambyses_debug))
 +		trace_printk("cambyses: balance_scan src_cpu=%d dst_cpu=%d nr=%d scan_nr=%d "
 +			     "mig_type=%d imbal=%ld idle=%d\n",
@@ -2045,29 +2051,49 @@ index 0000000000..017903416e
 +						struct task_struct,
 +						se.cambyses_node));
 +
-+			env->loop++;
-+			if (env->loop > env->loop_max)
-+				break;
-+			if (env->loop > env->loop_break) {
-+				env->loop_break += SCHED_NR_MIGRATE_BREAK;
-+				env->flags |= LBF_NEED_BREAK;
-+				break;
++			/*
++			 * CAMBYSES_FILTER_SCORE — shared filter + score + collect.
++			 * Used in both pre-score and direct-scan paths.
++			 *
++			 * Wrapped in if(1){} so that break/continue target
++			 * the enclosing for-loop (not a do-while wrapper).
++			 */
++			#define CAMBYSES_FILTER_SCORE(p) \
++			if (1) { \
++			env->loop++; \
++			if (env->loop > env->loop_max) \
++				break; \
++			if (env->loop > env->loop_break) { \
++				env->loop_break += SCHED_NR_MIGRATE_BREAK; \
++				env->flags |= LBF_NEED_BREAK; \
++				break; \
++			} \
++			\
++			if (smt) { \
++				if (!cpumask_test_cpu(env->dst_cpu, \
++								(p)->cpus_ptr)) \
++					continue; \
++				if (task_on_cpu(env->src_rq, (p))) \
++					continue; \
++			} else { \
++				if (!can_migrate_task((p), env)) { \
++					if ((p)->sched_task_hot) \
++						schedstat_inc( \
++						(p)->stats.nr_failed_migrations_hot); \
++					continue; \
++				} \
++			} \
++			if (!check_imbalance_cambyses((p), env)) \
++				continue; \
++			\
++			cands[nr_cands].p = (p); \
++			scores[nr_cands] = score_task((p), src_rq); \
++			nr_cands++; \
++			\
++			if (nr_cands >= SCHED_NR_MIGRATE_BREAK) \
++				break; \
 +			}
-+
-+			if (!can_migrate_task(p, env)) {
-+				if (p->sched_task_hot)
-+					schedstat_inc(p->stats.nr_failed_migrations_hot);
-+				continue;
-+			}
-+			if (!check_imbalance_cambyses(p, env))
-+				continue;
-+
-+			cands[nr_cands].p = p;
-+			scores[nr_cands] = score_task(p, src_rq);
-+			nr_cands++;
-+
-+			if (nr_cands >= SCHED_NR_MIGRATE_BREAK)
-+				break;
++			CAMBYSES_FILTER_SCORE(p);
 +		}
 +	} else {
 +		/*
@@ -2106,29 +2132,8 @@ index 0000000000..017903416e
 +						struct task_struct,
 +						se.cambyses_node));
 +
-+			env->loop++;
-+			if (env->loop > env->loop_max)
-+				break;
-+			if (env->loop > env->loop_break) {
-+				env->loop_break += SCHED_NR_MIGRATE_BREAK;
-+				env->flags |= LBF_NEED_BREAK;
-+				break;
-+			}
-+
-+			if (!can_migrate_task(p, env)) {
-+				if (p->sched_task_hot)
-+					schedstat_inc(p->stats.nr_failed_migrations_hot);
-+				continue;
-+			}
-+			if (!check_imbalance_cambyses(p, env))
-+				continue;
-+
-+			cands[nr_cands].p = p;
-+			scores[nr_cands] = score_task(p, src_rq);
-+			nr_cands++;
-+
-+			if (nr_cands >= SCHED_NR_MIGRATE_BREAK)
-+				break;
++			CAMBYSES_FILTER_SCORE(p);
++			#undef CAMBYSES_FILTER_SCORE
 +		}
 +	}
 +
@@ -2136,8 +2141,12 @@ index 0000000000..017903416e
 +	 * Newidle fallback: if the normal filter found no candidates,
 +	 * progressively relax gates so the idle CPU gets *something*.
 +	 *
-+	 *   Pass 2: drop check_imbalance (allow budget overshoot)
-+	 *   Pass 3: also skip cache-hot tasks (any movable task)
++	 *   Pass 1: drop check_imbalance (allow budget overshoot)
++	 *   Pass 2: also skip cache-hot tasks (any movable task)
++	 *
++	 * Pass number matches sysctl_cambyses_newidle_fallback directly.
++	 * For SMT domains, cache-hot is already skipped in the normal
++	 * pass, so Pass 1 is redundant — jump straight to Pass 2.
 +	 *
 +	 * The svec is already built; only the filter
 +	 * loop is re-run, so the cost is minimal.
@@ -2145,16 +2154,28 @@ index 0000000000..017903416e
 +	if (!nr_cands && env->idle == CPU_NEWLY_IDLE &&
 +	    sysctl_cambyses_newidle_fallback > 0) {
 +		int pass;
-+		int max_pass = sysctl_cambyses_newidle_fallback + 1;
++		int max_pass = sysctl_cambyses_newidle_fallback;
 +
-+		for (pass = 2; pass <= max_pass && !nr_cands; pass++) {
++		/*
++		 * SMT: hot check is already skipped in the normal pass,
++		 * so Pass 1 (drop budget, keep hot) is redundant — jump
++		 * straight to Pass 2 (drop budget + hot).
++		 */
++		if (smt) {
++			pass = 2;
++			max_pass = 2;
++		} else {
++			pass = 1;
++		}
++
++		for (; pass <= max_pass && !nr_cands; pass++) {
 +			for (i = 0; i < scan_nr; i++) {
 +				struct task_struct *p =
 +					svec_entry_idx(sv, i,
 +						       struct task_struct,
 +						       se.cambyses_node);
 +
-+				if (pass < 3) {
++				if (pass < 2) {
 +					if (!can_migrate_task(p, env))
 +						continue;
 +				} else {
@@ -3312,7 +3333,7 @@ index 0000000000..78174b73e6
 +
 +#endif /* CONFIG_SCHED_CAMBYSES_SIMD */
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 5e60e07cee..d1383420f9 100644
+index aababf02ef..94755e9377 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -90,6 +90,7 @@
@@ -3323,7 +3344,7 @@ index 5e60e07cee..d1383420f9 100644
  
  #include "autogroup.h"
  #include "pelt.h"
-@@ -4457,6 +4458,9 @@ static void __sched_fork(u64 clone_flags, struct task_struct *p)
+@@ -4407,6 +4408,9 @@ static void __sched_fork(u64 clone_flags, struct task_struct *p)
  	p->se.vruntime			= 0;
  	p->se.vlag			= 0;
  	INIT_LIST_HEAD(&p->se.group_node);
@@ -3333,7 +3354,7 @@ index 5e60e07cee..d1383420f9 100644
  
  	/* A delayed task cannot be in clone(). */
  	WARN_ON_ONCE(p->se.sched_delayed);
-@@ -8778,6 +8782,9 @@ void __init sched_init(void)
+@@ -8731,6 +8735,9 @@ void __init sched_init(void)
  		rq->max_idle_balance_cost = sysctl_sched_migration_cost;
  
  		INIT_LIST_HEAD(&rq->cfs_tasks);
@@ -3344,7 +3365,7 @@ index 5e60e07cee..d1383420f9 100644
  		rq_attach_root(rq, &def_root_domain);
  #ifdef CONFIG_NO_HZ_COMMON
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index a8d4becec9..0fefff75be 100644
+index 6368325077..af842c1de0 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -62,6 +62,10 @@
@@ -3358,7 +3379,7 @@ index a8d4becec9..0fefff75be 100644
  /*
   * The initial- and re-scaling of tunables is configurable
   *
-@@ -1184,6 +1188,14 @@ static s64 update_se(struct rq *rq, struct sched_entity *se)
+@@ -1282,6 +1286,14 @@ static s64 update_se(struct rq *rq, struct sched_entity *se)
  		 * task, as w/ proxy-exec they may not be the same.
  		 */
  		running->se.exec_start = now;
@@ -3373,7 +3394,7 @@ index a8d4becec9..0fefff75be 100644
  		running->se.sum_exec_runtime += delta_exec;
  
  		trace_sched_stat_runtime(running, delta_exec);
-@@ -3700,6 +3712,20 @@ account_entity_enqueue(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -3800,6 +3812,20 @@ account_entity_enqueue(struct cfs_rq *cfs_rq, struct sched_entity *se)
  
  		account_numa_enqueue(rq, task_of(se));
  		list_add(&se->group_node, &rq->cfs_tasks);
@@ -3394,7 +3415,7 @@ index a8d4becec9..0fefff75be 100644
  	}
  	cfs_rq->nr_queued++;
  }
-@@ -3711,6 +3737,23 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -3811,6 +3837,23 @@ account_entity_dequeue(struct cfs_rq *cfs_rq, struct sched_entity *se)
  	if (entity_is_task(se)) {
  		account_numa_dequeue(rq_of(cfs_rq), task_of(se));
  		list_del_init(&se->group_node);
@@ -3418,7 +3439,7 @@ index a8d4becec9..0fefff75be 100644
  	}
  	cfs_rq->nr_queued--;
  }
-@@ -3810,6 +3853,15 @@ void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
+@@ -3921,6 +3964,15 @@ void reweight_entity(struct cfs_rq *cfs_rq, struct sched_entity *se,
  
  	update_load_set(&se->load, weight);
  
@@ -3434,7 +3455,7 @@ index a8d4becec9..0fefff75be 100644
  	do {
  		u32 divider = get_pelt_divider(&se->avg);
  
-@@ -9655,16 +9707,59 @@ static void detach_task(struct task_struct *p, struct lb_env *env)
+@@ -9703,16 +9755,59 @@ static void detach_task(struct task_struct *p, struct lb_env *env)
   *
   * Returns a task if successful and NULL otherwise.
   */
@@ -3495,7 +3516,7 @@ index a8d4becec9..0fefff75be 100644
  
  		detach_task(p, env);
  
-@@ -9707,6 +9802,29 @@ static int detach_tasks(struct lb_env *env)
+@@ -9755,6 +9850,29 @@ static int detach_tasks(struct lb_env *env)
  	if (env->imbalance <= 0)
  		return 0;
  
@@ -3525,7 +3546,7 @@ index a8d4becec9..0fefff75be 100644
  	while (!list_empty(tasks)) {
  		/*
  		 * We don't want to steal all, otherwise we may be treated likewise,
-@@ -9729,8 +9847,26 @@ static int detach_tasks(struct lb_env *env)
+@@ -9777,8 +9895,26 @@ static int detach_tasks(struct lb_env *env)
  
  		p = list_last_entry(tasks, struct task_struct, se.group_node);
  
@@ -3553,7 +3574,7 @@ index a8d4becec9..0fefff75be 100644
  
  		switch (env->migration_type) {
  		case migrate_load:
-@@ -9786,6 +9922,11 @@ static int detach_tasks(struct lb_env *env)
+@@ -9834,6 +9970,11 @@ static int detach_tasks(struct lb_env *env)
  
  		detached++;
  
@@ -3565,7 +3586,7 @@ index a8d4becec9..0fefff75be 100644
  #ifdef CONFIG_PREEMPTION
  		/*
  		 * NEWIDLE balancing is a source of latency, so preemptible
-@@ -9808,6 +9949,11 @@ static int detach_tasks(struct lb_env *env)
+@@ -9856,6 +9997,11 @@ static int detach_tasks(struct lb_env *env)
  		if (p->sched_task_hot)
  			schedstat_inc(p->stats.nr_failed_migrations_hot);
  
@@ -3577,7 +3598,7 @@ index a8d4becec9..0fefff75be 100644
  		list_move(&p->se.group_node, tasks);
  	}
  
-@@ -11909,6 +12055,12 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -11960,6 +12106,12 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  	struct sched_group *group;
  	struct rq *busiest;
  	struct rq_flags rf;
@@ -3590,7 +3611,7 @@ index a8d4becec9..0fefff75be 100644
  	struct cpumask *cpus = this_cpu_cpumask_var_ptr(load_balance_mask);
  	struct lb_env env = {
  		.sd		= sd,
-@@ -12041,6 +12193,86 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -12092,6 +12244,86 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  			goto more_balance;
  		}
  
@@ -3677,7 +3698,7 @@ index a8d4becec9..0fefff75be 100644
  		/*
  		 * We failed to reach balance because of affinity.
  		 */
-@@ -12065,6 +12297,12 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -12116,6 +12348,12 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  			if (!cpumask_subset(cpus, env.dst_grpmask)) {
  				env.loop = 0;
  				env.loop_break = SCHED_NR_MIGRATE_BREAK;
@@ -3690,7 +3711,7 @@ index a8d4becec9..0fefff75be 100644
  				goto redo;
  			}
  			goto out_all_pinned;
-@@ -12184,6 +12422,10 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -12235,6 +12473,10 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  	if (need_unlock)
  		atomic_set_release(&sched_balance_running, 0);
  
@@ -3702,14 +3723,13 @@ index a8d4becec9..0fefff75be 100644
  }
  
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index cf3e331d1b..60e42f3b8a 100644
+index 15c8512cee..9d769bfa00 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1322,6 +1322,18 @@ struct rq {
- 	call_single_data_t	cfsb_csd;
+@@ -1340,6 +1340,18 @@ struct rq {
  	struct list_head	cfsb_csd_list;
  #endif
-+
+ 
 +#ifdef CONFIG_SCHED_CAMBYSES
 +	struct svec_node	*cambyses_buf[256];
 +	struct svec_head	cambyses_tasks;
@@ -3721,8 +3741,9 @@ index cf3e331d1b..60e42f3b8a 100644
 +	u64			cambyses_shadow_exec_start[256];
 +	unsigned long		cambyses_shadow_weight[256];
 +#endif
- };
++
+ 	atomic_t		nr_iowait;
+ } __no_randomize_layout;
  
- #ifdef CONFIG_FAIR_GROUP_SCHED
 -- 
 2.34.1
