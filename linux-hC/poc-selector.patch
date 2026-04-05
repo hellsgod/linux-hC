@@ -1,7 +1,7 @@
-From 11df35f4b5861d9e2c5362e94171af7297c1aaac Mon Sep 17 00:00:00 2001
+From 08909c0cb94d96ba3a23c41e7dc87132d4f66c90 Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
 Date: Fri, 3 Apr 2026 02:08:24 +0900
-Subject: [PATCH] 6.18.3-prefcorev7-poc-selector-v2.5.2
+Subject: [PATCH] 6.18.3-prefcorev7-poc-selector-v2.5.3
 
 ---
  include/linux/sched/topology.h |   50 +-
@@ -324,7 +324,7 @@ index ac9690805b..fa271b8ed9 100644
  	 * be set, propagate it into PREEMPT_NEED_RESCHED.
 diff --git a/kernel/sched/poc_selector.c b/kernel/sched/poc_selector.c
 new file mode 100644
-index 0000000000..b4d36ecda8
+index 0000000000..ad4ef22293
 --- /dev/null
 +++ b/kernel/sched/poc_selector.c
 @@ -0,0 +1,1688 @@
@@ -367,7 +367,7 @@ index 0000000000..b4d36ecda8
 +#define SCHED_POC_SELECTOR_AUTHOR   "Masahito Suzuki"
 +#define SCHED_POC_SELECTOR_PROGNAME "Piece-Of-Cake (POC) CPU Selector"
 +
-+#define SCHED_POC_SELECTOR_VERSION  "2.5.2"
++#define SCHED_POC_SELECTOR_VERSION  "2.5.3"
 +
 +/**************************************************************
 + * Static keys:
@@ -468,9 +468,9 @@ index 0000000000..b4d36ecda8
 + * it ran on last, keeping warm TLB/L1/L2 state.
 + *
 + * Checked after Level 0 (saturation) and before core_mask derivation.
-+ * Default: enabled.
++ * Default: disabled.
 + */
-+DEFINE_STATIC_KEY_TRUE(sched_poc_target_sticky);
++DEFINE_STATIC_KEY_FALSE(sched_poc_target_sticky);
 +
 +/*
 + * Early select: sched_poc_early_select
@@ -488,9 +488,9 @@ index 0000000000..b4d36ecda8
 + * one would let the pre-POC path return a lower-priority result
 + * before POC can evaluate the higher-priority candidate.
 + *
-+ * Default: disabled (POC Level 1r/1t handle this via bitmap).
++ * Default: enabled.
 + */
-+DEFINE_STATIC_KEY_FALSE(sched_poc_early_select);
++DEFINE_STATIC_KEY_TRUE(sched_poc_early_select);
 +
 +/*
 + * Greedy search: sched_poc_greedy_search
@@ -1283,12 +1283,12 @@ index 0000000000..b4d36ecda8
 +		core_mask = poc_idle_core_mask(cpu_mask, sd_share);
 +
 +		/* Level 1r: recent's core is idle (warm cache) */
-+		if (!static_branch_unlikely(&sched_poc_early_select) &&
++		if (!static_branch_likely(&sched_poc_early_select) &&
 +				core_mask && POC_CPU_IN_LLC(rct_bit) && POC_IDLE_CORE(rct_bit))
 +			POC_RETURN(recent, POC_LV1R);
 +
 +		/* Level 1s: target CPU sticky — L1/TLB affinity shortcut */
-+		if (static_branch_likely(&sched_poc_target_sticky) && POC_IDLE_CPU(tgt_bit))
++		if (static_branch_unlikely(&sched_poc_target_sticky) && POC_IDLE_CPU(tgt_bit))
 +			POC_RETURN(target, POC_LV1S);
 +
 +		if (core_mask) {
@@ -1299,7 +1299,7 @@ index 0000000000..b4d36ecda8
 +			 */
 +
 +			/* Level 1t: target CPU's core is idle → return it */
-+			if (!static_branch_unlikely(&sched_poc_early_select) &&
++			if (!static_branch_likely(&sched_poc_early_select) &&
 +					POC_IDLE_CORE(tgt_bit))
 +				POC_RETURN(target, POC_LV1T);
 +
@@ -1351,7 +1351,7 @@ index 0000000000..b4d36ecda8
 +#endif
 +	{
 +		/* Level 1r: recent CPU is idle (non-SMT) */
-+		if (!static_branch_unlikely(&sched_poc_early_select) &&
++		if (!static_branch_likely(&sched_poc_early_select) &&
 +				POC_CPU_IN_LLC(rct_bit) && POC_IDLE_CPU(rct_bit))
 +			POC_RETURN(recent, POC_LV1R);
 +		/* Level 1t: target CPU is idle → return (non-SMT) */
@@ -1581,7 +1581,7 @@ index 0000000000..b4d36ecda8
 +					       int write, void *buffer,
 +					       size_t *lenp, loff_t *ppos)
 +{
-+	unsigned int val = static_branch_likely(&sched_poc_target_sticky) ? 1 : 0;
++	unsigned int val = static_branch_unlikely(&sched_poc_target_sticky) ? 1 : 0;
 +	struct ctl_table tmp = {
 +		.data    = &val,
 +		.maxlen  = sizeof(val),
@@ -1603,7 +1603,7 @@ index 0000000000..b4d36ecda8
 +					  int write, void *buffer,
 +					  size_t *lenp, loff_t *ppos)
 +{
-+	unsigned int val = static_branch_unlikely(&sched_poc_early_select) ? 1 : 0;
++	unsigned int val = static_branch_likely(&sched_poc_early_select) ? 1 : 0;
 +	struct ctl_table tmp = {
 +		.data    = &val,
 +		.maxlen  = sizeof(val),
@@ -2017,7 +2017,7 @@ index 0000000000..b4d36ecda8
 +#endif /* CONFIG_SYSFS */
 +#endif /* CONFIG_SCHED_POC_SELECTOR */
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index a3f52e493b..36f14f37be 100644
+index a3f52e493b..f52ecebdf1 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1136,6 +1136,9 @@ struct rq {
@@ -2045,7 +2045,7 @@ index a3f52e493b..36f14f37be 100644
 +extern struct static_key_true sched_poc_aligned;
 +extern struct static_key_true sched_poc_smt_consecutive;
 +extern struct static_key_true sched_poc_smt_uniform;
-+extern struct static_key_true sched_poc_target_sticky;
++extern struct static_key_false sched_poc_target_sticky;
 +extern struct static_key_true sched_poc_packed;
 +extern struct static_key_false sched_poc_lockless_bitmap;
 +extern void __set_cpu_idle_state_poc(int cpu, int state);
