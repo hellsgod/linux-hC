@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.0.rc6
+	pkgver = 7.0.rc7
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc6.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc7.tar.gz
 	source = config
 	source = base.patch
 	source = cgroup-vram.patch
@@ -35,7 +35,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0004-HACK-kernel-open-Makefile-Remove-PAHOLE_VARIABLE.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 14e5e0ab9bb31d459b3158339139873aa1200e8f60ab7172d7370edad797e0c119fd7ec27f13b8ad69339d3a58ca0f7017d97dcfa69ebcbc1480f7d97ddad24a
+	b2sums = 9ffe9e0adba185472fa43cc61136f63bd2d43bf3094af97653a8d7e2e19677ea10f9e3693b629673464bd73cbb1512d19db85149315eef9685b3c1dda61d57ca
 	b2sums = eeb1f86c8757e6c80d242693b49f226b3fa77ee64471726e8207991d135d397e099bfa062ec68b438cdd4e463eba27ec53b11863fe6a4edbe6a2b04f72069c51
 	b2sums = 71018738962643baff538795fc62894e3dee475ebec850ea673248b155c501d260ffddf0df6f8b84b07463d6c1209972503a5181a17338810781de0ab16197d0
 	b2sums = bcd5242e3d7e9ed18421236dc90eb1b6ba2a9d47b106cf56adfc6240daacc89a81047fa2d7c2f4bc4a8a831556588109f898bc42711f7476fee4a7f401242a0b
@@ -76,7 +76,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 595.58.03 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=7.0.rc6-1
+	depends = linux-hC-rc=7.0.rc7-1
 	depends = nvidia-utils=595.58.03
 	depends = libglvnd
 	provides = NVIDIA-MODULE
