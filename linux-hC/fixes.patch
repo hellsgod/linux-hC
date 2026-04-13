@@ -308,6 +308,26 @@ index 94b8ecb892bb1..5d68786044513 100644
  			++upgcnt;
  
  			if (++cur_pgcnt >= pgcnt)
+diff --git a/include/linux/clockchips.h b/include/linux/clockchips.h
+index 50cdc9da8d32a..b0df28ddd394b 100644
+--- a/include/linux/clockchips.h
++++ b/include/linux/clockchips.h
+@@ -80,7 +80,6 @@ enum clock_event_state {
+  * @shift:		nanoseconds to cycles divisor (power of two)
+  * @state_use_accessors:current state of the device, assigned by the core code
+  * @features:		features
+- * @next_event_forced:	True if the last programming was a forced event
+  * @retries:		number of forced programming retries
+  * @set_state_periodic:	switch state to periodic
+  * @set_state_oneshot:	switch state to oneshot
+@@ -109,7 +108,6 @@ struct clock_event_device {
+ 	u32			shift;
+ 	enum clock_event_state	state_use_accessors;
+ 	unsigned int		features;
+-	unsigned int		next_event_forced;
+ 	unsigned long		retries;
+ 
+ 	int			(*set_state_periodic)(struct clock_event_device *);
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
 index 48d851fbd8ea5..7c1dac8da5e59 100644
 --- a/include/linux/perf_event.h
@@ -526,10 +546,10 @@ index 496dff740dcaf..292efc99839b7 100644
  	 * There's no userspace yet to cause hotplug operations; hence all the
  	 * CPU masks are stable and all blatant races in the below code cannot
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index bf948db905ed1..904e85f845312 100644
+index ab4114712be74..3b976e356ec29 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -11936,12 +11936,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -11932,12 +11932,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -547,7 +567,7 @@ index bf948db905ed1..904e85f845312 100644
  		/*
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
-@@ -12283,27 +12286,11 @@ void update_max_interval(void)
+@@ -12279,27 +12282,11 @@ void update_max_interval(void)
  	max_load_balance_interval = HZ*num_online_cpus()/10;
  }
  
@@ -576,7 +596,7 @@ index bf948db905ed1..904e85f845312 100644
  	if (cost > sd->max_newidle_lb_cost) {
  		/*
  		 * Track max cost of a domain to make sure to not delay the
-@@ -12351,7 +12338,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
+@@ -12347,7 +12334,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
  		 * Decay the newidle max times here because this is a regular
  		 * visit to all the domains.
  		 */
@@ -585,7 +605,7 @@ index bf948db905ed1..904e85f845312 100644
  		max_cost += sd->max_newidle_lb_cost;
  
  		/*
-@@ -12994,22 +12981,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -12990,22 +12977,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  			break;
  
  		if (sd->flags & SD_BALANCE_NEWIDLE) {
@@ -608,7 +628,7 @@ index bf948db905ed1..904e85f845312 100644
  
  			pulled_task = sched_balance_rq(this_cpu, this_rq,
  						   sd, CPU_NEWLY_IDLE,
-@@ -13017,14 +12988,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -13013,14 +12984,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  			t1 = sched_clock_cpu(this_cpu);
  			domain_cost = t1 - t0;
@@ -639,7 +659,7 @@ index 136a6584be797..3c12d9f93331d 100644
 - */
 -SCHED_FEAT(NI_RANDOM, true)
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 43bbf0693cca4..29394e1e156b6 100644
+index 1ef9ba480f51d..006d949958fa9 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -5,7 +5,6 @@
@@ -650,7 +670,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  #include <linux/sched/affinity.h>
  #include <linux/sched/autogroup.h>
  #include <linux/sched/cpufreq.h>
-@@ -1372,12 +1371,6 @@ static inline bool is_migration_disabled(struct task_struct *p)
+@@ -1375,12 +1374,6 @@ static inline bool is_migration_disabled(struct task_struct *p)
  }
  
  DECLARE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
@@ -663,7 +683,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  
  static __always_inline struct rq *__this_rq(void)
  {
-@@ -1429,12 +1422,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
+@@ -1432,12 +1425,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
  
  DECLARE_STATIC_KEY_FALSE(__sched_core_enabled);
  
@@ -678,7 +698,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  {
  	return !static_branch_unlikely(&__sched_core_enabled);
  }
-@@ -1443,7 +1436,7 @@ static inline bool sched_core_disabled(void)
+@@ -1446,7 +1439,7 @@ static inline bool sched_core_disabled(void)
   * Be careful with this function; not for general use. The return value isn't
   * stable unless you actually hold a relevant rq->__lock.
   */
@@ -687,7 +707,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  {
  	if (sched_core_enabled(rq))
  		return &rq->core->__lock;
-@@ -1451,7 +1444,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
+@@ -1454,7 +1447,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
  	return &rq->__lock;
  }
  
@@ -696,7 +716,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	if (rq->core_enabled)
-@@ -1546,12 +1539,12 @@ static inline bool sched_core_disabled(void)
+@@ -1549,12 +1542,12 @@ static inline bool sched_core_disabled(void)
  	return true;
  }
  
@@ -711,7 +731,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	return &rq->__lock;
-@@ -1606,30 +1599,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
+@@ -1609,30 +1602,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
  extern bool raw_spin_rq_trylock(struct rq *rq)
  	__cond_acquires(true, __rq_lockp(rq));
  
@@ -752,7 +772,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__acquires(__rq_lockp(rq))
  {
  	unsigned long flags;
-@@ -1640,7 +1636,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
+@@ -1643,7 +1639,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
  	return flags;
  }
  
@@ -778,6 +798,145 @@ index 32dcddaead82d..35ae4d1e9ad61 100644
  		.max_newidle_lb_cost	= 0,
  		.last_decay_max_lb_cost	= jiffies,
  		.child			= child,
+diff --git a/kernel/time/clockevents.c b/kernel/time/clockevents.c
+index 38570998a19b8..eaae1ce9f0600 100644
+--- a/kernel/time/clockevents.c
++++ b/kernel/time/clockevents.c
+@@ -172,7 +172,6 @@ void clockevents_shutdown(struct clock_event_device *dev)
+ {
+ 	clockevents_switch_state(dev, CLOCK_EVT_STATE_SHUTDOWN);
+ 	dev->next_event = KTIME_MAX;
+-	dev->next_event_forced = 0;
+ }
+ 
+ /**
+@@ -306,6 +305,7 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
+ {
+ 	unsigned long long clc;
+ 	int64_t delta;
++	int rc;
+ 
+ 	if (WARN_ON_ONCE(expires < 0))
+ 		return -ETIME;
+@@ -324,27 +324,16 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
+ 		return dev->set_next_ktime(expires, dev);
+ 
+ 	delta = ktime_to_ns(ktime_sub(expires, ktime_get()));
++	if (delta <= 0)
++		return force ? clockevents_program_min_delta(dev) : -ETIME;
+ 
+-	/* Required for tick_periodic() during early boot */
+-	if (delta <= 0 && !force)
+-		return -ETIME;
+-
+-	if (delta > (int64_t)dev->min_delta_ns) {
+-		delta = min(delta, (int64_t) dev->max_delta_ns);
+-		clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
+-		if (!dev->set_next_event((unsigned long) clc, dev))
+-			return 0;
+-	}
++	delta = min(delta, (int64_t) dev->max_delta_ns);
++	delta = max(delta, (int64_t) dev->min_delta_ns);
+ 
+-	if (dev->next_event_forced)
+-		return 0;
++	clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
++	rc = dev->set_next_event((unsigned long) clc, dev);
+ 
+-	if (dev->set_next_event(dev->min_delta_ticks, dev)) {
+-		if (!force || clockevents_program_min_delta(dev))
+-			return -ETIME;
+-	}
+-	dev->next_event_forced = 1;
+-	return 0;
++	return (rc && force) ? clockevents_program_min_delta(dev) : rc;
+ }
+ 
+ /*
+diff --git a/kernel/time/hrtimer.c b/kernel/time/hrtimer.c
+index 1e37142fe52f4..860af7a584289 100644
+--- a/kernel/time/hrtimer.c
++++ b/kernel/time/hrtimer.c
+@@ -1888,7 +1888,6 @@ void hrtimer_interrupt(struct clock_event_device *dev)
+ 	BUG_ON(!cpu_base->hres_active);
+ 	cpu_base->nr_events++;
+ 	dev->next_event = KTIME_MAX;
+-	dev->next_event_forced = 0;
+ 
+ 	raw_spin_lock_irqsave(&cpu_base->lock, flags);
+ 	entry_time = now = hrtimer_update_base(cpu_base);
+diff --git a/kernel/time/tick-broadcast.c b/kernel/time/tick-broadcast.c
+index 7e57fa31ee26f..f63c65881364d 100644
+--- a/kernel/time/tick-broadcast.c
++++ b/kernel/time/tick-broadcast.c
+@@ -76,10 +76,8 @@ const struct clock_event_device *tick_get_wakeup_device(int cpu)
+  */
+ static void tick_broadcast_start_periodic(struct clock_event_device *bc)
+ {
+-	if (bc) {
+-		bc->next_event_forced = 0;
++	if (bc)
+ 		tick_setup_periodic(bc, 1);
+-	}
+ }
+ 
+ /*
+@@ -405,7 +403,6 @@ static void tick_handle_periodic_broadcast(struct clock_event_device *dev)
+ 	bool bc_local;
+ 
+ 	raw_spin_lock(&tick_broadcast_lock);
+-	tick_broadcast_device.evtdev->next_event_forced = 0;
+ 
+ 	/* Handle spurious interrupts gracefully */
+ 	if (clockevent_state_shutdown(tick_broadcast_device.evtdev)) {
+@@ -699,7 +696,6 @@ static void tick_handle_oneshot_broadcast(struct clock_event_device *dev)
+ 
+ 	raw_spin_lock(&tick_broadcast_lock);
+ 	dev->next_event = KTIME_MAX;
+-	tick_broadcast_device.evtdev->next_event_forced = 0;
+ 	next_event = KTIME_MAX;
+ 	cpumask_clear(tmpmask);
+ 	now = ktime_get();
+@@ -1067,7 +1063,6 @@ static void tick_broadcast_setup_oneshot(struct clock_event_device *bc,
+ 
+ 
+ 	bc->event_handler = tick_handle_oneshot_broadcast;
+-	bc->next_event_forced = 0;
+ 	bc->next_event = KTIME_MAX;
+ 
+ 	/*
+@@ -1180,7 +1175,6 @@ void hotplug_cpu__broadcast_tick_pull(int deadcpu)
+ 		}
+ 
+ 		/* This moves the broadcast assignment to this CPU: */
+-		bc->next_event_forced = 0;
+ 		clockevents_program_event(bc, bc->next_event, 1);
+ 	}
+ 	raw_spin_unlock_irqrestore(&tick_broadcast_lock, flags);
+diff --git a/kernel/time/tick-common.c b/kernel/time/tick-common.c
+index 6a9198a4279b5..d305d85218961 100644
+--- a/kernel/time/tick-common.c
++++ b/kernel/time/tick-common.c
+@@ -110,7 +110,6 @@ void tick_handle_periodic(struct clock_event_device *dev)
+ 	int cpu = smp_processor_id();
+ 	ktime_t next = dev->next_event;
+ 
+-	dev->next_event_forced = 0;
+ 	tick_periodic(cpu);
+ 
+ 	/*
+diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+index d1f27df1e60ef..36449f0010a45 100644
+--- a/kernel/time/tick-sched.c
++++ b/kernel/time/tick-sched.c
+@@ -1513,7 +1513,6 @@ static void tick_nohz_lowres_handler(struct clock_event_device *dev)
+ 	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
+ 
+ 	dev->next_event = KTIME_MAX;
+-	dev->next_event_forced = 0;
+ 
+ 	if (likely(tick_nohz_handler(&ts->sched_timer) == HRTIMER_RESTART))
+ 		tick_program_event(hrtimer_get_expires(&ts->sched_timer), 1);
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
