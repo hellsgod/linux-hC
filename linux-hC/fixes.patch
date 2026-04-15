@@ -779,10 +779,20 @@ index 32dcddaead82d..35ae4d1e9ad61 100644
  		.last_decay_max_lb_cost	= jiffies,
  		.child			= child,
 diff --git a/kernel/time/clockevents.c b/kernel/time/clockevents.c
-index 38570998a19b8..37b10045572e9 100644
+index 38570998a19b8..69379b34bcc92 100644
 --- a/kernel/time/clockevents.c
 +++ b/kernel/time/clockevents.c
-@@ -332,8 +332,10 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
+@@ -94,6 +94,9 @@ static int __clockevents_switch_state(struct clock_event_device *dev,
+ 	if (dev->features & CLOCK_EVT_FEAT_DUMMY)
+ 		return 0;
+ 
++	/* On state transitions clear the forced flag unconditionally */
++	dev->next_event_forced = 0;
++
+ 	/* Transition with new state-specific callbacks */
+ 	switch (state) {
+ 	case CLOCK_EVT_STATE_DETACHED:
+@@ -332,8 +335,10 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
  	if (delta > (int64_t)dev->min_delta_ns) {
  		delta = min(delta, (int64_t) dev->max_delta_ns);
  		clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
@@ -794,26 +804,18 @@ index 38570998a19b8..37b10045572e9 100644
  	}
  
  	if (dev->next_event_forced)
-diff --git a/kernel/time/tick-oneshot.c b/kernel/time/tick-oneshot.c
-index 7472597f3225f..bf411472d4f76 100644
---- a/kernel/time/tick-oneshot.c
-+++ b/kernel/time/tick-oneshot.c
-@@ -34,6 +34,7 @@ int tick_program_event(ktime_t expires, int force)
- 		 */
- 		clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT_STOPPED);
- 		dev->next_event = KTIME_MAX;
-+		dev->next_event_forced = 0;
- 		return 0;
- 	}
+diff --git a/kernel/time/tick-broadcast.c b/kernel/time/tick-broadcast.c
+index 7e57fa31ee26f..115e0bf012764 100644
+--- a/kernel/time/tick-broadcast.c
++++ b/kernel/time/tick-broadcast.c
+@@ -108,6 +108,7 @@ static struct clock_event_device *tick_get_oneshot_wakeup_device(int cpu)
  
-@@ -43,6 +44,7 @@ int tick_program_event(ktime_t expires, int force)
- 		 * before using it.
- 		 */
- 		clockevents_switch_state(dev, CLOCK_EVT_STATE_ONESHOT);
-+		dev->next_event_forced = 0;
- 	}
- 
- 	return clockevents_program_event(dev, expires, force);
+ static void tick_oneshot_wakeup_handler(struct clock_event_device *wd)
+ {
++	wd->next_event_forced = 0;
+ 	/*
+ 	 * If we woke up early and the tick was reprogrammed in the
+ 	 * meantime then this may be spurious but harmless.
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c244..08f80d7c5df05 100644
 --- a/scripts/package/PKGBUILD
