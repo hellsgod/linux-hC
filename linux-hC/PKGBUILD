@@ -149,13 +149,13 @@ else
 fi
 
 pkgbase="linux-$_pkgsuffix"
-_major=6.19
-_minor=11
+_major=7.0
+_minor=0
 #_minorc=$((_minor+1))
 #_rcver=rc8
 pkgver=${_major}.${_minor}
-_stable=${_major}.${_minor}
-#_stable=${_major}
+#_stable=${_major}.${_minor}
+_stable=${_major}
 #_stablerc=${_major}-${_rcver}
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
@@ -188,10 +188,10 @@ source=(
     "https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.xz"
     "config"
     "base.patch"
+    "cgroup-vram.patch"
     "compiler-opt.patch"
-    "cpuidle.patch"
-    "crypto.patch"
     "fixes.patch"
+    "mglru.patch"
     "nap.patch"
     "poc-selector.patch")
 
@@ -217,7 +217,8 @@ fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
-             "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch")
+             "${_patchsource}/misc/nvidia/0002-Add-IBT-support.patch"
+             "${_patchsource}/misc/nvidia/0004-HACK-kernel-open-Makefile-Remove-PAHOLE_VARIABLE.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -647,14 +648,14 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('7304717954b8ad9eec54071d28d2d6c9af108d2c84686cee9b401e38078d4b39810541a854e458c85349de10959d96edb2ba7e38b0e0a7ebc46949e69e7816b3'
-        '33f100198a99804cb9acc03aba0fea1d945d1993a04902cd82268822765fc7fcd0ce44699ddeef20f0b33720e6b1d988b63df0110abce2bc52086a2b2e77be5a'
-        '767cc203ab351f83336158702e54f93b46949ff5603624b19314dc0137b6807da8948a139d47d922eb863f911815a92143dffacfe3f6c0a4687d56a8b5274460'
+b2sums=('3d9795083c8938f80f480de0d10bfd9c525640e59d5c7f22983de3f12ee42c84c31be902cafb05579ddb1c32bac5ed06b0d4953f9705450be185bd2d9ab08f89'
+        'eeb1f86c8757e6c80d242693b49f226b3fa77ee64471726e8207991d135d397e099bfa062ec68b438cdd4e463eba27ec53b11863fe6a4edbe6a2b04f72069c51'
+        '71018738962643baff538795fc62894e3dee475ebec850ea673248b155c501d260ffddf0df6f8b84b07463d6c1209972503a5181a17338810781de0ab16197d0'
+        'bcd5242e3d7e9ed18421236dc90eb1b6ba2a9d47b106cf56adfc6240daacc89a81047fa2d7c2f4bc4a8a831556588109f898bc42711f7476fee4a7f401242a0b'
         '33dab3d67d1339736dceecf2658a85baf8984dbc1f6b1258ce57bc4247e4f0515bb30e289b8bd6c3a717b8a2f54b00ea58709559ab01bf945086fba32a1efd96'
-        'e16093fa709c72d681fe1d282db39121c0ba9e549afe26b60bed936296073ab68235de4dc0c4b63d5f3fc490a57d779988b825056e667a35890907ffd6519407'
-        '8571cc061a0b461351db55857b329adcd5179e577eb1ea416bdb7fc2bf32c9c5d5239ec8391b5254fcc2979bb4e4e972c9c57dd9e9f1370e55b9f18854672ee3'
-        'f3950d31b55709586d764af435db7b93efd9a9800fea51735aff4473eace96eaced86c6e0e2a48bbb202a7b822ce1ad93badda1ccfdaded39b66f704c62f2344'
-        '00ff7469751467a014b553ceb27ed18adc886d7280003c5d19c77c2d749426c1ea23b1b36fc0dde07094296d295886a2ccbd6423247d563a9a900c3fd990bf3f'
-        '75b0e1257126b37067f65b78544d3c4a33f3679f50e6660f119001971e56ec5b00cc4147c852ecd4758f8cffc2b8ce1aec37a35b941e1293e952126477bbd3e5'
-        'ea26c88950fc06b6ffab93b30e3beacc7d26571a70262334ca8b001dc7899bf96b47d703fbaa7f4e47765c3dafccc23c58a4d4da2169b8ee50012afcb7a1dd96'
-        '375151c66fdbc3993414cc43c12476e8ac4846d1943762615e43147eeff03a44b952c8f2cde23d4002dc48273cacddda061e196eb79a605ff30276c545ebe36e')
+        'a249b07407b73840602d8176a95704a5350b411df820d4843a8fb35126d0171135d8a60b4e97c223800341237f06dd71439aff93a6110c36f158430a19e728ce'
+        '5ac2ba2f53d320c5bad8196fdb7feb83972181158d8c8fa5b73fc9344ee004626be28e5bc98893c8bb17dbb2b23cb745d95fd0a1f380542c66f079888c17334e'
+        '87144ca0c765ea379e28785cd6ac7308ca58cdcd98e968370f4237233b14ba0391f74b5aac894a569b80aa8121ba23c18bbae0f3b570f8ab2af746ac748639e4'
+        '4ec183cfe4448321da5181301ae18bd042cfa2e08e57e9e8eb4d671ef4ad19d5718a50331e6d5b6e1e74ca995b97f296ba97160eefa30462e677127df65f6c37'
+        'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
+        '47391773e97c88a305ed6ee3068614f0f4e62481a2f0341f9493c7dd838d9e99c2e6be94edab2dde2757b217b458986c0e683b1a294978c6d21c42c332e45981')
