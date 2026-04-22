@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf5..bebde469f81ae 100644
+index db2cb06aa8cf..bebde469f81a 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf5..bebde469f81ae 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f14..2fe6b7fe6b12d 100644
+index 9153016da8f1..2fe6b7fe6b12 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f14..2fe6b7fe6b12d 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2ebf..95d03be2ce456 100644
+index bd1ef5e2d2eb..95d03be2ce45 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2ebf..95d03be2ce456 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d9..d1967214ef25f 100644
+index 78bbacc14d2d..d1967214ef25 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d9..d1967214ef25f 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 1acafb1c6a932..ef5b507de34e2 100644
+index 1acafb1c6a93..ef5b507de34e 100644
 --- a/arch/x86/include/asm/mmu_context.h
 +++ b/arch/x86/include/asm/mmu_context.h
 @@ -136,9 +136,6 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
@@ -65,7 +65,7 @@ index 1acafb1c6a932..ef5b507de34e2 100644
  extern void mm_free_global_asid(struct mm_struct *mm);
  
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee7..4b55fa353bb5f 100644
+index 96bda43538ee..4b55fa353bb5 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -78,7 +78,7 @@ index 96bda43538ee7..4b55fa353bb5f 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 5a3cdc439e38d..0545fe75c3fa1 100644
+index 5a3cdc439e38..0545fe75c3fa 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
 @@ -172,6 +172,28 @@ struct tlb_state_shared {
@@ -122,10 +122,10 @@ index 5a3cdc439e38d..0545fe75c3fa1 100644
  
  static inline void __native_tlb_flush_global(unsigned long cr4)
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 09de584e4c8fa..1b7ec31075408 100644
+index 9b9bf7df7aad..c5fa07be3858 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
-@@ -1017,6 +1017,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+@@ -1020,6 +1020,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
  	}
  }
  
@@ -133,7 +133,7 @@ index 09de584e4c8fa..1b7ec31075408 100644
  static const struct x86_cpu_id zen5_rdseed_microcode[] = {
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x08, 0x1, 0x0b008121),
-@@ -1038,6 +1039,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
+@@ -1041,6 +1042,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
  		pr_emerg_once("RDSEED32 is broken. Disabling the corresponding CPUID bit.\n");
  	}
  }
@@ -146,7 +146,7 @@ index 09de584e4c8fa..1b7ec31075408 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 621e09d049cb9..af43d177087e7 100644
+index 621e09d049cb..af43d177087e 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -971,27 +971,6 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
@@ -178,7 +178,7 @@ index 621e09d049cb9..af43d177087e7 100644
   * Using a temporary mm allows to set temporary mappings that are not accessible
   * by other CPUs. Such mappings are needed to perform sensitive memory writes
 diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
-index 94b8ecb892bb1..5d68786044513 100644
+index 94b8ecb892bb..5d6878604451 100644
 --- a/drivers/dma-buf/udmabuf.c
 +++ b/drivers/dma-buf/udmabuf.c
 @@ -26,10 +26,10 @@ MODULE_PARM_DESC(size_limit_mb, "Max size of a dmabuf, in megabytes. Default is
@@ -309,7 +309,7 @@ index 94b8ecb892bb1..5d68786044513 100644
  
  			if (++cur_pgcnt >= pgcnt)
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 48d851fbd8ea5..7c1dac8da5e59 100644
+index 48d851fbd8ea..7c1dac8da5e5 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -322,7 +322,7 @@ index 48d851fbd8ea5..7c1dac8da5e59 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 95d0040df5841..4a279ee2d0262 100644
+index 95d0040df584..4a279ee2d026 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -44,7 +44,7 @@ static inline void smp_mb__after_mmgrab(void)
@@ -370,7 +370,7 @@ index 95d0040df5841..4a279ee2d0262 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
-index 45c0022b91ced..bbcfdf12aa6e5 100644
+index 45c0022b91ce..bbcfdf12aa6e 100644
 --- a/include/linux/sched/topology.h
 +++ b/include/linux/sched/topology.h
 @@ -92,9 +92,6 @@ struct sched_domain {
@@ -384,7 +384,7 @@ index 45c0022b91ced..bbcfdf12aa6e5 100644
  	unsigned long last_decay_max_lb_cost;
  
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index 738007d6f577f..df9934a60fafe 100644
+index 738007d6f577..df9934a60faf 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -177,7 +177,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -406,7 +406,7 @@ index 738007d6f577f..df9934a60fafe 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d6..428464bb81b34 100644
+index 29dd5b91dd7d..428464bb81b3 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -439,7 +439,7 @@ index 29dd5b91dd7d6..428464bb81b34 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 496dff740dcaf..ee5f025b7c31e 100644
+index 496dff740dca..ee5f025b7c31 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -124,7 +124,6 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(sched_exit_tp);
@@ -536,7 +536,7 @@ index 496dff740dcaf..ee5f025b7c31e 100644
  	 * There's no userspace yet to cause hotplug operations; hence all the
  	 * CPU masks are stable and all blatant races in the below code cannot
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index ab4114712be74..3b976e356ec29 100644
+index ab4114712be7..3b976e356ec2 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -11932,12 +11932,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
@@ -636,7 +636,7 @@ index ab4114712be74..3b976e356ec29 100644
  
  		/*
 diff --git a/kernel/sched/features.h b/kernel/sched/features.h
-index 136a6584be797..3c12d9f93331d 100644
+index 136a6584be79..3c12d9f93331 100644
 --- a/kernel/sched/features.h
 +++ b/kernel/sched/features.h
 @@ -121,8 +121,3 @@ SCHED_FEAT(WA_BIAS, true)
@@ -649,7 +649,7 @@ index 136a6584be797..3c12d9f93331d 100644
 - */
 -SCHED_FEAT(NI_RANDOM, true)
 diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
-index a83be0c834ddb..9ceb7e6224045 100644
+index a83be0c834dd..9ceb7e622404 100644
 --- a/kernel/sched/idle.c
 +++ b/kernel/sched/idle.c
 @@ -491,6 +491,9 @@ static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool fir
@@ -663,7 +663,7 @@ index a83be0c834ddb..9ceb7e6224045 100644
  	 * rq is about to be idle, check if we need to update the
  	 * lost_idle_time of clock_pelt
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 1ef9ba480f51d..006d949958fa9 100644
+index 1ef9ba480f51..006d949958fa 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -5,7 +5,6 @@
@@ -786,7 +786,7 @@ index 1ef9ba480f51d..006d949958fa9 100644
  {
  	raw_spin_rq_unlock(rq);
 diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
-index 32dcddaead82d..35ae4d1e9ad61 100644
+index 32dcddaead82..35ae4d1e9ad6 100644
 --- a/kernel/sched/topology.c
 +++ b/kernel/sched/topology.c
 @@ -1674,12 +1674,6 @@ sd_init(struct sched_domain_topology_level *tl,
@@ -802,46 +802,8 @@ index 32dcddaead82d..35ae4d1e9ad61 100644
  		.max_newidle_lb_cost	= 0,
  		.last_decay_max_lb_cost	= jiffies,
  		.child			= child,
-diff --git a/kernel/time/clockevents.c b/kernel/time/clockevents.c
-index 38570998a19b8..69379b34bcc92 100644
---- a/kernel/time/clockevents.c
-+++ b/kernel/time/clockevents.c
-@@ -94,6 +94,9 @@ static int __clockevents_switch_state(struct clock_event_device *dev,
- 	if (dev->features & CLOCK_EVT_FEAT_DUMMY)
- 		return 0;
- 
-+	/* On state transitions clear the forced flag unconditionally */
-+	dev->next_event_forced = 0;
-+
- 	/* Transition with new state-specific callbacks */
- 	switch (state) {
- 	case CLOCK_EVT_STATE_DETACHED:
-@@ -332,8 +335,10 @@ int clockevents_program_event(struct clock_event_device *dev, ktime_t expires,
- 	if (delta > (int64_t)dev->min_delta_ns) {
- 		delta = min(delta, (int64_t) dev->max_delta_ns);
- 		clc = ((unsigned long long) delta * dev->mult) >> dev->shift;
--		if (!dev->set_next_event((unsigned long) clc, dev))
-+		if (!dev->set_next_event((unsigned long) clc, dev)) {
-+			dev->next_event_forced = 0;
- 			return 0;
-+		}
- 	}
- 
- 	if (dev->next_event_forced)
-diff --git a/kernel/time/tick-broadcast.c b/kernel/time/tick-broadcast.c
-index 7e57fa31ee26f..115e0bf012764 100644
---- a/kernel/time/tick-broadcast.c
-+++ b/kernel/time/tick-broadcast.c
-@@ -108,6 +108,7 @@ static struct clock_event_device *tick_get_oneshot_wakeup_device(int cpu)
- 
- static void tick_oneshot_wakeup_handler(struct clock_event_device *wd)
- {
-+	wd->next_event_forced = 0;
- 	/*
- 	 * If we woke up early and the tick was reprogrammed in the
- 	 * meantime then this may be spurious but harmless.
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
