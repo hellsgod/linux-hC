@@ -1,7 +1,7 @@
-From ad5c63f09409f6579f1de1d0109e892b81b06c55 Mon Sep 17 00:00:00 2001
+From 8bcd6757baf32caa7b928d3e27824f6666c4c621 Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Fri, 24 Apr 2026 13:21:47 +0200
-Subject: [PATCH] 6.18.3-prefcorev8-poc-selector-v2.6.0-beta1
+Date: Sun, 19 Apr 2026 02:23:59 +0900
+Subject: [PATCH] 6.18.3-prefcorev8-poc-selector-v2.6.0
 
 ---
  include/linux/sched/topology.h |   50 +-
@@ -10,13 +10,13 @@ Subject: [PATCH] 6.18.3-prefcorev8-poc-selector-v2.6.0-beta1
  kernel/sched/fair.c            |  111 +-
  kernel/sched/idle.c            |   10 +
  kernel/sched/poc_selector.c    | 1788 ++++++++++++++++++++++++++++++++
- kernel/sched/sched.h           |  115 ++
+ kernel/sched/sched.h           |  110 ++
  kernel/sched/topology.c        |  226 ++++
- 8 files changed, 2302 insertions(+), 18 deletions(-)
+ 8 files changed, 2297 insertions(+), 18 deletions(-)
  create mode 100644 kernel/sched/poc_selector.c
 
 diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
-index 45c0022b91ce..93edf3a1d61b 100644
+index 45c0022b91..93edf3a1d6 100644
 --- a/include/linux/sched/topology.h
 +++ b/include/linux/sched/topology.h
 @@ -66,8 +66,54 @@ struct sched_group;
@@ -77,10 +77,10 @@ index 45c0022b91ce..93edf3a1d61b 100644
  
  struct sched_domain {
 diff --git a/init/Kconfig b/init/Kconfig
-index 1a5356a07ead..4410ee5693d0 100644
+index 3a664a42ce..3a03aced56 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1480,6 +1480,19 @@ config SCHED_AUTOGROUP
+@@ -1455,6 +1455,19 @@ config SCHED_AUTOGROUP
  	  desktop applications.  Task group autogeneration is currently based
  	  upon task session.
  
@@ -101,10 +101,10 @@ index 1a5356a07ead..4410ee5693d0 100644
  	bool "Kernel->user space relay support (formerly relayfs)"
  	select IRQ_WORK
 diff --git a/kernel/sched/ext.c b/kernel/sched/ext.c
-index 26a6ac2f8826..b764a0d16793 100644
+index 0aedbbeb12..debc642e5e 100644
 --- a/kernel/sched/ext.c
 +++ b/kernel/sched/ext.c
-@@ -4425,6 +4425,9 @@ static void scx_disable_workfn(struct kthread_work *work)
+@@ -4103,6 +4103,9 @@ static void scx_disable_workfn(struct kthread_work *work)
  	mutex_unlock(&scx_enable_mutex);
  
  	WARN_ON_ONCE(scx_set_enable_state(SCX_DISABLED) != SCX_DISABLING);
@@ -114,7 +114,7 @@ index 26a6ac2f8826..b764a0d16793 100644
  done:
  	scx_bypass(false);
  }
-@@ -5206,6 +5209,10 @@ static void scx_enable_workfn(struct kthread_work *work)
+@@ -4849,6 +4852,10 @@ static int scx_enable(struct sched_ext_ops *ops, struct bpf_link *link)
  	if (!(ops->flags & SCX_OPS_SWITCH_PARTIAL))
  		static_branch_enable(&__scx_switched_all);
  
@@ -126,10 +126,10 @@ index 26a6ac2f8826..b764a0d16793 100644
  		sch->ops.name, scx_switched_all() ? "" : " (partial)");
  	kobject_uevent(&sch->kobj, KOBJ_ADD);
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 2232e873840e..4646e3da1c42 100644
+index dcbf89e793..30c8ed2bea 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -7703,6 +7703,11 @@ static inline bool test_idle_cores(int cpu)
+@@ -7638,6 +7638,11 @@ static inline bool test_idle_cores(int cpu)
  	return false;
  }
  
@@ -141,7 +141,7 @@ index 2232e873840e..4646e3da1c42 100644
  static inline int select_idle_core(struct task_struct *p, int core, struct cpumask *cpus, int *idle_cpu)
  {
  	return __select_idle_cpu(core, p);
-@@ -7852,6 +7857,9 @@ static inline bool asym_fits_cpu(unsigned long util,
+@@ -7787,6 +7792,9 @@ static inline bool asym_fits_cpu(unsigned long util,
  	return true;
  }
  
@@ -151,7 +151,7 @@ index 2232e873840e..4646e3da1c42 100644
  /*
   * Try and locate an idle core/thread in the LLC cache domain.
   */
-@@ -7870,7 +7878,10 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7805,7 +7813,10 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	    cpus_share_cache(recent_used_cpu, target) &&
  	    (available_idle_cpu(recent_used_cpu) || sched_idle_cpu(recent_used_cpu)) &&
  	    cpumask_test_cpu(recent_used_cpu, p->cpus_ptr)) {
@@ -163,7 +163,7 @@ index 2232e873840e..4646e3da1c42 100644
  		if ((unsigned int)recent_used_cpu < nr_cpumask_bits &&
  		    is_idle_core(recent_used_cpu))
  			return recent_used_cpu;
-@@ -7894,23 +7905,13 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7829,23 +7840,13 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	 */
  	lockdep_assert_irqs_disabled();
  
@@ -192,7 +192,7 @@ index 2232e873840e..4646e3da1c42 100644
  
  	/*
  	 * Allow a per-cpu kthread to stack with the wakee if the
-@@ -7952,6 +7953,74 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7887,6 +7888,74 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	if (!sd)
  		return target;
  
@@ -267,7 +267,7 @@ index 2232e873840e..4646e3da1c42 100644
  	if (sched_smt_active()) {
  		has_idle_core = test_idle_cores(target);
  
-@@ -7966,6 +8035,9 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7901,6 +7970,9 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	if ((unsigned)i < nr_cpumask_bits)
  		return i;
  
@@ -277,7 +277,7 @@ index 2232e873840e..4646e3da1c42 100644
  	/*
  	 * For cluster machines which have lower sharing cache like L2 or
  	 * LLC Tag, we tend to find an idle CPU in the target's cluster
-@@ -7977,6 +8049,13 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
+@@ -7912,6 +7984,13 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target, int
  	if ((unsigned int)recent_used_cpu < nr_cpumask_bits)
  		return recent_used_cpu;
  
@@ -292,10 +292,10 @@ index 2232e873840e..4646e3da1c42 100644
  }
  
 diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
-index a83be0c834dd..912b2a8464ab 100644
+index f53cab2155..c34477387c 100644
 --- a/kernel/sched/idle.c
 +++ b/kernel/sched/idle.c
-@@ -297,6 +297,11 @@ static void do_idle(void)
+@@ -275,6 +275,11 @@ static void do_idle(void)
  	__current_set_polling();
  	tick_nohz_idle_enter();
  
@@ -307,7 +307,7 @@ index a83be0c834dd..912b2a8464ab 100644
  	while (!need_resched()) {
  
  		/*
-@@ -355,6 +360,11 @@ static void do_idle(void)
+@@ -332,6 +337,11 @@ static void do_idle(void)
  		arch_cpu_idle_exit();
  	}
  
@@ -321,7 +321,7 @@ index a83be0c834dd..912b2a8464ab 100644
  	 * be set, propagate it into PREEMPT_NEED_RESCHED.
 diff --git a/kernel/sched/poc_selector.c b/kernel/sched/poc_selector.c
 new file mode 100644
-index 000000000000..de2858a73f92
+index 0000000000..3b97aeb8d7
 --- /dev/null
 +++ b/kernel/sched/poc_selector.c
 @@ -0,0 +1,1788 @@
@@ -364,7 +364,7 @@ index 000000000000..de2858a73f92
 +#define SCHED_POC_SELECTOR_AUTHOR   "Masahito Suzuki"
 +#define SCHED_POC_SELECTOR_PROGNAME "Piece-Of-Cake (POC) CPU Selector"
 +
-+#define SCHED_POC_SELECTOR_VERSION  "2.6.0-beta1"
++#define SCHED_POC_SELECTOR_VERSION  "2.6.0"
 +
 +/**************************************************************
 + * Static keys:
@@ -2128,7 +2128,7 @@ index 43bbf0693cca..e1f459781843 100644
  #ifdef CONFIG_UCLAMP_TASK
  	/* Utilization clamp values based on CPU's RUNNABLE tasks */
  	struct uclamp_rq	uclamp[UCLAMP_CNT] ____cacheline_aligned;
-@@ -2283,8 +2287,118 @@ static inline struct task_group *task_group(struct task_struct *p)
+@@ -2209,6 +2212,112 @@ static inline struct task_group *task_group(struct task_struct *p)
  
  #endif /* !CONFIG_CGROUP_SCHED */
  
@@ -2240,14 +2240,8 @@ index 43bbf0693cca..e1f459781843 100644
 +
  static inline void __set_task_cpu(struct task_struct *p, unsigned int cpu)
  {
-+#ifdef CONFIG_SCHED_POC_SELECTOR
-+	if (cpu_rq(cpu)->idle_stamp)
-+		set_cpu_idle_state_poc(cpu, 0);
-+#endif
  	set_task_rq(p, cpu);
- #ifdef CONFIG_SMP
- 	/*
-@@ -3365,6 +3479,7 @@ extern void nohz_run_idle_balance(int cpu);
+@@ -3146,6 +3255,7 @@ extern void nohz_run_idle_balance(int cpu);
  static inline void nohz_run_idle_balance(int cpu) { }
  #endif
  
@@ -2256,10 +2250,10 @@ index 43bbf0693cca..e1f459781843 100644
  
  #if defined(CONFIG_SCHED_CORE) && defined(CONFIG_SCHEDSTATS)
 diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
-index 32dcddaead82..dcec1f6e506d 100644
+index c7a4d2fff5..f720cbf7c2 100644
 --- a/kernel/sched/topology.c
 +++ b/kernel/sched/topology.c
-@@ -1735,6 +1735,232 @@ sd_init(struct sched_domain_topology_level *tl,
+@@ -1723,6 +1723,232 @@ sd_init(struct sched_domain_topology_level *tl,
  		sd->shared = *per_cpu_ptr(sdd->sds, sd_id);
  		atomic_inc(&sd->shared->ref);
  		atomic_set(&sd->shared->nr_busy_cpus, sd_weight);
@@ -2493,5 +2487,4 @@ index 32dcddaead82..dcec1f6e506d 100644
  
  	sd->private = sdd;
 -- 
-2.54.0
-
+2.34.1
