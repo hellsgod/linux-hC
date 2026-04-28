@@ -711,6 +711,19 @@ index 7ba1801d8132..1d01d4cb7297 100644
  
  unsigned long vfs_pressure_ratio(unsigned long val)
  {
+diff --git a/fs/readdir.c b/fs/readdir.c
+index 73707b6816e9..4fd29fdb4a19 100644
+--- a/fs/readdir.c
++++ b/fs/readdir.c
+@@ -147,7 +147,7 @@ EXPORT_SYMBOL(iterate_dir);
+  */
+ static int verify_dirent_name(const char *name, int len)
+ {
+-	if (len <= 0 || len >= PATH_MAX)
++	if (unlikely(len <= 0 || len >= PATH_MAX))
+ 		return -EIO;
+ 	if (memchr(name, '/', len))
+ 		return -EIO;
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
 index d463b9b5a0a5..0e9eadf97d2d 100644
 --- a/include/linux/blkdev.h
@@ -999,9 +1012,45 @@ index 95ad967adcf3..022773565f46 100644
  	wake_up_process(t); /* get to TASK_INTERRUPTIBLE quickly. */
  }
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 496dff740dca..8b7225d99b20 100644
+index 496dff740dca..a998fa46ee43 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
+@@ -643,7 +643,7 @@ void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
+ 
+ 	/* Matches synchronize_rcu() in __sched_core_enable() */
+ 	preempt_disable();
+-	if (sched_core_disabled()) {
++	if (likely(sched_core_disabled())) {
+ 		raw_spin_lock_nested(&rq->__lock, subclass);
+ 		/* preempt_count *MUST* be > 1 */
+ 		preempt_enable_no_resched();
+@@ -860,7 +860,7 @@ void update_rq_clock(struct rq *rq)
+ 	scx_rq_clock_update(rq, clock);
+ 
+ 	delta = clock - rq->clock;
+-	if (delta < 0)
++	if (unlikely(delta < 0))
+ 		return;
+ 	rq->clock += delta;
+ 
+@@ -6019,7 +6019,7 @@ pick_next_task(struct rq *rq, struct task_struct *prev, struct rq_flags *rf)
+ 	struct rq *rq_i;
+ 	bool need_sync;
+ 
+-	if (!sched_core_enabled(rq))
++	if (likely(!sched_core_enabled(rq)))
+ 		return __pick_next_task(rq, prev, rf);
+ 
+ 	cpu = cpu_of(rq);
+@@ -7418,7 +7418,7 @@ void rt_mutex_setprio(struct task_struct *p, struct task_struct *pi_task)
+ #if !defined(CONFIG_PREEMPTION) || defined(CONFIG_PREEMPT_DYNAMIC)
+ int __sched __cond_resched(void)
+ {
+-	if (should_resched(0) && !irqs_disabled()) {
++	if (unlikely(should_resched(0) && !irqs_disabled())) {
+ 		preempt_schedule_common();
+ 		return 1;
+ 	}
 @@ -9137,7 +9137,7 @@ void sched_release_group(struct task_group *tg)
  	spin_unlock_irqrestore(&task_group_lock, flags);
  }
