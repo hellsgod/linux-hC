@@ -811,19 +811,6 @@ index 444ce811ea67..1a5356a07ead 100644
  config PID_NS
  	bool "PID Namespaces"
  	default y
-diff --git a/init/init_task.c b/init/init_task.c
-index 5c838757fc10..34272eaaa660 100644
---- a/init/init_task.c
-+++ b/init/init_task.c
-@@ -169,7 +169,7 @@ struct task_struct init_task __aligned(L1_CACHE_BYTES) = {
- 	.journal_info	= NULL,
- 	INIT_CPU_TIMERS(init_task)
- 	.pi_lock	= __RAW_SPIN_LOCK_UNLOCKED(init_task.pi_lock),
--	.timer_slack_ns = 50000, /* 50 usec default slack */
-+	.timer_slack_ns = 50, /* 50 nsec default slack */
- 	.thread_pid	= &init_struct_pid,
- 	.thread_node	= LIST_HEAD_INIT(init_signals.thread_head),
- #ifdef CONFIG_AUDIT
 diff --git a/init/main.c b/init/main.c
 index 1cb395dd94e4..17f573a70a69 100644
 --- a/init/main.c
