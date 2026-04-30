@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 7.0.2
+	pkgver = 7.0.3
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.2.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.3.tar.xz
 	source = config
 	source = base.patch
 	source = cgroup-vram.patch
@@ -34,7 +34,7 @@ pkgbase = linux-hC
 	source = nvidia-open-595.71.05.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/595.71.05.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0002-Add-IBT-support.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 2ad0bfbe1d9410b34dd46487b1b972f038e03b9d868f6d2cd4b620381bedcc7b26de699e5e119bef104f4c1014c3e9d0e5c32d8717943e110bddd2161688b14f
+	b2sums = 51eebd3aa3c64779308b0781818fd91921c1a7b0c3ffd361dbff01f8853f1cea7d4c70f6ee2ae3b7817aeca7605b63f12b0fa422d22c0a50fb2306553c49eda4
 	b2sums = eeb1f86c8757e6c80d242693b49f226b3fa77ee64471726e8207991d135d397e099bfa062ec68b438cdd4e463eba27ec53b11863fe6a4edbe6a2b04f72069c51
 	b2sums = 4c20a7dcd3e2747e1cd4aee030ca35d49961561e3548a499ca2de979a30fd951a0a1a5af042cfcf6c6a0fec53f4cc8131b71dc92142775c7020ea72e7671a8b4
 	b2sums = bcd5242e3d7e9ed18421236dc90eb1b6ba2a9d47b106cf56adfc6240daacc89a81047fa2d7c2f4bc4a8a831556588109f898bc42711f7476fee4a7f401242a0b
@@ -64,7 +64,15 @@ pkgname = linux-hC
 
 pkgname = linux-hC-headers
 	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel
+	depends = binutils
+	depends = glibc
+	depends = libelf
+	depends = libgcc
+	depends = openssl
 	depends = pahole
+	depends = xxhash
+	depends = zlib
+	depends = zstd
 	depends = linux-hC
 	depends = clang
 	depends = llvm
@@ -74,7 +82,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia-open
 	pkgdesc = nvidia open modules of 595.71.05 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=7.0.2-1
+	depends = linux-hC=7.0.3-1
 	depends = nvidia-utils=595.71.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE

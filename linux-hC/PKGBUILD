@@ -150,7 +150,7 @@ fi
 
 pkgbase="linux-$_pkgsuffix"
 _major=7.0
-_minor=2
+_minor=3
 #_minorc=$((_minor+1))
 #_rcver=rc8
 pkgver=${_major}.${_minor}
@@ -517,7 +517,16 @@ _package() {
 
 _package-headers() {
     pkgdesc="Headers and scripts for building modules for the $pkgdesc kernel"
-    depends=('pahole' "${pkgbase}")
+    depends=(binutils
+      glibc
+      libelf
+      libgcc
+      openssl
+      pahole
+      xxhash
+      zlib
+      zstd
+     "${pkgbase}")
     provides=(LINUX-HEADERS)
 
     if _is_lto_kernel; then
@@ -647,7 +656,7 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('2ad0bfbe1d9410b34dd46487b1b972f038e03b9d868f6d2cd4b620381bedcc7b26de699e5e119bef104f4c1014c3e9d0e5c32d8717943e110bddd2161688b14f'
+b2sums=('51eebd3aa3c64779308b0781818fd91921c1a7b0c3ffd361dbff01f8853f1cea7d4c70f6ee2ae3b7817aeca7605b63f12b0fa422d22c0a50fb2306553c49eda4'
         'eeb1f86c8757e6c80d242693b49f226b3fa77ee64471726e8207991d135d397e099bfa062ec68b438cdd4e463eba27ec53b11863fe6a4edbe6a2b04f72069c51'
         '4c20a7dcd3e2747e1cd4aee030ca35d49961561e3548a499ca2de979a30fd951a0a1a5af042cfcf6c6a0fec53f4cc8131b71dc92142775c7020ea72e7671a8b4'
         'bcd5242e3d7e9ed18421236dc90eb1b6ba2a9d47b106cf56adfc6240daacc89a81047fa2d7c2f4bc4a8a831556588109f898bc42711f7476fee4a7f401242a0b'
