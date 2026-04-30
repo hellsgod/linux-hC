@@ -1,8 +1,8 @@
 diff --git a/Makefile b/Makefile
-index d3a8482bdbd0..66e5ce522992 100644
+index e27c91ea56fc..c42da7a561f9 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -464,9 +464,60 @@ KERNELDOC       = $(srctree)/scripts/kernel-doc.py
+@@ -467,9 +467,60 @@ KERNELDOC       = $(srctree)/tools/docs/kernel-doc
  export KERNELDOC
  
  KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
@@ -65,7 +65,7 @@ index d3a8482bdbd0..66e5ce522992 100644
  
  # These flags apply to all Rust code in the tree, including the kernel and
  # host programs.
-@@ -498,7 +549,7 @@ export rust_common_flags := --edition=2021 \
+@@ -504,7 +555,7 @@ export rust_common_flags := --edition=2021 \
  
  KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
  		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
@@ -73,8 +73,8 @@ index d3a8482bdbd0..66e5ce522992 100644
 +KBUILD_HOSTCXXFLAGS := -Wall -O3 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS) \
  		       -I $(srctree)/scripts/include
  KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
- 			-Zallow-features= $(HOSTRUSTFLAGS)
-@@ -583,7 +634,26 @@ LINUXINCLUDE    := \
+ 			-Zallow-features=
+@@ -590,7 +641,26 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
@@ -99,10 +99,10 @@ index d3a8482bdbd0..66e5ce522992 100644
 +  -mllvm -simplifycfg-sink-common \
 +  -mllvm -branch-fold-placement -mllvm -forward-switch-cond \
 +  -mllvm -hoist-const-loads -mllvm -hoist-const-stores
- KBUILD_CFLAGS += -std=gnu11
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
-@@ -886,8 +956,8 @@ endif # need-config
+ KBUILD_CFLAGS += -fno-common
+@@ -925,8 +995,8 @@ endif # need-config
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
@@ -114,10 +114,10 @@ index d3a8482bdbd0..66e5ce522992 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index fa79feb8fe57..76d71921a001 100644
+index 03f722dfc985..0616f8d086a4 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1560,10 +1560,10 @@ choice
+@@ -1618,10 +1618,10 @@ choice
  	default CC_OPTIMIZE_FOR_PERFORMANCE
  
  config CC_OPTIMIZE_FOR_PERFORMANCE

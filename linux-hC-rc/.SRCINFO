@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.0.rc7
+	pkgver = 7.1.rc1
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,34 +21,28 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.0-rc7.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.1-rc1.tar.gz
 	source = config
 	source = base.patch
-	source = cgroup-vram.patch
 	source = compiler-opt.patch
 	source = fixes.patch
 	source = mglru.patch
 	source = nap.patch
 	source = poc-selector.patch
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/dkms-clang.patch
-	source = nvidia-open-595.58.03.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/595.58.03.tar.gz
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0002-Add-IBT-support.patch
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0004-HACK-kernel-open-Makefile-Remove-PAHOLE_VARIABLE.patch
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 9ffe9e0adba185472fa43cc61136f63bd2d43bf3094af97653a8d7e2e19677ea10f9e3693b629673464bd73cbb1512d19db85149315eef9685b3c1dda61d57ca
-	b2sums = eeb1f86c8757e6c80d242693b49f226b3fa77ee64471726e8207991d135d397e099bfa062ec68b438cdd4e463eba27ec53b11863fe6a4edbe6a2b04f72069c51
-	b2sums = 71018738962643baff538795fc62894e3dee475ebec850ea673248b155c501d260ffddf0df6f8b84b07463d6c1209972503a5181a17338810781de0ab16197d0
-	b2sums = bcd5242e3d7e9ed18421236dc90eb1b6ba2a9d47b106cf56adfc6240daacc89a81047fa2d7c2f4bc4a8a831556588109f898bc42711f7476fee4a7f401242a0b
-	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
-	b2sums = 4ce3398fecf42d6c52f627190db029571e025fe93ebd2f01408e6c9a4cc4cbf7f39ec997e84b0dae11324abc73334970ee6e1abffa37c4cb203d6a05d35d1772
-	b2sums = e71aaea34e39d953e098a973011a96aa7078b8b8010f9066ca0fd6992ed4b16d64749201a6159c693b9ec4e6cc6b272070f26bc636cd279b78d93fabc9e88a8e
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.1/misc/dkms-clang.patch
+	source = nvidia-open-595.71.05.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/595.71.05.tar.gz
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.1/misc/nvidia/0001-Add-IBT-support.patch
+	b2sums = ed87406a7a42339cfb906086f4df4c79489d36176ef9da113a8a44a040776d430bcf1f303329aac61e238de75ca37656b2f11d5e24c43c92030b8bb41421697b
+	b2sums = f8473e36b76722fa883bf8b760e58b8c47815e1b1574c2c4e0d56192c7d6c2fd43cb505ec777a0818cd64d1dc273e3732ce2b4c113ac5e9b560e26c87717690e
+	b2sums = aa2696bec6428c1393547bba0453a307c7de1bff90e195a925646fbe85ff99b4f03296ea2686e006503493b0294478424a475375d9a7ba7e52c3aa0599f5fd49
+	b2sums = 0566408348a7166476cf8e4d4408ddfdf3f925cd996132d7f71721f78fefa82da5d52943e616fa4d19467b43cb2e6e2d8a63584e88d9d622b85dfe18e6521214
+	b2sums = 9d5c5c98ccbbfc00fb127db0d748f7749b342de42168f7e57e360c3e85a056cd3b9872fbb2ec6b008e54519675c58a2d307628c30cab77b81a36e41786090049
+	b2sums = 768385789a36d0ba7d00da11eacbf8918bfea62e89d929efb1fe74a1e7a9026a767a68cdca95041736e1ad2c10a9765c3f4a180f3d370131bb3b9f925b7c5848
 	b2sums = 00ff7469751467a014b553ceb27ed18adc886d7280003c5d19c77c2d749426c1ea23b1b36fc0dde07094296d295886a2ccbd6423247d563a9a900c3fd990bf3f
-	b2sums = 4ec183cfe4448321da5181301ae18bd042cfa2e08e57e9e8eb4d671ef4ad19d5718a50331e6d5b6e1e74ca995b97f296ba97160eefa30462e677127df65f6c37
+	b2sums = 5c66bfe6395e4a1e953a8048432d0bb169945735557345b827bf919d134b367df31e3626e51b2ab1a4704edcf253d1019092cd193d7c3bd879b1131911bf779a
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
-	b2sums = f096d9a936040bd3d3f1032e80729b0056fc9d91bf38e6b3d5c1bfb0ec966945fba8c9cafebd37933ccfcce0e4287729301461652fb54f83ebb64fcd9828d8cf
+	b2sums = c21443afa1c6e2bc127d10fef4168d225b822a1ac3d05c5e32ac96effef21a128242af0b42acf22af39f5fe113e7e2ecf9c7c269e95d15213bc34a3485a0bac4
 	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
-	b2sums = 66636d34cada5ed99e7ea590873ba1557178a3a53875a5dff4c11b27a843534986fec7d87524c6d148a795b37e2ae461d46f3fa889c35750833f708a63598497
-	b2sums = 47391773e97c88a305ed6ee3068614f0f4e62481a2f0341f9493c7dd838d9e99c2e6be94edab2dde2757b217b458986c0e683b1a294978c6d21c42c332e45981
 
 pkgname = linux-hC-rc
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel and modules
@@ -66,7 +60,15 @@ pkgname = linux-hC-rc
 
 pkgname = linux-hC-rc-headers
 	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel
+	depends = binutils
+	depends = glibc
+	depends = libelf
+	depends = libgcc
+	depends = openssl
 	depends = pahole
+	depends = xxhash
+	depends = zlib
+	depends = zstd
 	depends = linux-hC-rc
 	depends = clang
 	depends = llvm
@@ -74,10 +76,10 @@ pkgname = linux-hC-rc-headers
 	provides = LINUX-HEADERS
 
 pkgname = linux-hC-rc-nvidia-open
-	pkgdesc = nvidia open modules of 595.58.03 driver for the linux-hC-rc kernel
+	pkgdesc = nvidia open modules of 595.71.05 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=7.0.rc7-1
-	depends = nvidia-utils=595.58.03
+	depends = linux-hC-rc=7.1.rc1-1
+	depends = nvidia-utils=595.71.05
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-rc-nvidia

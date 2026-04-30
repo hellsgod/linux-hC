@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf5..bebde469f81ae 100644
+index db2cb06aa8cf..bebde469f81a 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf5..bebde469f81ae 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f14..2fe6b7fe6b12d 100644
+index 9153016da8f1..2fe6b7fe6b12 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f14..2fe6b7fe6b12d 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2ebf..95d03be2ce456 100644
+index bd1ef5e2d2eb..95d03be2ce45 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2ebf..95d03be2ce456 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d9..d1967214ef25f 100644
+index 78bbacc14d2d..d1967214ef25 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -50,22 +50,8 @@ index 78bbacc14d2d9..d1967214ef25f 100644
  {
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
-diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 1acafb1c6a932..ef5b507de34e2 100644
---- a/arch/x86/include/asm/mmu_context.h
-+++ b/arch/x86/include/asm/mmu_context.h
-@@ -136,9 +136,6 @@ static inline void mm_reset_untag_mask(struct mm_struct *mm)
- }
- #endif
- 
--#define enter_lazy_tlb enter_lazy_tlb
--extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk);
--
- extern void mm_init_global_asid(struct mm_struct *mm);
- extern void mm_free_global_asid(struct mm_struct *mm);
- 
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee7..4b55fa353bb5f 100644
+index 96bda43538ee..4b55fa353bb5 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -77,55 +63,11 @@ index 96bda43538ee7..4b55fa353bb5f 100644
  {
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
-diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 5a3cdc439e38d..0545fe75c3fa1 100644
---- a/arch/x86/include/asm/tlbflush.h
-+++ b/arch/x86/include/asm/tlbflush.h
-@@ -172,6 +172,28 @@ struct tlb_state_shared {
- };
- DECLARE_PER_CPU_SHARED_ALIGNED(struct tlb_state_shared, cpu_tlbstate_shared);
- 
-+/*
-+ * Please ignore the name of this function.  It should be called
-+ * switch_to_kernel_thread().
-+ *
-+ * enter_lazy_tlb() is a hint from the scheduler that we are entering a
-+ * kernel thread or other context without an mm.  Acceptable implementations
-+ * include doing nothing whatsoever, switching to init_mm, or various clever
-+ * lazy tricks to try to minimize TLB flushes.
-+ *
-+ * The scheduler reserves the right to call enter_lazy_tlb() several times
-+ * in a row.  It will notify us that we're going back to a real mm by
-+ * calling switch_mm_irqs_off().
-+ */
-+#define enter_lazy_tlb enter_lazy_tlb
-+static __always_inline void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
-+{
-+	if (this_cpu_read(cpu_tlbstate.loaded_mm) == &init_mm)
-+		return;
-+
-+	this_cpu_write(cpu_tlbstate_shared.is_lazy, true);
-+}
-+
- bool nmi_uaccess_okay(void);
- #define nmi_uaccess_okay nmi_uaccess_okay
- 
-@@ -480,6 +502,10 @@ static inline void cpu_tlbstate_update_lam(unsigned long lam, u64 untag_mask)
- {
- }
- #endif
-+#else /* !MODULE */
-+#define enter_lazy_tlb enter_lazy_tlb
-+extern void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
-+	__compiletime_error("enter_lazy_tlb() should not be used in modules");
- #endif /* !MODULE */
- 
- static inline void __native_tlb_flush_global(unsigned long cr4)
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 09de584e4c8fa..1b7ec31075408 100644
+index 2d9ae6ab1701..d74d3657e73a 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
-@@ -1017,6 +1017,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+@@ -1021,6 +1021,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
  	}
  }
  
@@ -133,7 +75,7 @@ index 09de584e4c8fa..1b7ec31075408 100644
  static const struct x86_cpu_id zen5_rdseed_microcode[] = {
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x08, 0x1, 0x0b008121),
-@@ -1038,6 +1039,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
+@@ -1042,6 +1043,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
  		pr_emerg_once("RDSEED32 is broken. Disabling the corresponding CPUID bit.\n");
  	}
  }
@@ -145,40 +87,8 @@ index 09de584e4c8fa..1b7ec31075408 100644
  
  static void init_amd(struct cpuinfo_x86 *c)
  {
-diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 621e09d049cb9..af43d177087e7 100644
---- a/arch/x86/mm/tlb.c
-+++ b/arch/x86/mm/tlb.c
-@@ -971,27 +971,6 @@ void switch_mm_irqs_off(struct mm_struct *unused, struct mm_struct *next,
- 	}
- }
- 
--/*
-- * Please ignore the name of this function.  It should be called
-- * switch_to_kernel_thread().
-- *
-- * enter_lazy_tlb() is a hint from the scheduler that we are entering a
-- * kernel thread or other context without an mm.  Acceptable implementations
-- * include doing nothing whatsoever, switching to init_mm, or various clever
-- * lazy tricks to try to minimize TLB flushes.
-- *
-- * The scheduler reserves the right to call enter_lazy_tlb() several times
-- * in a row.  It will notify us that we're going back to a real mm by
-- * calling switch_mm_irqs_off().
-- */
--void enter_lazy_tlb(struct mm_struct *mm, struct task_struct *tsk)
--{
--	if (this_cpu_read(cpu_tlbstate.loaded_mm) == &init_mm)
--		return;
--
--	this_cpu_write(cpu_tlbstate_shared.is_lazy, true);
--}
--
- /*
-  * Using a temporary mm allows to set temporary mappings that are not accessible
-  * by other CPUs. Such mappings are needed to perform sensitive memory writes
 diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
-index 94b8ecb892bb1..5d68786044513 100644
+index 94b8ecb892bb..5d6878604451 100644
 --- a/drivers/dma-buf/udmabuf.c
 +++ b/drivers/dma-buf/udmabuf.c
 @@ -26,10 +26,10 @@ MODULE_PARM_DESC(size_limit_mb, "Max size of a dmabuf, in megabytes. Default is
@@ -308,8 +218,30 @@ index 94b8ecb892bb1..5d68786044513 100644
  			++upgcnt;
  
  			if (++cur_pgcnt >= pgcnt)
+diff --git a/include/linux/gfp.h b/include/linux/gfp.h
+index 51ef13ed756e..cdf95a9f0b87 100644
+--- a/include/linux/gfp.h
++++ b/include/linux/gfp.h
+@@ -239,6 +239,8 @@ unsigned long alloc_pages_bulk_noprof(gfp_t gfp, int preferred_nid,
+ 				struct page **page_array);
+ #define __alloc_pages_bulk(...)			alloc_hooks(alloc_pages_bulk_noprof(__VA_ARGS__))
+ 
++void free_pages_bulk(struct page **page_array, unsigned long nr_pages);
++
+ unsigned long alloc_pages_bulk_mempolicy_noprof(gfp_t gfp,
+ 				unsigned long nr_pages,
+ 				struct page **page_array);
+@@ -467,6 +469,8 @@ void free_contig_frozen_range(unsigned long pfn, unsigned long nr_pages);
+ void free_contig_range(unsigned long pfn, unsigned long nr_pages);
+ #endif
+ 
++void __free_contig_range(unsigned long pfn, unsigned long nr_pages);
++
+ DEFINE_FREE(free_page, void *, free_page((unsigned long)_T))
+ 
+ #endif /* __LINUX_GFP_H */
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 48d851fbd8ea5..7c1dac8da5e59 100644
+index 48d851fbd8ea..7c1dac8da5e5 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -322,9 +254,18 @@ index 48d851fbd8ea5..7c1dac8da5e59 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 95d0040df5841..4a279ee2d0262 100644
+index 95d0040df584..a17730d63f88 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
+@@ -32,7 +32,7 @@ extern struct mm_struct *mm_alloc(void);
+  * See also <Documentation/mm/active_mm.rst> for an in-depth explanation
+  * of &mm_struct.mm_count vs &mm_struct.mm_users.
+  */
+-static inline void mmgrab(struct mm_struct *mm)
++static __always_inline void mmgrab(struct mm_struct *mm)
+ {
+ 	atomic_inc(&mm->mm_count);
+ }
 @@ -44,7 +44,7 @@ static inline void smp_mb__after_mmgrab(void)
  
  extern void __mmdrop(struct mm_struct *mm);
@@ -334,7 +275,7 @@ index 95d0040df5841..4a279ee2d0262 100644
  {
  	/*
  	 * The implicit full barrier implied by atomic_dec_and_test() is
-@@ -71,14 +71,14 @@ static inline void __mmdrop_delayed(struct rcu_head *rhp)
+@@ -71,27 +71,27 @@ static inline void __mmdrop_delayed(struct rcu_head *rhp)
   * Invoked from finish_task_switch(). Delegates the heavy lifting on RT
   * kernels via RCU.
   */
@@ -351,6 +292,21 @@ index 95d0040df5841..4a279ee2d0262 100644
  {
  	mmdrop(mm);
  }
+ #endif
+ 
+ /* Helpers for lazy TLB mm refcounting */
+-static inline void mmgrab_lazy_tlb(struct mm_struct *mm)
++static __always_inline void mmgrab_lazy_tlb(struct mm_struct *mm)
+ {
+ 	if (IS_ENABLED(CONFIG_MMU_LAZY_TLB_REFCOUNT))
+ 		mmgrab(mm);
+ }
+ 
+-static inline void mmdrop_lazy_tlb(struct mm_struct *mm)
++static __always_inline void mmdrop_lazy_tlb(struct mm_struct *mm)
+ {
+ 	if (IS_ENABLED(CONFIG_MMU_LAZY_TLB_REFCOUNT)) {
+ 		mmdrop(mm);
 @@ -104,7 +104,7 @@ static inline void mmdrop_lazy_tlb(struct mm_struct *mm)
  	}
  }
@@ -360,6 +316,21 @@ index 95d0040df5841..4a279ee2d0262 100644
  {
  	if (IS_ENABLED(CONFIG_MMU_LAZY_TLB_REFCOUNT))
  		mmdrop_sched(mm);
+@@ -128,12 +128,12 @@ static inline void mmdrop_lazy_tlb_sched(struct mm_struct *mm)
+  * See also <Documentation/mm/active_mm.rst> for an in-depth explanation
+  * of &mm_struct.mm_count vs &mm_struct.mm_users.
+  */
+-static inline void mmget(struct mm_struct *mm)
++static __always_inline void mmget(struct mm_struct *mm)
+ {
+ 	atomic_inc(&mm->mm_users);
+ }
+ 
+-static inline bool mmget_not_zero(struct mm_struct *mm)
++static __always_inline bool mmget_not_zero(struct mm_struct *mm)
+ {
+ 	return atomic_inc_not_zero(&mm->mm_users);
+ }
 @@ -532,7 +532,7 @@ enum {
  #include <asm/membarrier.h>
  #endif
@@ -369,22 +340,8 @@ index 95d0040df5841..4a279ee2d0262 100644
  {
  	/*
  	 * The atomic_read() below prevents CSE. The following should
-diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
-index 45c0022b91ced..bbcfdf12aa6e5 100644
---- a/include/linux/sched/topology.h
-+++ b/include/linux/sched/topology.h
-@@ -92,9 +92,6 @@ struct sched_domain {
- 	unsigned int nr_balance_failed; /* initialise to 0 */
- 
- 	/* idle_balance() stats */
--	unsigned int newidle_call;
--	unsigned int newidle_success;
--	unsigned int newidle_ratio;
- 	u64 max_newidle_lb_cost;
- 	unsigned long last_decay_max_lb_cost;
- 
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index 738007d6f577f..df9934a60fafe 100644
+index 738007d6f577..df9934a60faf 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -177,7 +177,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -406,7 +363,7 @@ index 738007d6f577f..df9934a60fafe 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d6..428464bb81b34 100644
+index 29dd5b91dd7d..428464bb81b3 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -439,30 +396,20 @@ index 29dd5b91dd7d6..428464bb81b34 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 496dff740dcaf..292efc99839b7 100644
+index da20fb6ea25a..5d7591df38c6 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -124,7 +124,6 @@ EXPORT_TRACEPOINT_SYMBOL_GPL(sched_exit_tp);
- EXPORT_TRACEPOINT_SYMBOL_GPL(sched_set_need_resched_tp);
+@@ -3691,6 +3691,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
  
- DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
--DEFINE_PER_CPU(struct rnd_state, sched_rnd_state);
+ void update_rq_avg_idle(struct rq *rq)
+ {
++	if (!rq->idle_stamp)
++		return;
++
+ 	u64 delta = rq_clock(rq) - rq->idle_stamp;
+ 	u64 max = 2*rq->max_idle_balance_cost;
  
- #ifdef CONFIG_SCHED_PROXY_EXEC
- DEFINE_STATIC_KEY_TRUE(__sched_proxy_exec);
-@@ -687,11 +686,6 @@ bool raw_spin_rq_trylock(struct rq *rq)
- 	}
- }
- 
--void raw_spin_rq_unlock(struct rq *rq)
--{
--	raw_spin_unlock(rq_lockp(rq));
--}
--
- /*
-  * double_rq_lock - safely lock two runqueues
-  */
-@@ -4897,7 +4891,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -4957,7 +4960,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -471,8 +418,8 @@ index 496dff740dcaf..292efc99839b7 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -4913,7 +4907,7 @@ static inline void finish_task(struct task_struct *prev)
- 	smp_store_release(&prev->on_cpu, 0);
+@@ -5001,7 +5004,7 @@ static void zap_balance_callbacks(struct rq *rq)
+ 	rq->balance_callback = found ? &balance_push_callback : NULL;
  }
  
 -static void do_balance_callbacks(struct rq *rq, struct balance_callback *head)
@@ -480,7 +427,7 @@ index 496dff740dcaf..292efc99839b7 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -4948,7 +4942,7 @@ struct balance_callback balance_push_callback = {
+@@ -5036,7 +5039,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -489,7 +436,7 @@ index 496dff740dcaf..292efc99839b7 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5022,7 +5016,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5110,7 +5113,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -498,7 +445,7 @@ index 496dff740dcaf..292efc99839b7 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5055,7 +5049,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5144,7 +5147,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -507,7 +454,7 @@ index 496dff740dcaf..292efc99839b7 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5109,7 +5103,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5198,7 +5201,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -516,20 +463,11 @@ index 496dff740dcaf..292efc99839b7 100644
  	__releases(__rq_lockp(this_rq()))
  {
  	struct rq *rq = this_rq();
-@@ -8545,8 +8539,6 @@ void __init sched_init_smp(void)
- {
- 	sched_init_numa(NUMA_NO_NODE);
- 
--	prandom_init_once(&sched_rnd_state);
--
- 	/*
- 	 * There's no userspace yet to cause hotplug operations; hence all the
- 	 * CPU masks are stable and all blatant races in the below code cannot
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index bf948db905ed1..904e85f845312 100644
+index 69361c63353a..8954fb310493 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -11936,12 +11936,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -12132,12 +12132,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -547,123 +485,25 @@ index bf948db905ed1..904e85f845312 100644
  		/*
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
-@@ -12283,27 +12286,11 @@ void update_max_interval(void)
- 	max_load_balance_interval = HZ*num_online_cpus()/10;
- }
+diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
+index a83be0c834dd..9ceb7e622404 100644
+--- a/kernel/sched/idle.c
++++ b/kernel/sched/idle.c
+@@ -491,6 +491,9 @@ static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool fir
+ 	schedstat_inc(rq->sched_goidle);
+ 	next->se.exec_start = rq_clock_task(rq);
  
--static inline void update_newidle_stats(struct sched_domain *sd, unsigned int success)
--{
--	sd->newidle_call++;
--	sd->newidle_success += success;
--
--	if (sd->newidle_call >= 1024) {
--		sd->newidle_ratio = sd->newidle_success;
--		sd->newidle_call /= 2;
--		sd->newidle_success /= 2;
--	}
--}
--
--static inline bool
--update_newidle_cost(struct sched_domain *sd, u64 cost, unsigned int success)
-+static inline bool update_newidle_cost(struct sched_domain *sd, u64 cost)
- {
- 	unsigned long next_decay = sd->last_decay_max_lb_cost + HZ;
- 	unsigned long now = jiffies;
- 
--	if (cost)
--		update_newidle_stats(sd, success);
--
- 	if (cost > sd->max_newidle_lb_cost) {
- 		/*
- 		 * Track max cost of a domain to make sure to not delay the
-@@ -12351,7 +12338,7 @@ static void sched_balance_domains(struct rq *rq, enum cpu_idle_type idle)
- 		 * Decay the newidle max times here because this is a regular
- 		 * visit to all the domains.
- 		 */
--		need_decay = update_newidle_cost(sd, 0, 0);
-+		need_decay = update_newidle_cost(sd, 0);
- 		max_cost += sd->max_newidle_lb_cost;
- 
- 		/*
-@@ -12994,22 +12981,6 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
- 			break;
- 
- 		if (sd->flags & SD_BALANCE_NEWIDLE) {
--			unsigned int weight = 1;
--
--			if (sched_feat(NI_RANDOM)) {
--				/*
--				 * Throw a 1k sided dice; and only run
--				 * newidle_balance according to the success
--				 * rate.
--				 */
--				u32 d1k = sched_rng() % 1024;
--				weight = 1 + sd->newidle_ratio;
--				if (d1k > weight) {
--					update_newidle_stats(sd, 0);
--					continue;
--				}
--				weight = (1024 + weight/2) / weight;
--			}
- 
- 			pulled_task = sched_balance_rq(this_cpu, this_rq,
- 						   sd, CPU_NEWLY_IDLE,
-@@ -13017,14 +12988,10 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
- 
- 			t1 = sched_clock_cpu(this_cpu);
- 			domain_cost = t1 - t0;
-+			update_newidle_cost(sd, domain_cost);
++	if (!rq->idle_stamp)
++		rq->idle_stamp = rq_clock(rq);
 +
- 			curr_cost += domain_cost;
- 			t0 = t1;
--
--			/*
--			 * Track max cost of a domain to make sure to not delay the
--			 * next wakeup on the CPU.
--			 */
--			update_newidle_cost(sd, domain_cost, weight * !!pulled_task);
- 		}
- 
- 		/*
-diff --git a/kernel/sched/features.h b/kernel/sched/features.h
-index 136a6584be797..3c12d9f93331d 100644
---- a/kernel/sched/features.h
-+++ b/kernel/sched/features.h
-@@ -121,8 +121,3 @@ SCHED_FEAT(WA_BIAS, true)
- SCHED_FEAT(UTIL_EST, true)
- 
- SCHED_FEAT(LATENCY_WARN, false)
--
--/*
-- * Do newidle balancing proportional to its success rate using randomization.
-- */
--SCHED_FEAT(NI_RANDOM, true)
+ 	/*
+ 	 * rq is about to be idle, check if we need to update the
+ 	 * lost_idle_time of clock_pelt
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 43bbf0693cca4..29394e1e156b6 100644
+index 9f63b15d309d..cc8b83e25569 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -5,7 +5,6 @@
- #ifndef _KERNEL_SCHED_SCHED_H
- #define _KERNEL_SCHED_SCHED_H
- 
--#include <linux/prandom.h>
- #include <linux/sched/affinity.h>
- #include <linux/sched/autogroup.h>
- #include <linux/sched/cpufreq.h>
-@@ -1372,12 +1371,6 @@ static inline bool is_migration_disabled(struct task_struct *p)
- }
- 
- DECLARE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
--DECLARE_PER_CPU(struct rnd_state, sched_rnd_state);
--
--static inline u32 sched_rng(void)
--{
--	return prandom_u32_state(this_cpu_ptr(&sched_rnd_state));
--}
- 
- static __always_inline struct rq *__this_rq(void)
- {
-@@ -1429,12 +1422,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
+@@ -1441,12 +1441,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
  
  DECLARE_STATIC_KEY_FALSE(__sched_core_enabled);
  
@@ -678,7 +518,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  {
  	return !static_branch_unlikely(&__sched_core_enabled);
  }
-@@ -1443,7 +1436,7 @@ static inline bool sched_core_disabled(void)
+@@ -1455,7 +1455,7 @@ static inline bool sched_core_disabled(void)
   * Be careful with this function; not for general use. The return value isn't
   * stable unless you actually hold a relevant rq->__lock.
   */
@@ -687,7 +527,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  {
  	if (sched_core_enabled(rq))
  		return &rq->core->__lock;
-@@ -1451,7 +1444,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
+@@ -1463,7 +1463,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
  	return &rq->__lock;
  }
  
@@ -696,7 +536,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	if (rq->core_enabled)
-@@ -1546,12 +1539,12 @@ static inline bool sched_core_disabled(void)
+@@ -1558,12 +1558,12 @@ static inline bool sched_core_disabled(void)
  	return true;
  }
  
@@ -711,13 +551,10 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	return &rq->__lock;
-@@ -1606,30 +1599,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
+@@ -1618,33 +1618,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
  extern bool raw_spin_rq_trylock(struct rq *rq)
  	__cond_acquires(true, __rq_lockp(rq));
  
--extern void raw_spin_rq_unlock(struct rq *rq)
--	__releases(__rq_lockp(rq));
--
 -static inline void raw_spin_rq_lock(struct rq *rq)
 +static __always_inline void raw_spin_rq_lock(struct rq *rq)
  	__acquires(__rq_lockp(rq))
@@ -725,13 +562,14 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	raw_spin_rq_lock_nested(rq, 0);
  }
  
--static inline void raw_spin_rq_lock_irq(struct rq *rq)
+-static inline void raw_spin_rq_unlock(struct rq *rq)
 +static __always_inline void raw_spin_rq_unlock(struct rq *rq)
-+	__releases(__rq_lockp(rq))
-+{
-+	raw_spin_unlock(rq_lockp(rq));
-+}
-+
+ 	__releases(__rq_lockp(rq))
+ {
+ 	raw_spin_unlock(rq_lockp(rq));
+ }
+ 
+-static inline void raw_spin_rq_lock_irq(struct rq *rq)
 +static __always_inline void raw_spin_rq_lock_irq(struct rq *rq)
  	__acquires(__rq_lockp(rq))
  {
@@ -752,7 +590,7 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__acquires(__rq_lockp(rq))
  {
  	unsigned long flags;
-@@ -1640,7 +1636,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
+@@ -1655,7 +1655,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
  	return flags;
  }
  
@@ -761,25 +599,306 @@ index 43bbf0693cca4..29394e1e156b6 100644
  	__releases(__rq_lockp(rq))
  {
  	raw_spin_rq_unlock(rq);
-diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
-index 32dcddaead82d..35ae4d1e9ad61 100644
---- a/kernel/sched/topology.c
-+++ b/kernel/sched/topology.c
-@@ -1674,12 +1674,6 @@ sd_init(struct sched_domain_topology_level *tl,
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 65e205111553..65f8abdfb0cf 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -90,6 +90,9 @@ typedef int __bitwise fpi_t;
+ /* Free the page without taking locks. Rely on trylock only. */
+ #define FPI_TRYLOCK		((__force fpi_t)BIT(2))
  
- 		.last_balance		= jiffies,
- 		.balance_interval	= sd_weight,
--
--		/* 50% success rate */
--		.newidle_call		= 512,
--		.newidle_success	= 256,
--		.newidle_ratio		= 512,
--
- 		.max_newidle_lb_cost	= 0,
- 		.last_decay_max_lb_cost	= jiffies,
- 		.child			= child,
++/* free_pages_prepare() has already been called for page(s) being freed. */
++#define FPI_PREPARED		((__force fpi_t)BIT(3))
++
+ /* prevent >1 _updater_ of zone percpu pageset ->high and ->batch fields */
+ static DEFINE_MUTEX(pcp_batch_high_lock);
+ #define MIN_PERCPU_PAGELIST_HIGH_FRACTION (8)
+@@ -1300,8 +1303,8 @@ static inline void pgalloc_tag_sub_pages(struct alloc_tag *tag, unsigned int nr)
+ 
+ #endif /* CONFIG_MEM_ALLOC_PROFILING */
+ 
+-__always_inline bool __free_pages_prepare(struct page *page,
+-					  unsigned int order, fpi_t fpi_flags)
++static __always_inline bool __free_pages_prepare(struct page *page,
++		unsigned int order, fpi_t fpi_flags)
+ {
+ 	int bad = 0;
+ 	bool skip_kasan_poison = should_skip_kasan_poison(page);
+@@ -1309,6 +1312,9 @@ __always_inline bool __free_pages_prepare(struct page *page,
+ 	bool compound = PageCompound(page);
+ 	struct folio *folio = page_folio(page);
+ 
++	if (fpi_flags & FPI_PREPARED)
++		return true;
++
+ 	VM_BUG_ON_PAGE(PageTail(page), page);
+ 
+ 	trace_mm_page_free(page, order);
+@@ -5184,6 +5190,34 @@ unsigned long alloc_pages_bulk_noprof(gfp_t gfp, int preferred_nid,
+ }
+ EXPORT_SYMBOL_GPL(alloc_pages_bulk_noprof);
+ 
++/*
++ * free_pages_bulk - Free an array of order-0 pages
++ * @page_array: Array of pages to free
++ * @nr_pages: The number of pages in the array
++ *
++ * Free the order-0 pages. Adjacent entries whose PFNs form a contiguous
++ * run are released with a single __free_contig_range() call.
++ *
++ * This assumes page_array is sorted in ascending PFN order. Without that,
++ * the function still frees all pages, but contiguous runs may not be
++ * detected and the freeing pattern can degrade to freeing one page at a
++ * time.
++ *
++ * Context: Sleepable process context only; calls cond_resched()
++ */
++void free_pages_bulk(struct page **page_array, unsigned long nr_pages)
++{
++	while (nr_pages) {
++		unsigned long nr_contig = num_pages_contiguous(page_array, nr_pages);
++
++		__free_contig_range(page_to_pfn(*page_array), nr_contig);
++
++		nr_pages -= nr_contig;
++		page_array += nr_contig;
++		cond_resched();
++	}
++}
++
+ /*
+  * This is the 'heart' of the zoned buddy allocator.
+  */
+@@ -6763,6 +6797,105 @@ void __init page_alloc_sysctl_init(void)
+ 	register_sysctl_init("vm", page_alloc_sysctl_table);
+ }
+ 
++static void free_prepared_contig_range(struct page *page,
++		unsigned long nr_pages)
++{
++	unsigned long pfn = page_to_pfn(page);
++
++	while (nr_pages) {
++		unsigned int order;
++
++		/* We are limited by the largest buddy order. */
++		order = pfn ? __ffs(pfn) : MAX_PAGE_ORDER;
++		/* Don't exceed the number of pages to free. */
++		order = min_t(unsigned int, order, ilog2(nr_pages));
++		order = min_t(unsigned int, order, MAX_PAGE_ORDER);
++
++		/*
++		 * Free the chunk as a single block. Our caller has already
++		 * called free_pages_prepare() for each order-0 page.
++		 */
++		__free_frozen_pages(page, order, FPI_PREPARED);
++
++		pfn += 1UL << order;
++		page += 1UL << order;
++		nr_pages -= 1UL << order;
++	}
++}
++
++static void __free_contig_range_common(unsigned long pfn, unsigned long nr_pages,
++		bool is_frozen)
++{
++	struct page *page, *start = NULL;
++	unsigned long nr_start = 0;
++	unsigned long start_sec;
++	unsigned long i;
++
++	for (i = 0; i < nr_pages; i++) {
++		bool can_free = true;
++
++		/*
++		 * Contiguous PFNs might not have contiguous "struct pages"
++		 * in some kernel configs: page++ across a section boundary
++		 * is undefined. Use pfn_to_page() for each PFN.
++		 */
++		page = pfn_to_page(pfn + i);
++
++		VM_WARN_ON_ONCE(PageHead(page));
++		VM_WARN_ON_ONCE(PageTail(page));
++
++		if (!is_frozen)
++			can_free = put_page_testzero(page);
++
++		if (can_free)
++			can_free = free_pages_prepare(page, 0);
++
++		if (!can_free) {
++			if (start) {
++				free_prepared_contig_range(start, i - nr_start);
++				start = NULL;
++			}
++			continue;
++		}
++
++		if (start && memdesc_section(page->flags) != start_sec) {
++			free_prepared_contig_range(start, i - nr_start);
++			start = page;
++			nr_start = i;
++			start_sec = memdesc_section(page->flags);
++		} else if (!start) {
++			start = page;
++			nr_start = i;
++			start_sec = memdesc_section(page->flags);
++		}
++	}
++
++	if (start)
++		free_prepared_contig_range(start, nr_pages - nr_start);
++}
++
++/**
++ * __free_contig_range - Free contiguous range of order-0 pages.
++ * @pfn: Page frame number of the first page in the range.
++ * @nr_pages: Number of pages to free.
++ *
++ * For each order-0 struct page in the physically contiguous range, put a
++ * reference. Free any page who's reference count falls to zero. The
++ * implementation is functionally equivalent to, but significantly faster than
++ * calling __free_page() for each struct page in a loop.
++ *
++ * Memory allocated with alloc_pages(order>=1) then subsequently split to
++ * order-0 with split_page() is an example of appropriate contiguous pages that
++ * can be freed with this API.
++ *
++ * Context: May be called in interrupt context or while holding a normal
++ * spinlock, but not in NMI context or while holding a raw spinlock.
++ */
++void __free_contig_range(unsigned long pfn, unsigned long nr_pages)
++{
++	__free_contig_range_common(pfn, nr_pages, /* is_frozen= */ false);
++}
++
+ #ifdef CONFIG_CONTIG_ALLOC
+ /* Usage: See admin-guide/dynamic-debug-howto.rst */
+ static void alloc_contig_dump_pages(struct list_head *page_list)
+@@ -6900,8 +7033,7 @@ static int __alloc_contig_verify_gfp_mask(gfp_t gfp_mask, gfp_t *gfp_cc_mask)
+ 
+ static void __free_contig_frozen_range(unsigned long pfn, unsigned long nr_pages)
+ {
+-	for (; nr_pages--; pfn++)
+-		free_frozen_pages(pfn_to_page(pfn), 0);
++	__free_contig_range_common(pfn, nr_pages, /* is_frozen= */ true);
+ }
+ 
+ /**
+@@ -7309,8 +7441,7 @@ void free_contig_range(unsigned long pfn, unsigned long nr_pages)
+ 	if (WARN_ON_ONCE(PageHead(pfn_to_page(pfn))))
+ 		return;
+ 
+-	for (; nr_pages--; pfn++)
+-		__free_page(pfn_to_page(pfn));
++	__free_contig_range(pfn, nr_pages);
+ }
+ EXPORT_SYMBOL(free_contig_range);
+ #endif /* CONFIG_CONTIG_ALLOC */
+diff --git a/mm/swap.c b/mm/swap.c
+index 5cc44f0de987..2dd84813f4dd 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -160,14 +160,42 @@ static void folio_batch_move_lru(struct folio_batch *fbatch, move_fn_t move_fn)
+ 	int i;
+ 	struct lruvec *lruvec = NULL;
+ 	unsigned long flags = 0;
++	struct folio_batch free_fbatch;
++	bool is_lru_add = (move_fn == lru_add);
++
++	/*
++	 * If we're adding to the LRU, preemptively filter dead folios. Use
++	 * this dedicated folio batch for temp storage and deferred cleanup.
++	 */
++	if (is_lru_add)
++		folio_batch_init(&free_fbatch);
+ 
+ 	for (i = 0; i < folio_batch_count(fbatch); i++) {
+ 		struct folio *folio = fbatch->folios[i];
+ 
+ 		/* block memcg migration while the folio moves between lru */
+-		if (move_fn != lru_add && !folio_test_clear_lru(folio))
++		if (!is_lru_add && !folio_test_clear_lru(folio))
+ 			continue;
+ 
++		/*
++		 * Filter dead folios by moving them from the add batch to the temp
++		 * batch for freeing after this loop.
++		 *
++		 * We're bypassing normal cleanup. Clear flags that are not
++		 * applicable to dead folios.
++		 *
++		 * Since the folio may be part of a huge page, unqueue from
++		 * deferred split list to avoid a dangling list entry.
++		 */
++		if (is_lru_add && folio_ref_freeze(folio, 1)) {
++			__folio_clear_active(folio);
++			__folio_clear_unevictable(folio);
++			folio_unqueue_deferred_split(folio);
++			fbatch->folios[i] = NULL;
++			folio_batch_add(&free_fbatch, folio);
++			continue;
++		}
++
+ 		folio_lruvec_relock_irqsave(folio, &lruvec, &flags);
+ 		move_fn(lruvec, folio);
+ 
+@@ -176,6 +204,13 @@ static void folio_batch_move_lru(struct folio_batch *fbatch, move_fn_t move_fn)
+ 
+ 	if (lruvec)
+ 		lruvec_unlock_irqrestore(lruvec, flags);
++
++	/* Cleanup filtered dead folios. */
++	if (is_lru_add) {
++		mem_cgroup_uncharge_folios(&free_fbatch);
++		free_unref_folios(&free_fbatch);
++	}
++
+ 	folios_put(fbatch);
+ }
+ 
+@@ -964,6 +999,10 @@ void folios_put_refs(struct folio_batch *folios, unsigned int *refs)
+ 		struct folio *folio = folios->folios[i];
+ 		unsigned int nr_refs = refs ? refs[i] : 1;
+ 
++		/* Folio batch entry may have been preemptively removed during drain. */
++		if (!folio)
++			continue;
++
+ 		if (is_huge_zero_folio(folio))
+ 			continue;
+ 
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index aa08651ec0df..2c53fbbcf7b5 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -3459,19 +3459,13 @@ void vfree(const void *addr)
+ 
+ 	if (unlikely(vm->flags & VM_FLUSH_RESET_PERMS))
+ 		vm_reset_perms(vm);
+-	for (i = 0; i < vm->nr_pages; i++) {
+-		struct page *page = vm->pages[i];
+ 
+-		BUG_ON(!page);
+-		/*
+-		 * High-order allocs for huge vmallocs are split, so
+-		 * can be freed as an array of order-0 allocations
+-		 */
+-		if (!(vm->flags & VM_MAP_PUT_PAGES))
+-			mod_lruvec_page_state(page, NR_VMALLOC, -1);
+-		__free_page(page);
+-		cond_resched();
++	if (!(vm->flags & VM_MAP_PUT_PAGES)) {
++		for (i = 0; i < vm->nr_pages; i++)
++			mod_lruvec_page_state(vm->pages[i], NR_VMALLOC, -1);
+ 	}
++	free_pages_bulk(vm->pages, vm->nr_pages);
++
+ 	kvfree(vm->pages);
+ 	kfree(vm);
+ }
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
