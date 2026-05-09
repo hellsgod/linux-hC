@@ -218,28 +218,6 @@ index 94b8ecb892bb..5d6878604451 100644
  			++upgcnt;
  
  			if (++cur_pgcnt >= pgcnt)
-diff --git a/include/linux/gfp.h b/include/linux/gfp.h
-index 51ef13ed756e..cdf95a9f0b87 100644
---- a/include/linux/gfp.h
-+++ b/include/linux/gfp.h
-@@ -239,6 +239,8 @@ unsigned long alloc_pages_bulk_noprof(gfp_t gfp, int preferred_nid,
- 				struct page **page_array);
- #define __alloc_pages_bulk(...)			alloc_hooks(alloc_pages_bulk_noprof(__VA_ARGS__))
- 
-+void free_pages_bulk(struct page **page_array, unsigned long nr_pages);
-+
- unsigned long alloc_pages_bulk_mempolicy_noprof(gfp_t gfp,
- 				unsigned long nr_pages,
- 				struct page **page_array);
-@@ -467,6 +469,8 @@ void free_contig_frozen_range(unsigned long pfn, unsigned long nr_pages);
- void free_contig_range(unsigned long pfn, unsigned long nr_pages);
- #endif
- 
-+void __free_contig_range(unsigned long pfn, unsigned long nr_pages);
-+
- DEFINE_FREE(free_page, void *, free_page((unsigned long)_T))
- 
- #endif /* __LINUX_GFP_H */
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
 index 48d851fbd8ea..7c1dac8da5e5 100644
 --- a/include/linux/perf_event.h
@@ -396,7 +374,7 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index da20fb6ea25a..5d7591df38c6 100644
+index b8871449d3c6..d8273f09c6bc 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -3691,6 +3691,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
@@ -409,7 +387,7 @@ index da20fb6ea25a..5d7591df38c6 100644
  	u64 delta = rq_clock(rq) - rq->idle_stamp;
  	u64 max = 2*rq->max_idle_balance_cost;
  
-@@ -4957,7 +4960,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -4958,7 +4961,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -418,7 +396,7 @@ index da20fb6ea25a..5d7591df38c6 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -5001,7 +5004,7 @@ static void zap_balance_callbacks(struct rq *rq)
+@@ -5002,7 +5005,7 @@ static void zap_balance_callbacks(struct rq *rq)
  	rq->balance_callback = found ? &balance_push_callback : NULL;
  }
  
@@ -427,7 +405,7 @@ index da20fb6ea25a..5d7591df38c6 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -5036,7 +5039,7 @@ struct balance_callback balance_push_callback = {
+@@ -5037,7 +5040,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -436,7 +414,7 @@ index da20fb6ea25a..5d7591df38c6 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5110,7 +5113,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5111,7 +5114,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -445,7 +423,7 @@ index da20fb6ea25a..5d7591df38c6 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5144,7 +5147,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5145,7 +5148,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -454,7 +432,7 @@ index da20fb6ea25a..5d7591df38c6 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5198,7 +5201,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5199,7 +5202,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -464,10 +442,10 @@ index da20fb6ea25a..5d7591df38c6 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 69361c63353a..8954fb310493 100644
+index 728965851842..5a627af5a4b2 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12132,12 +12132,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -12138,12 +12138,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -599,202 +577,6 @@ index 9f63b15d309d..cc8b83e25569 100644
  	__releases(__rq_lockp(rq))
  {
  	raw_spin_rq_unlock(rq);
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 65e205111553..65f8abdfb0cf 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -90,6 +90,9 @@ typedef int __bitwise fpi_t;
- /* Free the page without taking locks. Rely on trylock only. */
- #define FPI_TRYLOCK		((__force fpi_t)BIT(2))
- 
-+/* free_pages_prepare() has already been called for page(s) being freed. */
-+#define FPI_PREPARED		((__force fpi_t)BIT(3))
-+
- /* prevent >1 _updater_ of zone percpu pageset ->high and ->batch fields */
- static DEFINE_MUTEX(pcp_batch_high_lock);
- #define MIN_PERCPU_PAGELIST_HIGH_FRACTION (8)
-@@ -1300,8 +1303,8 @@ static inline void pgalloc_tag_sub_pages(struct alloc_tag *tag, unsigned int nr)
- 
- #endif /* CONFIG_MEM_ALLOC_PROFILING */
- 
--__always_inline bool __free_pages_prepare(struct page *page,
--					  unsigned int order, fpi_t fpi_flags)
-+static __always_inline bool __free_pages_prepare(struct page *page,
-+		unsigned int order, fpi_t fpi_flags)
- {
- 	int bad = 0;
- 	bool skip_kasan_poison = should_skip_kasan_poison(page);
-@@ -1309,6 +1312,9 @@ __always_inline bool __free_pages_prepare(struct page *page,
- 	bool compound = PageCompound(page);
- 	struct folio *folio = page_folio(page);
- 
-+	if (fpi_flags & FPI_PREPARED)
-+		return true;
-+
- 	VM_BUG_ON_PAGE(PageTail(page), page);
- 
- 	trace_mm_page_free(page, order);
-@@ -5184,6 +5190,34 @@ unsigned long alloc_pages_bulk_noprof(gfp_t gfp, int preferred_nid,
- }
- EXPORT_SYMBOL_GPL(alloc_pages_bulk_noprof);
- 
-+/*
-+ * free_pages_bulk - Free an array of order-0 pages
-+ * @page_array: Array of pages to free
-+ * @nr_pages: The number of pages in the array
-+ *
-+ * Free the order-0 pages. Adjacent entries whose PFNs form a contiguous
-+ * run are released with a single __free_contig_range() call.
-+ *
-+ * This assumes page_array is sorted in ascending PFN order. Without that,
-+ * the function still frees all pages, but contiguous runs may not be
-+ * detected and the freeing pattern can degrade to freeing one page at a
-+ * time.
-+ *
-+ * Context: Sleepable process context only; calls cond_resched()
-+ */
-+void free_pages_bulk(struct page **page_array, unsigned long nr_pages)
-+{
-+	while (nr_pages) {
-+		unsigned long nr_contig = num_pages_contiguous(page_array, nr_pages);
-+
-+		__free_contig_range(page_to_pfn(*page_array), nr_contig);
-+
-+		nr_pages -= nr_contig;
-+		page_array += nr_contig;
-+		cond_resched();
-+	}
-+}
-+
- /*
-  * This is the 'heart' of the zoned buddy allocator.
-  */
-@@ -6763,6 +6797,105 @@ void __init page_alloc_sysctl_init(void)
- 	register_sysctl_init("vm", page_alloc_sysctl_table);
- }
- 
-+static void free_prepared_contig_range(struct page *page,
-+		unsigned long nr_pages)
-+{
-+	unsigned long pfn = page_to_pfn(page);
-+
-+	while (nr_pages) {
-+		unsigned int order;
-+
-+		/* We are limited by the largest buddy order. */
-+		order = pfn ? __ffs(pfn) : MAX_PAGE_ORDER;
-+		/* Don't exceed the number of pages to free. */
-+		order = min_t(unsigned int, order, ilog2(nr_pages));
-+		order = min_t(unsigned int, order, MAX_PAGE_ORDER);
-+
-+		/*
-+		 * Free the chunk as a single block. Our caller has already
-+		 * called free_pages_prepare() for each order-0 page.
-+		 */
-+		__free_frozen_pages(page, order, FPI_PREPARED);
-+
-+		pfn += 1UL << order;
-+		page += 1UL << order;
-+		nr_pages -= 1UL << order;
-+	}
-+}
-+
-+static void __free_contig_range_common(unsigned long pfn, unsigned long nr_pages,
-+		bool is_frozen)
-+{
-+	struct page *page, *start = NULL;
-+	unsigned long nr_start = 0;
-+	unsigned long start_sec;
-+	unsigned long i;
-+
-+	for (i = 0; i < nr_pages; i++) {
-+		bool can_free = true;
-+
-+		/*
-+		 * Contiguous PFNs might not have contiguous "struct pages"
-+		 * in some kernel configs: page++ across a section boundary
-+		 * is undefined. Use pfn_to_page() for each PFN.
-+		 */
-+		page = pfn_to_page(pfn + i);
-+
-+		VM_WARN_ON_ONCE(PageHead(page));
-+		VM_WARN_ON_ONCE(PageTail(page));
-+
-+		if (!is_frozen)
-+			can_free = put_page_testzero(page);
-+
-+		if (can_free)
-+			can_free = free_pages_prepare(page, 0);
-+
-+		if (!can_free) {
-+			if (start) {
-+				free_prepared_contig_range(start, i - nr_start);
-+				start = NULL;
-+			}
-+			continue;
-+		}
-+
-+		if (start && memdesc_section(page->flags) != start_sec) {
-+			free_prepared_contig_range(start, i - nr_start);
-+			start = page;
-+			nr_start = i;
-+			start_sec = memdesc_section(page->flags);
-+		} else if (!start) {
-+			start = page;
-+			nr_start = i;
-+			start_sec = memdesc_section(page->flags);
-+		}
-+	}
-+
-+	if (start)
-+		free_prepared_contig_range(start, nr_pages - nr_start);
-+}
-+
-+/**
-+ * __free_contig_range - Free contiguous range of order-0 pages.
-+ * @pfn: Page frame number of the first page in the range.
-+ * @nr_pages: Number of pages to free.
-+ *
-+ * For each order-0 struct page in the physically contiguous range, put a
-+ * reference. Free any page who's reference count falls to zero. The
-+ * implementation is functionally equivalent to, but significantly faster than
-+ * calling __free_page() for each struct page in a loop.
-+ *
-+ * Memory allocated with alloc_pages(order>=1) then subsequently split to
-+ * order-0 with split_page() is an example of appropriate contiguous pages that
-+ * can be freed with this API.
-+ *
-+ * Context: May be called in interrupt context or while holding a normal
-+ * spinlock, but not in NMI context or while holding a raw spinlock.
-+ */
-+void __free_contig_range(unsigned long pfn, unsigned long nr_pages)
-+{
-+	__free_contig_range_common(pfn, nr_pages, /* is_frozen= */ false);
-+}
-+
- #ifdef CONFIG_CONTIG_ALLOC
- /* Usage: See admin-guide/dynamic-debug-howto.rst */
- static void alloc_contig_dump_pages(struct list_head *page_list)
-@@ -6900,8 +7033,7 @@ static int __alloc_contig_verify_gfp_mask(gfp_t gfp_mask, gfp_t *gfp_cc_mask)
- 
- static void __free_contig_frozen_range(unsigned long pfn, unsigned long nr_pages)
- {
--	for (; nr_pages--; pfn++)
--		free_frozen_pages(pfn_to_page(pfn), 0);
-+	__free_contig_range_common(pfn, nr_pages, /* is_frozen= */ true);
- }
- 
- /**
-@@ -7309,8 +7441,7 @@ void free_contig_range(unsigned long pfn, unsigned long nr_pages)
- 	if (WARN_ON_ONCE(PageHead(pfn_to_page(pfn))))
- 		return;
- 
--	for (; nr_pages--; pfn++)
--		__free_page(pfn_to_page(pfn));
-+	__free_contig_range(pfn, nr_pages);
- }
- EXPORT_SYMBOL(free_contig_range);
- #endif /* CONFIG_CONTIG_ALLOC */
 diff --git a/mm/swap.c b/mm/swap.c
 index 5cc44f0de987..2dd84813f4dd 100644
 --- a/mm/swap.c
@@ -868,35 +650,35 @@ index 5cc44f0de987..2dd84813f4dd 100644
  		if (is_huge_zero_folio(folio))
  			continue;
  
-diff --git a/mm/vmalloc.c b/mm/vmalloc.c
-index aa08651ec0df..2c53fbbcf7b5 100644
---- a/mm/vmalloc.c
-+++ b/mm/vmalloc.c
-@@ -3459,19 +3459,13 @@ void vfree(const void *addr)
+diff --git a/net/rxrpc/call_event.c b/net/rxrpc/call_event.c
+index fdd683261226..2b19b252225e 100644
+--- a/net/rxrpc/call_event.c
++++ b/net/rxrpc/call_event.c
+@@ -334,7 +334,9 @@ bool rxrpc_input_call_event(struct rxrpc_call *call)
  
- 	if (unlikely(vm->flags & VM_FLUSH_RESET_PERMS))
- 		vm_reset_perms(vm);
--	for (i = 0; i < vm->nr_pages; i++) {
--		struct page *page = vm->pages[i];
+ 			if (sp->hdr.type == RXRPC_PACKET_TYPE_DATA &&
+ 			    sp->hdr.securityIndex != 0 &&
+-			    skb_cloned(skb)) {
++			    (skb_cloned(skb) ||
++			     skb_has_frag_list(skb) ||
++			     skb_has_shared_frag(skb))) {
+ 				/* Unshare the packet so that it can be
+ 				 * modified by in-place decryption.
+ 				 */
+diff --git a/net/rxrpc/conn_event.c b/net/rxrpc/conn_event.c
+index a2130d25aaa9..442414d90ba1 100644
+--- a/net/rxrpc/conn_event.c
++++ b/net/rxrpc/conn_event.c
+@@ -245,7 +245,8 @@ static int rxrpc_verify_response(struct rxrpc_connection *conn,
+ {
+ 	int ret;
  
--		BUG_ON(!page);
--		/*
--		 * High-order allocs for huge vmallocs are split, so
--		 * can be freed as an array of order-0 allocations
--		 */
--		if (!(vm->flags & VM_MAP_PUT_PAGES))
--			mod_lruvec_page_state(page, NR_VMALLOC, -1);
--		__free_page(page);
--		cond_resched();
-+	if (!(vm->flags & VM_MAP_PUT_PAGES)) {
-+		for (i = 0; i < vm->nr_pages; i++)
-+			mod_lruvec_page_state(vm->pages[i], NR_VMALLOC, -1);
- 	}
-+	free_pages_bulk(vm->pages, vm->nr_pages);
-+
- 	kvfree(vm->pages);
- 	kfree(vm);
- }
+-	if (skb_cloned(skb)) {
++	if (skb_cloned(skb) || skb_has_frag_list(skb) ||
++	    skb_has_shared_frag(skb)) {
+ 		/* Copy the packet if shared so that we can do in-place
+ 		 * decryption.
+ 		 */
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
