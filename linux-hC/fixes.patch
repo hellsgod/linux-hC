@@ -817,35 +817,6 @@ index 32dcddaead82..35ae4d1e9ad6 100644
  		.max_newidle_lb_cost	= 0,
  		.last_decay_max_lb_cost	= jiffies,
  		.child			= child,
-diff --git a/net/rxrpc/call_event.c b/net/rxrpc/call_event.c
-index fdd683261226..2b19b252225e 100644
---- a/net/rxrpc/call_event.c
-+++ b/net/rxrpc/call_event.c
-@@ -334,7 +334,9 @@ bool rxrpc_input_call_event(struct rxrpc_call *call)
- 
- 			if (sp->hdr.type == RXRPC_PACKET_TYPE_DATA &&
- 			    sp->hdr.securityIndex != 0 &&
--			    skb_cloned(skb)) {
-+			    (skb_cloned(skb) ||
-+			     skb_has_frag_list(skb) ||
-+			     skb_has_shared_frag(skb))) {
- 				/* Unshare the packet so that it can be
- 				 * modified by in-place decryption.
- 				 */
-diff --git a/net/rxrpc/conn_event.c b/net/rxrpc/conn_event.c
-index a2130d25aaa9..442414d90ba1 100644
---- a/net/rxrpc/conn_event.c
-+++ b/net/rxrpc/conn_event.c
-@@ -245,7 +245,8 @@ static int rxrpc_verify_response(struct rxrpc_connection *conn,
- {
- 	int ret;
- 
--	if (skb_cloned(skb)) {
-+	if (skb_cloned(skb) || skb_has_frag_list(skb) ||
-+	    skb_has_shared_frag(skb)) {
- 		/* Copy the packet if shared so that we can do in-place
- 		 * decryption.
- 		 */
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
 index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
