@@ -354,20 +354,6 @@ index 48d851fbd8ea5..7c1dac8da5e59 100644
  					    struct task_struct *task)
  {
  	if (static_branch_unlikely(&perf_sched_events))
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 007a0b61856d4..d41e7a8f9c85f 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -998,6 +998,9 @@ struct task_struct {
- 	unsigned			sched_rt_mutex:1;
- #endif
- 
-+	/* Save user-dumpable when mm goes away */
-+	unsigned			user_dumpable:1;
-+
- 	/* Bit to tell TOMOYO we're in execve(): */
- 	unsigned			in_execve:1;
- 	unsigned			in_iowait:1;
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
 index 95d0040df5841..4a279ee2d0262 100644
 --- a/include/linux/sched/mm.h
@@ -499,62 +485,6 @@ index af4b88e106abf..ba509479fc107 100644
 +	}
  	area->freelist[area->free_count++] = net_iov_idx(niov);
  	spin_unlock_bh(&area->freelist_lock);
- }
-diff --git a/kernel/exit.c b/kernel/exit.c
-index 9852444627a0b..e2b6369612542 100644
---- a/kernel/exit.c
-+++ b/kernel/exit.c
-@@ -571,6 +571,7 @@ static void exit_mm(void)
- 	 */
- 	smp_mb__after_spinlock();
- 	local_irq_disable();
-+	current->user_dumpable = (get_dumpable(mm) == SUID_DUMP_USER);
- 	current->mm = NULL;
- 	membarrier_update_current_mm(NULL);
- 	enter_lazy_tlb(mm, current);
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index 392ec2f75f013..0e3ab697cff5c 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -272,11 +272,24 @@ static bool ptrace_has_cap(struct user_namespace *ns, unsigned int mode)
- 	return ns_capable(ns, CAP_SYS_PTRACE);
- }
- 
-+static bool task_still_dumpable(struct task_struct *task, unsigned int mode)
-+{
-+	struct mm_struct *mm = task->mm;
-+	if (mm) {
-+		if (get_dumpable(mm) == SUID_DUMP_USER)
-+			return true;
-+		return ptrace_has_cap(mm->user_ns, mode);
-+	}
-+
-+	if (task->user_dumpable)
-+		return true;
-+	return ptrace_has_cap(&init_user_ns, mode);
-+}
-+
- /* Returns 0 on success, -errno on denial. */
- static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
- {
- 	const struct cred *cred = current_cred(), *tcred;
--	struct mm_struct *mm;
- 	kuid_t caller_uid;
- 	kgid_t caller_gid;
- 
-@@ -337,11 +350,8 @@ static int __ptrace_may_access(struct task_struct *task, unsigned int mode)
- 	 * Pairs with a write barrier in commit_creds().
- 	 */
- 	smp_rmb();
--	mm = task->mm;
--	if (mm &&
--	    ((get_dumpable(mm) != SUID_DUMP_USER) &&
--	     !ptrace_has_cap(mm->user_ns, mode)))
--	    return -EPERM;
-+	if (!task_still_dumpable(task, mode))
-+		return -EPERM;
- 
- 	return security_ptrace_access_check(task, mode);
  }
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
 index 14e947bcb3e5c..c9b606ee29fa1 100644
