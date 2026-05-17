@@ -1,5 +1,5 @@
 diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 4d0f545fb3ec..fa25a6df1df0 100644
+index 4d0f545fb3ec5..fa25a6df1df0b 100644
 --- a/Documentation/admin-guide/kernel-parameters.txt
 +++ b/Documentation/admin-guide/kernel-parameters.txt
 @@ -2513,6 +2513,9 @@ Kernel parameters
@@ -22,7 +22,7 @@ index 4d0f545fb3ec..fa25a6df1df0 100644
  			the priority of the RCU boost threads (rcub/N)
  			and for the RCU grace-period kthreads (rcu_bh,
 diff --git a/arch/x86/Kconfig.cpu b/arch/x86/Kconfig.cpu
-index d7ba9219cb47..5dfa49361b0d 100644
+index d7ba9219cb47d..5dfa49361b0d0 100644
 --- a/arch/x86/Kconfig.cpu
 +++ b/arch/x86/Kconfig.cpu
 @@ -232,6 +232,11 @@ config CC_HAS_MARCH_NATIVE
@@ -86,7 +86,7 @@ index d7ba9219cb47..5dfa49361b0d 100644
  	bool "Generic x86 support"
  	depends on X86_32
 diff --git a/arch/x86/Makefile b/arch/x86/Makefile
-index 46fec0b08487..6bcb8dc2f1a1 100644
+index 46fec0b08487a..6bcb8dc2f1a1a 100644
 --- a/arch/x86/Makefile
 +++ b/arch/x86/Makefile
 @@ -163,10 +163,22 @@ else
@@ -115,7 +115,7 @@ index 46fec0b08487..6bcb8dc2f1a1 100644
          KBUILD_CFLAGS += -mno-red-zone
          KBUILD_CFLAGS += -mcmodel=kernel
 diff --git a/arch/x86/include/asm/topology.h b/arch/x86/include/asm/topology.h
-index 0ba9bdb99871..ce457469748a 100644
+index 0ba9bdb998717..ce457469748aa 100644
 --- a/arch/x86/include/asm/topology.h
 +++ b/arch/x86/include/asm/topology.h
 @@ -271,6 +271,7 @@ extern bool __read_mostly sysctl_sched_itmt_enabled;
@@ -127,7 +127,7 @@ index 0ba9bdb99871..ce457469748a 100644
  /* Interface to notify scheduler that system supports ITMT */
  int sched_set_itmt_support(void);
 diff --git a/arch/x86/include/asm/tsc.h b/arch/x86/include/asm/tsc.h
-index 4f7f09f50552..46478b9ed8c5 100644
+index 4f7f09f505521..46478b9ed8c59 100644
 --- a/arch/x86/include/asm/tsc.h
 +++ b/arch/x86/include/asm/tsc.h
 @@ -79,6 +79,9 @@ static inline cycles_t get_cycles(void)
@@ -141,7 +141,7 @@ index 4f7f09f50552..46478b9ed8c5 100644
  }
  #define get_cycles get_cycles
 diff --git a/arch/x86/kernel/cpu/bus_lock.c b/arch/x86/kernel/cpu/bus_lock.c
-index bba28607a59a..7e756a20084c 100644
+index bba28607a59a6..7e756a20084cc 100644
 --- a/arch/x86/kernel/cpu/bus_lock.c
 +++ b/arch/x86/kernel/cpu/bus_lock.c
 @@ -47,7 +47,11 @@ static const struct {
@@ -157,7 +157,7 @@ index bba28607a59a..7e756a20084c 100644
  
  #ifdef CONFIG_PROC_SYSCTL
 diff --git a/arch/x86/kernel/cpu/intel_epb.c b/arch/x86/kernel/cpu/intel_epb.c
-index 2c56f8730f59..7035f5fc1c16 100644
+index 2c56f8730f596..7035f5fc1c162 100644
 --- a/arch/x86/kernel/cpu/intel_epb.c
 +++ b/arch/x86/kernel/cpu/intel_epb.c
 @@ -170,6 +170,10 @@ static ssize_t energy_perf_bias_store(struct device *dev,
@@ -172,7 +172,7 @@ index 2c56f8730f59..7035f5fc1c16 100644
  }
  
 diff --git a/arch/x86/kernel/itmt.c b/arch/x86/kernel/itmt.c
-index 243a769fdd97..3d4bce75bbc4 100644
+index 243a769fdd97b..3d4bce75bbc43 100644
 --- a/arch/x86/kernel/itmt.c
 +++ b/arch/x86/kernel/itmt.c
 @@ -26,6 +26,7 @@
@@ -223,7 +223,7 @@ index 243a769fdd97..3d4bce75bbc4 100644
 +	}
 +}
 diff --git a/arch/x86/kernel/tsc.c b/arch/x86/kernel/tsc.c
-index c5110eb554bc..13fed465eab7 100644
+index c5110eb554bcf..13fed465eab7c 100644
 --- a/arch/x86/kernel/tsc.c
 +++ b/arch/x86/kernel/tsc.c
 @@ -1601,6 +1601,9 @@ unsigned long calibrate_delay_is_known(void)
@@ -237,7 +237,7 @@ index c5110eb554bc..13fed465eab7 100644
  	if (sibling < nr_cpu_ids)
  		return cpu_data(sibling).loops_per_jiffy;
 diff --git a/drivers/Makefile b/drivers/Makefile
-index 0841ea851847..71f480cdeeee 100644
+index 0841ea851847e..71f480cdeeee4 100644
 --- a/drivers/Makefile
 +++ b/drivers/Makefile
 @@ -64,14 +64,8 @@ obj-y				+= char/
@@ -270,7 +270,7 @@ index 0841ea851847..71f480cdeeee 100644
  obj-$(CONFIG_MTD)		+= mtd/
  obj-$(CONFIG_SPI)		+= spi/
 diff --git a/drivers/acpi/osl.c b/drivers/acpi/osl.c
-index ed2162a97bd2..128e4921f5bd 100644
+index ed2162a97bd2a..128e4921f5bd8 100644
 --- a/drivers/acpi/osl.c
 +++ b/drivers/acpi/osl.c
 @@ -1598,7 +1598,7 @@ void acpi_os_release_lock(acpi_spinlock lockp, acpi_cpu_flags not_used)
@@ -283,7 +283,7 @@ index ed2162a97bd2..128e4921f5bd 100644
  		return AE_ERROR;
  	else
 diff --git a/drivers/clocksource/acpi_pm.c b/drivers/clocksource/acpi_pm.c
-index 67792937242f..f83fa2157bb1 100644
+index 67792937242fa..f83fa2157bb1b 100644
 --- a/drivers/clocksource/acpi_pm.c
 +++ b/drivers/clocksource/acpi_pm.c
 @@ -208,13 +208,16 @@ static int verify_pmtmr_rate(void)
@@ -306,7 +306,7 @@ index 67792937242f..f83fa2157bb1 100644
  		value1 = clocksource_acpi_pm.read(&clocksource_acpi_pm);
  		for (i = 0; i < ACPI_PM_READ_CHECKS; i++) {
 diff --git a/drivers/cpufreq/intel_pstate.c b/drivers/cpufreq/intel_pstate.c
-index 1292da53e5fc..f03d73c20ca3 100644
+index 1292da53e5fcb..f03d73c20ca3c 100644
 --- a/drivers/cpufreq/intel_pstate.c
 +++ b/drivers/cpufreq/intel_pstate.c
 @@ -382,6 +382,13 @@ static void intel_pstate_set_itmt_prio(int cpu)
@@ -333,7 +333,7 @@ index 1292da53e5fc..f03d73c20ca3 100644
  		default_driver = &intel_pstate;
  	else if (!strcmp(str, "passive"))
 diff --git a/drivers/cpuidle/Kconfig b/drivers/cpuidle/Kconfig
-index d6d8386d3f02..b65bb25b8917 100644
+index d6d8386d3f02b..b65bb25b89179 100644
 --- a/drivers/cpuidle/Kconfig
 +++ b/drivers/cpuidle/Kconfig
 @@ -5,7 +5,7 @@ config CPU_IDLE
@@ -356,7 +356,7 @@ index d6d8386d3f02..b65bb25b8917 100644
  	bool "Haltpoll governor (for virtualized systems)"
  	depends on KVM_GUEST
 diff --git a/drivers/cpuidle/governors/menu.c b/drivers/cpuidle/governors/menu.c
-index 544a5d593007..4d8e1246dc0f 100644
+index 544a5d5930077..4d8e1246dc0fa 100644
 --- a/drivers/cpuidle/governors/menu.c
 +++ b/drivers/cpuidle/governors/menu.c
 @@ -527,7 +527,7 @@ static int menu_enable_device(struct cpuidle_driver *drv,
@@ -369,7 +369,7 @@ index 544a5d593007..4d8e1246dc0f 100644
  	.select =	menu_select,
  	.reflect =	menu_reflect,
 diff --git a/drivers/cpuidle/governors/teo.c b/drivers/cpuidle/governors/teo.c
-index ac43b9b013b3..ecb23f3c5529 100644
+index ac43b9b013b3f..ecb23f3c55297 100644
 --- a/drivers/cpuidle/governors/teo.c
 +++ b/drivers/cpuidle/governors/teo.c
 @@ -563,7 +563,7 @@ static int teo_enable_device(struct cpuidle_driver *drv,
@@ -382,7 +382,7 @@ index ac43b9b013b3..ecb23f3c5529 100644
  	.select =	teo_select,
  	.reflect =	teo_reflect,
 diff --git a/drivers/firmware/sysfb.c b/drivers/firmware/sysfb.c
-index 8833582c1883..045dfa4b6fb6 100644
+index 8833582c18830..045dfa4b6fb6e 100644
 --- a/drivers/firmware/sysfb.c
 +++ b/drivers/firmware/sysfb.c
 @@ -35,6 +35,22 @@
@@ -418,7 +418,7 @@ index 8833582c1883..045dfa4b6fb6 100644
  		if (!IS_ERR(pd))
  			goto put_device;
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu.h b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
-index 8bc591deb546..d4ebcfcdd12e 100644
+index 8bc591deb546d..d4ebcfcdd12e6 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu.h
 @@ -160,6 +160,7 @@ struct amdgpu_watchdog_timer {
@@ -430,7 +430,7 @@ index 8bc591deb546..d4ebcfcdd12e 100644
  extern int amdgpu_gart_size;
  extern int amdgpu_gtt_size;
 diff --git a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
-index e47921e2a9af..2c9ffe70327f 100644
+index e47921e2a9af2..2c9ffe70327f3 100644
 --- a/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 +++ b/drivers/gpu/drm/amd/amdgpu/amdgpu_drv.c
 @@ -150,6 +150,7 @@ enum AMDGPU_DEBUG_MASK {
@@ -458,7 +458,7 @@ index e47921e2a9af..2c9ffe70327f 100644
   * DOC: vramlimit (int)
   * Restrict the total amount of VRAM in MiB for testing.  The default is 0 (Use full VRAM).
 diff --git a/drivers/gpu/drm/amd/display/Kconfig b/drivers/gpu/drm/amd/display/Kconfig
-index abd3b6564373..46937e6fa78d 100644
+index abd3b6564373a..46937e6fa78d4 100644
 --- a/drivers/gpu/drm/amd/display/Kconfig
 +++ b/drivers/gpu/drm/amd/display/Kconfig
 @@ -56,4 +56,10 @@ config DRM_AMD_SECURE_DISPLAY
@@ -473,7 +473,7 @@ index abd3b6564373..46937e6fa78d 100644
 +
  endmenu
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
-index e96a12ff2d31..16b814d6b8c3 100644
+index e96a12ff2d31e..16b814d6b8c32 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
 @@ -5033,7 +5033,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
@@ -486,7 +486,7 @@ index e96a12ff2d31..16b814d6b8c3 100644
  		return -ENOMEM;
  #endif
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
-index cd1e58b8defc..adfaf5df6c11 100644
+index cd1e58b8defcb..adfaf5df6c114 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
 @@ -184,7 +184,7 @@ static inline struct fixed31_32 amdgpu_dm_fixpt_from_s3132(__u64 x)
@@ -499,7 +499,7 @@ index cd1e58b8defc..adfaf5df6c11 100644
   *
   * AMD driver supports pre-defined mathematical functions for transferring
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
-index d69f5a75b685..29a197d92285 100644
+index d69f5a75b685a..29a197d922851 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_crtc.c
 @@ -490,7 +490,7 @@ static int amdgpu_dm_crtc_late_register(struct drm_crtc *crtc)
@@ -530,7 +530,7 @@ index d69f5a75b685..29a197d92285 100644
  #endif
  	return 0;
 diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
-index 81e43534ec59..7d58a28ba10f 100644
+index 81e43534ec599..7d58a28ba10fb 100644
 --- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
 +++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_plane.c
 @@ -1630,7 +1630,7 @@ static void amdgpu_dm_plane_drm_plane_destroy_state(struct drm_plane *plane,
@@ -561,7 +561,7 @@ index 81e43534ec59..7d58a28ba10f 100644
  #else
  	res = dm_plane_init_colorops(plane);
 diff --git a/drivers/gpu/drm/amd/pm/amdgpu_pm.c b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
-index 736304e73ca4..9ad4a77d6c99 100644
+index 736304e73ca4d..9ad4a77d6c99f 100644
 --- a/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 +++ b/drivers/gpu/drm/amd/pm/amdgpu_pm.c
 @@ -3385,6 +3385,9 @@ static ssize_t amdgpu_hwmon_show_power_cap_min(struct device *dev,
@@ -575,7 +575,7 @@ index 736304e73ca4..9ad4a77d6c99 100644
  }
  
 diff --git a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
-index 8faf7de7aaa9..28d559222e56 100644
+index 8faf7de7aaa9a..28d559222e561 100644
 --- a/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 +++ b/drivers/gpu/drm/amd/pm/swsmu/amdgpu_smu.c
 @@ -2987,7 +2987,10 @@ int smu_get_power_limit(void *handle,
@@ -606,7 +606,7 @@ index 8faf7de7aaa9..28d559222e56 100644
  				"New power limit (%d) is out of range [%d,%d]\n",
  				limit, smu->min_power_limit, smu->max_power_limit);
 diff --git a/drivers/input/evdev.c b/drivers/input/evdev.c
-index c7325226cb86..4f18a50ea366 100644
+index c7325226cb866..4f18a50ea366f 100644
 --- a/drivers/input/evdev.c
 +++ b/drivers/input/evdev.c
 @@ -46,6 +46,7 @@ struct evdev_client {
@@ -670,7 +670,7 @@ index c7325226cb86..4f18a50ea366 100644
  }
  
 diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 608b617fb817..787f881be9bf 100644
+index 608b617fb817f..787f881be9bf3 100644
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
 @@ -3226,6 +3226,9 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
@@ -684,7 +684,7 @@ index 608b617fb817..787f881be9bf 100644
  	if (ret < 0)
  		goto bad;
 diff --git a/fs/binfmt_elf.c b/fs/binfmt_elf.c
-index 16a56b6b3f6c..b722b3a301c2 100644
+index 16a56b6b3f6ca..b722b3a301c26 100644
 --- a/fs/binfmt_elf.c
 +++ b/fs/binfmt_elf.c
 @@ -1301,6 +1301,8 @@ static int load_elf_binary(struct linux_binprm *bprm)
@@ -697,7 +697,7 @@ index 16a56b6b3f6c..b722b3a301c2 100644
  	mm->end_data = end_data;
  	mm->start_stack = bprm->p;
 diff --git a/fs/dcache.c b/fs/dcache.c
-index 2c61aeea41f4..d5329429af8d 100644
+index 2c61aeea41f45..d5329429af8d6 100644
 --- a/fs/dcache.c
 +++ b/fs/dcache.c
 @@ -73,8 +73,8 @@
@@ -712,7 +712,7 @@ index 2c61aeea41f4..d5329429af8d 100644
  unsigned long vfs_pressure_ratio(unsigned long val)
  {
 diff --git a/fs/readdir.c b/fs/readdir.c
-index 76bb1ae3a450..4d9b7a45e72a 100644
+index 76bb1ae3a4504..4d9b7a45e72a0 100644
 --- a/fs/readdir.c
 +++ b/fs/readdir.c
 @@ -149,7 +149,7 @@ EXPORT_SYMBOL(iterate_dir);
@@ -725,7 +725,7 @@ index 76bb1ae3a450..4d9b7a45e72a 100644
  	if (memchr(name, '/', len))
  		return -EIO;
 diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 890128cdea1c..ea53d7965767 100644
+index 890128cdea1ce..ea53d79657672 100644
 --- a/include/linux/blkdev.h
 +++ b/include/linux/blkdev.h
 @@ -678,7 +678,8 @@ enum {
@@ -739,7 +739,7 @@ index 890128cdea1c..ea53d7965767 100644
  void blk_queue_flag_set(unsigned int flag, struct request_queue *q);
  void blk_queue_flag_clear(unsigned int flag, struct request_queue *q);
 diff --git a/include/linux/pagemap.h b/include/linux/pagemap.h
-index 31a848485ad9..76476bf989fe 100644
+index 31a848485ad9d..76476bf989feb 100644
 --- a/include/linux/pagemap.h
 +++ b/include/linux/pagemap.h
 @@ -1365,7 +1365,7 @@ struct readahead_control {
@@ -752,7 +752,7 @@ index 31a848485ad9..76476bf989fe 100644
  void page_cache_ra_unbounded(struct readahead_control *,
  		unsigned long nr_to_read, unsigned long lookahead_count);
 diff --git a/include/linux/wait.h b/include/linux/wait.h
-index dce055e6add3..43a204da6888 100644
+index dce055e6add39..43a204da68886 100644
 --- a/include/linux/wait.h
 +++ b/include/linux/wait.h
 @@ -163,6 +163,7 @@ static inline bool wq_has_sleeper(struct wait_queue_head *wq_head)
@@ -772,7 +772,7 @@ index dce055e6add3..43a204da6888 100644
  void finish_wait(struct wait_queue_head *wq_head, struct wait_queue_entry *wq_entry);
  long wait_woken(struct wait_queue_entry *wq_entry, unsigned mode, long timeout);
 diff --git a/init/Kconfig b/init/Kconfig
-index 2937c4d308ae..03f722dfc985 100644
+index 2937c4d308aec..03f722dfc9851 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -215,6 +215,12 @@ config THREAD_INFO_IN_TASK
@@ -812,7 +812,7 @@ index 2937c4d308ae..03f722dfc985 100644
  	bool "PID Namespaces"
  	default y
 diff --git a/init/main.c b/init/main.c
-index 96f93bb06c49..49ba3877a666 100644
+index 96f93bb06c490..49ba3877a6665 100644
 --- a/init/main.c
 +++ b/init/main.c
 @@ -1329,10 +1329,13 @@ static __init_or_module void
@@ -832,7 +832,7 @@ index 96f93bb06c49..49ba3877a666 100644
  
  static __init_or_module void
 diff --git a/kernel/fork.c b/kernel/fork.c
-index f1ad69c6dc2d..aa877108cc0d 100644
+index f1ad69c6dc2d4..aa877108cc0da 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -126,6 +126,12 @@
@@ -873,7 +873,7 @@ index f1ad69c6dc2d..aa877108cc0d 100644
  	if (err)
  		goto bad_unshare_out;
 diff --git a/kernel/locking/rwsem.c b/kernel/locking/rwsem.c
-index bf647097369c..be318a1aeef8 100644
+index bf647097369cb..be318a1aeef86 100644
 --- a/kernel/locking/rwsem.c
 +++ b/kernel/locking/rwsem.c
 @@ -770,6 +770,7 @@ rwsem_spin_on_owner(struct rw_semaphore *sem)
@@ -895,7 +895,7 @@ index bf647097369c..be318a1aeef8 100644
  
  	return state;
 diff --git a/kernel/rcu/Kconfig b/kernel/rcu/Kconfig
-index 762299291e09..3f214f13ee53 100644
+index 762299291e09b..3f214f13ee53e 100644
 --- a/kernel/rcu/Kconfig
 +++ b/kernel/rcu/Kconfig
 @@ -325,9 +325,9 @@ config RCU_NOCB_CPU_CB_BOOST
@@ -911,7 +911,7 @@ index 762299291e09..3f214f13ee53 100644
  	  of milliseconds or more.  Therefore, when enabling this option,
  	  it is your responsibility to ensure that latency-sensitive
 diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index 5f2848b828dc..8e948a83e711 100644
+index 5f2848b828dc4..8e948a83e7117 100644
 --- a/kernel/rcu/rcutorture.c
 +++ b/kernel/rcu/rcutorture.c
 @@ -3042,7 +3042,7 @@ static int rcutorture_booster_init(unsigned int cpu)
@@ -924,7 +924,7 @@ index 5f2848b828dc..8e948a83e711 100644
  		if (force_irqthreads()) {
  			t = per_cpu(ktimerd, cpu);
 diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 55df6d37145e..0090672f164c 100644
+index 55df6d37145e8..0090672f164c2 100644
 --- a/kernel/rcu/tree.c
 +++ b/kernel/rcu/tree.c
 @@ -4195,7 +4195,7 @@ static void rcu_spawn_exp_par_gp_kworker(struct rcu_node *rnp)
@@ -955,7 +955,7 @@ index 55df6d37145e..0090672f164c 100644
  	rnp = rcu_get_root();
  	raw_spin_lock_irqsave_rcu_node(rnp, flags);
 diff --git a/kernel/rcu/tree_nocb.h b/kernel/rcu/tree_nocb.h
-index 1047b30cd46b..f43acd379cdc 100644
+index 1047b30cd46b7..f43acd379cdc0 100644
 --- a/kernel/rcu/tree_nocb.h
 +++ b/kernel/rcu/tree_nocb.h
 @@ -1394,7 +1394,7 @@ static void rcu_spawn_cpu_nocb_kthread(int cpu)
@@ -977,7 +977,7 @@ index 1047b30cd46b..f43acd379cdc 100644
  	WRITE_ONCE(rdp->nocb_cb_kthread, t);
  	WRITE_ONCE(rdp->nocb_gp_kthread, rdp_gp->nocb_gp_kthread);
 diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index 95ad967adcf3..022773565f46 100644
+index 95ad967adcf3c..022773565f462 100644
 --- a/kernel/rcu/tree_plugin.h
 +++ b/kernel/rcu/tree_plugin.h
 @@ -1116,7 +1116,7 @@ static void rcu_cpu_kthread_setup(unsigned int cpu)
@@ -999,7 +999,7 @@ index 95ad967adcf3..022773565f46 100644
  	wake_up_process(t); /* get to TASK_INTERRUPTIBLE quickly. */
  }
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index da20fb6ea25a..0cd14f9cc813 100644
+index da20fb6ea25ae..0cd14f9cc813c 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -648,7 +648,7 @@ void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
@@ -1106,146 +1106,10 @@ index da20fb6ea25a..0cd14f9cc813 100644
  			scx_cgroup_move_task(tsk);
  		if (scope->running)
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 69361c63353a..7ae58fecd0e6 100644
+index 69361c63353ad..0816fdf9d273b 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -1233,7 +1233,7 @@ static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
- 
- #include "pelt.h"
- 
--static int select_idle_sibling(struct task_struct *p, int prev_cpu, int cpu);
-+static int select_idle_sibling(struct task_struct *p, int prev_cpu, int cpu, int sync);
- static unsigned long task_h_load(struct task_struct *p);
- static unsigned long capacity_of(int cpu);
- 
-@@ -7123,7 +7123,7 @@ static int sched_idle_rq(struct rq *rq)
- 
- static int choose_sched_idle_rq(struct rq *rq, struct task_struct *p)
- {
--	return sched_idle_rq(rq) && !task_has_idle_policy(p);
-+	return sched_idle_rq(rq) && (!p || !task_has_idle_policy(p));
- }
- 
- static int choose_idle_cpu(int cpu, struct task_struct *p)
-@@ -7786,6 +7786,24 @@ static inline int __select_idle_cpu(int cpu, struct task_struct *p)
- DEFINE_STATIC_KEY_FALSE(sched_smt_present);
- EXPORT_SYMBOL_GPL(sched_smt_present);
- 
-+/*
-+ * Return true if all the CPUs in the SMT core where @cpu belongs are idle,
-+ * false otherwise.
-+ */
-+static bool is_idle_core(int cpu, struct task_struct *p)
-+{
-+	int sibling;
-+
-+	if (!sched_smt_active())
-+		return choose_idle_cpu(cpu, p);
-+
-+	for_each_cpu(sibling, cpu_smt_mask(cpu))
-+		if (!choose_idle_cpu(sibling, p))
-+			return false;
-+
-+	return true;
-+}
-+
- static inline void set_idle_cores(int cpu, int val)
- {
- 	struct sched_domain_shared *sds;
-@@ -8060,13 +8078,29 @@ static inline bool asym_fits_cpu(unsigned long util,
- /*
-  * Try and locate an idle core/thread in the LLC cache domain.
-  */
--static int select_idle_sibling(struct task_struct *p, int prev, int target)
-+static int select_idle_sibling(struct task_struct *p, int prev, int target, int sync)
- {
- 	bool has_idle_core = false;
- 	struct sched_domain *sd;
- 	unsigned long task_util, util_min, util_max;
- 	int i, recent_used_cpu, prev_aff = -1;
- 
-+	/* Check a recently used CPU as a potential idle candidate: */
-+	recent_used_cpu = p->recent_used_cpu;
-+	p->recent_used_cpu = prev;
-+	if (recent_used_cpu != prev &&
-+	    recent_used_cpu != target &&
-+	    cpus_share_cache(recent_used_cpu, target) &&
-+	    choose_idle_cpu(recent_used_cpu, p) &&
-+	    cpumask_test_cpu(recent_used_cpu, p->cpus_ptr)) {
-+
-+		if ((unsigned int)recent_used_cpu < nr_cpumask_bits &&
-+		    is_idle_core(recent_used_cpu, p))
-+			return recent_used_cpu;
-+	} else {
-+		recent_used_cpu = -1;
-+	}
-+
- 	/*
- 	 * On asymmetric system, update task utilization because we will check
- 	 * that the task fits with CPU's capacity.
-@@ -8083,7 +8117,7 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
- 	 */
- 	lockdep_assert_irqs_disabled();
- 
--	if (choose_idle_cpu(target, p) &&
-+	if (sync && is_idle_core(target, p) &&
- 	    asym_fits_cpu(task_util, util_min, util_max, target))
- 		return target;
- 
-@@ -8117,24 +8151,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
- 		return prev;
- 	}
- 
--	/* Check a recently used CPU as a potential idle candidate: */
--	recent_used_cpu = p->recent_used_cpu;
--	p->recent_used_cpu = prev;
--	if (recent_used_cpu != prev &&
--	    recent_used_cpu != target &&
--	    cpus_share_cache(recent_used_cpu, target) &&
--	    choose_idle_cpu(recent_used_cpu, p) &&
--	    cpumask_test_cpu(recent_used_cpu, p->cpus_ptr) &&
--	    asym_fits_cpu(task_util, util_min, util_max, recent_used_cpu)) {
--
--		if (!static_branch_unlikely(&sched_cluster_active) ||
--		    cpus_share_resources(recent_used_cpu, target))
--			return recent_used_cpu;
--
--	} else {
--		recent_used_cpu = -1;
--	}
--
- 	/*
- 	 * For asymmetric CPU capacity systems, our domain of interest is
- 	 * sd_asym_cpucapacity rather than sd_llc.
-@@ -8858,8 +8874,16 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
- 		return sched_balance_find_dst_cpu(sd, p, cpu, prev_cpu, sd_flag);
- 
- 	/* Fast path */
--	if (wake_flags & WF_TTWU)
--		return select_idle_sibling(p, prev_cpu, new_cpu);
-+	if (wake_flags & WF_TTWU) {
-+		/*
-+		 * If the previous CPU is an idle core, retain the same for
-+		 * cache locality. Otherwise, search for an idle sibling.
-+		 */
-+		if (is_idle_core(prev_cpu, p))
-+			return prev_cpu;
-+
-+		return select_idle_sibling(p, prev_cpu, new_cpu, sync);
-+	}
- 
- 	return new_cpu;
- }
-@@ -10536,7 +10560,7 @@ static bool sched_use_asym_prio(struct sched_domain *sd, int cpu)
- 	if (!sched_smt_active())
- 		return true;
- 
--	return sd->flags & SD_SHARE_CPUCAPACITY || is_core_idle(cpu);
-+	return sd->flags & SD_SHARE_CPUCAPACITY || is_idle_core(cpu, NULL);
- }
- 
- static inline bool sched_asym(struct sched_domain *sd, int dst_cpu, int src_cpu)
-@@ -13209,7 +13233,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
+@@ -13209,7 +13209,7 @@ static int sched_balance_newidle(struct rq *this_rq, struct rq_flags *rf)
  
  		update_next_balance(sd, &next_balance);
  
@@ -1255,7 +1119,7 @@ index 69361c63353a..7ae58fecd0e6 100644
  
  		if (sd->flags & SD_BALANCE_NEWIDLE) {
 diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index 20f27e2cf7ae..9ddd02e7551c 100644
+index 20f27e2cf7aec..9ddd02e7551cc 100644
 --- a/kernel/sched/wait.c
 +++ b/kernel/sched/wait.c
 @@ -66,6 +66,17 @@ int add_wait_queue_priority_exclusive(struct wait_queue_head *wq_head,
@@ -1297,7 +1161,7 @@ index 20f27e2cf7ae..9ddd02e7551c 100644
  {
  	wq_entry->flags = flags;
 diff --git a/kernel/sysctl.c b/kernel/sysctl.c
-index c9efb17cc255..a17030e7523c 100644
+index c9efb17cc255c..a17030e7523c6 100644
 --- a/kernel/sysctl.c
 +++ b/kernel/sysctl.c
 @@ -35,6 +35,10 @@ EXPORT_SYMBOL_GPL(sysctl_long_vals);
@@ -1328,7 +1192,7 @@ index c9efb17cc255..a17030e7523c 100644
  	{
  		.procname	= "sysctl_writes_strict",
 diff --git a/kernel/user_namespace.c b/kernel/user_namespace.c
-index 0bed462e9b2a..b54a9a25d1c3 100644
+index 0bed462e9b2a2..b54a9a25d1c36 100644
 --- a/kernel/user_namespace.c
 +++ b/kernel/user_namespace.c
 @@ -23,6 +23,13 @@
@@ -1346,7 +1210,7 @@ index 0bed462e9b2a..b54a9a25d1c3 100644
  static DEFINE_MUTEX(userns_state_mutex);
  
 diff --git a/mm/compaction.c b/mm/compaction.c
-index 3648ce22c807..efab79973ef0 100644
+index 3648ce22c8072..efab79973ef0f 100644
 --- a/mm/compaction.c
 +++ b/mm/compaction.c
 @@ -1904,7 +1904,11 @@ static int sysctl_compact_unevictable_allowed __read_mostly = CONFIG_COMPACT_UNE
@@ -1362,7 +1226,7 @@ index 3648ce22c807..efab79973ef0 100644
  static int __read_mostly sysctl_compact_memory;
  
 diff --git a/mm/huge_memory.c b/mm/huge_memory.c
-index 970e077019b7..84243833d66c 100644
+index 970e077019b75..84243833d66cb 100644
 --- a/mm/huge_memory.c
 +++ b/mm/huge_memory.c
 @@ -63,7 +63,11 @@ unsigned long transparent_hugepage_flags __read_mostly =
@@ -1378,7 +1242,7 @@ index 970e077019b7..84243833d66c 100644
  	(1<<TRANSPARENT_HUGEPAGE_USE_ZERO_PAGE_FLAG);
  
 diff --git a/mm/internal.h b/mm/internal.h
-index 5a2ddcf68e0b..eaf2ba612282 100644
+index 5a2ddcf68e0b6..eaf2ba6122822 100644
 --- a/mm/internal.h
 +++ b/mm/internal.h
 @@ -920,6 +920,7 @@ void post_alloc_hook(struct page *page, unsigned int order, gfp_t gfp_flags);
@@ -1390,7 +1254,7 @@ index 5a2ddcf68e0b..eaf2ba612282 100644
  struct page *__alloc_frozen_pages_noprof(gfp_t, unsigned int order, int nid,
  		nodemask_t *);
 diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 65e205111553..fda2f8178826 100644
+index 65e205111553e..fda2f81788262 100644
 --- a/mm/page_alloc.c
 +++ b/mm/page_alloc.c
 @@ -90,6 +90,8 @@ typedef int __bitwise fpi_t;
@@ -1453,7 +1317,7 @@ index 65e205111553..fda2f8178826 100644
  }
  
 diff --git a/mm/swap.c b/mm/swap.c
-index 5cc44f0de987..fe18f5eb8681 100644
+index 5cc44f0de9877..fe18f5eb8681f 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -1140,6 +1140,10 @@ static const struct ctl_table swap_sysctl_table[] = {
@@ -1476,7 +1340,7 @@ index 5cc44f0de987..fe18f5eb8681 100644
  	 * Right now other parts of the system means that we
  	 * _really_ don't want to cluster much more
 diff --git a/mm/vmscan.c b/mm/vmscan.c
-index bd1b1aa12581..12bd9f9affd5 100644
+index bd1b1aa125819..12bd9f9affd5d 100644
 --- a/mm/vmscan.c
 +++ b/mm/vmscan.c
 @@ -198,7 +198,11 @@ struct scan_control {
@@ -1567,7 +1431,7 @@ index bd1b1aa12581..12bd9f9affd5 100644
  
  		/*
 diff --git a/net/ipv4/inet_connection_sock.c b/net/ipv4/inet_connection_sock.c
-index 928654c34156..ea21c1081bf9 100644
+index 928654c34156b..ea21c1081bf9d 100644
 --- a/net/ipv4/inet_connection_sock.c
 +++ b/net/ipv4/inet_connection_sock.c
 @@ -619,7 +619,7 @@ static int inet_csk_wait_for_connect(struct sock *sk, long timeo)
