@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf5..bebde469f81ae 100644
+index db2cb06aa8cf..bebde469f81a 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf5..bebde469f81ae 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f14..2fe6b7fe6b12d 100644
+index 9153016da8f1..2fe6b7fe6b12 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f14..2fe6b7fe6b12d 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2ebf..95d03be2ce456 100644
+index bd1ef5e2d2eb..95d03be2ce45 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2ebf..95d03be2ce456 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d9..d1967214ef25f 100644
+index 78bbacc14d2d..d1967214ef25 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d9..d1967214ef25f 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee7..4b55fa353bb5f 100644
+index 96bda43538ee..4b55fa353bb5 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -64,7 +64,7 @@ index 96bda43538ee7..4b55fa353bb5f 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 2d9ae6ab1701c..d74d3657e73ae 100644
+index 2d9ae6ab1701..d74d3657e73a 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1021,6 +1021,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
@@ -88,40 +88,22 @@ index 2d9ae6ab1701c..d74d3657e73ae 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/drivers/bluetooth/btmtk.c b/drivers/bluetooth/btmtk.c
-index f70c1b0f89903..6fb6ca2748086 100644
+index f70c1b0f8990..a29f72216c34 100644
 --- a/drivers/bluetooth/btmtk.c
 +++ b/drivers/bluetooth/btmtk.c
-@@ -695,13 +695,8 @@ static int btmtk_usb_hci_wmt_sync(struct hci_dev *hdev,
- 	if (data->evt_skb == NULL)
- 		goto err_free_wc;
- 
--	wmt_evt = skb_pull_data(data->evt_skb, sizeof(*wmt_evt));
--	if (!wmt_evt) {
--		bt_dev_err(hdev, "WMT event too short (%u bytes)",
--			   data->evt_skb->len);
--		err = -EINVAL;
--		goto err_free_skb;
--	}
-+	/* Parse and handle the return WMT event */
-+	wmt_evt = (struct btmtk_hci_wmt_evt *)data->evt_skb->data;
- 	if (wmt_evt->whdr.op != hdr->op) {
- 		bt_dev_err(hdev, "Wrong op received %d expected %d",
- 			   wmt_evt->whdr.op, hdr->op);
-@@ -717,12 +712,6 @@ static int btmtk_usb_hci_wmt_sync(struct hci_dev *hdev,
- 			status = BTMTK_WMT_PATCH_DONE;
- 		break;
+@@ -719,8 +719,8 @@ static int btmtk_usb_hci_wmt_sync(struct hci_dev *hdev,
  	case BTMTK_WMT_FUNC_CTRL:
--		if (!skb_pull_data(data->evt_skb,
--				   sizeof(wmt_evt_funcc->status))) {
+ 		if (!skb_pull_data(data->evt_skb,
+ 				   sizeof(wmt_evt_funcc->status))) {
 -			err = -EINVAL;
 -			goto err_free_skb;
--		}
--
++			status = BTMTK_WMT_ON_UNDONE;
++			break;
+ 		}
+ 
  		wmt_evt_funcc = (struct btmtk_hci_wmt_evt_funcc *)wmt_evt;
- 		if (be16_to_cpu(wmt_evt_funcc->status) == 0x404)
- 			status = BTMTK_WMT_ON_DONE;
 diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
-index 94b8ecb892bb1..5d68786044513 100644
+index 94b8ecb892bb..5d6878604451 100644
 --- a/drivers/dma-buf/udmabuf.c
 +++ b/drivers/dma-buf/udmabuf.c
 @@ -26,10 +26,10 @@ MODULE_PARM_DESC(size_limit_mb, "Max size of a dmabuf, in megabytes. Default is
@@ -252,7 +234,7 @@ index 94b8ecb892bb1..5d68786044513 100644
  
  			if (++cur_pgcnt >= pgcnt)
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 48d851fbd8ea5..7c1dac8da5e59 100644
+index 48d851fbd8ea..7c1dac8da5e5 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -265,7 +247,7 @@ index 48d851fbd8ea5..7c1dac8da5e59 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 95d0040df5841..a17730d63f888 100644
+index 95d0040df584..a17730d63f88 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -32,7 +32,7 @@ extern struct mm_struct *mm_alloc(void);
@@ -352,7 +334,7 @@ index 95d0040df5841..a17730d63f888 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index 738007d6f577f..df9934a60fafe 100644
+index 738007d6f577..df9934a60faf 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -177,7 +177,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -374,7 +356,7 @@ index 738007d6f577f..df9934a60fafe 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d6..428464bb81b34 100644
+index 29dd5b91dd7d..428464bb81b3 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -407,7 +389,7 @@ index 29dd5b91dd7d6..428464bb81b34 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b8871449d3c69..d8273f09c6bc8 100644
+index b8871449d3c6..d8273f09c6bc 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -3691,6 +3691,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
@@ -475,7 +457,7 @@ index b8871449d3c69..d8273f09c6bc8 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3ebec186f9823..813897c67ca6b 100644
+index 3ebec186f982..813897c67ca6 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -12168,12 +12168,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
@@ -497,7 +479,7 @@ index 3ebec186f9823..813897c67ca6b 100644
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
 diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
-index a83be0c834ddb..9ceb7e6224045 100644
+index a83be0c834dd..9ceb7e622404 100644
 --- a/kernel/sched/idle.c
 +++ b/kernel/sched/idle.c
 @@ -491,6 +491,9 @@ static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool fir
@@ -511,7 +493,7 @@ index a83be0c834ddb..9ceb7e6224045 100644
  	 * rq is about to be idle, check if we need to update the
  	 * lost_idle_time of clock_pelt
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 9f63b15d309d1..cc8b83e255692 100644
+index 9f63b15d309d..cc8b83e25569 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1441,12 +1441,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
@@ -611,7 +593,7 @@ index 9f63b15d309d1..cc8b83e255692 100644
  {
  	raw_spin_rq_unlock(rq);
 diff --git a/mm/swap.c b/mm/swap.c
-index 5cc44f0de9877..2dd84813f4dde 100644
+index 5cc44f0de987..2dd84813f4dd 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -160,14 +160,42 @@ static void folio_batch_move_lru(struct folio_batch *fbatch, move_fn_t move_fn)
@@ -684,7 +666,7 @@ index 5cc44f0de9877..2dd84813f4dde 100644
  			continue;
  
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c244..08f80d7c5df05 100644
+index 452374d63c24..08f80d7c5df0 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
