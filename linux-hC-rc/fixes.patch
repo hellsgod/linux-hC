@@ -87,21 +87,6 @@ index 2d9ae6ab1701..d74d3657e73a 100644
  
  static void init_amd(struct cpuinfo_x86 *c)
  {
-diff --git a/drivers/bluetooth/btmtk.c b/drivers/bluetooth/btmtk.c
-index f70c1b0f8990..a29f72216c34 100644
---- a/drivers/bluetooth/btmtk.c
-+++ b/drivers/bluetooth/btmtk.c
-@@ -719,8 +719,8 @@ static int btmtk_usb_hci_wmt_sync(struct hci_dev *hdev,
- 	case BTMTK_WMT_FUNC_CTRL:
- 		if (!skb_pull_data(data->evt_skb,
- 				   sizeof(wmt_evt_funcc->status))) {
--			err = -EINVAL;
--			goto err_free_skb;
-+			status = BTMTK_WMT_ON_UNDONE;
-+			break;
- 		}
- 
- 		wmt_evt_funcc = (struct btmtk_hci_wmt_evt_funcc *)wmt_evt;
 diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
 index 94b8ecb892bb..5d6878604451 100644
 --- a/drivers/dma-buf/udmabuf.c
