@@ -186,7 +186,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=595.71.05
+_nv_ver=610.43.02
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -221,8 +221,7 @@ if _is_lto_kernel; then
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
-    source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
-             "${_patchsource}/misc/nvidia/0001-Add-IBT-support.patch")
+     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz")
 fi
 
 # Use generated AutoFDO Profile
@@ -669,6 +668,5 @@ b2sums=('355578c7361587f3aeee487290f092a038105557883d961576d8283d243b6dca32700da
         '229a7347651cdf825040d1e23350dc304086be24b5c27b169c75739b780dac5dbaf98e95eeec4c7214b56e3f570ce59c3a3bb93166bb8fed91895fac2e9cb663'
         '8277cfa256360c616fb1e8dcf8beea7afa706ee0dcb7aca3c74aa5bcac87cf8b4e48c30dd5f1b8ec3bd32ff4f3610104c805eb62a815fc64720259a4d2bdd258'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
-        'c21443afa1c6e2bc127d10fef4168d225b822a1ac3d05c5e32ac96effef21a128242af0b42acf22af39f5fe113e7e2ecf9c7c269e95d15213bc34a3485a0bac4'
-        'bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f'
+        '8ce61789035ab5305d9ebd0c3d5945514c7640bd832dbd3060fec839f2dcc670675d036f889003e5e878ff434799a7229b63d27f90f9a6df807d83085e9bc445'
         '6232d2e1b08a2ef91e24c64e1fc1aa56252c389a7a78eddcb31c7cf8afe18d15cae789c239d14945333d65d905d71be03c84f2ea6c50afd8dd0240f5e21f3b56')

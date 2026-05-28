@@ -30,8 +30,7 @@ pkgbase = linux-hC
 	source = nap.patch
 	source = poc-selector.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/dkms-clang.patch
-	source = nvidia-open-595.71.05.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/595.71.05.tar.gz
-	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/nvidia/0002-Add-IBT-support.patch
+	source = nvidia-open-610.43.02.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.43.02.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
 	b2sums = 08dc26e2247186fbfee32ee3251174f8a2e68c6ed6118c0713cb87bb66d427c85b6ae2367af053b158d9ad0d9aaf0846bdebddf84c30558fec89e68ba0dc0957
 	b2sums = f14dbb5010532e18699069be2068946337596fa4b84f225eee0e6c41bf0d4f43f06a277b334635283d46f548e93c7b966cf2f7034ad2e0b684f7694400db2e7a
@@ -42,8 +41,7 @@ pkgbase = linux-hC
 	b2sums = 87144ca0c765ea379e28785cd6ac7308ca58cdcd98e968370f4237233b14ba0391f74b5aac894a569b80aa8121ba23c18bbae0f3b570f8ab2af746ac748639e4
 	b2sums = 060a01dee0082683944d50a5f48169ad084c23b4c40f90d7d69d7b194e9bfe8a78f4e805d4eec6adaf959fad419389aff7bc67a3e95d8a6f0a51928e21de05f1
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
-	b2sums = c21443afa1c6e2bc127d10fef4168d225b822a1ac3d05c5e32ac96effef21a128242af0b42acf22af39f5fe113e7e2ecf9c7c269e95d15213bc34a3485a0bac4
-	b2sums = bccb4169c43e556f10cddaf8f101cc0b29209f984b9f681f266602a359bc6b4765b48d192006decd23667bd2b899fad9c1fd5b742251014dacc7c077ea023e0f
+	b2sums = 8ce61789035ab5305d9ebd0c3d5945514c7640bd832dbd3060fec839f2dcc670675d036f889003e5e878ff434799a7229b63d27f90f9a6df807d83085e9bc445
 	b2sums = 47391773e97c88a305ed6ee3068614f0f4e62481a2f0341f9493c7dd838d9e99c2e6be94edab2dde2757b217b458986c0e683b1a294978c6d21c42c332e45981
 
 pkgname = linux-hC
@@ -78,10 +76,10 @@ pkgname = linux-hC-headers
 	provides = LINUX-HEADERS
 
 pkgname = linux-hC-nvidia-open
-	pkgdesc = nvidia open modules of 595.71.05 driver for the linux-hC kernel
+	pkgdesc = nvidia open modules of 610.43.02 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
 	depends = linux-hC=7.0.10-1
-	depends = nvidia-utils=595.71.05
+	depends = nvidia-utils=610.43.02
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-nvidia
