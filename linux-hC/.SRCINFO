@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 7.0.10
+	pkgver = 7.0.11
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.10.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.0.11.tar.xz
 	source = config
 	source = base.patch
 	source = compiler-opt.patch
@@ -32,7 +32,7 @@ pkgbase = linux-hC
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/misc/dkms-clang.patch
 	source = nvidia-open-610.43.02.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.43.02.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.0/sched/0001-bore.patch
-	b2sums = 08dc26e2247186fbfee32ee3251174f8a2e68c6ed6118c0713cb87bb66d427c85b6ae2367af053b158d9ad0d9aaf0846bdebddf84c30558fec89e68ba0dc0957
+	b2sums = e198c4edf9cc681c602e4c0bd8d92ff9d93433c95a525d8d94e5ad59aa9da2299a5048690841263e925835e3960d621fab137afd3522020f58d4fe1a09041ac7
 	b2sums = f14dbb5010532e18699069be2068946337596fa4b84f225eee0e6c41bf0d4f43f06a277b334635283d46f548e93c7b966cf2f7034ad2e0b684f7694400db2e7a
 	b2sums = c8909d99f85884a90c97ed8de66110b3561545b29693fb40b492956cf4dc9f7e6852e70ce4844dd31228ecade39a17573e32988cdaa9c0e81533ccc7737b2b78
 	b2sums = 77b7af3195f2888da98cc33dd25660b46054d9c7ebc0bd45684de1b447c259b4a0f553335d2d73e0c7eedaedb184bac50201700f65a25ffa29b4ff033bed91f4
@@ -78,7 +78,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia-open
 	pkgdesc = nvidia open modules of 610.43.02 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=7.0.10-1
+	depends = linux-hC=7.0.11-1
 	depends = nvidia-utils=610.43.02
 	depends = libglvnd
 	provides = NVIDIA-MODULE
