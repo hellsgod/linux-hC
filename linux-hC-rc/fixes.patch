@@ -218,6 +218,18 @@ index 94b8ecb892bb..5d6878604451 100644
  			++upgcnt;
  
  			if (++cur_pgcnt >= pgcnt)
+diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
+index b26aa9169e83..64514d600eec 100644
+--- a/fs/btrfs/super.c
++++ b/fs/btrfs/super.c
+@@ -1873,6 +1873,7 @@ static int btrfs_get_tree_super(struct fs_context *fc)
+ 	fs_info->fs_devices = fs_devices;
+ 	mutex_unlock(&uuid_mutex);
+ 
++	fc->sb_flags |= SB_NOSEC;
+ 
+ 	sb = sget_fc(fc, btrfs_fc_test_super, set_anon_super_fc);
+ 	if (IS_ERR(sb)) {
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
 index 48d851fbd8ea..7c1dac8da5e5 100644
 --- a/include/linux/perf_event.h
