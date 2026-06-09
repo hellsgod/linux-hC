@@ -41,7 +41,7 @@ index 29226d112029..d540f54f4d16 100644
  	/*
  	 * We have to call flush only on online vCPUs. And
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index af43d177087e..c37cc9845abc 100644
+index af43d177087e..807a15b1af19 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -1373,28 +1373,12 @@ void flush_tlb_multi(const struct cpumask *cpumask,
@@ -58,11 +58,11 @@ index af43d177087e..c37cc9845abc 100644
 -			unsigned long start, unsigned long end,
 -			unsigned int stride_shift, bool freed_tables,
 -			u64 new_tlb_gen)
-+static void get_flush_tlb_info(struct flush_tlb_info *info,
-+			       struct mm_struct *mm,
-+			       unsigned long start, unsigned long end,
-+			       unsigned int stride_shift, bool freed_tables,
-+			       u64 new_tlb_gen)
++static void init_flush_tlb_info(struct flush_tlb_info *info,
++				struct mm_struct *mm,
++				unsigned long start, unsigned long end,
++				unsigned int stride_shift, bool freed_tables,
++				u64 new_tlb_gen)
  {
 -	struct flush_tlb_info *info = this_cpu_ptr(&flush_tlb_info);
 -
@@ -78,12 +78,9 @@ index af43d177087e..c37cc9845abc 100644
  	/*
  	 * If the number of flushes is so large that a full flush
  	 * would be faster, do a full flush.
-@@ -1410,34 +1394,24 @@ static struct flush_tlb_info *get_flush_tlb_info(struct mm_struct *mm,
- 	info->stride_shift	= stride_shift;
- 	info->freed_tables	= freed_tables;
+@@ -1412,32 +1396,23 @@ static struct flush_tlb_info *get_flush_tlb_info(struct mm_struct *mm,
  	info->new_tlb_gen	= new_tlb_gen;
--	info->initiating_cpu	= smp_processor_id();
-+	info->initiating_cpu	= raw_smp_processor_id();
+ 	info->initiating_cpu	= smp_processor_id();
  	info->trim_cpumask	= 0;
 -
 -	return info;
@@ -105,6 +102,7 @@ index af43d177087e..c37cc9845abc 100644
 -	struct flush_tlb_info *info;
 +	struct flush_tlb_info _info;
 +	struct flush_tlb_info *info = &_info;
++	bool remote_flush = false;
  	int cpu = get_cpu();
  	u64 new_tlb_gen;
  
@@ -113,56 +111,52 @@ index af43d177087e..c37cc9845abc 100644
  
 -	info = get_flush_tlb_info(mm, start, end, stride_shift, freed_tables,
 -				  new_tlb_gen);
-+	get_flush_tlb_info(&_info, mm, start, end, stride_shift, freed_tables,
-+			   new_tlb_gen);
++	init_flush_tlb_info(&_info, mm, start, end, stride_shift, freed_tables,
++			    new_tlb_gen);
  
  	/*
  	 * flush_tlb_multi() is not optimized for the common case in which only
-@@ -1447,9 +1421,11 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+@@ -1447,9 +1422,7 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
  	if (mm_global_asid(mm)) {
  		broadcast_tlb_flush(info);
  	} else if (cpumask_any_but(mm_cpumask(mm), cpu) < nr_cpu_ids) {
-+		put_cpu();
- 		info->trim_cpumask = should_trim_cpumask(mm);
- 		flush_tlb_multi(mm_cpumask(mm), info);
- 		consider_global_asid(mm);
-+		goto invalidate;
+-		info->trim_cpumask = should_trim_cpumask(mm);
+-		flush_tlb_multi(mm_cpumask(mm), info);
+-		consider_global_asid(mm);
++		remote_flush = true;
  	} else if (mm == this_cpu_read(cpu_tlbstate.loaded_mm)) {
  		lockdep_assert_irqs_enabled();
  		local_irq_disable();
-@@ -1457,8 +1433,8 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+@@ -1457,8 +1430,14 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
  		local_irq_enable();
  	}
  
 -	put_flush_tlb_info();
  	put_cpu();
-+invalidate:
++
++	if (remote_flush) {
++		info->trim_cpumask = should_trim_cpumask(mm);
++		flush_tlb_multi(mm_cpumask(mm), info);
++		consider_global_asid(mm);
++	}
++
  	mmu_notifier_arch_invalidate_secondary_tlbs(mm, start, end);
  }
  
-@@ -1485,6 +1461,8 @@ static void invlpgb_kernel_range_flush(struct flush_tlb_info *info)
- {
- 	unsigned long addr, nr;
- 
-+	guard(preempt)();
-+
- 	for (addr = info->start; addr < info->end; addr += nr << PAGE_SHIFT) {
- 		nr = (info->end - addr) >> PAGE_SHIFT;
- 
-@@ -1527,19 +1505,15 @@ static void kernel_tlb_flush_range(struct flush_tlb_info *info)
+@@ -1527,19 +1506,16 @@ static void kernel_tlb_flush_range(struct flush_tlb_info *info)
  
  void flush_tlb_kernel_range(unsigned long start, unsigned long end)
  {
 -	struct flush_tlb_info *info;
--
--	guard(preempt)();
 +	struct flush_tlb_info info;
+ 
+ 	guard(preempt)();
++	init_flush_tlb_info(&info, NULL, start, end, PAGE_SHIFT, false,
++			    TLB_GENERATION_INVALID);
  
 -	info = get_flush_tlb_info(NULL, start, end, PAGE_SHIFT, false,
 -				  TLB_GENERATION_INVALID);
-+	get_flush_tlb_info(&info, NULL, start, end, PAGE_SHIFT, false,
-+			   TLB_GENERATION_INVALID);
- 
+-
 -	if (info->end == TLB_FLUSH_ALL)
 -		kernel_tlb_flush_all(info);
 +	if (info.end == TLB_FLUSH_ALL)
@@ -175,30 +169,29 @@ index af43d177087e..c37cc9845abc 100644
  }
  
  /*
-@@ -1707,12 +1681,11 @@ EXPORT_SYMBOL_FOR_KVM(__flush_tlb_all);
+@@ -1707,12 +1683,12 @@ EXPORT_SYMBOL_FOR_KVM(__flush_tlb_all);
  
  void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  {
 -	struct flush_tlb_info *info;
-+	struct flush_tlb_info info;
- 
- 	int cpu = get_cpu();
 -
++	struct flush_tlb_info info;
++	bool remote_flush = false;
+ 	int cpu = get_cpu();
+ 
 -	info = get_flush_tlb_info(NULL, 0, TLB_FLUSH_ALL, 0, false,
 -				  TLB_GENERATION_INVALID);
-+	get_flush_tlb_info(&info, NULL, 0, TLB_FLUSH_ALL, 0, false,
-+			   TLB_GENERATION_INVALID);
++	init_flush_tlb_info(&info, NULL, 0, TLB_FLUSH_ALL, 0, false,
++			    TLB_GENERATION_INVALID);
  	/*
  	 * flush_tlb_multi() is not optimized for the common case in which only
  	 * a local TLB flush is needed. Optimize this use-case by calling
-@@ -1722,18 +1695,19 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
+@@ -1722,18 +1698,20 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  		invlpgb_flush_all_nonglobals();
  		batch->unmapped_pages = false;
  	} else if (cpumask_any_but(&batch->cpumask, cpu) < nr_cpu_ids) {
 -		flush_tlb_multi(&batch->cpumask, info);
-+		put_cpu();
-+		flush_tlb_multi(&batch->cpumask, &info);
-+		goto clear;
++		remote_flush = true;
  	} else if (cpumask_test_cpu(cpu, &batch->cpumask)) {
  		lockdep_assert_irqs_enabled();
  		local_irq_disable();
@@ -211,7 +204,10 @@ index af43d177087e..c37cc9845abc 100644
 -
 -	put_flush_tlb_info();
  	put_cpu();
-+clear:
++
++	if (remote_flush)
++		flush_tlb_multi(&batch->cpumask, &info);
++
 +	cpumask_clear(&batch->cpumask);
  }
  
@@ -234,38 +230,29 @@ index ee06cba5c6f5..f9c0b4724091 100644
  	unsigned long			preempt_disable_ip;
  #endif
 diff --git a/include/linux/smp.h b/include/linux/smp.h
-index 6925d15ccaa7..e05af439abe4 100644
+index 6925d15ccaa7..15da884114cb 100644
 --- a/include/linux/smp.h
 +++ b/include/linux/smp.h
-@@ -167,6 +167,11 @@ void smp_call_function_many(const struct cpumask *mask,
- int smp_call_function_any(const struct cpumask *mask,
- 			  smp_call_func_t func, void *info, int wait);
+@@ -239,6 +239,17 @@ static inline int get_boot_cpu_id(void)
  
-+#ifdef CONFIG_PREEMPTION
+ #endif /* !SMP */
+ 
++#if defined(CONFIG_PREEMPTION) && defined(CONFIG_SMP)
 +int smp_task_ipi_mask_alloc(struct task_struct *task);
 +void smp_task_ipi_mask_free(struct task_struct *task);
-+#endif
-+
- void kick_all_cpus_sync(void);
- void wake_up_all_idle_cpus(void);
- bool cpus_peek_for_pending_ipi(const struct cpumask *mask);
-@@ -310,4 +315,14 @@ bool csd_lock_is_stuck(void);
- static inline bool csd_lock_is_stuck(void) { return false; }
- #endif
- 
-+#if !defined(CONFIG_SMP) || !defined(CONFIG_PREEMPTION)
++#else
 +static inline int smp_task_ipi_mask_alloc(struct task_struct *task)
 +{
 +	return 0;
 +}
-+static inline void smp_task_ipi_mask_free(struct task_struct *task)
-+{
-+}
++static inline void smp_task_ipi_mask_free(struct task_struct *task) { }
 +#endif
 +
- #endif /* __LINUX_SMP_H */
+ /*
+  * raw_smp_processor_id() - get the current (unstable) CPU id
+  *
 diff --git a/kernel/fork.c b/kernel/fork.c
-index 5f3fdfdb14c7..bf485c51c447 100644
+index 8ac38beae360..6f09d5ae66ea 100644
 --- a/kernel/fork.c
 +++ b/kernel/fork.c
 @@ -535,6 +535,7 @@ void free_task(struct task_struct *tsk)
@@ -357,7 +344,7 @@ index 327c315f411c..2082f9b44370 100644
  		schedule_timeout_idle((1 + longwait) * HZ);  // Let no-wait handlers complete.
  	else if (!(torture_random(trsp) & 0xfff))
 diff --git a/kernel/smp.c b/kernel/smp.c
-index a0bb56bd8dda..15799f842746 100644
+index a0bb56bd8dda..0595e0043a23 100644
 --- a/kernel/smp.c
 +++ b/kernel/smp.c
 @@ -16,6 +16,7 @@
@@ -585,12 +572,12 @@ index a0bb56bd8dda..15799f842746 100644
  	}
  
 +	/*
-+	 * Waiting for completion can take time especially with many CPUs.
-+	 * On a PREEMPTIBLE kernel a per-task cpumask is used to track CPUs
-+	 * with pending IPI request. This allows to enable preemption and
-+	 * potentially wait while allowing task preemption. On a !PREEMPTIBLE
-+	 * the cpumask is shared and the call must block until completion to
-+	 * avoid modifications by a another caller on this CPU.
++	 * Waiting for completion can take time, especially with many CPUs.
++	 * On a PREEMPT kernel a per-task cpumask is used to track CPUs with
++	 * pending IPI requests. This allows preemption to be enabled before
++	 * waiting. On a !PREEMPT kernel the cpumask is shared and the call
++	 * must block until completion to avoid modifications by another caller
++	 * on this CPU.
 +	 */
 +	if (task_mask)
 +		put_cpu();
