@@ -1,21 +1,25 @@
 diff --git a/arch/x86/include/asm/tlbflush.h b/arch/x86/include/asm/tlbflush.h
-index 0545fe75c3fa..f4e4505d4ece 100644
+index 0545fe75c3fa..5889a6c4e956 100644
 --- a/arch/x86/include/asm/tlbflush.h
 +++ b/arch/x86/include/asm/tlbflush.h
-@@ -211,6 +211,12 @@ extern u16 invlpgb_count_max;
+@@ -4,6 +4,7 @@
+ 
+ #include <linux/mm_types.h>
+ #include <linux/mmu_notifier.h>
++#include <linux/minmax.h>
+ #include <linux/sched.h>
+ 
+ #include <asm/barrier.h>
+@@ -211,6 +212,8 @@ extern u16 invlpgb_count_max;
  
  extern void initialize_tlbstate_and_flush(void);
  
-+#if SMP_CACHE_BYTES > 64
-+#define FLUSH_TLB_INFO_ALIGN 64
-+#else
-+#define FLUSH_TLB_INFO_ALIGN SMP_CACHE_BYTES
-+#endif
++#define FLUSH_TLB_INFO_ALIGN MIN(SMP_CACHE_BYTES, 64)
 +
  /*
   * TLB flushing:
   *
-@@ -249,7 +255,7 @@ struct flush_tlb_info {
+@@ -249,7 +252,7 @@ struct flush_tlb_info {
  	u8			stride_shift;
  	u8			freed_tables;
  	u8			trim_cpumask;
@@ -41,7 +45,7 @@ index 29226d112029..d540f54f4d16 100644
  	/*
  	 * We have to call flush only on online vCPUs. And
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index af43d177087e..807a15b1af19 100644
+index af43d177087e..3b021930cc69 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
 @@ -1373,28 +1373,12 @@ void flush_tlb_multi(const struct cpumask *cpumask,
@@ -78,7 +82,7 @@ index af43d177087e..807a15b1af19 100644
  	/*
  	 * If the number of flushes is so large that a full flush
  	 * would be faster, do a full flush.
-@@ -1412,32 +1396,23 @@ static struct flush_tlb_info *get_flush_tlb_info(struct mm_struct *mm,
+@@ -1412,32 +1396,22 @@ static struct flush_tlb_info *get_flush_tlb_info(struct mm_struct *mm,
  	info->new_tlb_gen	= new_tlb_gen;
  	info->initiating_cpu	= smp_processor_id();
  	info->trim_cpumask	= 0;
@@ -100,8 +104,7 @@ index af43d177087e..807a15b1af19 100644
  				bool freed_tables)
  {
 -	struct flush_tlb_info *info;
-+	struct flush_tlb_info _info;
-+	struct flush_tlb_info *info = &_info;
++	struct flush_tlb_info info;
 +	bool remote_flush = false;
  	int cpu = get_cpu();
  	u64 new_tlb_gen;
@@ -111,14 +114,17 @@ index af43d177087e..807a15b1af19 100644
  
 -	info = get_flush_tlb_info(mm, start, end, stride_shift, freed_tables,
 -				  new_tlb_gen);
-+	init_flush_tlb_info(&_info, mm, start, end, stride_shift, freed_tables,
++	init_flush_tlb_info(&info, mm, start, end, stride_shift, freed_tables,
 +			    new_tlb_gen);
  
  	/*
  	 * flush_tlb_multi() is not optimized for the common case in which only
-@@ -1447,9 +1422,7 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+@@ -1445,20 +1419,24 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+ 	 * flush_tlb_func_local() directly in this case.
+ 	 */
  	if (mm_global_asid(mm)) {
- 		broadcast_tlb_flush(info);
+-		broadcast_tlb_flush(info);
++		broadcast_tlb_flush(&info);
  	} else if (cpumask_any_but(mm_cpumask(mm), cpu) < nr_cpu_ids) {
 -		info->trim_cpumask = should_trim_cpumask(mm);
 -		flush_tlb_multi(mm_cpumask(mm), info);
@@ -127,7 +133,8 @@ index af43d177087e..807a15b1af19 100644
  	} else if (mm == this_cpu_read(cpu_tlbstate.loaded_mm)) {
  		lockdep_assert_irqs_enabled();
  		local_irq_disable();
-@@ -1457,8 +1430,14 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+-		flush_tlb_func(info);
++		flush_tlb_func(&info);
  		local_irq_enable();
  	}
  
@@ -135,15 +142,15 @@ index af43d177087e..807a15b1af19 100644
  	put_cpu();
 +
 +	if (remote_flush) {
-+		info->trim_cpumask = should_trim_cpumask(mm);
-+		flush_tlb_multi(mm_cpumask(mm), info);
++		info.trim_cpumask = should_trim_cpumask(mm);
++		flush_tlb_multi(mm_cpumask(mm), &info);
 +		consider_global_asid(mm);
 +	}
 +
  	mmu_notifier_arch_invalidate_secondary_tlbs(mm, start, end);
  }
  
-@@ -1527,19 +1506,16 @@ static void kernel_tlb_flush_range(struct flush_tlb_info *info)
+@@ -1527,19 +1505,16 @@ static void kernel_tlb_flush_range(struct flush_tlb_info *info)
  
  void flush_tlb_kernel_range(unsigned long start, unsigned long end)
  {
@@ -169,7 +176,7 @@ index af43d177087e..807a15b1af19 100644
  }
  
  /*
-@@ -1707,12 +1683,12 @@ EXPORT_SYMBOL_FOR_KVM(__flush_tlb_all);
+@@ -1707,12 +1682,12 @@ EXPORT_SYMBOL_FOR_KVM(__flush_tlb_all);
  
  void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  {
@@ -186,7 +193,7 @@ index af43d177087e..807a15b1af19 100644
  	/*
  	 * flush_tlb_multi() is not optimized for the common case in which only
  	 * a local TLB flush is needed. Optimize this use-case by calling
-@@ -1722,18 +1698,20 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
+@@ -1722,18 +1697,20 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  		invlpgb_flush_all_nonglobals();
  		batch->unmapped_pages = false;
  	} else if (cpumask_any_but(&batch->cpumask, cpu) < nr_cpu_ids) {
