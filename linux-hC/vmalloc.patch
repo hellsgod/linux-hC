@@ -1,0 +1,475 @@
+diff --git a/include/linux/gfp.h b/include/linux/gfp.h
+index 51ef13ed756e..cdf95a9f0b87 100644
+--- a/include/linux/gfp.h
++++ b/include/linux/gfp.h
+@@ -239,6 +239,8 @@ unsigned long alloc_pages_bulk_noprof(gfp_t gfp, int preferred_nid,
+ 				struct page **page_array);
+ #define __alloc_pages_bulk(...)			alloc_hooks(alloc_pages_bulk_noprof(__VA_ARGS__))
+ 
++void free_pages_bulk(struct page **page_array, unsigned long nr_pages);
++
+ unsigned long alloc_pages_bulk_mempolicy_noprof(gfp_t gfp,
+ 				unsigned long nr_pages,
+ 				struct page **page_array);
+@@ -467,6 +469,8 @@ void free_contig_frozen_range(unsigned long pfn, unsigned long nr_pages);
+ void free_contig_range(unsigned long pfn, unsigned long nr_pages);
+ #endif
+ 
++void __free_contig_range(unsigned long pfn, unsigned long nr_pages);
++
+ DEFINE_FREE(free_page, void *, free_page((unsigned long)_T))
+ 
+ #endif /* __LINUX_GFP_H */
+diff --git a/lib/test_vmalloc.c b/lib/test_vmalloc.c
+index 876c72c18a0c..b23f85e8f8ca 100644
+--- a/lib/test_vmalloc.c
++++ b/lib/test_vmalloc.c
+@@ -55,6 +55,7 @@ __param(int, run_test_mask, 7,
+ 		"\t\tid: 512,  name: kvfree_rcu_2_arg_vmalloc_test\n"
+ 		"\t\tid: 1024, name: vm_map_ram_test\n"
+ 		"\t\tid: 2048, name: no_block_alloc_test\n"
++		"\t\tid: 4096, name: vrealloc_test\n"
+ 		/* Add a new test case description here. */
+ );
+ 
+@@ -421,6 +422,66 @@ vm_map_ram_test(void)
+ 	return nr_allocated != map_nr_pages;
+ }
+ 
++static int vrealloc_test(void)
++{
++	void *ptr, *tmp;
++	int i;
++
++	for (i = 0; i < test_loop_count; i++) {
++		int err = -1;
++
++		ptr = vrealloc(NULL, PAGE_SIZE, GFP_KERNEL);
++		if (!ptr)
++			return -1;
++
++		*((__u8 *)ptr) = 'a';
++
++		/* Grow: beyond allocated pages, triggers full realloc. */
++		tmp = vrealloc(ptr, 4 * PAGE_SIZE, GFP_KERNEL);
++		if (!tmp)
++			goto error;
++		ptr = tmp;
++
++		if (*((__u8 *)ptr) != 'a')
++			goto error;
++
++		/* Shrink: crosses page boundary, frees tail pages. */
++		tmp = vrealloc(ptr, PAGE_SIZE, GFP_KERNEL);
++		if (!tmp)
++			goto error;
++		ptr = tmp;
++
++		if (*((__u8 *)ptr) != 'a')
++			goto error;
++
++		/* Shrink: within same page, no page freeing. */
++		tmp = vrealloc(ptr, PAGE_SIZE / 2, GFP_KERNEL);
++		if (!tmp)
++			goto error;
++		ptr = tmp;
++
++		if (*((__u8 *)ptr) != 'a')
++			goto error;
++
++		/* Grow: within allocated page, in-place, no realloc. */
++		tmp = vrealloc(ptr, PAGE_SIZE, GFP_KERNEL);
++		if (!tmp)
++			goto error;
++		ptr = tmp;
++
++		if (*((__u8 *)ptr) != 'a')
++			goto error;
++
++		err = 0;
++error:
++		vfree(ptr);
++		if (err)
++			return err;
++	}
++
++	return 0;
++}
++
+ struct test_case_desc {
+ 	const char *test_name;
+ 	int (*test_func)(void);
+@@ -440,6 +501,7 @@ static struct test_case_desc test_case_array[] = {
+ 	{ "kvfree_rcu_2_arg_vmalloc_test", kvfree_rcu_2_arg_vmalloc_test, },
+ 	{ "vm_map_ram_test", vm_map_ram_test, },
+ 	{ "no_block_alloc_test", no_block_alloc_test, true },
++	{ "vrealloc_test", vrealloc_test, },
+ 	/* Add a new test case here. */
+ };
+ 
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 227d58dc3de6..6e358773208f 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -90,6 +90,9 @@ typedef int __bitwise fpi_t;
+ /* Free the page without taking locks. Rely on trylock only. */
+ #define FPI_TRYLOCK		((__force fpi_t)BIT(2))
+ 
++/* free_pages_prepare() has already been called for page(s) being freed. */
++#define FPI_PREPARED		((__force fpi_t)BIT(3))
++
+ /* prevent >1 _updater_ of zone percpu pageset ->high and ->batch fields */
+ static DEFINE_MUTEX(pcp_batch_high_lock);
+ #define MIN_PERCPU_PAGELIST_HIGH_FRACTION (8)
+@@ -1300,8 +1303,8 @@ static inline void pgalloc_tag_sub_pages(struct alloc_tag *tag, unsigned int nr)
+ 
+ #endif /* CONFIG_MEM_ALLOC_PROFILING */
+ 
+-__always_inline bool __free_pages_prepare(struct page *page,
+-					  unsigned int order, fpi_t fpi_flags)
++static __always_inline bool __free_pages_prepare(struct page *page,
++		unsigned int order, fpi_t fpi_flags)
+ {
+ 	int bad = 0;
+ 	bool skip_kasan_poison = should_skip_kasan_poison(page);
+@@ -1309,6 +1312,9 @@ __always_inline bool __free_pages_prepare(struct page *page,
+ 	bool compound = PageCompound(page);
+ 	struct folio *folio = page_folio(page);
+ 
++	if (fpi_flags & FPI_PREPARED)
++		return true;
++
+ 	VM_BUG_ON_PAGE(PageTail(page), page);
+ 
+ 	trace_mm_page_free(page, order);
+@@ -5184,6 +5190,34 @@ unsigned long alloc_pages_bulk_noprof(gfp_t gfp, int preferred_nid,
+ }
+ EXPORT_SYMBOL_GPL(alloc_pages_bulk_noprof);
+ 
++/*
++ * free_pages_bulk - Free an array of order-0 pages
++ * @page_array: Array of pages to free
++ * @nr_pages: The number of pages in the array
++ *
++ * Free the order-0 pages. Adjacent entries whose PFNs form a contiguous
++ * run are released with a single __free_contig_range() call.
++ *
++ * This assumes page_array is sorted in ascending PFN order. Without that,
++ * the function still frees all pages, but contiguous runs may not be
++ * detected and the freeing pattern can degrade to freeing one page at a
++ * time.
++ *
++ * Context: Sleepable process context only; calls cond_resched()
++ */
++void free_pages_bulk(struct page **page_array, unsigned long nr_pages)
++{
++	while (nr_pages) {
++		unsigned long nr_contig = num_pages_contiguous(page_array, nr_pages);
++
++		__free_contig_range(page_to_pfn(*page_array), nr_contig);
++
++		nr_pages -= nr_contig;
++		page_array += nr_contig;
++		cond_resched();
++	}
++}
++
+ /*
+  * This is the 'heart' of the zoned buddy allocator.
+  */
+@@ -6763,6 +6797,105 @@ void __init page_alloc_sysctl_init(void)
+ 	register_sysctl_init("vm", page_alloc_sysctl_table);
+ }
+ 
++static void free_prepared_contig_range(struct page *page,
++		unsigned long nr_pages)
++{
++	unsigned long pfn = page_to_pfn(page);
++
++	while (nr_pages) {
++		unsigned int order;
++
++		/* We are limited by the largest buddy order. */
++		order = pfn ? __ffs(pfn) : MAX_PAGE_ORDER;
++		/* Don't exceed the number of pages to free. */
++		order = min_t(unsigned int, order, ilog2(nr_pages));
++		order = min_t(unsigned int, order, MAX_PAGE_ORDER);
++
++		/*
++		 * Free the chunk as a single block. Our caller has already
++		 * called free_pages_prepare() for each order-0 page.
++		 */
++		__free_frozen_pages(page, order, FPI_PREPARED);
++
++		pfn += 1UL << order;
++		page += 1UL << order;
++		nr_pages -= 1UL << order;
++	}
++}
++
++static void __free_contig_range_common(unsigned long pfn, unsigned long nr_pages,
++		bool is_frozen)
++{
++	struct page *page, *start = NULL;
++	unsigned long nr_start = 0;
++	unsigned long start_sec;
++	unsigned long i;
++
++	for (i = 0; i < nr_pages; i++) {
++		bool can_free = true;
++
++		/*
++		 * Contiguous PFNs might not have contiguous "struct pages"
++		 * in some kernel configs: page++ across a section boundary
++		 * is undefined. Use pfn_to_page() for each PFN.
++		 */
++		page = pfn_to_page(pfn + i);
++
++		VM_WARN_ON_ONCE(PageHead(page));
++		VM_WARN_ON_ONCE(PageTail(page));
++
++		if (!is_frozen)
++			can_free = put_page_testzero(page);
++
++		if (can_free)
++			can_free = free_pages_prepare(page, 0);
++
++		if (!can_free) {
++			if (start) {
++				free_prepared_contig_range(start, i - nr_start);
++				start = NULL;
++			}
++			continue;
++		}
++
++		if (start && memdesc_section(page->flags) != start_sec) {
++			free_prepared_contig_range(start, i - nr_start);
++			start = page;
++			nr_start = i;
++			start_sec = memdesc_section(page->flags);
++		} else if (!start) {
++			start = page;
++			nr_start = i;
++			start_sec = memdesc_section(page->flags);
++		}
++	}
++
++	if (start)
++		free_prepared_contig_range(start, nr_pages - nr_start);
++}
++
++/**
++ * __free_contig_range - Free contiguous range of order-0 pages.
++ * @pfn: Page frame number of the first page in the range.
++ * @nr_pages: Number of pages to free.
++ *
++ * For each order-0 struct page in the physically contiguous range, put a
++ * reference. Free any page who's reference count falls to zero. The
++ * implementation is functionally equivalent to, but significantly faster than
++ * calling __free_page() for each struct page in a loop.
++ *
++ * Memory allocated with alloc_pages(order>=1) then subsequently split to
++ * order-0 with split_page() is an example of appropriate contiguous pages that
++ * can be freed with this API.
++ *
++ * Context: May be called in interrupt context or while holding a normal
++ * spinlock, but not in NMI context or while holding a raw spinlock.
++ */
++void __free_contig_range(unsigned long pfn, unsigned long nr_pages)
++{
++	__free_contig_range_common(pfn, nr_pages, /* is_frozen= */ false);
++}
++
+ #ifdef CONFIG_CONTIG_ALLOC
+ /* Usage: See admin-guide/dynamic-debug-howto.rst */
+ static void alloc_contig_dump_pages(struct list_head *page_list)
+@@ -6900,8 +7033,7 @@ static int __alloc_contig_verify_gfp_mask(gfp_t gfp_mask, gfp_t *gfp_cc_mask)
+ 
+ static void __free_contig_frozen_range(unsigned long pfn, unsigned long nr_pages)
+ {
+-	for (; nr_pages--; pfn++)
+-		free_frozen_pages(pfn_to_page(pfn), 0);
++	__free_contig_range_common(pfn, nr_pages, /* is_frozen= */ true);
+ }
+ 
+ /**
+@@ -7309,8 +7441,7 @@ void free_contig_range(unsigned long pfn, unsigned long nr_pages)
+ 	if (WARN_ON_ONCE(PageHead(pfn_to_page(pfn))))
+ 		return;
+ 
+-	for (; nr_pages--; pfn++)
+-		__free_page(pfn_to_page(pfn));
++	__free_contig_range(pfn, nr_pages);
+ }
+ EXPORT_SYMBOL(free_contig_range);
+ #endif /* CONFIG_CONTIG_ALLOC */
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index c31a8615a832..584ebd1dc5ce 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -3416,6 +3416,32 @@ void vfree_atomic(const void *addr)
+ 		schedule_work(&p->wq);
+ }
+ 
++/*
++ * vm_area_free_pages - free a range of pages from a vmalloc allocation
++ * @vm: the vm_struct containing the pages
++ * @start_idx: first page index to free (inclusive)
++ * @end_idx: last page index to free (exclusive)
++ *
++ * Free pages [start_idx, end_idx) updating NR_VMALLOC stat accounting.
++ * Freed vm->pages[] entries are set to NULL.
++ * Caller is responsible for unmapping (vunmap_range) and KASAN
++ * poisoning before calling this.
++ */
++static void vm_area_free_pages(struct vm_struct *vm, unsigned int start_idx,
++			       unsigned int end_idx)
++{
++	unsigned int i;
++
++	if (!(vm->flags & VM_MAP_PUT_PAGES)) {
++		for (i = start_idx; i < end_idx; i++)
++			mod_lruvec_page_state(vm->pages[i], NR_VMALLOC, -1);
++	}
++	free_pages_bulk(vm->pages + start_idx, end_idx - start_idx);
++
++	for (i = start_idx; i < end_idx; i++)
++		vm->pages[i] = NULL;
++}
++
+ /**
+  * vfree - Release memory allocated by vmalloc()
+  * @addr:  Memory base address
+@@ -3436,7 +3462,6 @@ void vfree_atomic(const void *addr)
+ void vfree(const void *addr)
+ {
+ 	struct vm_struct *vm;
+-	int i;
+ 
+ 	if (unlikely(in_interrupt())) {
+ 		vfree_atomic(addr);
+@@ -3459,19 +3484,8 @@ void vfree(const void *addr)
+ 
+ 	if (unlikely(vm->flags & VM_FLUSH_RESET_PERMS))
+ 		vm_reset_perms(vm);
+-	for (i = 0; i < vm->nr_pages; i++) {
+-		struct page *page = vm->pages[i];
+ 
+-		BUG_ON(!page);
+-		/*
+-		 * High-order allocs for huge vmallocs are split, so
+-		 * can be freed as an array of order-0 allocations
+-		 */
+-		if (!(vm->flags & VM_MAP_PUT_PAGES))
+-			mod_lruvec_page_state(page, NR_VMALLOC, -1);
+-		__free_page(page);
+-		cond_resched();
+-	}
++	vm_area_free_pages(vm, 0, vm->nr_pages);
+ 	kvfree(vm->pages);
+ 	kfree(vm);
+ }
+@@ -4324,16 +4338,70 @@ void *vrealloc_node_align_noprof(const void *p, size_t size, unsigned long align
+ 		if (unlikely(flags & __GFP_THISNODE) && nid != NUMA_NO_NODE &&
+ 			     nid != page_to_nid(vmalloc_to_page(p)))
+ 			goto need_realloc;
++	} else {
++		/*
++		 * If p is NULL, vrealloc behaves exactly like vmalloc.
++		 * Skip the shrink and in-place grow paths.
++		 */
++		goto need_realloc;
+ 	}
+ 
+-	/*
+-	 * TODO: Shrink the vm_area, i.e. unmap and free unused pages. What
+-	 * would be a good heuristic for when to shrink the vm_area?
+-	 */
+ 	if (size <= old_size) {
++		unsigned int new_nr_pages = PAGE_ALIGN(size) >> PAGE_SHIFT;
++
+ 		/* Zero out "freed" memory, potentially for future realloc. */
+ 		if (want_init_on_free() || want_init_on_alloc(flags))
+ 			memset((void *)p + size, 0, old_size - size);
++
++		/*
++		 * Free tail pages when shrink crosses a page boundary.
++		 *
++		 * Skip huge page allocations (page_order > 0) as partial
++		 * freeing would require splitting.
++		 *
++		 * Skip VM_FLUSH_RESET_PERMS, as direct-map permissions must
++		 * be reset before pages are returned to the allocator.
++		 *
++		 * Skip VM_USERMAP, as remap_vmalloc_range_partial() validates
++		 * mapping requests against the unchanged vm->size; freeing
++		 * tail pages would cause vmalloc_to_page() to return NULL for
++		 * the unmapped range.
++		 *
++		 * Skip if either GFP_NOFS or GFP_NOIO are used.
++		 * kmemleak_free_part() internally allocates with
++		 * GFP_KERNEL, which could trigger a recursive deadlock
++		 * if we are under filesystem or I/O reclaim.
++		 */
++		if (new_nr_pages < vm->nr_pages && !vm_area_page_order(vm) &&
++		    !(vm->flags & (VM_FLUSH_RESET_PERMS | VM_USERMAP)) &&
++		    gfp_has_io_fs(flags)) {
++			unsigned long addr = (unsigned long)kasan_reset_tag(p);
++			unsigned int old_nr_pages = vm->nr_pages;
++
++			/*
++			 * Use the node lock to synchronize with concurrent
++			 * readers (vmalloc_info_show).
++			 */
++			struct vmap_node *vn = addr_to_node(addr);
++
++			spin_lock(&vn->busy.lock);
++			vm->nr_pages = new_nr_pages;
++			spin_unlock(&vn->busy.lock);
++
++			/* Notify kmemleak of the reduced allocation size before unmapping. */
++			kmemleak_free_part(
++				(void *)addr + ((unsigned long)new_nr_pages
++						<< PAGE_SHIFT),
++				(unsigned long)(old_nr_pages - new_nr_pages)
++					<< PAGE_SHIFT);
++
++			vunmap_range(addr + ((unsigned long)new_nr_pages
++					     << PAGE_SHIFT),
++				     addr + ((unsigned long)old_nr_pages
++					     << PAGE_SHIFT));
++
++			vm_area_free_pages(vm, new_nr_pages, old_nr_pages);
++		}
+ 		vm->requested_size = size;
+ 		kasan_vrealloc(p, old_size, size);
+ 		return (void *)p;
+@@ -4342,7 +4410,7 @@ void *vrealloc_node_align_noprof(const void *p, size_t size, unsigned long align
+ 	/*
+ 	 * We already have the bytes available in the allocation; use them.
+ 	 */
+-	if (size <= alloced_size) {
++	if (size <= vm->nr_pages << PAGE_SHIFT) {
+ 		/*
+ 		 * No need to zero memory here, as unused memory will have
+ 		 * already been zeroed at initial allocation time or during
+@@ -4641,7 +4709,18 @@ long vread_iter(struct iov_iter *iter, const char *addr, size_t count)
+ 		smp_rmb();
+ 
+ 		vaddr = (char *) va->va_start;
+-		size = vm ? get_vm_area_size(vm) : va_size(va);
++		if (vm)
++			/*
++			 * For VM_ALLOC areas, use nr_pages rather than
++			 * get_vm_area_size() because vrealloc() may shrink
++			 * the mapping without updating area->size. Other
++			 * mapping types (vmap, ioremap) don't set nr_pages.
++			 */
++			size = (vm->flags & VM_ALLOC) ?
++				       (vm->nr_pages << PAGE_SHIFT) :
++				       get_vm_area_size(vm);
++		else
++			size = va_size(va);
+ 
+ 		if (addr >= vaddr + size)
+ 			goto next_va;
