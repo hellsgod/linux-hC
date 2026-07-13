@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.2.rc2
+	pkgver = 7.2.rc3
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.2-rc2.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.2-rc3.tar.gz
 	source = config
 	source = base.patch
 	source = compiler-opt.patch
@@ -33,7 +33,7 @@ pkgbase = linux-hC-rc
 	source = nvidia-open-610.43.03.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.43.03.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.2/misc/nvidia/0001-make-Add-support-for-7.2-Kernel.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.2/sched/0001-bore.patch
-	b2sums = 839046385da22f49a42ae659945030f7927e2ab214594176d1a62410d74e0257d7d595d1adb0adb806af62391052b8163a5209f9a659dbe96a4769670a950673
+	b2sums = 35b4abca2f835f4d594e57086a87471a5273313f530b9b51df2980e087d6f18ebad2d14a718e1b7747e90713e63c586bd19a2041b4b33cc6ad241593563630fd
 	b2sums = 85a5785e5ffc3a11bac01ca4f75e07a217ea14216eb8e83289bea38f4908e3ba34746b5c2f88962ec0bc36f7e5140faa15c9b9a8cfc8e77d2b83de468f596f46
 	b2sums = 51503d440cb2e50771921bb85a5543429d33f9bf849913feb0f16791f10349d2fefaca4319ca1e3cd3d48cccd31ae4f57772840d3ab933e752df852af8e2f646
 	b2sums = 0566408348a7166476cf8e4d4408ddfdf3f925cd996132d7f71721f78fefa82da5d52943e616fa4d19467b43cb2e6e2d8a63584e88d9d622b85dfe18e6521214
@@ -80,7 +80,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 610.43.03 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=7.2.rc2-1
+	depends = linux-hC-rc=7.2.rc3-1
 	depends = nvidia-utils=610.43.03
 	depends = libglvnd
 	provides = NVIDIA-MODULE
