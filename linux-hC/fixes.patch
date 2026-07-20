@@ -64,10 +64,10 @@ index 96bda43538ee..4b55fa353bb5 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 2d9ae6ab1701..d74d3657e73a 100644
+index 31f01e9c7114..a3277ad94ae9 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
-@@ -1021,6 +1021,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+@@ -1024,6 +1024,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
  	}
  }
  
@@ -75,7 +75,7 @@ index 2d9ae6ab1701..d74d3657e73a 100644
  static const struct x86_cpu_id zen5_rdseed_microcode[] = {
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x08, 0x1, 0x0b008121),
-@@ -1042,6 +1043,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
+@@ -1045,6 +1046,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
  		pr_emerg_once("RDSEED32 is broken. Disabling the corresponding CPUID bit.\n");
  	}
  }
@@ -87,137 +87,25 @@ index 2d9ae6ab1701..d74d3657e73a 100644
  
  static void init_amd(struct cpuinfo_x86 *c)
  {
-diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
-index 94b8ecb892bb..5d6878604451 100644
---- a/drivers/dma-buf/udmabuf.c
-+++ b/drivers/dma-buf/udmabuf.c
-@@ -26,10 +26,10 @@ MODULE_PARM_DESC(size_limit_mb, "Max size of a dmabuf, in megabytes. Default is
- 
- struct udmabuf {
- 	pgoff_t pagecount;
--	struct folio **folios;
-+	struct page **pages;
- 
- 	/**
--	 * Unlike folios, pinned_folios is only used for unpin.
-+	 * Unlike pages, pinned_folios is only used for unpin.
- 	 * So, nr_pinned is not the same to pagecount, the pinned_folios
- 	 * only set each folio which already pinned when udmabuf_create.
- 	 * Note that, since a folio may be pinned multiple times, each folio
-@@ -41,7 +41,6 @@ struct udmabuf {
- 
- 	struct sg_table *sg;
- 	struct miscdevice *device;
--	pgoff_t *offsets;
- };
- 
- static vm_fault_t udmabuf_vm_fault(struct vm_fault *vmf)
-@@ -55,8 +54,7 @@ static vm_fault_t udmabuf_vm_fault(struct vm_fault *vmf)
- 	if (pgoff >= ubuf->pagecount)
- 		return VM_FAULT_SIGBUS;
- 
--	pfn = folio_pfn(ubuf->folios[pgoff]);
--	pfn += ubuf->offsets[pgoff] >> PAGE_SHIFT;
-+	pfn = page_to_pfn(ubuf->pages[pgoff]);
- 
- 	ret = vmf_insert_pfn(vma, vmf->address, pfn);
- 	if (ret & VM_FAULT_ERROR)
-@@ -73,8 +71,7 @@ static vm_fault_t udmabuf_vm_fault(struct vm_fault *vmf)
- 		if (WARN_ON(pgoff >= ubuf->pagecount))
- 			break;
- 
--		pfn = folio_pfn(ubuf->folios[pgoff]);
--		pfn += ubuf->offsets[pgoff] >> PAGE_SHIFT;
-+		pfn = page_to_pfn(ubuf->pages[pgoff]);
- 
- 		/**
- 		 * If the below vmf_insert_pfn() fails, we do not return an
-@@ -109,22 +106,11 @@ static int mmap_udmabuf(struct dma_buf *buf, struct vm_area_struct *vma)
- static int vmap_udmabuf(struct dma_buf *buf, struct iosys_map *map)
- {
- 	struct udmabuf *ubuf = buf->priv;
--	struct page **pages;
- 	void *vaddr;
--	pgoff_t pg;
- 
- 	dma_resv_assert_held(buf->resv);
- 
--	pages = kvmalloc_objs(*pages, ubuf->pagecount);
--	if (!pages)
--		return -ENOMEM;
--
--	for (pg = 0; pg < ubuf->pagecount; pg++)
--		pages[pg] = folio_page(ubuf->folios[pg],
--				       ubuf->offsets[pg] >> PAGE_SHIFT);
--
--	vaddr = vm_map_ram(pages, ubuf->pagecount, -1);
--	kvfree(pages);
-+	vaddr = vm_map_ram(ubuf->pages, ubuf->pagecount, -1);
- 	if (!vaddr)
- 		return -EINVAL;
- 
-@@ -146,22 +132,18 @@ static struct sg_table *get_sg_table(struct device *dev, struct dma_buf *buf,
- {
- 	struct udmabuf *ubuf = buf->priv;
- 	struct sg_table *sg;
--	struct scatterlist *sgl;
--	unsigned int i = 0;
- 	int ret;
- 
- 	sg = kzalloc_obj(*sg);
- 	if (!sg)
- 		return ERR_PTR(-ENOMEM);
- 
--	ret = sg_alloc_table(sg, ubuf->pagecount, GFP_KERNEL);
-+	ret = sg_alloc_table_from_pages(sg, ubuf->pages, ubuf->pagecount, 0,
-+					ubuf->pagecount << PAGE_SHIFT,
-+					GFP_KERNEL);
- 	if (ret < 0)
- 		goto err_alloc;
- 
--	for_each_sg(sg->sgl, sgl, ubuf->pagecount, i)
--		sg_set_folio(sgl, ubuf->folios[i], PAGE_SIZE,
--			     ubuf->offsets[i]);
--
- 	ret = dma_map_sgtable(dev, sg, direction, 0);
- 	if (ret < 0)
- 		goto err_map;
-@@ -207,12 +189,8 @@ static void unpin_all_folios(struct udmabuf *ubuf)
- 
- static __always_inline int init_udmabuf(struct udmabuf *ubuf, pgoff_t pgcnt)
- {
--	ubuf->folios = kvmalloc_objs(*ubuf->folios, pgcnt);
--	if (!ubuf->folios)
--		return -ENOMEM;
--
--	ubuf->offsets = kvzalloc_objs(*ubuf->offsets, pgcnt);
--	if (!ubuf->offsets)
-+	ubuf->pages = kvmalloc_objs(*ubuf->pages, pgcnt);
-+	if (!ubuf->pages)
- 		return -ENOMEM;
- 
- 	ubuf->pinned_folios = kvmalloc_objs(*ubuf->pinned_folios, pgcnt);
-@@ -225,8 +203,7 @@ static __always_inline int init_udmabuf(struct udmabuf *ubuf, pgoff_t pgcnt)
- static __always_inline void deinit_udmabuf(struct udmabuf *ubuf)
- {
- 	unpin_all_folios(ubuf);
--	kvfree(ubuf->offsets);
--	kvfree(ubuf->folios);
-+	kvfree(ubuf->pages);
- }
- 
- static void release_udmabuf(struct dma_buf *buf)
-@@ -344,8 +321,8 @@ static long udmabuf_pin_folios(struct udmabuf *ubuf, struct file *memfd,
- 		ubuf->pinned_folios[nr_pinned++] = folios[cur_folio];
- 
- 		for (; subpgoff < fsize; subpgoff += PAGE_SIZE) {
--			ubuf->folios[upgcnt] = folios[cur_folio];
--			ubuf->offsets[upgcnt] = subpgoff;
-+			ubuf->pages[upgcnt] = folio_page(folios[cur_folio],
-+						subpgoff >> PAGE_SHIFT);
- 			++upgcnt;
- 
- 			if (++cur_pgcnt >= pgcnt)
+diff --git a/block/bio.c b/block/bio.c
+index 5f10900b3f42..1574ccf396b2 100644
+--- a/block/bio.c
++++ b/block/bio.c
+@@ -555,6 +555,14 @@ struct bio *bio_alloc_bioset(struct block_device *bdev, unsigned short nr_vecs,
+ 		bio = bio_alloc_percpu_cache(bs);
+ 	} else {
+ 		opf &= ~REQ_ALLOC_CACHE;
++	}
++
++	/*
++	 * For a bioset without a percpu cache, or when the percpu cache was
++	 * empty, try a slab allocation with optimistic GFP_ flags before
++	 * falling back to the mempool.
++	 */
++	if (!bio) {
+ 		p = kmem_cache_alloc(bs->bio_slab, gfp);
+ 		if (p)
+ 			bio = p + bs->front_pad;
 diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
 index b26aa9169e83..64514d600eec 100644
 --- a/fs/btrfs/super.c
@@ -386,7 +274,7 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b8871449d3c6..d8273f09c6bc 100644
+index 091ee8d2b17a..9cb8b0a71aa6 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -3691,6 +3691,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
@@ -794,7 +682,7 @@ index 5cc44f0de987..2dd84813f4dd 100644
  			continue;
  
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 1213c8e04671..a657006081f5 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
