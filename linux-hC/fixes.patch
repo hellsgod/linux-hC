@@ -237,18 +237,6 @@ index 2f94be1df525..bced421c0d65 100644
  			++upgcnt;
  
  			if (++cur_pgcnt >= pgcnt)
-diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
-index b26aa9169e83..64514d600eec 100644
---- a/fs/btrfs/super.c
-+++ b/fs/btrfs/super.c
-@@ -1873,6 +1873,7 @@ static int btrfs_get_tree_super(struct fs_context *fc)
- 	fs_info->fs_devices = fs_devices;
- 	mutex_unlock(&uuid_mutex);
- 
-+	fc->sb_flags |= SB_NOSEC;
- 
- 	sb = sget_fc(fc, btrfs_fc_test_super, set_anon_super_fc);
- 	if (IS_ERR(sb)) {
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
 index 48d851fbd8ea..7c1dac8da5e5 100644
 --- a/include/linux/perf_event.h
@@ -405,7 +393,7 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 091ee8d2b17a..9cb8b0a71aa6 100644
+index 69c2aa8c6246..fef0b1b53378 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -3691,6 +3691,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
@@ -418,7 +406,7 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  	u64 delta = rq_clock(rq) - rq->idle_stamp;
  	u64 max = 2*rq->max_idle_balance_cost;
  
-@@ -4958,7 +4961,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -4959,7 +4962,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -427,7 +415,7 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -5002,7 +5005,7 @@ static void zap_balance_callbacks(struct rq *rq)
+@@ -5003,7 +5006,7 @@ static void zap_balance_callbacks(struct rq *rq)
  	rq->balance_callback = found ? &balance_push_callback : NULL;
  }
  
@@ -436,7 +424,7 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -5037,7 +5040,7 @@ struct balance_callback balance_push_callback = {
+@@ -5038,7 +5041,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -445,7 +433,7 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5111,7 +5114,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5112,7 +5115,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -454,7 +442,7 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5145,7 +5148,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5146,7 +5149,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -463,7 +451,7 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5199,7 +5202,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5200,7 +5203,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -473,10 +461,10 @@ index 091ee8d2b17a..9cb8b0a71aa6 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3ebec186f982..813897c67ca6 100644
+index abb76775aa72..e90878d7a724 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12168,12 +12168,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -12171,12 +12171,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
