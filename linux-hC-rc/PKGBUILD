@@ -204,16 +204,16 @@ if _is_lto_kernel; then
     makedepends+=(clang llvm lld)
     source+=("${_patchsource}/misc/dkms-clang.patch")
     BUILD_FLAGS=(
-        CC=/home/hellsgod/clang23/bin/clang
-        LD=/home/hellsgod/clang23/bin/ld.lld
-        AR=/home/hellsgod/clang23/bin/llvm-ar
-        NM=/home/hellsgod/clang23/bin/llvm-nm
-        STRIP=/home/hellsgod/clang23/bin/llvm-strip
-        OBJCOPY=/home/hellsgod/clang23/bin/llvm-objcopy
-        OBJDUMP=/home/hellsgod/clang23/bin/llvm-objdump
-        RANLIB=/home/hellsgod/clang23/bin/llvm-ranlib
-        READELF=/home/hellsgod/clang23/bin/llvm-readelf
-        AS=/home/hellsgod/clang23/bin/llvm-as
+        CC=/home/hellsgod/clang24/bin/clang
+        LD=/home/hellsgod/clang24/bin/ld.lld
+        AR=/home/hellsgod/clang24/bin/llvm-ar
+        NM=/home/hellsgod/clang24/bin/llvm-nm
+        STRIP=/home/hellsgod/clang24/bin/llvm-strip
+        OBJCOPY=/home/hellsgod/clang24/bin/llvm-objcopy
+        OBJDUMP=/home/hellsgod/clang24/bin/llvm-objdump
+        RANLIB=/home/hellsgod/clang24/bin/llvm-ranlib
+        READELF=/home/hellsgod/clang24/bin/llvm-readelf
+        AS=/home/hellsgod/clang24/bin/llvm-as
         LLVM=1
         LLVM_IAS=1
     )
@@ -661,7 +661,7 @@ done
 b2sums=('46bb6126b1f11442b657f31c6d2025a347c44aa9ce5688bbd678264a9ba9d34ba50c7582580fb20796e73998996588b3aac161a7d36a0db2c2700f6513ed4b14'
         'a4b425ee9e189f2985f03f0afa8e0f0c3506d5d443be5ff81166a95a3a337b454a1a0ea2dbb03e78e5ce13e50a2d18040788c1edd458d994fb4212892f62ea0d'
         '51503d440cb2e50771921bb85a5543429d33f9bf849913feb0f16791f10349d2fefaca4319ca1e3cd3d48cccd31ae4f57772840d3ab933e752df852af8e2f646'
-        '0566408348a7166476cf8e4d4408ddfdf3f925cd996132d7f71721f78fefa82da5d52943e616fa4d19467b43cb2e6e2d8a63584e88d9d622b85dfe18e6521214'
+        '0fb1398e6fc3264054cdccb1638c834ad5547de031aeef864e6255fc43cd69b627f83bf9fc7496bf695cc64eacb2d7f0d9741079cdf573d8151ffb6ba82f45e7'
         'f77a7137c16068ef52984dbfa39f613de88525fbab280b563c0584d93da50475ff9ebaa429f491ceee4fbc2ec68372eea2edeff1cb4980615396118756327113'
         '2184f92ece054763a4a87f2b9313eb77f59d70aba2d6b352ea8fddd1d8226eb2d2034716a0056055893a25e5e596bda00f8318fb4a142feefa3f9412ebe90314'
         '0e225abdb5a3e733f3eb318c01746fee958ee4eee798f6e77df29d5e8df6e396aeaeb29e797822094e28506b7c35d4116d9e5a95a3081d4efaa9fdc216994a51'

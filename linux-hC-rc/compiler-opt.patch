@@ -82,7 +82,7 @@ index e27c91ea56fc..c42da7a561f9 100644
 +KBUILD_CFLAGS := \
 +  -fdata-sections -ffunction-sections \
 +  -ffine-grained-bitfield-accesses \
-+  -mllvm -enable-pre -mllvm -enable-load-pre -mllvm -enable-load-in-loop-pre -mllvm -enable-split-backedge-in-load-pre \
++  -mllvm -enable-load-pre -mllvm -enable-load-in-loop-pre -mllvm -enable-split-backedge-in-load-pre \
 +  -mllvm -basic-aa-recphi -mllvm -basic-aa-separate-storage \
 +  -mllvm -enable-gvn-memoryssa \
 +  -mllvm -dse-optimize-memoryssa \
