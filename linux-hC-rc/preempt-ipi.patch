@@ -49,10 +49,10 @@ index dcef84da304b..5b554e480c0e 100644
  	/*
  	 * We have to call flush only on online vCPUs. And
 diff --git a/arch/x86/mm/tlb.c b/arch/x86/mm/tlb.c
-index 1023acadd8f8..2511b994ea09 100644
+index 1023acadd8f8..e5a0c6e32d19 100644
 --- a/arch/x86/mm/tlb.c
 +++ b/arch/x86/mm/tlb.c
-@@ -1373,28 +1373,12 @@ void flush_tlb_multi(const struct cpumask *cpumask,
+@@ -1373,35 +1373,19 @@ void flush_tlb_multi(const struct cpumask *cpumask,
   */
  unsigned long tlb_single_page_flush_ceiling __read_mostly = 33;
  
@@ -86,7 +86,16 @@ index 1023acadd8f8..2511b994ea09 100644
  	/*
  	 * If the number of flushes is so large that a full flush
  	 * would be faster, do a full flush.
-@@ -1412,32 +1396,22 @@ static struct flush_tlb_info *get_flush_tlb_info(struct mm_struct *mm,
+ 	 */
+ 	if ((end - start) >> stride_shift > tlb_single_page_flush_ceiling) {
+-		start = 0;
+-		end = TLB_FLUSH_ALL;
++		start	= 0;
++		end	= TLB_FLUSH_ALL;
+ 	}
+ 
+ 	info->start		= start;
+@@ -1412,32 +1396,21 @@ static struct flush_tlb_info *get_flush_tlb_info(struct mm_struct *mm,
  	info->new_tlb_gen	= new_tlb_gen;
  	info->initiating_cpu	= smp_processor_id();
  	info->trim_cpumask	= 0;
@@ -118,12 +127,11 @@ index 1023acadd8f8..2511b994ea09 100644
  
 -	info = get_flush_tlb_info(mm, start, end, stride_shift, freed_tables,
 -				  new_tlb_gen);
-+	init_flush_tlb_info(&info, mm, start, end, stride_shift, freed_tables,
-+			    new_tlb_gen);
++	init_flush_tlb_info(&info, mm, start, end, stride_shift, freed_tables, new_tlb_gen);
  
  	/*
  	 * flush_tlb_multi() is not optimized for the common case in which only
-@@ -1445,20 +1419,24 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
+@@ -1445,20 +1418,24 @@ void flush_tlb_mm_range(struct mm_struct *mm, unsigned long start,
  	 * flush_tlb_func_local() directly in this case.
  	 */
  	if (mm_global_asid(mm)) {
@@ -154,7 +162,7 @@ index 1023acadd8f8..2511b994ea09 100644
  	mmu_notifier_arch_invalidate_secondary_tlbs(mm, start, end);
  }
  
-@@ -1527,19 +1505,16 @@ static void kernel_tlb_flush_range(struct flush_tlb_info *info)
+@@ -1527,19 +1504,16 @@ static void kernel_tlb_flush_range(struct flush_tlb_info *info)
  
  void flush_tlb_kernel_range(unsigned long start, unsigned long end)
  {
@@ -180,7 +188,7 @@ index 1023acadd8f8..2511b994ea09 100644
  }
  
  /*
-@@ -1707,12 +1682,12 @@ EXPORT_SYMBOL_FOR_KVM(__flush_tlb_all);
+@@ -1707,12 +1681,12 @@ EXPORT_SYMBOL_FOR_KVM(__flush_tlb_all);
  
  void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  {
@@ -197,7 +205,7 @@ index 1023acadd8f8..2511b994ea09 100644
  	/*
  	 * flush_tlb_multi() is not optimized for the common case in which only
  	 * a local TLB flush is needed. Optimize this use-case by calling
-@@ -1722,18 +1697,20 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
+@@ -1722,18 +1696,20 @@ void arch_tlbbatch_flush(struct arch_tlbflush_unmap_batch *batch)
  		invlpgb_flush_all_nonglobals();
  		batch->unmapped_pages = false;
  	} else if (cpumask_any_but(&batch->cpumask, cpu) < nr_cpu_ids) {
@@ -224,19 +232,32 @@ index 1023acadd8f8..2511b994ea09 100644
  
  /*
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 373bcc0598d1..e29c97ace8fa 100644
+index 373bcc0598d1..5738c54eb85a 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1359,6 +1359,12 @@ struct task_struct {
+@@ -823,6 +823,17 @@ struct kmap_ctrl {
+ #endif
+ };
+ 
++#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPTION)
++struct task_ipi_mask {
++	union {
++		cpumask_t		*ipi_mask_ptr;
++		unsigned long		ipi_mask_val;
++	};
++};
++#else
++struct task_ipi_mask { };
++#endif
++
+ struct task_struct {
+ #ifdef CONFIG_THREAD_INFO_IN_TASK
+ 	/*
+@@ -1359,6 +1370,7 @@ struct task_struct {
  	struct list_head		perf_event_list;
  	struct perf_ctx_data __rcu	*perf_ctx_data;
  #endif
-+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPTION)
-+	union {
-+		cpumask_t			*ipi_mask_ptr;
-+		unsigned long			ipi_mask_val;
-+	};
-+#endif
++	struct task_ipi_mask		__private ipi_mask;
  #ifdef CONFIG_DEBUG_PREEMPT
  	unsigned long			preempt_disable_ip;
  #endif
@@ -366,7 +387,7 @@ index 327c315f411c..2082f9b44370 100644
  		schedule_timeout_idle((1 + longwait) * HZ);  // Let no-wait handlers complete.
  	else if (!(torture_random(trsp) & 0xfff))
 diff --git a/kernel/smp.c b/kernel/smp.c
-index a0bb56bd8dda..db0a123911d1 100644
+index a0bb56bd8dda..de04335524d8 100644
 --- a/kernel/smp.c
 +++ b/kernel/smp.c
 @@ -16,6 +16,7 @@
@@ -496,7 +517,7 @@ index a0bb56bd8dda..db0a123911d1 100644
   *
   * Selection preference:
   *	1) current cpu if in @mask
-@@ -769,19 +797,52 @@ EXPORT_SYMBOL_GPL(smp_call_function_single_async);
+@@ -769,19 +797,53 @@ EXPORT_SYMBOL_GPL(smp_call_function_single_async);
  int smp_call_function_any(const struct cpumask *mask,
  			  smp_call_func_t func, void *info, int wait)
  {
@@ -522,8 +543,9 @@ index a0bb56bd8dda..db0a123911d1 100644
 +	if (static_branch_unlikely(&ipi_mask_inlined))
 +		return 0;
 +
-+	task->ipi_mask_ptr = kmalloc(cpumask_size(), GFP_KERNEL);
-+	if (!task->ipi_mask_ptr)
++	ACCESS_PRIVATE(task, ipi_mask).ipi_mask_ptr =
++		kmalloc(cpumask_size(), GFP_KERNEL);
++	if (!ACCESS_PRIVATE(task, ipi_mask).ipi_mask_ptr)
 +		return -ENOMEM;
 +
 +	return 0;
@@ -535,7 +557,7 @@ index a0bb56bd8dda..db0a123911d1 100644
 +	if (static_branch_unlikely(&ipi_mask_inlined))
 +		return;
 +
-+	kfree(task->ipi_mask_ptr);
++	kfree(ACCESS_PRIVATE(task, ipi_mask).ipi_mask_ptr);
 +}
 +
 +static cpumask_t *smp_task_ipi_mask(struct task_struct *cur)
@@ -546,9 +568,9 @@ index a0bb56bd8dda..db0a123911d1 100644
 +	 * avoid extra memory allocations.
 +	 */
 +	if (static_branch_unlikely(&ipi_mask_inlined))
-+		return (cpumask_t *)&cur->ipi_mask_val;
++		return (cpumask_t *)&ACCESS_PRIVATE(cur, ipi_mask).ipi_mask_val;
 +
-+	return cur->ipi_mask_ptr;
++	return ACCESS_PRIVATE(cur, ipi_mask).ipi_mask_ptr;
 +}
 +#else
 +static cpumask_t *smp_task_ipi_mask(struct task_struct *cur)
@@ -559,7 +581,7 @@ index a0bb56bd8dda..db0a123911d1 100644
  
  /*
   * Flags to be used as scf_flags argument of smp_call_function_many_cond().
-@@ -797,13 +858,20 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
+@@ -797,13 +859,20 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
  					unsigned int scf_flags,
  					smp_cond_func_t cond_func)
  {
@@ -584,7 +606,7 @@ index a0bb56bd8dda..db0a123911d1 100644
  
  	/*
  	 * Can deadlock when called with interrupts disabled.
-@@ -825,16 +893,15 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
+@@ -825,16 +894,15 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
  
  	/* Check if we need remote execution, i.e., any CPU excluding this one. */
  	if (cpumask_any_and_but(mask, cpu_online_mask, this_cpu) < nr_cpu_ids) {
@@ -605,7 +627,7 @@ index a0bb56bd8dda..db0a123911d1 100644
  				continue;
  			}
  
-@@ -884,8 +951,18 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
+@@ -884,8 +952,18 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
  		local_irq_restore(flags);
  	}
  
@@ -625,7 +647,7 @@ index a0bb56bd8dda..db0a123911d1 100644
  			call_single_data_t *csd;
  
  			csd = per_cpu_ptr(cfd->csd, cpu);
-@@ -896,15 +973,14 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
+@@ -896,15 +974,14 @@ static void smp_call_function_many_cond(const struct cpumask *mask,
  
  /**
   * smp_call_function_many() - Run a function on a set of CPUs.
@@ -647,7 +669,7 @@ index a0bb56bd8dda..db0a123911d1 100644
   *
   * @func is not called on the local CPU even if @mask contains it.  Consider
   * using on_each_cpu_cond_mask() instead if this is not desirable.
-@@ -918,10 +994,10 @@ EXPORT_SYMBOL(smp_call_function_many);
+@@ -918,10 +995,10 @@ EXPORT_SYMBOL(smp_call_function_many);
  
  /**
   * smp_call_function() - Run a function on all other CPUs.
@@ -662,7 +684,7 @@ index a0bb56bd8dda..db0a123911d1 100644
   *
   * If @wait is true, then returns once @func has returned; otherwise
   * it returns just before the target cpu calls @func.
-@@ -931,9 +1007,8 @@ EXPORT_SYMBOL(smp_call_function_many);
+@@ -931,9 +1008,8 @@ EXPORT_SYMBOL(smp_call_function_many);
   */
  void smp_call_function(smp_call_func_t func, void *info, int wait)
  {
@@ -674,7 +696,7 @@ index a0bb56bd8dda..db0a123911d1 100644
  }
  EXPORT_SYMBOL(smp_call_function);
  
-@@ -999,6 +1074,9 @@ EXPORT_SYMBOL(nr_cpu_ids);
+@@ -999,6 +1075,9 @@ EXPORT_SYMBOL(nr_cpu_ids);
  void __init setup_nr_cpu_ids(void)
  {
  	set_nr_cpu_ids(find_last_bit(cpumask_bits(cpu_possible_mask), NR_CPUS) + 1);
@@ -684,7 +706,26 @@ index a0bb56bd8dda..db0a123911d1 100644
  }
  
  /* Called by boot processor to activate the rest. */
-@@ -1053,9 +1131,7 @@ void on_each_cpu_cond_mask(smp_cond_func_t cond_func, smp_call_func_t func,
+@@ -1035,12 +1114,14 @@ void __init smp_init(void)
+  * @func:	The function to run on all applicable CPUs.
+  *		This must be fast and non-blocking.
+  * @info:	An arbitrary pointer to pass to both functions.
+- * @wait:	If true, wait (atomically) until function has
+- *		completed on other CPUs.
++ * @wait:	If true, wait until function has completed on other CPUs.
+  * @mask:	The set of cpus to run on (only runs on online subset).
+  *
+- * Preemption is disabled to protect against CPUs going offline but not online.
+- * CPUs going online during the call will not be seen or sent an IPI.
++ * Target CPU selection and work queueing are done with preemption
++ * disabled. This protects against CPUs going offline, but not against
++ * CPUs coming online concurrently; newly online CPUs are not guaranteed
++ * to be seen or sent an IPI. If @wait is true, the final wait for remote
++ * completion happens after that preemption-disabled section.
+  *
+  * You must not call this function with disabled interrupts or
+  * from a hardware interrupt handler or from a bottom half handler.
+@@ -1053,9 +1134,7 @@ void on_each_cpu_cond_mask(smp_cond_func_t cond_func, smp_call_func_t func,
  	if (wait)
  		scf_flags |= SCF_WAIT;
  
