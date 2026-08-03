@@ -50,18 +50,6 @@ index 78bbacc14d2d..d1967214ef25 100644
  {
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
-diff --git a/arch/x86/boot/compressed/Makefile b/arch/x86/boot/compressed/Makefile
-index 07e0e64b9a98..06934f9691d6 100644
---- a/arch/x86/boot/compressed/Makefile
-+++ b/arch/x86/boot/compressed/Makefile
-@@ -27,6 +27,7 @@ targets := vmlinux vmlinux.bin vmlinux.bin.gz vmlinux.bin.bz2 vmlinux.bin.lzma \
- KBUILD_CFLAGS := -m$(BITS) -O2 $(CLANG_FLAGS)
- KBUILD_CFLAGS += $(CC_FLAGS_DIALECT)
- KBUILD_CFLAGS += -fno-strict-aliasing -fPIE
-+KBUILD_CFLAGS += -fno-jump-tables
- KBUILD_CFLAGS += -Wundef
- KBUILD_CFLAGS += -DDISABLE_BRANCH_PROFILING
- cflags-$(CONFIG_X86_32) := -march=i386
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
 index 96bda43538ee..4b55fa353bb5 100644
 --- a/arch/x86/include/asm/sync_core.h
