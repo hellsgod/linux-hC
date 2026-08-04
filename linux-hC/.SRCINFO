@@ -32,7 +32,7 @@ pkgbase = linux-hC
 	source = preempt-ipi.patch
 	source = vmalloc.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.1/misc/dkms-clang.patch
-	source = nvidia-open-610.43.03.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.43.03.tar.gz
+	source = nvidia-open-610.57.04.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.57.04.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.1/sched/0001-bore.patch
 	b2sums = 86bf9bebe2d44f1a7782a5b313690eeac03a9bf34934f5eec90a1f5252130d22f813e86e1db5a269d717f6cea26d846551ba32e6921caadc80294f9b6b487d30
 	b2sums = 386d1fda2a558993e5bac0c2be9821b25412111d156e19732d2f200b582ca4ac0edbd93b7a2b91c84ed39af7382564dcf45232755f5dd8cbff46a1d31b923ef5
@@ -45,7 +45,7 @@ pkgbase = linux-hC
 	b2sums = ee3762c899ab38d8fe2bc6be936d3eb2b91e1e7239bc6496547cf84eeadcdb6775d13e177cf393c24ae6d1ac32f4c36da185a038e7d524d1975f69497c0334e8
 	b2sums = 3ca044416000681021761c0bec471bdb47e77cc1f92a723ebde03db46c40a46d82d7a66215dfb8cfcfbf2c9472ab8599146776bf9321bc8eda765f91b5d3e441
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
-	b2sums = 811f9b67f25d5a99c7b35d69b2551bbc2da9ecc7ccc9b4e8d433a73949606d00d19fa76cc81ff321e9f0b318ceaf148bde1b663a66c0403fe956214c3dd7dfe5
+	b2sums = bc9fa4e91ef9592b48789e9a0af61e5e33052e4c59e2bd76454f6026ff2ed36d865c30675254e5b5ede887993e5bd0a71f525b00b41f1c108220b3ba36398c21
 	b2sums = 271b29699b4902f9ed34e74a78e7d4dbb894889a725c1ad29067a5c1cdcfa8b45f10d569ed6843cad03aaa73a7446f62ef1d98d61e5f966f2c1ba537d6c33c59
 
 pkgname = linux-hC
@@ -80,10 +80,10 @@ pkgname = linux-hC-headers
 	provides = LINUX-HEADERS
 
 pkgname = linux-hC-nvidia-open
-	pkgdesc = nvidia open modules of 610.43.03 driver for the linux-hC kernel
+	pkgdesc = nvidia open modules of 610.57.04 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
 	depends = linux-hC=7.1.6-1
-	depends = nvidia-utils=610.43.03
+	depends = nvidia-utils=610.57.04
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-nvidia
