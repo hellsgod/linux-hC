@@ -20,7 +20,7 @@
 # 'eevdf' - select 'EEVDF Scheduler'
 # 'rt' - select EEVDF, but includes a series of realtime patches
 # 'rt-bore' - select Burst-Oriented Response Enhancer, but includes a series of realtime patches
-: "${_cpusched:=cachyos}"
+: "${_cpusched:=eevdf}"
 
 ### Tweak kernel options prior to a build via nconfig
 : "${_makenconfig:=no}"
@@ -154,10 +154,10 @@ else
 fi
 
 pkgbase="linux-$_pkgsuffix"
-_major=7.2
+_major=7.3
 _minor=0
 #_minorc=$((_minor+1))
-_rcver=rc7
+_rcver=rc1
 pkgver=${_major}.${_rcver}
 #_stable=${_major}.${_minor}
 #_stable=${_major}
@@ -196,8 +196,7 @@ source=(
     "compiler-opt.patch"
     "fixes.patch"
     "nap.patch"
-    "poc-selector.patch"
-    "preempt-ipi.patch")
+    "poc-selector.patch")
 
 # LLVM makedepends
 if _is_lto_kernel; then
@@ -220,7 +219,8 @@ if _is_lto_kernel; then
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
-     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz")
+     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
+              "${_patchsource}/misc/nvidia/0003-Pass-dmem_cgroup_init-to-dmem_cgroup_register_region.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -657,14 +657,13 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('4299f17dac88bd1aacf58f1ba0b7061859c1723845925b0efc36e09248f74fa5eb57fa9a3d11f7699943713997f4449933f516f120c77d2eac7777d768f36345'
-        'aa13d2e68e3a85079d628d44af76d4332e717a36a71b32d2501e5611391b4647dae1d635756a1ce6de1269e7f6252d09d26b9fd49135b68200253da70c1b5a8d'
-        '51503d440cb2e50771921bb85a5543429d33f9bf849913feb0f16791f10349d2fefaca4319ca1e3cd3d48cccd31ae4f57772840d3ab933e752df852af8e2f646'
+b2sums=('9cdda743e3e5fbedb38aca8d0ab9e50638b55c7977e513a39383aa387f71ebb7b4a860ac00e4a7b3d4299c8dcdb43b64a30ae575300a5f6f46e02be423520ea7'
+        'f0cd3e5f7146f2360fe49271cfc0dd820339399cac3402c8142f3cba3ae08556ddd57694d33dc4e4ef9fc0991199e0a3b3d6bbe5d34677983ffe2ffc1ee79e45'
+        'b7bbd00ece5108a87f99577f9252024574cacdb153b05165388efbbb64ffe4146f32a64870dc117a0563c32b159acc0225cd8d4aaa309f0c51ea834a63742008'
         '0fb1398e6fc3264054cdccb1638c834ad5547de031aeef864e6255fc43cd69b627f83bf9fc7496bf695cc64eacb2d7f0d9741079cdf573d8151ffb6ba82f45e7'
-        'a39612c69e84b04026381b09ba73e1e885e3bcf1dfa602b6c145935f5682cbf3cc561a2f8783b469977d3f1160b1d244d5f4f4706c4e134fc5be22b26675db2d'
+        '0c7dfadc47c9944733e05a13d008549566a66449cea59f8c6b3440e4d04b18bf60c8a2f30783870d2dbc24e782c12f4255d2e4d1f8c72a8aea53ffb727e654b6'
         '2184f92ece054763a4a87f2b9313eb77f59d70aba2d6b352ea8fddd1d8226eb2d2034716a0056055893a25e5e596bda00f8318fb4a142feefa3f9412ebe90314'
         '4c9bca4cd5340386dcb4842d159f064b429ae04bcf82870ad7edcbb58881961d9f6f4e350154c5284c187fe0ad32f8ea3d4bb0cee193d3f07b45f068c2210576'
-        'fdedb576a0348374d75d171b910e5d3c3b16f2aa2b9db7fb51d8a830ee4ed6b3768f3801ec99791d09e07f9ac2ca151ffd7ec960d787fe14b3c626502b4c0762'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
         'bc9fa4e91ef9592b48789e9a0af61e5e33052e4c59e2bd76454f6026ff2ed36d865c30675254e5b5ede887993e5bd0a71f525b00b41f1c108220b3ba36398c21'
-        '2c9c483549b95f44b6a05093df422742075ac052414b1d335f03d208134c0aee432cb12147fbd6b4222ebe594620f103a3a5e4c05b3af7a1c41c4c40190fb1db')
+        'c710ded32a62af6a755a837fbd91ddda81d8fcd3905caaf7c396a91a027148d522fbaafedcc02be8d0bf584c8adfe74c065cf3fe60b1ca6c36dfd401a835e86d')
