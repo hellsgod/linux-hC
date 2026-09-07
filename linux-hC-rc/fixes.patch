@@ -263,20 +263,10 @@ index 82825e775499..ce83fc74387d 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f78275192036..ecf96fdb4ff4 100644
+index b998ef6b87af..f59f2a6ce91c 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -3742,6 +3742,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
- 
- void update_rq_avg_idle(struct rq *rq)
- {
-+	if (!rq->idle_stamp)
-+		return;
-+
- 	u64 delta = rq_clock(rq) - rq->idle_stamp;
- 	u64 max = 2*rq->max_idle_balance_cost;
- 
-@@ -5084,7 +5087,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -5090,7 +5090,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -285,7 +275,7 @@ index f78275192036..ecf96fdb4ff4 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -5128,7 +5131,7 @@ static void zap_balance_callbacks(struct rq *rq)
+@@ -5134,7 +5134,7 @@ static void zap_balance_callbacks(struct rq *rq)
  	rq->balance_callback = found ? &balance_push_callback : NULL;
  }
  
@@ -294,7 +284,7 @@ index f78275192036..ecf96fdb4ff4 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -5163,7 +5166,7 @@ struct balance_callback balance_push_callback = {
+@@ -5169,7 +5169,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -303,7 +293,7 @@ index f78275192036..ecf96fdb4ff4 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5237,7 +5240,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5243,7 +5243,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -312,7 +302,7 @@ index f78275192036..ecf96fdb4ff4 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5271,7 +5274,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5277,7 +5277,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -321,7 +311,7 @@ index f78275192036..ecf96fdb4ff4 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5325,7 +5328,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5331,7 +5331,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -331,10 +321,10 @@ index f78275192036..ecf96fdb4ff4 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 8dff37059faf..013da798d09a 100644
+index ade1eceb39b8..c53abd3170b7 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -13494,12 +13494,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -13534,12 +13534,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -352,20 +342,6 @@ index 8dff37059faf..013da798d09a 100644
  		/*
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
-diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
-index eb73b65ce6c4..f92250b9d68c 100644
---- a/kernel/sched/idle.c
-+++ b/kernel/sched/idle.c
-@@ -494,6 +494,9 @@ static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool fir
- 	schedstat_inc(rq->sched_goidle);
- 	next->se.exec_start = rq_clock_task(rq);
- 
-+	if (!rq->idle_stamp)
-+		rq->idle_stamp = rq_clock(rq);
-+
- 	/*
- 	 * rq is about to be idle, check if we need to update the
- 	 * lost_idle_time of clock_pelt
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
 index e656c7059bf8..530e1ebbcf3b 100644
 --- a/kernel/sched/sched.h
