@@ -31,6 +31,7 @@ pkgbase = linux-hC-rc
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/misc/dkms-clang.patch
 	source = nvidia-open-610.57.04.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.57.04.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/misc/nvidia/0003-Pass-dmem_cgroup_init-to-dmem_cgroup_register_region.patch
+	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/sched/0001-bore.patch
 	b2sums = d8522ffee4af76eacdba75a8116376e9c21621ed0b22cbd381b816cd71f9fc25d1682fede84cfe51d854eb817a5836304023c4848a817f51f5a94a44ccd13f88
 	b2sums = f0cd3e5f7146f2360fe49271cfc0dd820339399cac3402c8142f3cba3ae08556ddd57694d33dc4e4ef9fc0991199e0a3b3d6bbe5d34677983ffe2ffc1ee79e45
 	b2sums = b7bbd00ece5108a87f99577f9252024574cacdb153b05165388efbbb64ffe4146f32a64870dc117a0563c32b159acc0225cd8d4aaa309f0c51ea834a63742008
@@ -41,6 +42,7 @@ pkgbase = linux-hC-rc
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
 	b2sums = bc9fa4e91ef9592b48789e9a0af61e5e33052e4c59e2bd76454f6026ff2ed36d865c30675254e5b5ede887993e5bd0a71f525b00b41f1c108220b3ba36398c21
 	b2sums = c710ded32a62af6a755a837fbd91ddda81d8fcd3905caaf7c396a91a027148d522fbaafedcc02be8d0bf584c8adfe74c065cf3fe60b1ca6c36dfd401a835e86d
+	b2sums = f96c79455514ac1397bb90c6e403b9dab31fec5575b6f0ae97b45be9247933f78c159a10ee98e3b52b8a1cb2a80b024c76cdd58f3a130860a9ca9775905e741a
 
 pkgname = linux-hC-rc
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel and modules

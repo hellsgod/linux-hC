@@ -20,7 +20,7 @@
 # 'eevdf' - select 'EEVDF Scheduler'
 # 'rt' - select EEVDF, but includes a series of realtime patches
 # 'rt-bore' - select Burst-Oriented Response Enhancer, but includes a series of realtime patches
-: "${_cpusched:=eevdf}"
+: "${_cpusched:=cachyos}"
 
 ### Tweak kernel options prior to a build via nconfig
 : "${_makenconfig:=no}"
@@ -666,4 +666,5 @@ b2sums=('d8522ffee4af76eacdba75a8116376e9c21621ed0b22cbd381b816cd71f9fc25d1682fe
         '4c9bca4cd5340386dcb4842d159f064b429ae04bcf82870ad7edcbb58881961d9f6f4e350154c5284c187fe0ad32f8ea3d4bb0cee193d3f07b45f068c2210576'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
         'bc9fa4e91ef9592b48789e9a0af61e5e33052e4c59e2bd76454f6026ff2ed36d865c30675254e5b5ede887993e5bd0a71f525b00b41f1c108220b3ba36398c21'
-        'c710ded32a62af6a755a837fbd91ddda81d8fcd3905caaf7c396a91a027148d522fbaafedcc02be8d0bf584c8adfe74c065cf3fe60b1ca6c36dfd401a835e86d')
+        'c710ded32a62af6a755a837fbd91ddda81d8fcd3905caaf7c396a91a027148d522fbaafedcc02be8d0bf584c8adfe74c065cf3fe60b1ca6c36dfd401a835e86d'
+        'f96c79455514ac1397bb90c6e403b9dab31fec5575b6f0ae97b45be9247933f78c159a10ee98e3b52b8a1cb2a80b024c76cdd58f3a130860a9ca9775905e741a')
