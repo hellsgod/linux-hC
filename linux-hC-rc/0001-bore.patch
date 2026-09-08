@@ -1,4 +1,4 @@
-From 6223393a6131951917885ade1523022a9da9a283 Mon Sep 17 00:00:00 2001
+From b2db3339048bca1cb4bc01371157a308644b6ab9 Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
 Date: Mon, 7 Sep 2026 05:59:44 +0900
 Subject: [PATCH] linux7.3-rc1-bore-6.8.0
@@ -79,12 +79,9 @@ Claude-Session: https://claude.ai/code/session_01G4ShiABPJeNpkr9rq5DaqR
  kernel/sched/debug.c         |  61 +++++
  kernel/sched/fair.c          | 171 ++++++++++++-
  kernel/sched/sched.h         |   9 +
- localversion                 |   1 +
- scripts/setlocalversion      |   2 +-
- 16 files changed, 869 insertions(+), 12 deletions(-)
+ 14 files changed, 867 insertions(+), 11 deletions(-)
  create mode 100644 include/linux/sched/bore.h
  create mode 100644 kernel/sched/bore.c
- create mode 100644 localversion
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
 index 8b3d47a325cc..30c8dc9a4b90 100644
@@ -1369,26 +1366,5 @@ index 530e1ebbcf3b..15f3c238ef84 100644
  
  extern int sysctl_resched_latency_warn_ms;
  extern int sysctl_resched_latency_warn_once;
-diff --git a/localversion b/localversion
-new file mode 100644
-index 000000000000..b6752aa36ace
---- /dev/null
-+++ b/localversion
-@@ -0,0 +1 @@
-+-bore
-\ No newline at end of file
-diff --git a/scripts/setlocalversion b/scripts/setlocalversion
-index 28169d7e143b..5cb02894acaf 100755
---- a/scripts/setlocalversion
-+++ b/scripts/setlocalversion
-@@ -117,7 +117,7 @@ scm_version()
- 		# If only the short version is requested, don't bother
- 		# running further git commands
- 		if $short; then
--			echo "+"
-+			#echo "+"
- 			return
- 		fi
- 
 -- 
 2.55.0
