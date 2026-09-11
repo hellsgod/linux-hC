@@ -29,7 +29,7 @@ pkgbase = linux-hC-rc
 	source = nap.patch
 	source = poc-selector.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/misc/dkms-clang.patch
-	source = nvidia-open-610.57.04.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/610.57.04.tar.gz
+	source = nvidia-open-615.71.09.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/615.71.09.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/misc/nvidia/0003-Pass-dmem_cgroup_init-to-dmem_cgroup_register_region.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/sched/0001-bore.patch
 	b2sums = d8522ffee4af76eacdba75a8116376e9c21621ed0b22cbd381b816cd71f9fc25d1682fede84cfe51d854eb817a5836304023c4848a817f51f5a94a44ccd13f88
@@ -40,9 +40,9 @@ pkgbase = linux-hC-rc
 	b2sums = 2184f92ece054763a4a87f2b9313eb77f59d70aba2d6b352ea8fddd1d8226eb2d2034716a0056055893a25e5e596bda00f8318fb4a142feefa3f9412ebe90314
 	b2sums = 4c9bca4cd5340386dcb4842d159f064b429ae04bcf82870ad7edcbb58881961d9f6f4e350154c5284c187fe0ad32f8ea3d4bb0cee193d3f07b45f068c2210576
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
-	b2sums = bc9fa4e91ef9592b48789e9a0af61e5e33052e4c59e2bd76454f6026ff2ed36d865c30675254e5b5ede887993e5bd0a71f525b00b41f1c108220b3ba36398c21
+	b2sums = c5c57d51320090dff1afe917a087339b7071c580338e2f67d1c0b989fc2116614db0fdbb6dcb270e8dae2d6fa0ec831a0d3c584af9dc2481d857642b1805db0d
 	b2sums = c710ded32a62af6a755a837fbd91ddda81d8fcd3905caaf7c396a91a027148d522fbaafedcc02be8d0bf584c8adfe74c065cf3fe60b1ca6c36dfd401a835e86d
-	b2sums = 4d080c7ef9aa3684be6f8ca5877afb9ed844f3c3284a1b43ea4914c6c865b4e10e986b427c88648476588bf1165a0cbe5e065b4bb575eefb33f6bb75042acacc
+	b2sums = 8c05247483041e800914acb294cb01d5d40147a0b186fe51350bfd8ef3d423afa60fc12d36a178162a9a8c5d791f29c8338b7958176027780355b627cf01714d
 
 pkgname = linux-hC-rc
 	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate kernel and modules
@@ -76,10 +76,10 @@ pkgname = linux-hC-rc-headers
 	provides = LINUX-HEADERS
 
 pkgname = linux-hC-rc-nvidia-open
-	pkgdesc = nvidia open modules of 610.57.04 driver for the linux-hC-rc kernel
+	pkgdesc = nvidia open modules of 615.71.09 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
 	depends = linux-hC-rc=7.3.rc2-1
-	depends = nvidia-utils=610.57.04
+	depends = nvidia-utils=615.71.09
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-rc-nvidia
