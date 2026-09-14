@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf..bebde469f81a 100644
+index db2cb06aa8cf5..bebde469f81ae 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf..bebde469f81a 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f1..2fe6b7fe6b12 100644
+index 9153016da8f14..2fe6b7fe6b12d 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f1..2fe6b7fe6b12 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2eb..95d03be2ce45 100644
+index bd1ef5e2d2ebf..95d03be2ce456 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2eb..95d03be2ce45 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d..d1967214ef25 100644
+index 78bbacc14d2d9..d1967214ef25f 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d..d1967214ef25 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index df22113db9cd..3b0ed46dfc23 100644
+index df22113db9cd7..3b0ed46dfc233 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -64,7 +64,7 @@ index df22113db9cd..3b0ed46dfc23 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (cpu_feature_enabled(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 54e14ed276b5..4edee3768075 100644
+index 54e14ed276b52..4edee3768075f 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1029,6 +1029,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
@@ -87,28 +87,26 @@ index 54e14ed276b5..4edee3768075 100644
  
  static void init_amd(struct cpuinfo_x86 *c)
  {
-diff --git a/drivers/platform/x86/amd/pmf/spc.c b/drivers/platform/x86/amd/pmf/spc.c
-index 94355b435a66..592ba4de4c7f 100644
---- a/drivers/platform/x86/amd/pmf/spc.c
-+++ b/drivers/platform/x86/amd/pmf/spc.c
-@@ -17,7 +17,6 @@
- #include <linux/units.h>
- #include "pmf.h"
+diff --git a/drivers/gpu/drm/gud/gud_connector.c b/drivers/gpu/drm/gud/gud_connector.c
+index 8141c3a1e30ad..5c0065c876a77 100644
+--- a/drivers/gpu/drm/gud/gud_connector.c
++++ b/drivers/gpu/drm/gud/gud_connector.c
+@@ -399,11 +399,8 @@ static int gud_connector_add_tv_mode(struct gud_device *gdrm, struct drm_connect
+ 	for (i = 0; i < num_modes; i++) {
+ 		char *mode = &buf[i * GUD_CONNECTOR_TV_MODE_NAME_LEN];
  
--#ifdef CONFIG_AMD_PMF_DEBUG
- u32 amd_pmf_get_ta_custom_bios_inputs(struct ta_pmf_enact_table *in, int index)
- {
- 	switch (index) {
-@@ -31,6 +30,7 @@ u32 amd_pmf_get_ta_custom_bios_inputs(struct ta_pmf_enact_table *in, int index)
- }
- EXPORT_SYMBOL(amd_pmf_get_ta_custom_bios_inputs);
+-		if (!memchr(mode, '\0', GUD_CONNECTOR_TV_MODE_NAME_LEN)) {
+-			ret = -EIO;
+-			goto free;
+-		}
+-
++		/* The device is not trusted to NUL-terminate the name */
++		mode[GUD_CONNECTOR_TV_MODE_NAME_LEN - 1] = '\0';
+ 		modes[i] = mode;
+ 	}
  
-+#ifdef CONFIG_AMD_PMF_DEBUG
- void amd_pmf_dump_ta_inputs(struct amd_pmf_dev *dev, struct ta_pmf_enact_table *in)
- {
- 	int i;
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 5842552294c1..2c163e28dddc 100644
+index 5842552294c19..2c163e28dddc3 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -121,7 +119,7 @@ index 5842552294c1..2c163e28dddc 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index d7c6a942aa7e..99d555f26b61 100644
+index d7c6a942aa7e0..99d555f26b614 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -32,7 +32,7 @@ extern struct mm_struct *mm_alloc(void);
@@ -208,7 +206,7 @@ index d7c6a942aa7e..99d555f26b61 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index b121c5d53e30..ea7002ad7d02 100644
+index b121c5d53e308..ea7002ad7d02e 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -172,7 +172,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -230,7 +228,7 @@ index b121c5d53e30..ea7002ad7d02 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 82825e775499..ce83fc74387d 100644
+index 82825e7754993..ce83fc74387d1 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -89,24 +89,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -263,7 +261,7 @@ index 82825e775499..ce83fc74387d 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b998ef6b87af..f59f2a6ce91c 100644
+index b998ef6b87af4..f59f2a6ce91cc 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -5090,7 +5090,7 @@ static inline void prepare_task(struct task_struct *next)
@@ -321,7 +319,7 @@ index b998ef6b87af..f59f2a6ce91c 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index ade1eceb39b8..c53abd3170b7 100644
+index ade1eceb39b80..c53abd3170b7b 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -13534,12 +13534,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
@@ -343,7 +341,7 @@ index ade1eceb39b8..c53abd3170b7 100644
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index e656c7059bf8..530e1ebbcf3b 100644
+index e656c7059bf86..530e1ebbcf3b2 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1482,12 +1482,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
@@ -443,7 +441,7 @@ index e656c7059bf8..530e1ebbcf3b 100644
  {
  	raw_spin_rq_unlock(rq);
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 66e4b6a37783..e187908d3f1e 100644
+index 66e4b6a37783c..e187908d3f1e6 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
