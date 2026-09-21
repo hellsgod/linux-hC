@@ -1,6 +1,6 @@
 pkgbase = linux-hC
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
-	pkgver = 7.2.6
+	pkgver = 7.2.7
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.6.tar.xz
+	source = https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.2.7.tar.xz
 	source = config
 	source = base.patch
 	source = cambyses.patch
@@ -33,12 +33,12 @@ pkgbase = linux-hC
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.2/misc/dkms-clang.patch
 	source = nvidia-open-615.71.09.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/615.71.09.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.2/sched/0001-bore.patch
-	b2sums = bbbb558b48b65cf544fe74652437f4aab6578fbb523f4bfef401cecfed8ea94fc939dbab73f2d30216b0729165b8f4a33e23993b082ca9285f259535e7441688
+	b2sums = 0fa304e65b0d96d6082e3040db9c974ebdbcfd54a2bc22a8841db63291787f01bf63862d882ecf77cb810f51e91db4e44ac6e27616f93f945531b868b9a1a00d
 	b2sums = aa13d2e68e3a85079d628d44af76d4332e717a36a71b32d2501e5611391b4647dae1d635756a1ce6de1269e7f6252d09d26b9fd49135b68200253da70c1b5a8d
 	b2sums = 51503d440cb2e50771921bb85a5543429d33f9bf849913feb0f16791f10349d2fefaca4319ca1e3cd3d48cccd31ae4f57772840d3ab933e752df852af8e2f646
 	b2sums = 42397d2e2ee7a68fc3f2f97d0e7e566399195a9d15ec9ee7b96278581dd495ae8c1a91b3c405a94c945757f7911734269b3a8ea92a3a450ee3de29254ecb6066
 	b2sums = 0fb1398e6fc3264054cdccb1638c834ad5547de031aeef864e6255fc43cd69b627f83bf9fc7496bf695cc64eacb2d7f0d9741079cdf573d8151ffb6ba82f45e7
-	b2sums = fd4a5cd1d376f2aabf880c78e033f1d07255f3598f0479ddb68582a7bfda092ee72cab405ffb27358c77219e9085d15c1be05c0a667049292e13afffc6dc8c37
+	b2sums = 9a57532937a9c1e39ee40bc7183edf7c5f12c542e695c655793d82b1899dbfa337a7c24c6153721455cbf9514b3f79a3bc69bcd507b326e97ba952f8b13b2d43
 	b2sums = 2184f92ece054763a4a87f2b9313eb77f59d70aba2d6b352ea8fddd1d8226eb2d2034716a0056055893a25e5e596bda00f8318fb4a142feefa3f9412ebe90314
 	b2sums = 16aa3e611db25771b85eace5b178856a53adb9f3a1fc5dbf2735c4019d991d39a4c71443193285fe86c6a6fde998b5cafb08e0d06aea31783293c18410d08429
 	b2sums = fdedb576a0348374d75d171b910e5d3c3b16f2aa2b9db7fb51d8a830ee4ed6b3768f3801ec99791d09e07f9ac2ca151ffd7ec960d787fe14b3c626502b4c0762
@@ -80,7 +80,7 @@ pkgname = linux-hC-headers
 pkgname = linux-hC-nvidia-open
 	pkgdesc = nvidia open modules of 615.71.09 driver for the linux-hC kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC=7.2.6-1
+	depends = linux-hC=7.2.7-1
 	depends = nvidia-utils=615.71.09
 	depends = libglvnd
 	provides = NVIDIA-MODULE
