@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf5..bebde469f81ae 100644
+index db2cb06aa8cf..bebde469f81a 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf5..bebde469f81ae 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f14..2fe6b7fe6b12d 100644
+index 9153016da8f1..2fe6b7fe6b12 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f14..2fe6b7fe6b12d 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2ebf..95d03be2ce456 100644
+index bd1ef5e2d2eb..95d03be2ce45 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2ebf..95d03be2ce456 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d9..d1967214ef25f 100644
+index 78bbacc14d2d..d1967214ef25 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d9..d1967214ef25f 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index df22113db9cd7..3b0ed46dfc233 100644
+index df22113db9cd..3b0ed46dfc23 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -64,7 +64,7 @@ index df22113db9cd7..3b0ed46dfc233 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (cpu_feature_enabled(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 54e14ed276b52..4edee3768075f 100644
+index 54e14ed276b5..4edee3768075 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
 @@ -1029,6 +1029,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
@@ -88,7 +88,7 @@ index 54e14ed276b52..4edee3768075f 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/drivers/gpu/drm/gud/gud_connector.c b/drivers/gpu/drm/gud/gud_connector.c
-index 8141c3a1e30ad..5c0065c876a77 100644
+index 8141c3a1e30a..5c0065c876a7 100644
 --- a/drivers/gpu/drm/gud/gud_connector.c
 +++ b/drivers/gpu/drm/gud/gud_connector.c
 @@ -399,11 +399,8 @@ static int gud_connector_add_tv_mode(struct gud_device *gdrm, struct drm_connect
@@ -106,7 +106,7 @@ index 8141c3a1e30ad..5c0065c876a77 100644
  	}
  
 diff --git a/fs/internal.h b/fs/internal.h
-index c658c8a5ebd56..9632239036acc 100644
+index c658c8a5ebd5..9632239036ac 100644
 --- a/fs/internal.h
 +++ b/fs/internal.h
 @@ -205,6 +205,7 @@ int do_fchownat(int dfd, const char __user *filename, uid_t user, gid_t group,
@@ -118,7 +118,7 @@ index c658c8a5ebd56..9632239036acc 100644
  /*
   * inode.c
 diff --git a/fs/namei.c b/fs/namei.c
-index 20a6534ea3eff..cffc98f50f3e8 100644
+index 20a6534ea3ef..cffc98f50f3e 100644
 --- a/fs/namei.c
 +++ b/fs/namei.c
 @@ -4789,6 +4789,7 @@ static const char *open_last_lookups(struct nameidata *nd,
@@ -162,7 +162,7 @@ index 20a6534ea3eff..cffc98f50f3e8 100644
  }
  
 diff --git a/fs/open.c b/fs/open.c
-index 6b1c14e684a93..2a7697cee00bc 100644
+index 6b1c14e684a9..2a7697cee00b 100644
 --- a/fs/open.c
 +++ b/fs/open.c
 @@ -931,6 +931,11 @@ static inline int file_get_write_access(struct file *f)
@@ -228,7 +228,7 @@ index 6b1c14e684a93..2a7697cee00bc 100644
  			 const struct cred *cred)
  {
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 5842552294c19..2c163e28dddc3 100644
+index 5842552294c1..2c163e28dddc 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -241,7 +241,7 @@ index 5842552294c19..2c163e28dddc3 100644
  {
  	if (static_branch_unlikely(&perf_sched_events))
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index d7c6a942aa7e0..99d555f26b614 100644
+index d7c6a942aa7e..99d555f26b61 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -32,7 +32,7 @@ extern struct mm_struct *mm_alloc(void);
@@ -328,7 +328,7 @@ index d7c6a942aa7e0..99d555f26b614 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index b121c5d53e308..ea7002ad7d02e 100644
+index b121c5d53e30..ea7002ad7d02 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
 @@ -172,7 +172,7 @@ extern cpumask_var_t tick_nohz_full_mask;
@@ -350,7 +350,7 @@ index b121c5d53e308..ea7002ad7d02e 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 82825e7754993..ce83fc74387d1 100644
+index 82825e775499..ce83fc74387d 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
 @@ -89,24 +89,24 @@ static __always_inline void vtime_account_guest_exit(void)
@@ -383,7 +383,7 @@ index 82825e7754993..ce83fc74387d1 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b998ef6b87af4..f59f2a6ce91cc 100644
+index b998ef6b87af..f59f2a6ce91c 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -5090,7 +5090,7 @@ static inline void prepare_task(struct task_struct *next)
@@ -441,7 +441,7 @@ index b998ef6b87af4..f59f2a6ce91cc 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index ade1eceb39b80..c53abd3170b7b 100644
+index ade1eceb39b8..c53abd3170b7 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -13534,12 +13534,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
@@ -463,7 +463,7 @@ index ade1eceb39b80..c53abd3170b7b 100644
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index e656c7059bf86..530e1ebbcf3b2 100644
+index e656c7059bf8..530e1ebbcf3b 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
 @@ -1482,12 +1482,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
@@ -562,8 +562,127 @@ index e656c7059bf86..530e1ebbcf3b2 100644
  	__releases(__rq_lockp(rq))
  {
  	raw_spin_rq_unlock(rq);
+diff --git a/mm/slub.c b/mm/slub.c
+index f9b56cb439e7..e80ef16cebb7 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -422,6 +422,7 @@ struct node_barn {
+ 	spinlock_t lock;
+ 	struct list_head sheaves_full;
+ 	struct list_head sheaves_empty;
++	struct slab_sheaf *sheaf_partial;
+ 	unsigned int nr_full;
+ 	unsigned int nr_empty;
+ };
+@@ -3298,6 +3299,7 @@ static void barn_init(struct node_barn *barn)
+ 	spin_lock_init(&barn->lock);
+ 	INIT_LIST_HEAD(&barn->sheaves_full);
+ 	INIT_LIST_HEAD(&barn->sheaves_empty);
++	barn->sheaf_partial = NULL;
+ 	barn->nr_full = 0;
+ 	barn->nr_empty = 0;
+ }
+@@ -3315,6 +3317,10 @@ static void barn_shrink(struct kmem_cache *s, struct node_barn *barn)
+ 	barn->nr_full = 0;
+ 	list_splice_init(&barn->sheaves_empty, &empty_list);
+ 	barn->nr_empty = 0;
++	if (barn->sheaf_partial) {
++		list_add(&barn->sheaf_partial->barn_list, &full_list);
++		barn->sheaf_partial = NULL;
++	}
+ 
+ 	spin_unlock_irqrestore(&barn->lock, flags);
+ 
+@@ -5073,12 +5079,87 @@ void *kmem_cache_alloc_node_noprof(struct kmem_cache *s, gfp_t gfpflags, int nod
+ }
+ EXPORT_SYMBOL(kmem_cache_alloc_node_noprof);
+ 
++/*
++ * Refill @sheaf from the barn: from its partial sheaf first, then from its full
++ * sheaves. A sheaf that objects were copied from stays in the barn as the
++ * partial sheaf if it still holds objects, or goes on the empty list if it is
++ * empty.
++ *
++ * Returns true if the sheaf is now full, at s->sheaf_capacity.
++ * Returns false if the sheaf is still not full.
++ */
++static bool refill_sheaf_from_barn(struct kmem_cache *s,
++				   struct slab_sheaf *sheaf)
++{
++	struct node_barn *barn = get_barn(s);
++	struct slab_sheaf *src;
++	unsigned int to_move;
++	unsigned long flags;
++
++	if (!barn)
++		return false;
++
++	if (!data_race(barn->nr_full) && !data_race(barn->sheaf_partial))
++		return false;
++
++	spin_lock_irqsave(&barn->lock, flags);
++
++	/*
++	 * The partial sheaf can hold fewer objects than @sheaf needs to
++	 * reach capacity, and a sheaf on the full list is not necessarily
++	 * full (see the comment in rcu_free_sheaf()), so keep taking from
++	 * the barn until @sheaf is full or nothing is left.
++	 */
++	while (sheaf->size < s->sheaf_capacity) {
++		src = barn->sheaf_partial;
++		barn->sheaf_partial = NULL;
++		if (!src) {
++			if (!barn->nr_full)
++				break;
++			src = list_first_entry(&barn->sheaves_full,
++					       struct slab_sheaf, barn_list);
++			list_del(&src->barn_list);
++			barn->nr_full--;
++		}
++
++		to_move = min(s->sheaf_capacity - sheaf->size, src->size);
++		src->size -= to_move;
++		memcpy(&sheaf->objects[sheaf->size], &src->objects[src->size],
++		       to_move * sizeof(void *));
++		sheaf->size += to_move;
++
++		if (src->size) {
++			barn->sheaf_partial = src;
++		} else {
++			/*
++			 * No empty-limit check: the sheaf put on the empty list
++			 * was already in the barn, so the barn holds no more
++			 * sheaves than before. barn_replace_empty_sheaf() skips
++			 * the check for the same reason.
++			 */
++			list_add(&src->barn_list, &barn->sheaves_empty);
++			barn->nr_empty++;
++		}
++	}
++
++	spin_unlock_irqrestore(&barn->lock, flags);
++
++	if (sheaf->size < s->sheaf_capacity)
++		return false;
++
++	stat(s, BARN_GET);
++	return true;
++}
++
+ static int __prefill_sheaf_pfmemalloc(struct kmem_cache *s,
+ 				      struct slab_sheaf *sheaf, gfp_t gfp)
+ {
+ 	gfp_t gfp_nomemalloc;
+ 	int ret;
+ 
++	if (refill_sheaf_from_barn(s, sheaf))
++		return 0;
++
+ 	gfp_nomemalloc = gfp | __GFP_NOMEMALLOC;
+ 	if (gfp_pfmemalloc_allowed(gfp))
+ 		gfp_nomemalloc |= __GFP_NOWARN;
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 66e4b6a37783c..e187908d3f1e6 100644
+index 66e4b6a37783..e187908d3f1e 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
