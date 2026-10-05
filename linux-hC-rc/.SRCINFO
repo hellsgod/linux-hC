@@ -1,6 +1,6 @@
 pkgbase = linux-hC-rc
 	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate
-	pkgver = 7.3.rc5
+	pkgver = 7.3.rc6
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
 	arch = x86_64
@@ -21,7 +21,7 @@ pkgbase = linux-hC-rc
 	options = !strip
 	options = !debug
 	options = !lto
-	source = https://github.com/torvalds/linux/archive/refs/tags/v7.3-rc5.tar.gz
+	source = https://github.com/torvalds/linux/archive/refs/tags/v7.3-rc6.tar.gz
 	source = config
 	source = base.patch
 	source = cambyses.patch
@@ -33,7 +33,7 @@ pkgbase = linux-hC-rc
 	source = nvidia-open-615.71.09.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/615.71.09.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/misc/nvidia/0003-Pass-dmem_cgroup_init-to-dmem_cgroup_register_region.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/sched/0001-bore.patch
-	b2sums = 4175e807cca0c48e425df3ef20fe6e2fe59e1f6827b5dd41720b3d0b8ec9c9b0431ce89efce077416f2824ddfecd4a56d29bfb432a7641f67592db1337bc03e6
+	b2sums = 278bfbe10d8155afde4fb5923571a1f0ab2cf2ae5351b1477559550aeb689b951e68269a89ae605b546d8a252d26248fac8f3107bd306fb75cbd2bc95f5bb63f
 	b2sums = 0c1015a25be11e7d17c71b8d7ab6e00cfa7d4409b304907a8f9044632480dde5982b480a12b97b83b61ec6f989b1805056ac6d4f8955448343e9feb3a984d0a5
 	b2sums = b7bbd00ece5108a87f99577f9252024574cacdb153b05165388efbbb64ffe4146f32a64870dc117a0563c32b159acc0225cd8d4aaa309f0c51ea834a63742008
 	b2sums = df2f0242719c9a7ac19d12edc5f9fdd446f65bd23c192a56095ab3d199f41559dc7914205a32d54d253992b73e884ea4acec6ba590346c37187a80bfecf73a21
@@ -80,7 +80,7 @@ pkgname = linux-hC-rc-headers
 pkgname = linux-hC-rc-nvidia-open
 	pkgdesc = nvidia open modules of 615.71.09 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
-	depends = linux-hC-rc=7.3.rc5-1
+	depends = linux-hC-rc=7.3.rc6-1
 	depends = nvidia-utils=615.71.09
 	depends = libglvnd
 	provides = NVIDIA-MODULE
