@@ -186,7 +186,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=615.71.09
+_nv_ver=615.78.08
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -220,8 +220,7 @@ if _is_lto_kernel; then
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
-     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
-              "${_patchsource}/misc/nvidia/0003-Pass-dmem_cgroup_init-to-dmem_cgroup_register_region.patch")
+     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz")
 fi
 
 # Use generated AutoFDO Profile
@@ -667,6 +666,5 @@ b2sums=('278bfbe10d8155afde4fb5923571a1f0ab2cf2ae5351b1477559550aeb689b951e68269
         '2184f92ece054763a4a87f2b9313eb77f59d70aba2d6b352ea8fddd1d8226eb2d2034716a0056055893a25e5e596bda00f8318fb4a142feefa3f9412ebe90314'
         'f7a6b68b345c02ea17088cb3bc01d9058729e46a1437e250aa188361872dc5d04fbfb2f0b7e6abb9db7f41f09d8aff419e20f37fdb10031df7e7ef86d4faf545'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
-        'c5c57d51320090dff1afe917a087339b7071c580338e2f67d1c0b989fc2116614db0fdbb6dcb270e8dae2d6fa0ec831a0d3c584af9dc2481d857642b1805db0d'
-        'c710ded32a62af6a755a837fbd91ddda81d8fcd3905caaf7c396a91a027148d522fbaafedcc02be8d0bf584c8adfe74c065cf3fe60b1ca6c36dfd401a835e86d'
+        '9958823fa89ae760914c87fb00d486f559e019ced66021ce4f61f0dfd88869738be352a43007f1587130439741ae54b0f10d07cb070c4cdc0339f5cee77237b6'
         'a9f6f3abf51398d82544b02f99a70510aabb9184279b4d1e2b98a541f604ee3ea7fff91e56a7c43d7e9bcfe6f204833893f9de951b55af705b6d19e581ef044a')
