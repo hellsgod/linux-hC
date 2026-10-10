@@ -1,5 +1,5 @@
 diff --git a/arch/arm/include/asm/mmu_context.h b/arch/arm/include/asm/mmu_context.h
-index db2cb06aa8cf..bebde469f81a 100644
+index db2cb06aa8cf5..bebde469f81ae 100644
 --- a/arch/arm/include/asm/mmu_context.h
 +++ b/arch/arm/include/asm/mmu_context.h
 @@ -80,7 +80,7 @@ static inline void check_and_switch_context(struct mm_struct *mm,
@@ -12,7 +12,7 @@ index db2cb06aa8cf..bebde469f81a 100644
  	struct mm_struct *mm = current->mm;
  
 diff --git a/arch/riscv/include/asm/sync_core.h b/arch/riscv/include/asm/sync_core.h
-index 9153016da8f1..2fe6b7fe6b12 100644
+index 9153016da8f14..2fe6b7fe6b12d 100644
 --- a/arch/riscv/include/asm/sync_core.h
 +++ b/arch/riscv/include/asm/sync_core.h
 @@ -6,7 +6,7 @@
@@ -25,7 +25,7 @@ index 9153016da8f1..2fe6b7fe6b12 100644
  	asm volatile ("fence.i" ::: "memory");
  }
 diff --git a/arch/s390/include/asm/mmu_context.h b/arch/s390/include/asm/mmu_context.h
-index bd1ef5e2d2eb..95d03be2ce45 100644
+index bd1ef5e2d2ebf..95d03be2ce456 100644
 --- a/arch/s390/include/asm/mmu_context.h
 +++ b/arch/s390/include/asm/mmu_context.h
 @@ -93,7 +93,7 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
@@ -38,7 +38,7 @@ index bd1ef5e2d2eb..95d03be2ce45 100644
  	struct task_struct *tsk = current;
  	struct mm_struct *mm = tsk->mm;
 diff --git a/arch/sparc/include/asm/mmu_context_64.h b/arch/sparc/include/asm/mmu_context_64.h
-index 78bbacc14d2d..d1967214ef25 100644
+index 78bbacc14d2d9..d1967214ef25f 100644
 --- a/arch/sparc/include/asm/mmu_context_64.h
 +++ b/arch/sparc/include/asm/mmu_context_64.h
 @@ -160,7 +160,7 @@ static inline void arch_start_context_switch(struct task_struct *prev)
@@ -51,7 +51,7 @@ index 78bbacc14d2d..d1967214ef25 100644
  	/* Restore the state of MCDPER register for the new process
  	 * just switched to.
 diff --git a/arch/x86/include/asm/sync_core.h b/arch/x86/include/asm/sync_core.h
-index 96bda43538ee..4b55fa353bb5 100644
+index 96bda43538ee7..4b55fa353bb5f 100644
 --- a/arch/x86/include/asm/sync_core.h
 +++ b/arch/x86/include/asm/sync_core.h
 @@ -93,7 +93,7 @@ static __always_inline void sync_core(void)
@@ -64,10 +64,10 @@ index 96bda43538ee..4b55fa353bb5 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (static_cpu_has(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 2d9ae6ab1701..d74d3657e73a 100644
+index d61df70d6875e..361c6c3c1c202 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
-@@ -1021,6 +1021,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+@@ -1027,6 +1027,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
  	}
  }
  
@@ -75,7 +75,7 @@ index 2d9ae6ab1701..d74d3657e73a 100644
  static const struct x86_cpu_id zen5_rdseed_microcode[] = {
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x08, 0x1, 0x0b008121),
-@@ -1042,6 +1043,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
+@@ -1048,6 +1049,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
  		pr_emerg_once("RDSEED32 is broken. Disabling the corresponding CPUID bit.\n");
  	}
  }
@@ -87,151 +87,193 @@ index 2d9ae6ab1701..d74d3657e73a 100644
  
  static void init_amd(struct cpuinfo_x86 *c)
  {
-diff --git a/drivers/dma-buf/udmabuf.c b/drivers/dma-buf/udmabuf.c
-index 94b8ecb892bb..5d6878604451 100644
---- a/drivers/dma-buf/udmabuf.c
-+++ b/drivers/dma-buf/udmabuf.c
-@@ -26,10 +26,10 @@ MODULE_PARM_DESC(size_limit_mb, "Max size of a dmabuf, in megabytes. Default is
+diff --git a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+index 5ba196dd9d7ad..b09dd0d5336f2 100644
+--- a/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
++++ b/drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
+@@ -7015,16 +7015,11 @@ static void fill_stream_properties_from_drm_display_mode(
+ 	timing_out->v_border_top = 0;
+ 	timing_out->v_border_bottom = 0;
+ 	/* TODO: un-hardcode */
+-	if (drm_mode_is_420_only(info, mode_in)
+-			&& (stream->signal == SIGNAL_TYPE_HDMI_TYPE_A ||
+-			    stream->signal == SIGNAL_TYPE_HDMI_FRL)
+-			&& aconnector
+-			&& aconnector->force_yuv_pixel_format == PIXEL_ENCODING_YCBCR420)
+-		timing_out->pixel_encoding = PIXEL_ENCODING_YCBCR420;
+-	else if (drm_mode_is_420_also(info, mode_in)
+-			&& aconnector
+-			&& (aconnector->force_yuv_pixel_format == PIXEL_ENCODING_YCBCR420
+-			|| aconnector->force_yuv420_output))
++	if (drm_mode_is_420_only(info, mode_in) ||
++	    (aconnector &&
++	     (aconnector->force_yuv_pixel_format == PIXEL_ENCODING_YCBCR420 ||
++	      aconnector->force_yuv420_output) &&
++	     drm_mode_is_420_also(info, mode_in)))
+ 		timing_out->pixel_encoding = PIXEL_ENCODING_YCBCR420;
+ 	else if ((connector->display_info.color_formats & BIT(DRM_OUTPUT_COLOR_FORMAT_YCBCR422))
+ 			&& aconnector
+diff --git a/drivers/gpu/drm/gud/gud_connector.c b/drivers/gpu/drm/gud/gud_connector.c
+index 8141c3a1e30ad..5c0065c876a77 100644
+--- a/drivers/gpu/drm/gud/gud_connector.c
++++ b/drivers/gpu/drm/gud/gud_connector.c
+@@ -399,11 +399,8 @@ static int gud_connector_add_tv_mode(struct gud_device *gdrm, struct drm_connect
+ 	for (i = 0; i < num_modes; i++) {
+ 		char *mode = &buf[i * GUD_CONNECTOR_TV_MODE_NAME_LEN];
  
- struct udmabuf {
- 	pgoff_t pagecount;
--	struct folio **folios;
-+	struct page **pages;
- 
- 	/**
--	 * Unlike folios, pinned_folios is only used for unpin.
-+	 * Unlike pages, pinned_folios is only used for unpin.
- 	 * So, nr_pinned is not the same to pagecount, the pinned_folios
- 	 * only set each folio which already pinned when udmabuf_create.
- 	 * Note that, since a folio may be pinned multiple times, each folio
-@@ -41,7 +41,6 @@ struct udmabuf {
- 
- 	struct sg_table *sg;
- 	struct miscdevice *device;
--	pgoff_t *offsets;
- };
- 
- static vm_fault_t udmabuf_vm_fault(struct vm_fault *vmf)
-@@ -55,8 +54,7 @@ static vm_fault_t udmabuf_vm_fault(struct vm_fault *vmf)
- 	if (pgoff >= ubuf->pagecount)
- 		return VM_FAULT_SIGBUS;
- 
--	pfn = folio_pfn(ubuf->folios[pgoff]);
--	pfn += ubuf->offsets[pgoff] >> PAGE_SHIFT;
-+	pfn = page_to_pfn(ubuf->pages[pgoff]);
- 
- 	ret = vmf_insert_pfn(vma, vmf->address, pfn);
- 	if (ret & VM_FAULT_ERROR)
-@@ -73,8 +71,7 @@ static vm_fault_t udmabuf_vm_fault(struct vm_fault *vmf)
- 		if (WARN_ON(pgoff >= ubuf->pagecount))
- 			break;
- 
--		pfn = folio_pfn(ubuf->folios[pgoff]);
--		pfn += ubuf->offsets[pgoff] >> PAGE_SHIFT;
-+		pfn = page_to_pfn(ubuf->pages[pgoff]);
- 
- 		/**
- 		 * If the below vmf_insert_pfn() fails, we do not return an
-@@ -109,22 +106,11 @@ static int mmap_udmabuf(struct dma_buf *buf, struct vm_area_struct *vma)
- static int vmap_udmabuf(struct dma_buf *buf, struct iosys_map *map)
- {
- 	struct udmabuf *ubuf = buf->priv;
--	struct page **pages;
- 	void *vaddr;
--	pgoff_t pg;
- 
- 	dma_resv_assert_held(buf->resv);
- 
--	pages = kvmalloc_objs(*pages, ubuf->pagecount);
--	if (!pages)
--		return -ENOMEM;
+-		if (!memchr(mode, '\0', GUD_CONNECTOR_TV_MODE_NAME_LEN)) {
+-			ret = -EIO;
+-			goto free;
+-		}
 -
--	for (pg = 0; pg < ubuf->pagecount; pg++)
--		pages[pg] = folio_page(ubuf->folios[pg],
--				       ubuf->offsets[pg] >> PAGE_SHIFT);
--
--	vaddr = vm_map_ram(pages, ubuf->pagecount, -1);
--	kvfree(pages);
-+	vaddr = vm_map_ram(ubuf->pages, ubuf->pagecount, -1);
- 	if (!vaddr)
- 		return -EINVAL;
++		/* The device is not trusted to NUL-terminate the name */
++		mode[GUD_CONNECTOR_TV_MODE_NAME_LEN - 1] = '\0';
+ 		modes[i] = mode;
+ 	}
  
-@@ -146,22 +132,18 @@ static struct sg_table *get_sg_table(struct device *dev, struct dma_buf *buf,
+diff --git a/drivers/net/wireguard/queueing.h b/drivers/net/wireguard/queueing.h
+index 79b6d70de236b..663b19b783953 100644
+--- a/drivers/net/wireguard/queueing.h
++++ b/drivers/net/wireguard/queueing.h
+@@ -78,12 +78,14 @@ static inline void wg_reset_packet(struct sk_buff *skb, bool encapsulating)
+ 	u8 l4_hash = skb->l4_hash;
+ 	u8 sw_hash = skb->sw_hash;
+ 	u32 hash = skb->hash;
++	u8 tstamp_type = skb->tstamp_type;
+ 	skb_scrub_packet(skb, true);
+ 	memset(&skb->headers, 0, sizeof(skb->headers));
+ 	if (encapsulating) {
+ 		skb->l4_hash = l4_hash;
+ 		skb->sw_hash = sw_hash;
+ 		skb->hash = hash;
++		skb->tstamp_type = tstamp_type;
+ 	}
+ 	skb->queue_mapping = 0;
+ 	skb->nohdr = 0;
+diff --git a/fs/internal.h b/fs/internal.h
+index 355d93f922086..6f0fc23356887 100644
+--- a/fs/internal.h
++++ b/fs/internal.h
+@@ -204,6 +204,7 @@ int do_fchownat(int dfd, const char __user *filename, uid_t user, gid_t group,
+ 		int flag);
+ int chown_common(const struct path *path, uid_t user, gid_t group);
+ extern int vfs_open(const struct path *, struct file *);
++int vfs_open_consume(struct path *, struct file *);
+ 
+ /*
+  * inode.c
+diff --git a/fs/namei.c b/fs/namei.c
+index 19ce43c9a6e66..9180ee85809b8 100644
+--- a/fs/namei.c
++++ b/fs/namei.c
+@@ -4652,6 +4652,7 @@ static const char *open_last_lookups(struct nameidata *nd,
+ static int do_open(struct nameidata *nd,
+ 		   struct file *file, const struct open_flags *op)
  {
- 	struct udmabuf *ubuf = buf->priv;
- 	struct sg_table *sg;
--	struct scatterlist *sgl;
--	unsigned int i = 0;
- 	int ret;
- 
- 	sg = kzalloc_obj(*sg);
- 	if (!sg)
- 		return ERR_PTR(-ENOMEM);
- 
--	ret = sg_alloc_table(sg, ubuf->pagecount, GFP_KERNEL);
-+	ret = sg_alloc_table_from_pages(sg, ubuf->pages, ubuf->pagecount, 0,
-+					ubuf->pagecount << PAGE_SHIFT,
-+					GFP_KERNEL);
- 	if (ret < 0)
- 		goto err_alloc;
- 
--	for_each_sg(sg->sgl, sgl, ubuf->pagecount, i)
--		sg_set_folio(sgl, ubuf->folios[i], PAGE_SIZE,
--			     ubuf->offsets[i]);
--
- 	ret = dma_map_sgtable(dev, sg, direction, 0);
- 	if (ret < 0)
- 		goto err_map;
-@@ -207,12 +189,8 @@ static void unpin_all_folios(struct udmabuf *ubuf)
- 
- static __always_inline int init_udmabuf(struct udmabuf *ubuf, pgoff_t pgcnt)
- {
--	ubuf->folios = kvmalloc_objs(*ubuf->folios, pgcnt);
--	if (!ubuf->folios)
--		return -ENOMEM;
--
--	ubuf->offsets = kvzalloc_objs(*ubuf->offsets, pgcnt);
--	if (!ubuf->offsets)
-+	ubuf->pages = kvmalloc_objs(*ubuf->pages, pgcnt);
-+	if (!ubuf->pages)
- 		return -ENOMEM;
- 
- 	ubuf->pinned_folios = kvmalloc_objs(*ubuf->pinned_folios, pgcnt);
-@@ -225,8 +203,7 @@ static __always_inline int init_udmabuf(struct udmabuf *ubuf, pgoff_t pgcnt)
- static __always_inline void deinit_udmabuf(struct udmabuf *ubuf)
- {
- 	unpin_all_folios(ubuf);
--	kvfree(ubuf->offsets);
--	kvfree(ubuf->folios);
-+	kvfree(ubuf->pages);
++	struct vfsmount *mnt;
+ 	struct mnt_idmap *idmap;
+ 	int open_flag = op->open_flag;
+ 	bool do_truncate;
+@@ -4693,11 +4694,17 @@ static int do_open(struct nameidata *nd,
+ 		error = mnt_want_write(nd->path.mnt);
+ 		if (error)
+ 			return error;
++		/*
++		 * A dedicated reference is needed because after the call to
++		 * vfs_open_consume() we no longer own the reference in nd->path.mnt
++		 * while we need to undo write acess below.
++		 */
++		mnt = mntget(nd->path.mnt);
+ 		do_truncate = true;
+ 	}
+ 	error = may_open(idmap, &nd->path, acc_mode, open_flag);
+ 	if (!error && !(file->f_mode & FMODE_OPENED))
+-		error = vfs_open(&nd->path, file);
++		error = vfs_open_consume(&nd->path, file);
+ 	if (!error)
+ 		error = security_file_post_open(file, op->acc_mode);
+ 	if (!error && do_truncate)
+@@ -4706,8 +4713,10 @@ static int do_open(struct nameidata *nd,
+ 		WARN_ON(1);
+ 		error = -EINVAL;
+ 	}
+-	if (do_truncate)
+-		mnt_drop_write(nd->path.mnt);
++	if (do_truncate) {
++		mnt_drop_write(mnt);
++		mntput(mnt);
++	}
+ 	return error;
  }
  
- static void release_udmabuf(struct dma_buf *buf)
-@@ -344,8 +321,8 @@ static long udmabuf_pin_folios(struct udmabuf *ubuf, struct file *memfd,
- 		ubuf->pinned_folios[nr_pinned++] = folios[cur_folio];
+diff --git a/fs/open.c b/fs/open.c
+index 408925d7bd0b7..91375ab1709c4 100644
+--- a/fs/open.c
++++ b/fs/open.c
+@@ -882,6 +882,11 @@ static inline int file_get_write_access(struct file *f)
+ 	return error;
+ }
  
- 		for (; subpgoff < fsize; subpgoff += PAGE_SIZE) {
--			ubuf->folios[upgcnt] = folios[cur_folio];
--			ubuf->offsets[upgcnt] = subpgoff;
-+			ubuf->pages[upgcnt] = folio_page(folios[cur_folio],
-+						subpgoff >> PAGE_SHIFT);
- 			++upgcnt;
++/*
++ * Populate struct file
++ *
++ * NOTE: it assumes f_path is populated and consumes the caller's reference.
++ */
+ static int do_dentry_open(struct file *f,
+ 			  int (*open)(struct inode *, struct file *))
+ {
+@@ -889,7 +894,6 @@ static int do_dentry_open(struct file *f,
+ 	struct inode *inode = f->f_path.dentry->d_inode;
+ 	int error;
  
- 			if (++cur_pgcnt >= pgcnt)
-diff --git a/fs/btrfs/super.c b/fs/btrfs/super.c
-index b26aa9169e83..64514d600eec 100644
---- a/fs/btrfs/super.c
-+++ b/fs/btrfs/super.c
-@@ -1873,6 +1873,7 @@ static int btrfs_get_tree_super(struct fs_context *fc)
- 	fs_info->fs_devices = fs_devices;
- 	mutex_unlock(&uuid_mutex);
+-	path_get(&f->f_path);
+ 	f->f_inode = inode;
+ 	f->f_mapping = inode->i_mapping;
+ 	f->f_wb_err = filemap_sample_wb_err(f->f_mapping);
+@@ -1006,6 +1010,7 @@ int finish_open(struct file *file, struct dentry *dentry,
+ 	BUG_ON(file->f_mode & FMODE_OPENED); /* once it's opened, it's opened */
  
-+	fc->sb_flags |= SB_NOSEC;
+ 	file->__f_path.dentry = dentry;
++	path_get(&file->f_path);
+ 	return do_dentry_open(file, open);
+ }
+ EXPORT_SYMBOL(finish_open);
+@@ -1049,6 +1054,7 @@ int vfs_open(const struct path *path, struct file *file)
+ 	int ret;
  
- 	sb = sget_fc(fc, btrfs_fc_test_super, set_anon_super_fc);
- 	if (IS_ERR(sb)) {
+ 	file->__f_path = *path;
++	path_get(&file->f_path);
+ 	ret = do_dentry_open(file, NULL);
+ 	if (!ret) {
+ 		/*
+@@ -1061,6 +1067,25 @@ int vfs_open(const struct path *path, struct file *file)
+ 	return ret;
+ }
+ 
++/**
++ * vfs_open_consume - open the file at the given path and consume the reference
++ * @path: path to open
++ * @file: newly allocated file with f_flag initialized
++ */
++int vfs_open_consume(struct path *path, struct file *file)
++{
++	int ret;
++
++	file->__f_path = *path;
++	path->mnt = NULL;
++	path->dentry = NULL;
++	ret = do_dentry_open(file, NULL);
++	if (!ret) {
++		fsnotify_open(file);
++	}
++	return ret;
++}
++
+ struct file *dentry_open(const struct path *path, int flags,
+ 			 const struct cred *cred)
+ {
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index 48d851fbd8ea..7c1dac8da5e5 100644
+index 48d851fbd8ea5..7c1dac8da5e59 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
 @@ -1632,7 +1632,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
@@ -243,8 +285,34 @@ index 48d851fbd8ea..7c1dac8da5e5 100644
  					    struct task_struct *task)
  {
  	if (static_branch_unlikely(&perf_sched_events))
+diff --git a/include/linux/rmap.h b/include/linux/rmap.h
+index 8dc0871e5f001..e090aa09825d5 100644
+--- a/include/linux/rmap.h
++++ b/include/linux/rmap.h
+@@ -843,7 +843,7 @@ static inline int folio_try_share_anon_rmap_pmd(struct folio *folio,
+  * Called from mm/vmscan.c to handle paging out
+  */
+ int folio_referenced(struct folio *, int is_locked,
+-			struct mem_cgroup *memcg, vm_flags_t *vm_flags);
++		struct mem_cgroup *memcg, vma_flags_t *vma_flags);
+ 
+ void try_to_migrate(struct folio *folio, enum ttu_flags flags);
+ void try_to_unmap(struct folio *, enum ttu_flags flags);
+@@ -975,10 +975,9 @@ struct anon_vma *folio_lock_anon_vma_read(const struct folio *folio,
+ #define anon_vma_prepare(vma)	(0)
+ 
+ static inline int folio_referenced(struct folio *folio, int is_locked,
+-				  struct mem_cgroup *memcg,
+-				  vm_flags_t *vm_flags)
++		struct mem_cgroup *memcg, vma_flags_t *vma_flags)
+ {
+-	*vm_flags = 0;
++	vma_flags_clear_all(vma_flags);
+ 	return 0;
+ }
+ 
 diff --git a/include/linux/sched/mm.h b/include/linux/sched/mm.h
-index 95d0040df584..a17730d63f88 100644
+index 95d0040df5841..a17730d63f888 100644
 --- a/include/linux/sched/mm.h
 +++ b/include/linux/sched/mm.h
 @@ -32,7 +32,7 @@ extern struct mm_struct *mm_alloc(void);
@@ -331,10 +399,10 @@ index 95d0040df584..a17730d63f88 100644
  	/*
  	 * The atomic_read() below prevents CSE. The following should
 diff --git a/include/linux/tick.h b/include/linux/tick.h
-index 738007d6f577..df9934a60faf 100644
+index 47750ccd1314b..7009813ecdf87 100644
 --- a/include/linux/tick.h
 +++ b/include/linux/tick.h
-@@ -177,7 +177,7 @@ extern cpumask_var_t tick_nohz_full_mask;
+@@ -175,7 +175,7 @@ extern cpumask_var_t tick_nohz_full_mask;
  #ifdef CONFIG_NO_HZ_FULL
  extern bool tick_nohz_full_running;
  
@@ -343,7 +411,7 @@ index 738007d6f577..df9934a60faf 100644
  {
  	if (!context_tracking_enabled())
  		return false;
-@@ -301,7 +301,7 @@ static inline void __tick_nohz_task_switch(void) { }
+@@ -299,7 +299,7 @@ static inline void __tick_nohz_task_switch(void) { }
  static inline void tick_nohz_full_setup(cpumask_var_t cpumask) { }
  #endif
  
@@ -353,10 +421,10 @@ index 738007d6f577..df9934a60faf 100644
  	if (tick_nohz_full_enabled())
  		__tick_nohz_task_switch();
 diff --git a/include/linux/vtime.h b/include/linux/vtime.h
-index 29dd5b91dd7d..428464bb81b3 100644
+index 82825e7754993..ce83fc74387d1 100644
 --- a/include/linux/vtime.h
 +++ b/include/linux/vtime.h
-@@ -67,24 +67,24 @@ static __always_inline void vtime_account_guest_exit(void)
+@@ -89,24 +89,24 @@ static __always_inline void vtime_account_guest_exit(void)
   * For now vtime state is tied to context tracking. We might want to decouple
   * those later if necessary.
   */
@@ -369,13 +437,13 @@ index 29dd5b91dd7d..428464bb81b3 100644
 -static inline bool vtime_accounting_enabled_cpu(int cpu)
 +static __always_inline bool vtime_accounting_enabled_cpu(int cpu)
  {
- 	return context_tracking_enabled_cpu(cpu);
+ 	return vtime_generic_enabled_cpu(cpu);
  }
  
 -static inline bool vtime_accounting_enabled_this_cpu(void)
 +static __always_inline bool vtime_accounting_enabled_this_cpu(void)
  {
- 	return context_tracking_enabled_this_cpu();
+ 	return vtime_generic_enabled_this_cpu();
  }
  
  extern void vtime_task_switch_generic(struct task_struct *prev);
@@ -386,20 +454,10 @@ index 29dd5b91dd7d..428464bb81b3 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b8871449d3c6..d8273f09c6bc 100644
+index 35d647c8c3683..839c19eda4f49 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -3691,6 +3691,9 @@ static inline void ttwu_do_wakeup(struct task_struct *p)
- 
- void update_rq_avg_idle(struct rq *rq)
- {
-+	if (!rq->idle_stamp)
-+		return;
-+
- 	u64 delta = rq_clock(rq) - rq->idle_stamp;
- 	u64 max = 2*rq->max_idle_balance_cost;
- 
-@@ -4958,7 +4961,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -5091,7 +5091,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -408,7 +466,7 @@ index b8871449d3c6..d8273f09c6bc 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -5002,7 +5005,7 @@ static void zap_balance_callbacks(struct rq *rq)
+@@ -5135,7 +5135,7 @@ static void zap_balance_callbacks(struct rq *rq)
  	rq->balance_callback = found ? &balance_push_callback : NULL;
  }
  
@@ -417,7 +475,7 @@ index b8871449d3c6..d8273f09c6bc 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -5037,7 +5040,7 @@ struct balance_callback balance_push_callback = {
+@@ -5170,7 +5170,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -426,7 +484,7 @@ index b8871449d3c6..d8273f09c6bc 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5111,7 +5114,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5244,7 +5244,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -435,7 +493,7 @@ index b8871449d3c6..d8273f09c6bc 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5145,7 +5148,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5278,7 +5278,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -444,7 +502,7 @@ index b8871449d3c6..d8273f09c6bc 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5199,7 +5202,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5332,7 +5332,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -454,10 +512,10 @@ index b8871449d3c6..d8273f09c6bc 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 3ebec186f982..813897c67ca6 100644
+index bb8a5f358ee19..0f821a68c9fb6 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -12168,12 +12168,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -13350,12 +13350,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -475,156 +533,11 @@ index 3ebec186f982..813897c67ca6 100644
  		/*
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
-diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
-index a83be0c834dd..9ceb7e622404 100644
---- a/kernel/sched/idle.c
-+++ b/kernel/sched/idle.c
-@@ -491,6 +491,9 @@ static void set_next_task_idle(struct rq *rq, struct task_struct *next, bool fir
- 	schedstat_inc(rq->sched_goidle);
- 	next->se.exec_start = rq_clock_task(rq);
- 
-+	if (!rq->idle_stamp)
-+		rq->idle_stamp = rq_clock(rq);
-+
- 	/*
- 	 * rq is about to be idle, check if we need to update the
- 	 * lost_idle_time of clock_pelt
-diff --git a/kernel/sched/membarrier.c b/kernel/sched/membarrier.c
-index 226a6329f3e9..b446b16ed3b2 100644
---- a/kernel/sched/membarrier.c
-+++ b/kernel/sched/membarrier.c
-@@ -164,8 +164,26 @@
- 	| MEMBARRIER_PRIVATE_EXPEDITED_RSEQ_BITMASK			\
- 	| MEMBARRIER_CMD_GET_REGISTRATIONS)
- 
-+/*
-+ * Scoped guard for memory barriers on entry and exit.
-+ * Matches memory barriers before & after rq->curr modification in scheduler.
-+ */
-+DEFINE_LOCK_GUARD_0(mb, smp_mb(), smp_mb())
- static DEFINE_MUTEX(membarrier_ipi_mutex);
-+static DEFINE_PER_CPU(struct mutex, membarrier_cpu_mutexes);
-+
- #define SERIALIZE_IPI() guard(mutex)(&membarrier_ipi_mutex)
-+#define SERIALIZE_IPI_CPU(cpu_id) guard(mutex)(&per_cpu(membarrier_cpu_mutexes, cpu_id))
-+
-+static int __init membarrier_init(void)
-+{
-+	int i;
-+
-+	for_each_possible_cpu(i)
-+		mutex_init(&per_cpu(membarrier_cpu_mutexes, i));
-+	return 0;
-+}
-+core_initcall(membarrier_init);
- 
- static void ipi_mb(void *info)
- {
-@@ -324,7 +342,6 @@ static int membarrier_global_expedited(void)
- 
- static int membarrier_private_expedited(int flags, int cpu_id)
- {
--	cpumask_var_t tmpmask;
- 	struct mm_struct *mm = current->mm;
- 	smp_call_func_t ipi_func = ipi_mb;
- 
-@@ -361,30 +378,45 @@ static int membarrier_private_expedited(int flags, int cpu_id)
- 	 * On RISC-V, this barrier pairing is also needed for the
- 	 * SYNC_CORE command when switching between processes, cf.
- 	 * the inline comments in membarrier_arch_switch_mm().
-+	 *
-+	 * Memory barrier on the caller thread _after_ we finished
-+	 * waiting for the last IPI. Matches memory barriers before
-+	 * rq->curr modification in scheduler.
- 	 */
--	smp_mb();	/* system call entry is not a mb. */
--
--	if (cpu_id < 0 && !zalloc_cpumask_var(&tmpmask, GFP_KERNEL))
--		return -ENOMEM;
--
--	SERIALIZE_IPI();
--	cpus_read_lock();
--
-+	guard(mb)();
- 	if (cpu_id >= 0) {
-+		if (cpu_id >= nr_cpu_ids || !cpu_possible(cpu_id))
-+			return 0;
-+
-+		SERIALIZE_IPI_CPU(cpu_id);
-+		guard(cpus_read_lock)();
- 		struct task_struct *p;
- 
--		if (cpu_id >= nr_cpu_ids || !cpu_online(cpu_id))
--			goto out;
-+		if (!cpu_online(cpu_id))
-+			return 0;
-+
- 		rcu_read_lock();
- 		p = rcu_dereference(cpu_rq(cpu_id)->curr);
- 		if (!p || p->mm != mm) {
- 			rcu_read_unlock();
--			goto out;
-+			return 0;
- 		}
- 		rcu_read_unlock();
-+		/*
-+		 * smp_call_function_single() will call ipi_func() if cpu_id
-+		 * is the calling CPU.
-+		 */
-+		smp_call_function_single(cpu_id, ipi_func, NULL, 1);
- 	} else {
-+		cpumask_var_t __free(free_cpumask_var) tmpmask = CPUMASK_VAR_NULL;
- 		int cpu;
- 
-+		if (!zalloc_cpumask_var(&tmpmask, GFP_KERNEL))
-+			return -ENOMEM;
-+
-+		SERIALIZE_IPI();
-+		guard(cpus_read_lock)();
-+
- 		rcu_read_lock();
- 		for_each_online_cpu(cpu) {
- 			struct task_struct *p;
-@@ -394,15 +426,6 @@ static int membarrier_private_expedited(int flags, int cpu_id)
- 				__cpumask_set_cpu(cpu, tmpmask);
- 		}
- 		rcu_read_unlock();
--	}
--
--	if (cpu_id >= 0) {
--		/*
--		 * smp_call_function_single() will call ipi_func() if cpu_id
--		 * is the calling CPU.
--		 */
--		smp_call_function_single(cpu_id, ipi_func, NULL, 1);
--	} else {
- 		/*
- 		 * For regular membarrier, we can save a few cycles by
- 		 * skipping the current cpu -- we're about to do smp_mb()
-@@ -429,18 +452,6 @@ static int membarrier_private_expedited(int flags, int cpu_id)
- 		}
- 	}
- 
--out:
--	if (cpu_id < 0)
--		free_cpumask_var(tmpmask);
--	cpus_read_unlock();
--
--	/*
--	 * Memory barrier on the caller thread _after_ we finished
--	 * waiting for the last IPI. Matches memory barriers before
--	 * rq->curr modification in scheduler.
--	 */
--	smp_mb();	/* exit from system call is not a mb */
--
- 	return 0;
- }
- 
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 9f63b15d309d..cc8b83e25569 100644
+index f76e6f7f4a014..97e95082a7dd3 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1441,12 +1441,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
+@@ -1460,12 +1460,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
  
  DECLARE_STATIC_KEY_FALSE(__sched_core_enabled);
  
@@ -639,7 +552,7 @@ index 9f63b15d309d..cc8b83e25569 100644
  {
  	return !static_branch_unlikely(&__sched_core_enabled);
  }
-@@ -1455,7 +1455,7 @@ static inline bool sched_core_disabled(void)
+@@ -1474,7 +1474,7 @@ static inline bool sched_core_disabled(void)
   * Be careful with this function; not for general use. The return value isn't
   * stable unless you actually hold a relevant rq->__lock.
   */
@@ -648,7 +561,7 @@ index 9f63b15d309d..cc8b83e25569 100644
  {
  	if (sched_core_enabled(rq))
  		return &rq->core->__lock;
-@@ -1463,7 +1463,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
+@@ -1482,7 +1482,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
  	return &rq->__lock;
  }
  
@@ -657,7 +570,7 @@ index 9f63b15d309d..cc8b83e25569 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	if (rq->core_enabled)
-@@ -1558,12 +1558,12 @@ static inline bool sched_core_disabled(void)
+@@ -1585,12 +1585,12 @@ static inline bool sched_core_disabled(void)
  	return true;
  }
  
@@ -672,7 +585,7 @@ index 9f63b15d309d..cc8b83e25569 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	return &rq->__lock;
-@@ -1618,33 +1618,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
+@@ -1650,33 +1650,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
  extern bool raw_spin_rq_trylock(struct rq *rq)
  	__cond_acquires(true, __rq_lockp(rq));
  
@@ -711,7 +624,7 @@ index 9f63b15d309d..cc8b83e25569 100644
  	__acquires(__rq_lockp(rq))
  {
  	unsigned long flags;
-@@ -1655,7 +1655,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
+@@ -1687,7 +1687,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
  	return flags;
  }
  
@@ -720,81 +633,417 @@ index 9f63b15d309d..cc8b83e25569 100644
  	__releases(__rq_lockp(rq))
  {
  	raw_spin_rq_unlock(rq);
-diff --git a/mm/swap.c b/mm/swap.c
-index 5cc44f0de987..2dd84813f4dd 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -160,14 +160,42 @@ static void folio_batch_move_lru(struct folio_batch *fbatch, move_fn_t move_fn)
- 	int i;
- 	struct lruvec *lruvec = NULL;
- 	unsigned long flags = 0;
-+	struct folio_batch free_fbatch;
-+	bool is_lru_add = (move_fn == lru_add);
+diff --git a/mm/rmap.c b/mm/rmap.c
+index 143cf80d95f42..33be57bc9bf8c 100644
+--- a/mm/rmap.c
++++ b/mm/rmap.c
+@@ -907,7 +907,7 @@ pmd_t *mm_find_pmd(struct mm_struct *mm, unsigned long address)
+ struct folio_referenced_arg {
+ 	int mapcount;
+ 	int referenced;
+-	vm_flags_t vm_flags;
++	vma_flags_t vma_flags;
+ 	struct mem_cgroup *memcg;
+ };
+ 
+@@ -926,7 +926,7 @@ static bool folio_referenced_one(struct folio *folio,
+ 		address = pvmw.address;
+ 		nr = 1;
+ 
+-		if (vma->vm_flags & VM_LOCKED) {
++		if (vma_test(vma, VMA_LOCKED_BIT)) {
+ 			ptes++;
+ 			pra->mapcount--;
+ 
+@@ -947,7 +947,7 @@ static bool folio_referenced_one(struct folio *folio,
+ 			/* Restore the mlock which got missed */
+ 			mlock_vma_folio(folio, vma);
+ 			page_vma_mapped_walk_done(&pvmw);
+-			pra->vm_flags |= VM_LOCKED;
++			vma_flags_set(&pra->vma_flags, VMA_LOCKED_BIT);
+ 			return false; /* To break the loop */
+ 		}
+ 
+@@ -1015,8 +1015,11 @@ static bool folio_referenced_one(struct folio *folio,
+ 		referenced++;
+ 
+ 	if (referenced) {
++		vma_flags_t vma_flags = vma->flags;
++
+ 		pra->referenced++;
+-		pra->vm_flags |= vma->vm_flags & ~VM_LOCKED;
++		vma_flags_clear(&vma_flags, VMA_LOCKED_BIT);
++		vma_flags_set_mask(&pra->vma_flags, vma_flags);
+ 	}
+ 
+ 	if (!pra->mapcount)
+@@ -1054,7 +1057,7 @@ static bool invalid_folio_referenced_vma(struct vm_area_struct *vma, void *arg)
+  * @folio: The folio to test.
+  * @is_locked: Caller holds lock on the folio.
+  * @memcg: target memory cgroup
+- * @vm_flags: A combination of all the vma->vm_flags which referenced the folio.
++ * @vma_flags: A combination of all the vma->flags which referenced the folio.
+  *
+  * Quick test_and_clear_referenced for all mappings of a folio,
+  *
+@@ -1062,7 +1065,7 @@ static bool invalid_folio_referenced_vma(struct vm_area_struct *vma, void *arg)
+  * the function bailed out due to rmap lock contention.
+  */
+ int folio_referenced(struct folio *folio, int is_locked,
+-		     struct mem_cgroup *memcg, vm_flags_t *vm_flags)
++		struct mem_cgroup *memcg, vma_flags_t *vma_flags)
+ {
+ 	bool we_locked = false;
+ 	struct folio_referenced_arg pra = {
+@@ -1078,7 +1081,7 @@ int folio_referenced(struct folio *folio, int is_locked,
+ 	};
+ 
+ 	VM_WARN_ON_ONCE_FOLIO(folio_is_zone_device(folio), folio);
+-	*vm_flags = 0;
++	vma_flags_clear_all(vma_flags);
+ 	if (!pra.mapcount)
+ 		return 0;
+ 
+@@ -1092,7 +1095,7 @@ int folio_referenced(struct folio *folio, int is_locked,
+ 	}
+ 
+ 	rmap_walk(folio, &rwc);
+-	*vm_flags = pra.vm_flags;
++	vma_flags_set_mask(vma_flags, pra.vma_flags);
+ 
+ 	if (we_locked)
+ 		folio_unlock(folio);
+diff --git a/mm/slub.c b/mm/slub.c
+index 3791d69ba6f90..3cbb18b06afad 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -416,6 +416,7 @@ struct node_barn {
+ 	spinlock_t lock;
+ 	struct list_head sheaves_full;
+ 	struct list_head sheaves_empty;
++	struct slab_sheaf *sheaf_partial;
+ 	unsigned int nr_full;
+ 	unsigned int nr_empty;
+ };
+@@ -3223,6 +3224,7 @@ static void barn_init(struct node_barn *barn)
+ 	spin_lock_init(&barn->lock);
+ 	INIT_LIST_HEAD(&barn->sheaves_full);
+ 	INIT_LIST_HEAD(&barn->sheaves_empty);
++	barn->sheaf_partial = NULL;
+ 	barn->nr_full = 0;
+ 	barn->nr_empty = 0;
+ }
+@@ -3240,6 +3242,10 @@ static void barn_shrink(struct kmem_cache *s, struct node_barn *barn)
+ 	barn->nr_full = 0;
+ 	list_splice_init(&barn->sheaves_empty, &empty_list);
+ 	barn->nr_empty = 0;
++	if (barn->sheaf_partial) {
++		list_add(&barn->sheaf_partial->barn_list, &full_list);
++		barn->sheaf_partial = NULL;
++	}
+ 
+ 	spin_unlock_irqrestore(&barn->lock, flags);
+ 
+@@ -5000,12 +5006,87 @@ void *kmem_cache_alloc_node_noprof(struct kmem_cache *s, gfp_t gfpflags, int nod
+ }
+ EXPORT_SYMBOL(kmem_cache_alloc_node_noprof);
+ 
++/*
++ * Refill @sheaf from the barn: from its partial sheaf first, then from its full
++ * sheaves. A sheaf that objects were copied from stays in the barn as the
++ * partial sheaf if it still holds objects, or goes on the empty list if it is
++ * empty.
++ *
++ * Returns true if the sheaf is now full, at s->sheaf_capacity.
++ * Returns false if the sheaf is still not full.
++ */
++static bool refill_sheaf_from_barn(struct kmem_cache *s,
++				   struct slab_sheaf *sheaf)
++{
++	struct node_barn *barn = get_barn(s);
++	struct slab_sheaf *src;
++	unsigned int to_move;
++	unsigned long flags;
++
++	if (!barn)
++		return false;
++
++	if (!data_race(barn->nr_full) && !data_race(barn->sheaf_partial))
++		return false;
++
++	spin_lock_irqsave(&barn->lock, flags);
 +
 +	/*
-+	 * If we're adding to the LRU, preemptively filter dead folios. Use
-+	 * this dedicated folio batch for temp storage and deferred cleanup.
++	 * The partial sheaf can hold fewer objects than @sheaf needs to
++	 * reach capacity, and a sheaf on the full list is not necessarily
++	 * full (see the comment in rcu_free_sheaf()), so keep taking from
++	 * the barn until @sheaf is full or nothing is left.
 +	 */
-+	if (is_lru_add)
-+		folio_batch_init(&free_fbatch);
- 
- 	for (i = 0; i < folio_batch_count(fbatch); i++) {
- 		struct folio *folio = fbatch->folios[i];
- 
- 		/* block memcg migration while the folio moves between lru */
--		if (move_fn != lru_add && !folio_test_clear_lru(folio))
-+		if (!is_lru_add && !folio_test_clear_lru(folio))
- 			continue;
- 
-+		/*
-+		 * Filter dead folios by moving them from the add batch to the temp
-+		 * batch for freeing after this loop.
-+		 *
-+		 * We're bypassing normal cleanup. Clear flags that are not
-+		 * applicable to dead folios.
-+		 *
-+		 * Since the folio may be part of a huge page, unqueue from
-+		 * deferred split list to avoid a dangling list entry.
-+		 */
-+		if (is_lru_add && folio_ref_freeze(folio, 1)) {
-+			__folio_clear_active(folio);
-+			__folio_clear_unevictable(folio);
-+			folio_unqueue_deferred_split(folio);
-+			fbatch->folios[i] = NULL;
-+			folio_batch_add(&free_fbatch, folio);
-+			continue;
++	while (sheaf->size < s->sheaf_capacity) {
++		src = barn->sheaf_partial;
++		barn->sheaf_partial = NULL;
++		if (!src) {
++			if (!barn->nr_full)
++				break;
++			src = list_first_entry(&barn->sheaves_full,
++					       struct slab_sheaf, barn_list);
++			list_del(&src->barn_list);
++			barn->nr_full--;
 +		}
 +
- 		folio_lruvec_relock_irqsave(folio, &lruvec, &flags);
- 		move_fn(lruvec, folio);
- 
-@@ -176,6 +204,13 @@ static void folio_batch_move_lru(struct folio_batch *fbatch, move_fn_t move_fn)
- 
- 	if (lruvec)
- 		lruvec_unlock_irqrestore(lruvec, flags);
++		to_move = min(s->sheaf_capacity - sheaf->size, src->size);
++		src->size -= to_move;
++		memcpy(&sheaf->objects[sheaf->size], &src->objects[src->size],
++		       to_move * sizeof(void *));
++		sheaf->size += to_move;
 +
-+	/* Cleanup filtered dead folios. */
-+	if (is_lru_add) {
-+		mem_cgroup_uncharge_folios(&free_fbatch);
-+		free_unref_folios(&free_fbatch);
++		if (src->size) {
++			barn->sheaf_partial = src;
++		} else {
++			/*
++			 * No empty-limit check: the sheaf put on the empty list
++			 * was already in the barn, so the barn holds no more
++			 * sheaves than before. barn_replace_empty_sheaf() skips
++			 * the check for the same reason.
++			 */
++			list_add(&src->barn_list, &barn->sheaves_empty);
++			barn->nr_empty++;
++		}
 +	}
 +
- 	folios_put(fbatch);
++	spin_unlock_irqrestore(&barn->lock, flags);
++
++	if (sheaf->size < s->sheaf_capacity)
++		return false;
++
++	stat(s, BARN_GET);
++	return true;
++}
++
+ static int __prefill_sheaf_pfmemalloc(struct kmem_cache *s,
+ 				      struct slab_sheaf *sheaf, gfp_t gfp)
+ {
+ 	gfp_t gfp_nomemalloc;
+ 	int ret;
+ 
++	if (refill_sheaf_from_barn(s, sheaf))
++		return 0;
++
+ 	gfp_nomemalloc = gfp | __GFP_NOMEMALLOC;
+ 	if (gfp_pfmemalloc_allowed(gfp))
+ 		gfp_nomemalloc |= __GFP_NOWARN;
+diff --git a/mm/vmscan.c b/mm/vmscan.c
+index 8781dbcdb99a6..bcd18e44f98d3 100644
+--- a/mm/vmscan.c
++++ b/mm/vmscan.c
+@@ -262,6 +262,12 @@ static bool writeback_throttling_sane(struct scan_control *sc)
+ }
+ #endif
+ 
++static inline bool is_exec_file_folio(const struct folio *folio,
++		const vma_flags_t *vma_flags)
++{
++	return vma_flags_test(vma_flags, VMA_EXEC_BIT) && folio_is_file_lru(folio);
++}
++
+ static void set_task_reclaim_state(struct task_struct *task,
+ 				   struct reclaim_state *rs)
+ {
+@@ -830,10 +836,16 @@ enum folio_references {
+  * with PG_active set. In contrast, the aging (page table walk) path uses
+  * folio_update_gen().
+  */
+-static bool lru_gen_set_refs(struct folio *folio)
++static bool lru_gen_set_refs(struct folio *folio, const vma_flags_t *vma_flags)
+ {
+ 	/* see the comment on LRU_REFS_FLAGS */
+ 	if (!folio_test_referenced(folio) && !folio_test_workingset(folio)) {
++		/* Activate file-backed executable folios after first usage. */
++		if (is_exec_file_folio(folio, vma_flags)) {
++			set_mask_bits(&folio->flags.f, LRU_REFS_FLAGS, BIT(PG_workingset));
++			return true;
++		}
++
+ 		set_mask_bits(&folio->flags.f, LRU_REFS_MASK, BIT(PG_referenced));
+ 		return false;
+ 	}
+@@ -846,7 +858,7 @@ static bool lru_gen_set_refs(struct folio *folio)
+ 	return true;
+ }
+ #else
+-static bool lru_gen_set_refs(struct folio *folio)
++static bool lru_gen_set_refs(struct folio *folio, const vma_flags_t *vma_flags)
+ {
+ 	return false;
+ }
+@@ -856,16 +868,16 @@ static enum folio_references folio_check_references(struct folio *folio,
+ 						  struct scan_control *sc)
+ {
+ 	int referenced_ptes, referenced_folio;
+-	vm_flags_t vm_flags;
++	vma_flags_t vma_flags;
+ 
+ 	referenced_ptes = folio_referenced(folio, 1, sc->target_mem_cgroup,
+-					   &vm_flags);
++					   &vma_flags);
+ 
+ 	/*
+ 	 * The supposedly reclaimable folio was found to be in a VM_LOCKED vma.
+ 	 * Let the folio, now marked Mlocked, be moved to the unevictable list.
+ 	 */
+-	if (vm_flags & VM_LOCKED)
++	if (vma_flags_test(&vma_flags, VMA_LOCKED_BIT))
+ 		return FOLIOREF_ACTIVATE;
+ 
+ 	/*
+@@ -881,7 +893,7 @@ static enum folio_references folio_check_references(struct folio *folio,
+ 		if (!referenced_ptes)
+ 			return FOLIOREF_RECLAIM;
+ 
+-		return lru_gen_set_refs(folio) ? FOLIOREF_ACTIVATE : FOLIOREF_KEEP;
++		return lru_gen_set_refs(folio, &vma_flags) ? FOLIOREF_ACTIVATE : FOLIOREF_KEEP;
+ 	}
+ 
+ 	referenced_folio = folio_test_clear_referenced(folio);
+@@ -909,7 +921,7 @@ static enum folio_references folio_check_references(struct folio *folio,
+ 		/*
+ 		 * Activate file-backed executable folios after first usage.
+ 		 */
+-		if ((vm_flags & VM_EXEC) && folio_is_file_lru(folio))
++		if (is_exec_file_folio(folio, &vma_flags))
+ 			return FOLIOREF_ACTIVATE;
+ 
+ 		return FOLIOREF_KEEP;
+@@ -2067,7 +2079,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
+ {
+ 	unsigned long nr_taken;
+ 	unsigned long nr_scanned;
+-	vm_flags_t vm_flags;
++	vma_flags_t vma_flags;
+ 	LIST_HEAD(l_hold);	/* The folios which were snipped off */
+ 	LIST_HEAD(l_active);
+ 	LIST_HEAD(l_inactive);
+@@ -2111,7 +2123,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
+ 
+ 		/* Referenced or rmap lock contention: rotate */
+ 		if (folio_referenced(folio, 0, sc->target_mem_cgroup,
+-				     &vm_flags) != 0) {
++				     &vma_flags) != 0) {
+ 			/*
+ 			 * Identify referenced, file-backed active folios and
+ 			 * give them one more trip around the active list. So
+@@ -2121,7 +2133,7 @@ static void shrink_active_list(unsigned long nr_to_scan,
+ 			 * IO, plus JVM can create lots of anon VM_EXEC folios,
+ 			 * so we ignore them here.
+ 			 */
+-			if ((vm_flags & VM_EXEC) && folio_is_file_lru(folio)) {
++			if (is_exec_file_folio(folio, &vma_flags)) {
+ 				nr_rotated += folio_nr_pages(folio);
+ 				list_add(&folio->lru, &l_active);
+ 				continue;
+@@ -3190,14 +3202,19 @@ static bool positive_ctrl_err(struct ctrl_pos *sp, struct ctrl_pos *pv)
+  ******************************************************************************/
+ 
+ /* promote pages accessed through page tables */
+-static int folio_update_gen(struct folio *folio, int gen)
++static int folio_update_gen(struct folio *folio, int gen, const vma_flags_t *vma_flags)
+ {
+ 	unsigned long new_flags, old_flags = READ_ONCE(folio->flags.f);
+ 
+ 	VM_WARN_ON_ONCE(gen >= MAX_NR_GENS);
+ 
+-	/* see the comment on LRU_REFS_FLAGS */
+-	if (!folio_test_referenced(folio) && !folio_test_workingset(folio)) {
++	/*
++	 * See the comment on LRU_REFS_FLAGS, and activate file-backed
++	 * executable folios after first usage to avoid typical IO
++	 * thrashing from reclaiming.
++	 */
++	if (!folio_test_referenced(folio) && !folio_test_workingset(folio) &&
++	    !is_exec_file_folio(folio, vma_flags)) {
+ 		set_mask_bits(&folio->flags.f, LRU_REFS_MASK, BIT(PG_referenced));
+ 		return -1;
+ 	}
+@@ -3430,8 +3447,8 @@ static bool suitable_to_scan(int total, int young)
+ 	return young * n >= total;
  }
  
-@@ -964,6 +999,10 @@ void folios_put_refs(struct folio_batch *folios, unsigned int *refs)
- 		struct folio *folio = folios->folios[i];
- 		unsigned int nr_refs = refs ? refs[i] : 1;
+-static void walk_update_folio(struct lru_gen_mm_walk *walk, struct folio *folio,
+-			      int new_gen, bool dirty)
++static void walk_update_folio(struct lru_gen_mm_walk *walk, struct vm_area_struct *vma,
++		struct folio *folio, int new_gen, bool dirty)
+ {
+ 	int old_gen;
  
-+		/* Folio batch entry may have been preemptively removed during drain. */
-+		if (!folio)
-+			continue;
-+
- 		if (is_huge_zero_folio(folio))
+@@ -3444,10 +3461,10 @@ static void walk_update_folio(struct lru_gen_mm_walk *walk, struct folio *folio,
+ 		folio_mark_dirty(folio);
+ 
+ 	if (walk) {
+-		old_gen = folio_update_gen(folio, new_gen);
++		old_gen = folio_update_gen(folio, new_gen, &vma->flags);
+ 		if (old_gen >= 0 && old_gen != new_gen)
+ 			update_batch_size(walk, folio, old_gen, new_gen);
+-	} else if (lru_gen_set_refs(folio)) {
++	} else if (lru_gen_set_refs(folio, &vma->flags)) {
+ 		old_gen = folio_lru_gen(folio);
+ 		if (old_gen >= 0 && old_gen != new_gen)
+ 			folio_activate(folio);
+@@ -3520,7 +3537,7 @@ static bool walk_pte_range(pmd_t *pmd, unsigned long start, unsigned long end,
  			continue;
  
+ 		if (last != folio) {
+-			walk_update_folio(walk, last, gen, dirty);
++			walk_update_folio(walk, args->vma, last, gen, dirty);
+ 
+ 			last = folio;
+ 			dirty = false;
+@@ -3533,7 +3550,7 @@ static bool walk_pte_range(pmd_t *pmd, unsigned long start, unsigned long end,
+ 		walk->mm_stats[MM_LEAF_YOUNG] += nr;
+ 	}
+ 
+-	walk_update_folio(walk, last, gen, dirty);
++	walk_update_folio(walk, args->vma, last, gen, dirty);
+ 	last = NULL;
+ 
+ 	if (i < PTRS_PER_PTE && get_next_vma(PMD_MASK, PAGE_SIZE, args, &start, &end))
+@@ -3611,7 +3628,7 @@ static void walk_pmd_range_locked(pud_t *pud, unsigned long addr, struct vm_area
+ 			goto next;
+ 
+ 		if (last != folio) {
+-			walk_update_folio(walk, last, gen, dirty);
++			walk_update_folio(walk, vma, last, gen, dirty);
+ 
+ 			last = folio;
+ 			dirty = false;
+@@ -3625,7 +3642,7 @@ static void walk_pmd_range_locked(pud_t *pud, unsigned long addr, struct vm_area
+ 		i = i > MIN_LRU_BATCH ? 0 : find_next_bit(bitmap, MIN_LRU_BATCH, i) + 1;
+ 	} while (i <= MIN_LRU_BATCH);
+ 
+-	walk_update_folio(walk, last, gen, dirty);
++	walk_update_folio(walk, vma, last, gen, dirty);
+ 
+ 	lazy_mmu_mode_disable();
+ 	spin_unlock(ptl);
+@@ -4260,7 +4277,7 @@ bool lru_gen_look_around(struct page_vma_mapped_walk *pvmw, unsigned int nr)
+ 			continue;
+ 
+ 		if (last != folio) {
+-			walk_update_folio(walk, last, gen, dirty);
++			walk_update_folio(walk, vma, last, gen, dirty);
+ 
+ 			last = folio;
+ 			dirty = false;
+@@ -4272,7 +4289,7 @@ bool lru_gen_look_around(struct page_vma_mapped_walk *pvmw, unsigned int nr)
+ 		young += nr;
+ 	}
+ 
+-	walk_update_folio(walk, last, gen, dirty);
++	walk_update_folio(walk, vma, last, gen, dirty);
+ 
+ 	lazy_mmu_mode_disable();
+ 
 diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 452374d63c24..08f80d7c5df0 100644
+index 66e4b6a37783c..e187908d3f1e6 100644
 --- a/scripts/package/PKGBUILD
 +++ b/scripts/package/PKGBUILD
 @@ -90,6 +90,11 @@ _package-headers() {
