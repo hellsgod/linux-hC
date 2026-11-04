@@ -12,12 +12,16 @@ pkgbase = linux-hC
 	makedepends = pahole
 	makedepends = perl
 	makedepends = python
+	makedepends = rust
+	makedepends = rust-bindgen
+	makedepends = rust-src
 	makedepends = tar
 	makedepends = xz
 	makedepends = zstd
 	makedepends = clang
 	makedepends = llvm
 	makedepends = lld
+	makedepends = pahole>=1:1.32-2
 	options = !strip
 	options = !debug
 	options = !lto
@@ -36,7 +40,7 @@ pkgbase = linux-hC
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/sched/0001-bore.patch
 	b2sums = 46aecb5a8b875642c8f627a2b9bc100ecedc91dc26e727131f9c6ea6d87bf89367fa6f4983b9f1188600609f8bbc35788cb2ce96802e656deb54fdc6670cdf79
 	b2sums = d40663c93becbb598454aa2aa9812ccb59043340c9cd7fa1c03a162bb128bb130cb6a7b695d55695b1118a40620962fabbff552f829269ccec6abb9344e49e4b
-	b2sums = b7bbd00ece5108a87f99577f9252024574cacdb153b05165388efbbb64ffe4146f32a64870dc117a0563c32b159acc0225cd8d4aaa309f0c51ea834a63742008
+	b2sums = 8a2f6fd15eaade025738a31ac33c52324c865955ac571d2e6bb27ad28b97da865a7e33da2cc5047ca828144a76bd108593e0613424e8d5944b99f386dc4b057e
 	b2sums = df2f0242719c9a7ac19d12edc5f9fdd446f65bd23c192a56095ab3d199f41559dc7914205a32d54d253992b73e884ea4acec6ba590346c37187a80bfecf73a21
 	b2sums = 0fb1398e6fc3264054cdccb1638c834ad5547de031aeef864e6255fc43cd69b627f83bf9fc7496bf695cc64eacb2d7f0d9741079cdf573d8151ffb6ba82f45e7
 	b2sums = c1ff7bb49195d3b71c62483e8fcf9e829157833d70b0559943a91244fc5999f2a797683ebcbdd033255c7098f1c3156dffeb3fcbf05af09eb5ed2a1e04c0f69b
@@ -77,6 +81,7 @@ pkgname = linux-hC-headers
 	depends = clang
 	depends = llvm
 	depends = lld
+	depends = pahole>=1:1.32-2
 	provides = LINUX-HEADERS
 
 pkgname = linux-hC-nvidia-open

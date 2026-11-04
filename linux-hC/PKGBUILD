@@ -180,6 +180,9 @@ makedepends=(
   pahole
   perl
   python
+  rust
+  rust-bindgen
+  rust-src
   tar
   xz
   zstd
@@ -203,7 +206,9 @@ source=(
 
 # LLVM makedepends
 if _is_lto_kernel; then
-    makedepends+=(clang llvm lld)
+    # pahole needs the --lang_exclude fix for merged LTO CUs to generate
+    # BTF for Rust modules
+    makedepends+=(clang llvm lld 'pahole>=1:1.32-2')
     source+=("${_patchsource}/misc/dkms-clang.patch")
     BUILD_FLAGS=(
         CC=/home/hellsgod/clang24/bin/clang
@@ -216,6 +221,7 @@ if _is_lto_kernel; then
         RANLIB=/home/hellsgod/clang24/bin/llvm-ranlib
         READELF=/home/hellsgod/clang24/bin/llvm-readelf
         AS=/home/hellsgod/clang24/bin/llvm-as
+        LIBCLANG_PATH=/home/hellsgod/clang24/lib
         LLVM=1
         LLVM_IAS=1
     )
@@ -329,6 +335,11 @@ prepare() {
     esac
 
     echo "Selecting '$_use_llvm_lto' LLVM level..."
+
+    echo "Enabling QR Code Panic"
+    scripts/config --set-str DRM_PANIC_SCREEN qr_code -e DRM_PANIC_SCREEN_QR_CODE \
+        --set-str DRM_PANIC_SCREEN_QR_CODE_URL https://panic.archlinux.org/panic_report# \
+        --set-val CONFIG_DRM_PANIC_SCREEN_QR_VERSION 40
 
     ### Select tick rate
     case "$_HZ_ticks" in
@@ -533,7 +544,7 @@ _package-headers() {
     provides=(LINUX-HEADERS)
 
     if _is_lto_kernel; then
-        depends+=(clang llvm lld)
+        depends+=(clang llvm lld 'pahole>=1:1.32-2')
     fi
 
     cd "${_srcname}"
@@ -576,6 +587,23 @@ _package-headers() {
 
     echo "Installing KConfig files..."
     find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+
+    # Install .rmeta files if they exist
+    if compgen -G "rust/*.rmeta" 1>/dev/null; then
+        install -Dt "$builddir/rust" -m644 rust/*.rmeta
+    fi
+
+    # Install .so files if they exist
+    if compgen -G "rust/*.so" 1>/dev/null; then
+        install -Dt "$builddir/rust" rust/*.so
+    fi
+
+    # Install generated Rust files
+    if [ -d rust/kernel ]; then
+        while IFS= read -r -d "" _gen; do
+            install -Dm644 "$_gen" "$builddir/$_gen"
+        done < <(find rust -type f -name 'generated_*.rs' -print0)
+    fi
 
     echo "Installing unstripped VDSO..."
     make INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
@@ -661,7 +689,7 @@ done
 
 b2sums=('46aecb5a8b875642c8f627a2b9bc100ecedc91dc26e727131f9c6ea6d87bf89367fa6f4983b9f1188600609f8bbc35788cb2ce96802e656deb54fdc6670cdf79'
         'd40663c93becbb598454aa2aa9812ccb59043340c9cd7fa1c03a162bb128bb130cb6a7b695d55695b1118a40620962fabbff552f829269ccec6abb9344e49e4b'
-        'b7bbd00ece5108a87f99577f9252024574cacdb153b05165388efbbb64ffe4146f32a64870dc117a0563c32b159acc0225cd8d4aaa309f0c51ea834a63742008'
+        '8a2f6fd15eaade025738a31ac33c52324c865955ac571d2e6bb27ad28b97da865a7e33da2cc5047ca828144a76bd108593e0613424e8d5944b99f386dc4b057e'
         'df2f0242719c9a7ac19d12edc5f9fdd446f65bd23c192a56095ab3d199f41559dc7914205a32d54d253992b73e884ea4acec6ba590346c37187a80bfecf73a21'
         '0fb1398e6fc3264054cdccb1638c834ad5547de031aeef864e6255fc43cd69b627f83bf9fc7496bf695cc64eacb2d7f0d9741079cdf573d8151ffb6ba82f45e7'
         'c1ff7bb49195d3b71c62483e8fcf9e829157833d70b0559943a91244fc5999f2a797683ebcbdd033255c7098f1c3156dffeb3fcbf05af09eb5ed2a1e04c0f69b'
