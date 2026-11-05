@@ -180,6 +180,9 @@ makedepends=(
   pahole
   perl
   python
+  rust
+  rust-bindgen
+  rust-src
   tar
   xz
   zstd
@@ -201,7 +204,9 @@ source=(
 
 # LLVM makedepends
 if _is_lto_kernel; then
-    makedepends+=(clang llvm lld)
+    # pahole needs the --lang_exclude fix for merged LTO CUs to generate
+    # BTF for Rust modules
+    makedepends+=(clang llvm lld 'pahole>=1:1.32-2')
     source+=("${_patchsource}/misc/dkms-clang.patch")
     BUILD_FLAGS=(
         CC=/home/hellsgod/clang24/bin/clang
@@ -214,6 +219,7 @@ if _is_lto_kernel; then
         RANLIB=/home/hellsgod/clang24/bin/llvm-ranlib
         READELF=/home/hellsgod/clang24/bin/llvm-readelf
         AS=/home/hellsgod/clang24/bin/llvm-as
+        LIBCLANG_PATH=/home/hellsgod/clang24/lib
         LLVM=1
         LLVM_IAS=1
     )
@@ -327,6 +333,11 @@ prepare() {
     esac
 
     echo "Selecting '$_use_llvm_lto' LLVM level..."
+
+    echo "Enabling QR Code Panic"
+    scripts/config --set-str DRM_PANIC_SCREEN qr_code -e DRM_PANIC_SCREEN_QR_CODE \
+        --set-str DRM_PANIC_SCREEN_QR_CODE_URL https://panic.archlinux.org/panic_report# \
+        --set-val CONFIG_DRM_PANIC_SCREEN_QR_VERSION 40
 
     ### Select tick rate
     case "$_HZ_ticks" in
@@ -467,6 +478,17 @@ prepare() {
     cat .config > "${basedir}/config-${pkgver}-${pkgrel}${pkgbase#linux}"
 }
 
+_strip_modules() {
+    if [ "$_use_llvm_lto" != "none" ]; then
+        local strip_bin="llvm-strip"
+    else
+        local strip_bin="strip"
+    fi
+
+    find "$1" -type f -name '*.ko' -print \
+        -exec "${strip_bin}" --strip-debug '{}' \;
+}
+
 build() {
     cd "$_srcname"
     make "${BUILD_FLAGS[@]}" -j"$(nproc)" all
@@ -531,7 +553,7 @@ _package-headers() {
     provides=(LINUX-HEADERS)
 
     if _is_lto_kernel; then
-        depends+=(clang llvm lld)
+        depends+=(clang llvm lld 'pahole>=1:1.32-2')
     fi
 
     cd "${_srcname}"
@@ -574,6 +596,23 @@ _package-headers() {
 
     echo "Installing KConfig files..."
     find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
+
+    # Install .rmeta files if they exist
+    if compgen -G "rust/*.rmeta" 1>/dev/null; then
+        install -Dt "$builddir/rust" -m644 rust/*.rmeta
+    fi
+
+    # Install .so files if they exist
+    if compgen -G "rust/*.so" 1>/dev/null; then
+        install -Dt "$builddir/rust" rust/*.so
+    fi
+
+    # Install generated Rust files
+    if [ -d rust/kernel ]; then
+        while IFS= read -r -d "" _gen; do
+            install -Dm644 "$_gen" "$builddir/$_gen"
+        done < <(find rust -type f -name 'generated_*.rs' -print0)
+    fi
 
     echo "Installing unstripped VDSO..."
     make INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
@@ -643,6 +682,7 @@ _package-nvidia-open(){
     install -m644 kernel-open/*.ko "${modulesdir}"
     install -Dt "$pkgdir/usr/share/licenses/${pkgname}" -m644 COPYING
 
+    _strip_modules "${modulesdir}"
     find "$pkgdir" -name '*.ko' -exec zstd --rm -19 -T0 {} +
 }
 

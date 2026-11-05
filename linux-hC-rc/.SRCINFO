@@ -12,12 +12,16 @@ pkgbase = linux-hC-rc-mobile
 	makedepends = pahole
 	makedepends = perl
 	makedepends = python
+	makedepends = rust
+	makedepends = rust-bindgen
+	makedepends = rust-src
 	makedepends = tar
 	makedepends = xz
 	makedepends = zstd
 	makedepends = clang
 	makedepends = llvm
 	makedepends = lld
+	makedepends = pahole>=1:1.32-2
 	options = !strip
 	options = !debug
 	options = !lto
@@ -71,4 +75,5 @@ pkgname = linux-hC-rc-mobile-headers
 	depends = clang
 	depends = llvm
 	depends = lld
+	depends = pahole>=1:1.32-2
 	provides = LINUX-HEADERS
