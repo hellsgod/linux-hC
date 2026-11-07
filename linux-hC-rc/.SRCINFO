@@ -35,7 +35,7 @@ pkgbase = linux-hC-rc
 	source = nap.patch
 	source = poc-selector.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.4/misc/dkms-clang.patch
-	source = nvidia-open-615.78.08.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/615.78.08.tar.gz
+	source = nvidia-open-620.70.06.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/620.70.06.tar.gz
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.4/misc/nvidia/0005-Fix-build-on-Linux-7.4.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.4/sched/0001-bore.patch
 	b2sums = 54cee3e84d7d0945d7386a7190d62518def2115d869553c40ce97e183920defad33c267c8f1eb3f1da68a8cf7a57060229bac421ad031cab0974d5571a000b85
@@ -48,7 +48,7 @@ pkgbase = linux-hC-rc
 	b2sums = 66c133eeba6fc67285ed31a493519217b568781a389113a4223e2f71c72c1a1d91e390b689668decb526bad506f5070d779c0a0543f382caf2b056ad0d6ee902
 	b2sums = bd3358e3ede1aefa64a7ff442ad3127e7f7fac70af5a46f3a507cdcde28b13513396f39c92ed4ea8edf7c394af8a1177536fcd2f17b1982c4aee8151aa7c31df
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
-	b2sums = 9958823fa89ae760914c87fb00d486f559e019ced66021ce4f61f0dfd88869738be352a43007f1587130439741ae54b0f10d07cb070c4cdc0339f5cee77237b6
+	b2sums = dce2a643c72e0baf7395d748956d872839fe41e69a3c5611db212b0fdd69d7bc0179f92271a6875755a7940ec0edbae034809d06287edf0420617bc64ce3bef5
 	b2sums = e006e4e8571875acb10354cec22626624f97fe0b68fe5c6edd45e4a2b95d513845a2ad367c1aaa6771d3021ca7ca06b9cac78983bace622bf95f14b980b4e99d
 	b2sums = 380c6ad52198b66ec7aa62a26727a358c31d3c103719231727dacb4200460975029b79d11cbffe51cb5a2946bcb258a5c5233996119bb43b153fc60a0b82fc29
 
@@ -85,10 +85,10 @@ pkgname = linux-hC-rc-headers
 	provides = LINUX-HEADERS
 
 pkgname = linux-hC-rc-nvidia-open
-	pkgdesc = nvidia open modules of 615.78.08 driver for the linux-hC-rc kernel
+	pkgdesc = nvidia open modules of 620.70.06 driver for the linux-hC-rc kernel
 	license = MIT AND GPL-2.0-only
 	depends = linux-hC-rc=7.4.rc1-1
-	depends = nvidia-utils=615.78.08
+	depends = nvidia-utils=620.70.06
 	depends = libglvnd
 	provides = NVIDIA-MODULE
 	conflicts = linux-hC-rc-nvidia
