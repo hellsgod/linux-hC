@@ -11,6 +11,11 @@
 ### Selecting hells config
 : "${_hells_config:=yes}"
 
+### Custom LLVM toolchain
+: "${_custom_llvm=yes}"
+: "${_custom_llvm_path=/home/hellsgod/clang24/bin}"
+: "${_custom_libclang_path=/home/hellsgod/clang24/lib}"
+
 ### Selecting the CPU scheduler
 # ATTENTION - only one of the following values can be selected:
 # 'bore' - select 'Burst-Oriented Response Enhancer'
@@ -145,6 +150,60 @@ _is_lto_kernel() {
     return $?
 }
 
+_validate_custom_llvm() {
+    local llvm_path="${_custom_llvm_path%/}"
+    local libclang_path="${_custom_libclang_path%/}"
+    local tool
+
+    # Validate LLVM directory
+    if [[ -z "$llvm_path" ]]; then
+        error "Custom LLVM enabled, but LLVM path is empty!"
+        return 1
+    fi
+
+    if [[ ! -d "$llvm_path" ]]; then
+        error "Custom LLVM directory not found: $llvm_path"
+        return 1
+    fi
+
+    # Validate libclang directory
+    if [[ -z "$libclang_path" ]]; then
+        error "Custom LLVM enabled, but libclang path is empty!"
+        return 1
+    fi
+
+    if [[ ! -d "$libclang_path" ]]; then
+        error "Custom libclang directory not found: $libclang_path"
+        return 1
+    fi
+
+    # Validate required LLVM tools
+    for tool in \
+        clang \
+        ld.lld \
+        llvm-ar \
+        llvm-nm \
+        llvm-objcopy \
+        llvm-objdump \
+        llvm-readelf \
+        llvm-strip; do
+
+        if [[ ! -x "${llvm_path}/${tool}" ]]; then
+            error "LLVM tool missing or not executable: ${llvm_path}/${tool}"
+            return 1
+fi
+    done
+
+    # Validate libclang
+    if [[ ! -f "${libclang_path}/libclang.so" ]]; then
+        error "libclang.so missing or invalid: ${libclang_path}"
+        return 1
+    fi
+
+    msg2 "Custom LLVM toolchain validated: ${llvm_path}"
+    return 0
+}
+
 if _is_lto_kernel && [ "$_use_lto_suffix" = "yes"  ]; then
     _pkgsuffix=hC-lto
 elif ! _is_lto_kernel && [ "$_use_gcc_suffix" = "yes" ]; then
@@ -206,25 +265,28 @@ source=(
 
 # LLVM makedepends
 if _is_lto_kernel; then
-    # pahole needs the --lang_exclude fix for merged LTO CUs to generate
-    # BTF for Rust modules
+    # pahole needs the --lang_exclude fix for merged LTO CUs
+    # to generate BTF for Rust modules
     makedepends+=(clang llvm lld 'pahole>=1:1.32-2')
     source+=("${_patchsource}/misc/dkms-clang.patch")
+
     BUILD_FLAGS=(
-        CC=/home/hellsgod/clang24/bin/clang
-        LD=/home/hellsgod/clang24/bin/ld.lld
-        AR=/home/hellsgod/clang24/bin/llvm-ar
-        NM=/home/hellsgod/clang24/bin/llvm-nm
-        STRIP=/home/hellsgod/clang24/bin/llvm-strip
-        OBJCOPY=/home/hellsgod/clang24/bin/llvm-objcopy
-        OBJDUMP=/home/hellsgod/clang24/bin/llvm-objdump
-        RANLIB=/home/hellsgod/clang24/bin/llvm-ranlib
-        READELF=/home/hellsgod/clang24/bin/llvm-readelf
-        AS=/home/hellsgod/clang24/bin/llvm-as
-        LIBCLANG_PATH=/home/hellsgod/clang24/lib
+        CC=clang
+        LD=ld.lld
         LLVM=1
         LLVM_IAS=1
     )
+
+    if [[ "${_custom_llvm,,}" == "yes" ||
+          "${_custom_llvm,,}" == "true" ]]; then
+
+        BUILD_FLAGS=(
+            "LLVM=${_custom_llvm_path%/}/"
+            "CC=${_custom_llvm_path%/}/clang"
+            "LD=${_custom_llvm_path%/}/ld.lld"
+            "LIBCLANG_PATH=${_custom_libclang_path%/}"
+        )
+    fi
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
@@ -492,23 +554,35 @@ _strip_modules() {
 }
 
 build() {
+    if _is_lto_kernel; then
+        if [[ "${_custom_llvm,,}" == "yes" ||
+              "${_custom_llvm,,}" == "true" ]]; then
+
+            _validate_custom_llvm || return 1
+
+            export LIBCLANG_PATH="${_custom_libclang_path%/}"
+        fi
+    fi
+
     cd "$_srcname"
     make "${BUILD_FLAGS[@]}" -j"$(nproc)" all
     make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
 
     local MODULE_FLAGS=(
-       KERNEL_UNAME="${_kernuname}"
-       IGNORE_PREEMPT_RT_PRESENCE=1
-       SYSSRC="${srcdir}/${_srcname}"
-       SYSOUT="${srcdir}/${_srcname}"
+        KERNEL_UNAME="${_kernuname}"
+        IGNORE_PREEMPT_RT_PRESENCE=1
+        SYSSRC="${srcdir}/${_srcname}"
+        SYSOUT="${srcdir}/${_srcname}"
     )
 
-    if [ "$_build_nvidia_open" = "yes" ]; then
+    if [[ "$_build_nvidia_open" == "yes" ]]; then
         cd "${srcdir}/${_nv_open_pkg}"
         MODULE_FLAGS+=(IGNORE_CC_MISMATCH=yes)
-        CFLAGS= CXXFLAGS= LDFLAGS= make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" -j"$(nproc)" modules
-    fi
 
+        CFLAGS= CXXFLAGS= LDFLAGS= \
+            make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" \
+            -j"$(nproc)" modules
+    fi
 }
 
 _package() {
