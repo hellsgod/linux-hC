@@ -325,6 +325,16 @@ export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EP
 _die() { error "$@" ; exit 1; }
 
 prepare() {
+    if _is_lto_kernel; then
+        if [[ "${_custom_llvm,,}" == "yes" ||
+              "${_custom_llvm,,}" == "true" ]]; then
+
+            _validate_custom_llvm || return 1
+
+            export LIBCLANG_PATH="${_custom_libclang_path%/}"
+        fi
+    fi
+
     cd "$_srcname"
 
     echo "Setting version..."
@@ -401,7 +411,7 @@ prepare() {
     echo "Enabling QR Code Panic"
     scripts/config --set-str DRM_PANIC_SCREEN qr_code -e DRM_PANIC_SCREEN_QR_CODE \
         --set-str DRM_PANIC_SCREEN_QR_CODE_URL https://panic.archlinux.org/panic_report# \
-        --set-val CONFIG_DRM_PANIC_SCREEN_QR_VERSION 40
+        --set-val DRM_PANIC_SCREEN_QR_VERSION 40
 
     ### Select tick rate
     case "$_HZ_ticks" in
@@ -527,7 +537,7 @@ prepare() {
     diff -u ../config .config || :
 
     ### Prepared version
-    make -s kernelrelease > version
+    make "${BUILD_FLAGS[@]}" -s kernelrelease > version
     echo "Prepared $pkgbase version $(<version)"
 
     ### Running make nconfig
@@ -543,27 +553,22 @@ prepare() {
 }
 
 _strip_modules() {
-    if [ "$_use_llvm_lto" != "none" ]; then
-        local strip_bin="llvm-strip"
-    else
-        local strip_bin="strip"
-    fi
+    local strip_bin="strip"
 
-    find "$1" -type f -name '*.ko' -print \
-        -exec "${strip_bin}" --strip-debug '{}' \;
-}
-
-build() {
     if _is_lto_kernel; then
+        strip_bin="llvm-strip"
+
         if [[ "${_custom_llvm,,}" == "yes" ||
               "${_custom_llvm,,}" == "true" ]]; then
-
-            _validate_custom_llvm || return 1
-
-            export LIBCLANG_PATH="${_custom_libclang_path%/}"
+            strip_bin="${_custom_llvm_path%/}/llvm-strip"
         fi
     fi
 
+    find "$1" -type f -name '*.ko' \
+        -exec "$strip_bin" --strip-debug '{}' +
+}
+
+build() {
     cd "$_srcname"
     make "${BUILD_FLAGS[@]}" -j"$(nproc)" all
     make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
@@ -691,7 +696,7 @@ _package-headers() {
     fi
 
     echo "Installing unstripped VDSO..."
-    make INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
+    make "${BUILD_FLAGS[@]}" INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
     link=  # Suppress build-id symlinks
 
     echo "Removing unneeded architectures..."
