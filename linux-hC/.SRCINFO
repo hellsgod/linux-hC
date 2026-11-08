@@ -1,5 +1,5 @@
 pkgbase = linux-hC
-	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel
+	pkgdesc = Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang built hC-kernel
 	pkgver = 7.3.3
 	pkgrel = 1
 	url = https://github.com/hellsgod/linux-hC
@@ -53,7 +53,7 @@ pkgbase = linux-hC
 	b2sums = cb79a548377b58e5b2dd1140305d5d71d5f23485cbb5f73e268cb43e0277633e93f1d49e5bc7df7c181d585b357051afcf46caa894af0c209c72031dc9982f19
 
 pkgname = linux-hC
-	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel and modules
+	pkgdesc = The Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang built hC-kernel kernel and modules
 	depends = coreutils
 	depends = kmod
 	depends = initramfs
@@ -67,7 +67,7 @@ pkgname = linux-hC
 	provides = NTSYNC-MODULE
 
 pkgname = linux-hC-headers
-	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel kernel
+	pkgdesc = Headers and scripts for building modules for the Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang built hC-kernel kernel
 	depends = binutils
 	depends = glibc
 	depends = libelf
