@@ -11,6 +11,11 @@
 ### Selecting hells config
 : "${_hells_config:=yes}"
 
+### Custom LLVM toolchain
+: "${_custom_llvm=yes}"
+: "${_custom_llvm_path=/home/hellsgod/clang24/bin}"
+: "${_custom_libclang_path=/home/hellsgod/clang24/lib}"
+
 ### Selecting the CPU scheduler
 # ATTENTION - only one of the following values can be selected:
 # 'bore' - select 'Burst-Oriented Response Enhancer'
@@ -145,6 +150,60 @@ _is_lto_kernel() {
     return $?
 }
 
+_validate_custom_llvm() {
+    local llvm_path="${_custom_llvm_path%/}"
+    local libclang_path="${_custom_libclang_path%/}"
+    local tool
+
+    # Validate LLVM directory
+    if [[ -z "$llvm_path" ]]; then
+        error "Custom LLVM enabled, but LLVM path is empty!"
+        return 1
+    fi
+
+    if [[ ! -d "$llvm_path" ]]; then
+        error "Custom LLVM directory not found: $llvm_path"
+        return 1
+    fi
+
+    # Validate libclang directory
+    if [[ -z "$libclang_path" ]]; then
+        error "Custom LLVM enabled, but libclang path is empty!"
+        return 1
+    fi
+
+    if [[ ! -d "$libclang_path" ]]; then
+        error "Custom libclang directory not found: $libclang_path"
+        return 1
+    fi
+
+    # Validate required LLVM tools
+    for tool in \
+        clang \
+        ld.lld \
+        llvm-ar \
+        llvm-nm \
+        llvm-objcopy \
+        llvm-objdump \
+        llvm-readelf \
+        llvm-strip; do
+
+        if [[ ! -x "${llvm_path}/${tool}" ]]; then
+            error "LLVM tool missing or not executable: ${llvm_path}/${tool}"
+            return 1
+fi
+    done
+
+    # Validate libclang
+    if [[ ! -f "${libclang_path}/libclang.so" ]]; then
+        error "libclang.so missing or invalid: ${libclang_path}"
+        return 1
+    fi
+
+    msg2 "Custom LLVM toolchain validated: ${llvm_path}"
+    return 0
+}
+
 if _is_lto_kernel && [ "$_use_lto_suffix" = "yes" ]; then
     _pkgsuffix="hC-rc-mobile-lto"
 elif ! _is_lto_kernel && [ "$_use_gcc_suffix" = "yes" ]; then
@@ -154,17 +213,17 @@ else
 fi
 
 pkgbase="linux-$_pkgsuffix"
-_major=7.3
+_major=7.4
 _minor=0
 #_minorc=$((_minor+1))
-_rcver=rc7
+_rcver=rc1
 pkgver=${_major}.${_rcver}
 #_stable=${_major}.${_minor}
 #_stable=${_major}
 _stable=${_major}-${_rcver}
 _srcname=linux-${_stable}
 #_srcname=linux-${_major}
-pkgdesc='Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang 21 improved hC-kernel - Release Candidate'
+pkgdesc='Linux BORE + LTO + ZEN/Cachy/Clear Tweaks + Custom set of build flags Clang built hC-kernel - Release Candidate'
 pkgrel=1
 _kernver="$pkgver-$pkgrel"
 _kernuname="${pkgver}-${_pkgsuffix}"
@@ -189,7 +248,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=615.78.08
+_nv_ver=620.70.06
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -199,34 +258,39 @@ source=(
     "cambyses.patch"
     "compiler-opt.patch"
     "fixes.patch"
+    "lru-cast.patch"
     "nap.patch"
     "poc-selector.patch")
 
 # LLVM makedepends
 if _is_lto_kernel; then
-    # pahole needs the --lang_exclude fix for merged LTO CUs to generate
-    # BTF for Rust modules
+    # pahole needs the --lang_exclude fix for merged LTO CUs
+    # to generate BTF for Rust modules
     makedepends+=(clang llvm lld 'pahole>=1:1.32-2')
     source+=("${_patchsource}/misc/dkms-clang.patch")
+
     BUILD_FLAGS=(
-        CC=/home/hellsgod/clang24/bin/clang
-        LD=/home/hellsgod/clang24/bin/ld.lld
-        AR=/home/hellsgod/clang24/bin/llvm-ar
-        NM=/home/hellsgod/clang24/bin/llvm-nm
-        STRIP=/home/hellsgod/clang24/bin/llvm-strip
-        OBJCOPY=/home/hellsgod/clang24/bin/llvm-objcopy
-        OBJDUMP=/home/hellsgod/clang24/bin/llvm-objdump
-        RANLIB=/home/hellsgod/clang24/bin/llvm-ranlib
-        READELF=/home/hellsgod/clang24/bin/llvm-readelf
-        AS=/home/hellsgod/clang24/bin/llvm-as
-        LIBCLANG_PATH=/home/hellsgod/clang24/lib
+        CC=clang
+        LD=ld.lld
         LLVM=1
         LLVM_IAS=1
     )
+
+    if [[ "${_custom_llvm,,}" == "yes" ||
+          "${_custom_llvm,,}" == "true" ]]; then
+
+        BUILD_FLAGS=(
+            "LLVM=${_custom_llvm_path%/}/"
+            "CC=${_custom_llvm_path%/}/clang"
+            "LD=${_custom_llvm_path%/}/ld.lld"
+            "LIBCLANG_PATH=${_custom_libclang_path%/}"
+        )
+    fi
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
-     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz")
+     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
+              "${_patchsource}/misc/nvidia/0005-Fix-build-on-Linux-7.4.patch")
 fi
 
 # Use generated AutoFDO Profile
@@ -261,6 +325,16 @@ export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EP
 _die() { error "$@" ; exit 1; }
 
 prepare() {
+    if _is_lto_kernel; then
+        if [[ "${_custom_llvm,,}" == "yes" ||
+              "${_custom_llvm,,}" == "true" ]]; then
+
+            _validate_custom_llvm || return 1
+
+            export LIBCLANG_PATH="${_custom_libclang_path%/}"
+        fi
+    fi
+
     cd "$_srcname"
 
     echo "Setting version..."
@@ -337,7 +411,7 @@ prepare() {
     echo "Enabling QR Code Panic"
     scripts/config --set-str DRM_PANIC_SCREEN qr_code -e DRM_PANIC_SCREEN_QR_CODE \
         --set-str DRM_PANIC_SCREEN_QR_CODE_URL https://panic.archlinux.org/panic_report# \
-        --set-val CONFIG_DRM_PANIC_SCREEN_QR_VERSION 40
+        --set-val DRM_PANIC_SCREEN_QR_VERSION 40
 
     ### Select tick rate
     case "$_HZ_ticks" in
@@ -463,7 +537,7 @@ prepare() {
     diff -u ../config .config || :
 
     ### Prepared version
-    make -s kernelrelease > version
+    make "${BUILD_FLAGS[@]}" -s kernelrelease > version
     echo "Prepared $pkgbase version $(<version)"
 
     ### Running make nconfig
@@ -479,14 +553,19 @@ prepare() {
 }
 
 _strip_modules() {
-    if [ "$_use_llvm_lto" != "none" ]; then
-        local strip_bin="llvm-strip"
-    else
-        local strip_bin="strip"
+    local strip_bin="strip"
+
+    if _is_lto_kernel; then
+        strip_bin="llvm-strip"
+
+        if [[ "${_custom_llvm,,}" == "yes" ||
+              "${_custom_llvm,,}" == "true" ]]; then
+            strip_bin="${_custom_llvm_path%/}/llvm-strip"
+        fi
     fi
 
-    find "$1" -type f -name '*.ko' -print \
-        -exec "${strip_bin}" --strip-debug '{}' \;
+    find "$1" -type f -name '*.ko' \
+        -exec "$strip_bin" --strip-debug '{}' +
 }
 
 build() {
@@ -495,18 +574,20 @@ build() {
     make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
 
     local MODULE_FLAGS=(
-       KERNEL_UNAME="${_kernuname}"
-       IGNORE_PREEMPT_RT_PRESENCE=1
-       SYSSRC="${srcdir}/${_srcname}"
-       SYSOUT="${srcdir}/${_srcname}"
+        KERNEL_UNAME="${_kernuname}"
+        IGNORE_PREEMPT_RT_PRESENCE=1
+        SYSSRC="${srcdir}/${_srcname}"
+        SYSOUT="${srcdir}/${_srcname}"
     )
 
-    if [ "$_build_nvidia_open" = "yes" ]; then
+    if [[ "$_build_nvidia_open" == "yes" ]]; then
         cd "${srcdir}/${_nv_open_pkg}"
         MODULE_FLAGS+=(IGNORE_CC_MISMATCH=yes)
-        CFLAGS= CXXFLAGS= LDFLAGS= make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" -j"$(nproc)" modules
-    fi
 
+        CFLAGS= CXXFLAGS= LDFLAGS= \
+            make "${BUILD_FLAGS[@]}" "${MODULE_FLAGS[@]}" \
+            -j"$(nproc)" modules
+    fi
 }
 
 _package() {
@@ -615,7 +696,7 @@ _package-headers() {
     fi
 
     echo "Installing unstripped VDSO..."
-    make INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
+    make "${BUILD_FLAGS[@]}" INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
     link=  # Suppress build-id symlinks
 
     echo "Removing unneeded architectures..."
@@ -697,9 +778,9 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('63b3228343e52f77e8c0c6facb79ffb0c0682ff79cd8391ef8cf3aa994c44b99ee9111155a8ff186534c5f090047150b41fde5680622183b44ceb4f78189d004'
-        '0c1015a25be11e7d17c71b8d7ab6e00cfa7d4409b304907a8f9044632480dde5982b480a12b97b83b61ec6f989b1805056ac6d4f8955448343e9feb3a984d0a5'
-        'b7bbd00ece5108a87f99577f9252024574cacdb153b05165388efbbb64ffe4146f32a64870dc117a0563c32b159acc0225cd8d4aaa309f0c51ea834a63742008'
+b2sums=('54cee3e84d7d0945d7386a7190d62518def2115d869553c40ce97e183920defad33c267c8f1eb3f1da68a8cf7a57060229bac421ad031cab0974d5571a000b85'
+        'b7ff5ddf5e683ba2b1a5e393199948fcbc273f61e3bcc7e8b98203abb4d4bbc97a085d16f06d7c95702468315b28f79a9ca1ce47f3ea9bbe0d236919d2ee3f78'
+        '6f75fc5617f5ec7156f18ff26a10faf359061590fdd645f440a0f089802d932176776559ef76381465a692eb4cccd89a5d46ead7f54a65efffc04166ea7dd4c9'
         'df2f0242719c9a7ac19d12edc5f9fdd446f65bd23c192a56095ab3d199f41559dc7914205a32d54d253992b73e884ea4acec6ba590346c37187a80bfecf73a21'
         '2639986d000c6df1329900ba5a02177846b011b8f8c693ea8167eb99c4ec12c66dcd78eb22716c486d5c9d17f486ab9510935312d2c7b9c75d77d9e4d3b66b44'
         'c1ff7bb49195d3b71c62483e8fcf9e829157833d70b0559943a91244fc5999f2a797683ebcbdd033255c7098f1c3156dffeb3fcbf05af09eb5ed2a1e04c0f69b'
@@ -707,4 +788,3 @@ b2sums=('63b3228343e52f77e8c0c6facb79ffb0c0682ff79cd8391ef8cf3aa994c44b99ee91111
         'f7a6b68b345c02ea17088cb3bc01d9058729e46a1437e250aa188361872dc5d04fbfb2f0b7e6abb9db7f41f09d8aff419e20f37fdb10031df7e7ef86d4faf545'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
         'a9f6f3abf51398d82544b02f99a70510aabb9184279b4d1e2b98a541f604ee3ea7fff91e56a7c43d7e9bcfe6f204833893f9de951b55af705b6d19e581ef044a')
-

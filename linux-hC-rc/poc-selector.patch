@@ -1,7 +1,7 @@
-From 2f337aaed6493d96257ea641fa6bb0c3d6306ac9 Mon Sep 17 00:00:00 2001
+From 467a70844030ae59ca94185578a1f144e895237e Mon Sep 17 00:00:00 2001
 From: Masahito S <firelzrd@gmail.com>
-Date: Sat, 26 Sep 2026 00:38:37 +0900
-Subject: [PATCH] 7.3-rc1-poc-selector-v3.0.0
+Date: Fri, 6 Nov 2026 08:19:43 +0900
+Subject: [PATCH] 7.4-rc1-poc-selector-v3.0.1
 
 ---
  include/linux/sched.h          |   23 +
@@ -9,23 +9,23 @@ Subject: [PATCH] 7.3-rc1-poc-selector-v3.0.0
  init/Kconfig                   |   13 +
  kernel/sched/core.c            |    4 +
  kernel/sched/ext/ext.c         |    7 +
- kernel/sched/fair.c            |  168 ++-
+ kernel/sched/fair.c            |  193 ++-
  kernel/sched/idle.c            |   10 +
- kernel/sched/poc_selector.c    | 2261 ++++++++++++++++++++++++++++++++
+ kernel/sched/poc_selector.c    | 2256 ++++++++++++++++++++++++++++++++
  kernel/sched/poc_selector.h    |  129 ++
  kernel/sched/poc_sync.h        |  143 ++
  kernel/sched/sched.h           |    7 +
  kernel/sched/topology.c        |    3 +
- 12 files changed, 2762 insertions(+), 37 deletions(-)
+ 12 files changed, 2777 insertions(+), 42 deletions(-)
  create mode 100644 kernel/sched/poc_selector.c
  create mode 100644 kernel/sched/poc_selector.h
  create mode 100644 kernel/sched/poc_sync.h
 
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 8b3d47a325..ba6ef1569d 100644
+index 1c93da7522..045a589856 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -814,6 +814,26 @@ struct wake_q_node {
+@@ -815,6 +815,26 @@ struct wake_q_node {
  	struct wake_q_node *next;
  };
  
@@ -52,7 +52,7 @@ index 8b3d47a325..ba6ef1569d 100644
  struct kmap_ctrl {
  #ifdef CONFIG_KMAP_LOCAL
  	int				idx;
-@@ -887,6 +907,9 @@ struct task_struct {
+@@ -888,6 +908,9 @@ struct task_struct {
  	unsigned int			rt_priority;
  
  	struct sched_entity		se;
@@ -63,7 +63,7 @@ index 8b3d47a325..ba6ef1569d 100644
  	struct sched_dl_entity		dl;
  	struct sched_dl_entity		*dl_server;
 diff --git a/include/linux/sched/topology.h b/include/linux/sched/topology.h
-index b5d9d7c2b8..b2e3732f3b 100644
+index f96812d71c..c133438e58 100644
 --- a/include/linux/sched/topology.h
 +++ b/include/linux/sched/topology.h
 @@ -86,6 +86,37 @@ struct sched_domain_shared {
@@ -90,7 +90,7 @@ index b5d9d7c2b8..b2e3732f3b 100644
 +	 * Writers: atomic_or / atomic64_set on the shared cacheline.
 +	 */
 +	atomic64_t	poc_busy_mask ____cacheline_aligned;
-+	atomic_t	poc_pending[8] ____cacheline_aligned;	/* 8 chunks x 8 LLC CPUs */
++	atomic64_t	poc_pending ____cacheline_aligned;	/* one bit per LLC CPU */
 +
 +	/*
 +	 * Read-only lookup tables (written once at init).
@@ -105,10 +105,10 @@ index b5d9d7c2b8..b2e3732f3b 100644
  
  struct sched_domain {
 diff --git a/init/Kconfig b/init/Kconfig
-index 8583d9f06c..145429cc7a 100644
+index 4013781e0a..0902495dee 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1501,6 +1501,19 @@ config SCHED_AUTOGROUP
+@@ -1308,6 +1308,19 @@ config SCHED_AUTOGROUP
  	  desktop applications.  Task group autogeneration is currently based
  	  upon task session.
  
@@ -129,10 +129,10 @@ index 8583d9f06c..145429cc7a 100644
  	bool "Kernel->user space relay support (formerly relayfs)"
  	select IRQ_WORK
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f782751920..f8eb88da53 100644
+index 04b62c16fa..521356a0d2 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -4583,6 +4583,10 @@ static void __sched_fork(u64 clone_flags, struct task_struct *p)
+@@ -4646,6 +4646,10 @@ static void __sched_fork(u64 clone_flags, struct task_struct *p)
  	p->se.vlag			= 0;
  	p->se.rel_deadline		= 0;
  	INIT_LIST_HEAD(&p->se.group_node);
@@ -144,10 +144,10 @@ index f782751920..f8eb88da53 100644
  	/* A delayed task cannot be in clone(). */
  	WARN_ON_ONCE(p->se.sched_delayed);
 diff --git a/kernel/sched/ext/ext.c b/kernel/sched/ext/ext.c
-index 10af28a9f2..ef4ff8805f 100644
+index f74ffb3b1a..7bba876c49 100644
 --- a/kernel/sched/ext/ext.c
 +++ b/kernel/sched/ext/ext.c
-@@ -6538,6 +6538,9 @@ static void scx_root_disable(struct scx_sched *sch)
+@@ -7662,6 +7662,9 @@ static void scx_root_disable(struct scx_sched *sch)
  	mutex_unlock(&scx_enable_mutex);
  
  	WARN_ON_ONCE(scx_set_enable_state(SCX_DISABLED) != SCX_DISABLING);
@@ -157,7 +157,7 @@ index 10af28a9f2..ef4ff8805f 100644
  done:
  	scx_bypass(sch, false);
  }
-@@ -7840,6 +7843,10 @@ static void scx_root_enable_workfn(struct kthread_work *work)
+@@ -8990,6 +8993,10 @@ static void scx_root_enable_workfn(struct kthread_work *work)
  		}
  	}
  
@@ -169,10 +169,10 @@ index 10af28a9f2..ef4ff8805f 100644
  		sch->ops.name, scx_switched_all() ? "" : " (partial)");
  	kobject_uevent(&sch->kobj, KOBJ_ADD);
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 8dff37059f..ae98b89c83 100644
+index cfc982205b..d329ca70c8 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -1303,7 +1303,7 @@ static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
+@@ -1256,7 +1256,7 @@ static bool update_deadline(struct cfs_rq *cfs_rq, struct sched_entity *se)
  
  #include "pelt.h"
  
@@ -181,7 +181,7 @@ index 8dff37059f..ae98b89c83 100644
  static unsigned long task_h_load(struct task_struct *p);
  static unsigned long capacity_of(int cpu);
  
-@@ -8177,6 +8177,10 @@ static bool __dequeue_task(struct rq *rq, struct task_struct *p, int flags)
+@@ -8357,6 +8357,10 @@ static bool __dequeue_task(struct rq *rq, struct task_struct *p, int flags)
  	return true;
  }
  
@@ -192,7 +192,7 @@ index 8dff37059f..ae98b89c83 100644
  /*
   * The dequeue_task method is called before nr_running is
   * decreased. We remove the task from the rbtree and
-@@ -8189,6 +8193,10 @@ static bool dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
+@@ -8369,6 +8373,10 @@ static bool dequeue_task_fair(struct rq *rq, struct task_struct *p, int flags)
  		return true;
  	}
  
@@ -203,7 +203,7 @@ index 8dff37059f..ae98b89c83 100644
  	if (!p->se.sched_delayed)
  		util_est_dequeue(&rq->cfs, p);
  
-@@ -8616,6 +8624,20 @@ void __update_idle_core(struct rq *rq)
+@@ -8817,6 +8825,33 @@ void __update_idle_core(struct rq *rq)
  	rcu_read_unlock();
  }
  
@@ -212,11 +212,24 @@ index 8dff37059f..ae98b89c83 100644
 + */
 +static inline bool is_idle_core(int cpu)
 +{
-+	int sibling;
++	const unsigned long *bits = cpumask_bits(cpu_smt_mask(cpu));
++	unsigned int w;
 +
-+	for_each_cpu(sibling, cpu_smt_mask(cpu)) {
-+		if (!available_idle_cpu(sibling))
-+			return false;
++	/*
++	 * Walk the mask words in place: for_each_cpu() calls find_next_bit()
++	 * for each sibling and once more to find the end, and this runs for
++	 * most wakeups, up to four times.
++	 */
++	for (w = 0; w < BITS_TO_LONGS(nr_cpumask_bits); w++) {
++		unsigned long m = bits[w];
++
++		while (m) {
++			int sibling = w * BITS_PER_LONG + __ffs(m);
++
++			if (!available_idle_cpu(sibling))
++				return false;
++			m &= m - 1;
++		}
 +	}
 +	return true;
 +}
@@ -224,7 +237,7 @@ index 8dff37059f..ae98b89c83 100644
  /*
   * Scan the entire LLC domain for idle cores; this dynamically switches off if
   * there are no idle cores left in the system; tracked through
-@@ -8943,16 +8965,55 @@ static inline bool asym_fits_cpu(unsigned long util,
+@@ -9144,16 +9179,57 @@ static inline bool asym_fits_cpu(unsigned long util,
  	return true;
  }
  
@@ -270,9 +283,11 @@ index 8dff37059f..ae98b89c83 100644
 +			if (static_branch_likely(&poc_selector_active)) {
 +				poc_count(cpu == prev ? POC_LV1P : POC_LV1R);
 +				poc_commit_cpu(cpu);
++				return cpu;
 +			}
 +#endif
-+			return cpu;
++			target = cpu;
++			goto select_smt_priority;
 +		}
 +	} else {
 +		recent_used_cpu = -1;
@@ -281,19 +296,13 @@ index 8dff37059f..ae98b89c83 100644
  	/*
  	 * On asymmetric system, update task utilization because we will check
  	 * that the task fits with CPU's capacity.
-@@ -8969,23 +9030,15 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+@@ -9170,25 +9246,15 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
  	 */
  	lockdep_assert_irqs_disabled();
  
 -	if (choose_idle_cpu(target, p) &&
 -	    asym_fits_cpu(task_util, util_min, util_max, target))
-+#ifdef CONFIG_SCHED_POC_SELECTOR
-+	if (static_branch_likely(&poc_selector_active) &&
-+	    is_idle_core(target) &&
-+	    asym_fits_cpu(task_util, util_min, util_max, target)) {
-+		poc_count(POC_LV1T);
-+		poc_commit_cpu(target);
- 		return target;
+-		goto select_smt_priority;
 -
 -	/*
 -	 * If the previous CPU is cache affine and idle, don't be stupid:
@@ -303,17 +312,26 @@ index 8dff37059f..ae98b89c83 100644
 -	    asym_fits_cpu(task_util, util_min, util_max, prev)) {
 -
 -		if (!static_branch_unlikely(&sched_cluster_active) ||
--		    cpus_share_resources(prev, target))
--			return prev;
+-		    cpus_share_resources(prev, target)) {
+-			target = prev;
+-			goto select_smt_priority;
+-		}
 -
 -		prev_aff = prev;
++#ifdef CONFIG_SCHED_POC_SELECTOR
++	if (static_branch_likely(&poc_selector_active) &&
++	    is_idle_core(target) &&
++	    asym_fits_cpu(task_util, util_min, util_max, target)) {
++		poc_count(POC_LV1T);
++		poc_commit_cpu(target);
++		return target;
  	}
 +#endif
  
  	/*
  	 * Allow a per-cpu kthread to stack with the wakee if the
-@@ -9003,24 +9056,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
- 		return prev;
+@@ -9207,26 +9273,6 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+ 		goto select_smt_priority;
  	}
  
 -	/* Check a recently used CPU as a potential idle candidate: */
@@ -327,8 +345,10 @@ index 8dff37059f..ae98b89c83 100644
 -	    asym_fits_cpu(task_util, util_min, util_max, recent_used_cpu)) {
 -
 -		if (!static_branch_unlikely(&sched_cluster_active) ||
--		    cpus_share_resources(recent_used_cpu, target))
--			return recent_used_cpu;
+-		    cpus_share_resources(recent_used_cpu, target)) {
+-			target = recent_used_cpu;
+-			goto select_smt_priority;
+-		}
 -
 -	} else {
 -		recent_used_cpu = -1;
@@ -337,7 +357,7 @@ index 8dff37059f..ae98b89c83 100644
  	/*
  	 * For asymmetric CPU capacity systems, our domain of interest is
  	 * sd_asym_cpucapacity rather than sd_llc.
-@@ -9045,6 +9080,46 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+@@ -9255,6 +9301,50 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
  	if (!sd)
  		return target;
  
@@ -355,8 +375,10 @@ index 8dff37059f..ae98b89c83 100644
 +
 +	if ((unsigned int)recent_used_cpu < nr_cpumask_bits) {
 +		if (choose_idle_cpu(recent_used_cpu, p)) {
-+			if (is_idle_core(recent_used_cpu))
-+				return recent_used_cpu;
++			if (is_idle_core(recent_used_cpu)) {
++				target = recent_used_cpu;
++				goto select_smt_priority;
++			}
 +			/* idle CPU but not idle core → preserve for give_up */
 +		} else {
 +			recent_used_cpu = -1;  /* not idle → discard */
@@ -365,7 +387,7 @@ index 8dff37059f..ae98b89c83 100644
 +
 +	if (sync && is_idle_core(target) &&
 +	    asym_fits_cpu(task_util, util_min, util_max, target))
-+		return target;
++		goto select_smt_priority;
 +
 +	/*
 +	 * If the previous CPU is cache affine and idle, don't be stupid:
@@ -375,8 +397,10 @@ index 8dff37059f..ae98b89c83 100644
 +	    asym_fits_cpu(task_util, util_min, util_max, prev)) {
 +
 +		if (!static_branch_unlikely(&sched_cluster_active) ||
-+		    cpus_share_resources(prev, target))
-+			return prev;
++		    cpus_share_resources(prev, target)) {
++			target = prev;
++			goto select_smt_priority;
++		}
 +
 +		prev_aff = prev;
 +	}
@@ -384,9 +408,9 @@ index 8dff37059f..ae98b89c83 100644
  	if (sched_smt_active()) {
  		has_idle_core = test_idle_cores(target);
  
-@@ -9059,6 +9134,9 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
- 	if ((unsigned)i < nr_cpumask_bits)
- 		return i;
+@@ -9273,6 +9363,9 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+ 		goto select_smt_priority;
+ 	}
  
 +#ifdef CONFIG_SCHED_POC_SELECTOR
 +give_up:
@@ -394,18 +418,18 @@ index 8dff37059f..ae98b89c83 100644
  	/*
  	 * For cluster machines which have lower sharing cache like L2 or
  	 * LLC Tag, we tend to find an idle CPU in the target's cluster
-@@ -9070,6 +9148,9 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
- 	if ((unsigned int)recent_used_cpu < nr_cpumask_bits)
- 		return recent_used_cpu;
+@@ -9288,6 +9381,9 @@ static int select_idle_sibling(struct task_struct *p, int prev, int target)
+ 		goto select_smt_priority;
+ 	}
  
 +#ifdef CONFIG_SCHED_POC_SELECTOR
 +	target = poc_last_resort(prev, target);
 +#endif
  	return target;
- }
  
-@@ -9751,8 +9832,13 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
- 		return sched_balance_find_dst_cpu(sd, p, cpu, prev_cpu, sd_flag);
+ select_smt_priority:
+@@ -9974,8 +10070,13 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int wake_flags)
+ 	}
  
  	/* Fast path */
 -	if (wake_flags & WF_TTWU)
@@ -420,7 +444,7 @@ index 8dff37059f..ae98b89c83 100644
  
  	return new_cpu;
  }
-@@ -9906,6 +9992,10 @@ static void wakeup_preempt_fair(struct rq *rq, struct task_struct *p, int wake_f
+@@ -10135,6 +10236,10 @@ static void wakeup_preempt_fair(struct rq *rq, struct task_struct *p, int wake_f
  	struct sched_entity *nse, *se = &donor->se, *pse = &p->se;
  	struct cfs_rq *cfs_rq = &rq->cfs;
  	int cse_is_idle, pse_is_idle;
@@ -431,7 +455,7 @@ index 8dff37059f..ae98b89c83 100644
  
  	/*
  	 * XXX Getting preempted by higher class, try and find idle CPU?
-@@ -9914,6 +10004,10 @@ static void wakeup_preempt_fair(struct rq *rq, struct task_struct *p, int wake_f
+@@ -10143,6 +10248,10 @@ static void wakeup_preempt_fair(struct rq *rq, struct task_struct *p, int wake_f
  	    donor->sched_class != &fair_sched_class)
  		return;
  
@@ -443,7 +467,7 @@ index 8dff37059f..ae98b89c83 100644
  		return;
  
 diff --git a/kernel/sched/idle.c b/kernel/sched/idle.c
-index eb73b65ce6..1d37215060 100644
+index e0c10a5dbd..51ab13982a 100644
 --- a/kernel/sched/idle.c
 +++ b/kernel/sched/idle.c
 @@ -305,6 +305,11 @@ static void do_idle(void)
@@ -472,10 +496,10 @@ index eb73b65ce6..1d37215060 100644
  	 * be set, propagate it into PREEMPT_NEED_RESCHED.
 diff --git a/kernel/sched/poc_selector.c b/kernel/sched/poc_selector.c
 new file mode 100644
-index 0000000000..54c646c1a8
+index 0000000000..155c45b9f4
 --- /dev/null
 +++ b/kernel/sched/poc_selector.c
-@@ -0,0 +1,2261 @@
+@@ -0,0 +1,2256 @@
 +// SPDX-License-Identifier: GPL-2.0
 +/*
 + * Piece-Of-Cake (POC) CPU Selector
@@ -530,7 +554,7 @@ index 0000000000..54c646c1a8
 +#define SCHED_POC_SELECTOR_AUTHOR   "Masahito Suzuki"
 +#define SCHED_POC_SELECTOR_PROGNAME "Piece-Of-Cake (POC) CPU Selector"
 +
-+#define SCHED_POC_SELECTOR_VERSION  "3.0.0"
++#define SCHED_POC_SELECTOR_VERSION  "3.0.1"
 +
 +/**************************************************************
 + * Static keys:
@@ -1064,30 +1088,24 @@ index 0000000000..54c646c1a8
 +	unsigned int head = 0, tail = 0;
 +	u8 ring[64];
 +	u64 busy = 0;
-+	int i;
++	u64 s;
 +
-+	for (i = 0; i < 8; i++) {
-+		unsigned int s;
++	s = (u64)atomic64_xchg(&sd_share->poc_pending, 0);
++	if (s)
++		busy = (u64)atomic64_read(&sd_share->poc_busy_mask);
++	while (s) {
++		int b = __ffs64(s);
++		int cpu = base + b;
 +
-+		if (!atomic_read(&sd_share->poc_pending[i]))
++		s &= s - 1;
++		if (cpu >= nr_cpu_ids || !cpu_online(cpu))
 +			continue;
-+		s = (unsigned int)atomic_xchg(&sd_share->poc_pending[i], 0);
-+		if (!head)
-+			busy = (u64)atomic64_read(&sd_share->poc_busy_mask);
-+		while (s) {
-+			int b = (i * 8) + __ffs(s);
-+			int cpu = base + b;
-+
-+			s &= s - 1;
-+			if (cpu >= nr_cpu_ids || !cpu_online(cpu))
-+				continue;
-+			prefetch(&cpu_rq(cpu)->poc_busy_bit);
-+			ring[head++] = b;
-+			if (head - tail > budget) {
-+				b = ring[tail++];
-+				busy &= ~(1ULL << b);
-+				busy |= READ_ONCE(cpu_rq(base + b)->poc_busy_bit);
-+			}
++		prefetch(&cpu_rq(cpu)->poc_busy_bit);
++		ring[head++] = b;
++		if (head - tail > budget) {
++			b = ring[tail++];
++			busy &= ~(1ULL << b);
++			busy |= READ_ONCE(cpu_rq(base + b)->poc_busy_bit);
 +		}
 +	}
 +	if (!head)
@@ -1105,12 +1123,7 @@ index 0000000000..54c646c1a8
 +/* nothing pending is the common case: check without a stack frame */
 +void poc_aggregate(struct sched_domain_shared *sd_share)
 +{
-+	unsigned int any = 0;
-+	int i;
-+
-+	for (i = 0; i < 8; i++)
-+		any |= (unsigned int)atomic_read(&sd_share->poc_pending[i]);
-+	if (any)
++	if (atomic64_read(&sd_share->poc_pending))
 +		poc_aggregate_pull(sd_share);
 +}
 +/*
@@ -1153,7 +1166,15 @@ index 0000000000..54c646c1a8
 +	 */
 +	if (!!((u64)atomic64_read(&sd_share->poc_busy_mask) & bm) == !state)
 +		return;
-+	atomic_or(1 << (bit & 7), &sd_share->poc_pending[bit >> 3]);
++	/*
++	 * poc_aggregate_pull() reads rq->poc_busy_bit after its fully
++	 * ordered xchg took this bit, but atomic64_or() alone is not ordered
++	 * after the store above: on a weakly ordered CPU the bit could be
++	 * seen first and the stale state be pulled into the busy mask.
++	 * Costs nothing on x86.
++	 */
++	smp_wmb();
++	atomic64_or(1ULL << (bit & 63), &sd_share->poc_pending);
 +}
 +/**************************************************************
 + * Idle CPU selection helpers:
@@ -1379,8 +1400,8 @@ index 0000000000..54c646c1a8
 +		 * still-idle local bit and undoes the commit before the wakee
 +		 * gets to run, letting the rest of the burst stack on it.
 +		 */
-+		if (atomic_read(&sd_share->poc_pending[bit >> 3]) & (1 << (bit & 7)))
-+			atomic_and(~(1 << (bit & 7)), &sd_share->poc_pending[bit >> 3]);
++		if (atomic64_read(&sd_share->poc_pending) & (1ULL << bit))
++			atomic64_andnot(1ULL << bit, &sd_share->poc_pending);
 +		smp_mb__after_atomic();
 +		WRITE_ONCE(cpu_rq(cpu)->poc_idle_committed, 1);
 +	}
@@ -1766,8 +1787,7 @@ index 0000000000..54c646c1a8
 +			}
 +			atomic64_set(&sd->shared->poc_busy_mask, busy);
 +		}
-+		for (int pi = 0; pi < 8; pi++)
-+			atomic_set(&sd->shared->poc_pending[pi], 0);
++		atomic64_set(&sd->shared->poc_pending, 0);
 +	}
 +
 +#ifdef CONFIG_SCHED_SMT
@@ -1986,8 +2006,7 @@ index 0000000000..54c646c1a8
 +			members &= members - 1;
 +		}
 +		atomic64_set(&sd_share->poc_busy_mask, busy);
-+		for (int pi = 0; pi < 8; pi++)
-+			atomic_set(&sd_share->poc_pending[pi], 0);
++		atomic64_set(&sd_share->poc_pending, 0);
 +	}
 +}
 +
@@ -3022,10 +3041,10 @@ index 0000000000..e645ed7beb
 +	poc_sync_resolve(p, exec - (p->poc_sync.mark - 1));
 +}
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index e656c7059b..3a64b164a2 100644
+index 6c7c563352..219e0ced8e 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1201,6 +1201,11 @@ struct rq {
+@@ -1220,6 +1220,11 @@ struct rq {
  	call_single_data_t	nohz_csd;
  #endif /* CONFIG_NO_HZ_COMMON */
  
@@ -3037,7 +3056,7 @@ index e656c7059b..3a64b164a2 100644
  #ifdef CONFIG_UCLAMP_TASK
  	/* Utilization clamp values based on CPU's RUNNABLE tasks */
  	struct uclamp_rq	uclamp[UCLAMP_CNT] ____cacheline_aligned;
-@@ -2409,6 +2414,8 @@ static inline struct task_group *task_group(struct task_struct *p)
+@@ -2431,6 +2436,8 @@ static inline struct task_group *task_group(struct task_struct *p)
  
  #endif /* !CONFIG_CGROUP_SCHED */
  
@@ -3047,10 +3066,10 @@ index e656c7059b..3a64b164a2 100644
  {
  	set_task_rq(p, cpu);
 diff --git a/kernel/sched/topology.c b/kernel/sched/topology.c
-index 0248227d98..bef155792a 100644
+index 919d0fb00b..6319f1c44b 100644
 --- a/kernel/sched/topology.c
 +++ b/kernel/sched/topology.c
-@@ -3166,6 +3166,9 @@ build_sched_domains(const struct cpumask *cpu_map, struct sched_domain_attr *att
+@@ -3188,6 +3188,9 @@ build_sched_domains(const struct cpumask *cpu_map, struct sched_domain_attr *att
  
  		if (sd->flags & SD_SHARE_LLC) {
  			init_sched_domain_shared(&d, sd, SD_SHARE_LLC);
