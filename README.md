@@ -12,9 +12,13 @@ This repository is primarily maintained for my personal use. I make it publicly 
 
 I integrate selected patches and optimizations from projects such as ZEN, CachyOS, Clear Linux, XanMod, pf-kernel, and independent kernel developers.
 
-My kernel source repository, including the patches I use, can be found here:
+My [kernel source repository](https://github.com/hellsgod/linux) contains separate branches for each kernel version, where I maintain the changes included in my patch collections, such as `base.patch` and `fixes.patch`.
 
-[linux-hC kernel source](https://github.com/hellsgod/linux)
+Each change is kept as an individual commit, preserving the original author's attribution and commit message. This allows anyone interested to browse the corresponding branches and see exactly which changes are included, rather than having to dig through large patch files.
+
+The patch files themselves are generated using `git diff`, as I previously encountered issues with `git format-patch` during the PKGBUILD build process.
+
+Patches from [firelzrd](https://github.com/firelzrd), including BORE, poc-selector, NAP, Cambyses, and lru_cast, are maintained by their original developer and integrated separately.
 
 `linux-hC` is a personal project, developed primarily for my own use and tailored to my hardware, preferences, and interests.
 
@@ -38,7 +42,9 @@ I primarily focus on three areas:
 
 I prefer targeted changes to scheduling, load balancing, CPU idle behavior, and memory management that fit this approach.
 
-Patches are selected based on their design, potential benefits, and relevance to my own usage. I am also willing to experiment with newer approaches, even if their benefits are not immediately measurable.
+Patches are selected based on their design, potential benefits, and relevance to my own usage. I'm also willing to experiment with newer approaches, even if their benefits are not immediately measurable.
+
+I don't believe that more features necessarily make a better kernel. Instead, I focus on a carefully selected set of changes that serve a clear purpose, rather than including every available tweak or optimization simply because it exists.
 
 Most testing is done through real-world usage, including gaming, multitasking, and compiling large projects under full CPU load. Feedback from other users and different hardware configurations is also valuable.
 
