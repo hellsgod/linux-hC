@@ -1,87 +1,13 @@
 diff --git a/Makefile b/Makefile
-index e27c91ea56fc..c42da7a561f9 100644
+index 7d8c4667e79f2..3cf66ef11caad 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -467,9 +467,60 @@ KERNELDOC       = $(srctree)/tools/docs/kernel-doc
- export KERNELDOC
- 
- KBUILD_USERHOSTCFLAGS := -Wall -Wmissing-prototypes -Wstrict-prototypes \
--			 -O2 -fomit-frame-pointer -std=gnu11
-+			 -O3 -fomit-frame-pointer -std=gnu11
- KBUILD_USERCFLAGS  := $(KBUILD_USERHOSTCFLAGS) $(USERCFLAGS)
--KBUILD_USERLDFLAGS := $(USERLDFLAGS)
-+KBUILD_USERLDFLAGS := \
-+  -lto-CGO3 -lto-O3 -Wl,-O3 \
-+  -Wl,--gc-sections -Wl,--no-undefined -Wl,--as-needed \
-+  -Wl,--icf=safe \
-+  -Wl,--compress-debug-sections=zstd -Wl,--exclude-libs,ALL \
-+  -plugin-opt=thinlto-split-lto-unit \
-+  -plugin-opt=partial-inliner \
-+  -plugin-opt=mergefunc -plugin-opt=pick-merged-source-locations \
-+  -plugin-opt=inline-threshold=420 \
-+  -plugin-opt=inlinehint-threshold=170 \
-+  -plugin-opt=inlinecold-threshold=110 \
-+  -plugin-opt=inline-deferral -plugin-opt=inline-deferral-scale=4 \
-+  -plugin-opt=inline-savings-multiplier=2 -plugin-opt=inline-savings-profitable-multiplier=3 \
-+  -plugin-opt=inline-size-allowance=28 \
-+  -plugin-opt=max-num-inline-blocks=14 -plugin-opt=max-partial-inlining=8 \
-+  -plugin-opt=unroll-threshold=70 -plugin-opt=unroll-max-count=10 \
-+  -plugin-opt=unroll-max-iteration-count-to-analyze=40 \
-+  -plugin-opt=unroll-allow-partial -plugin-opt=unroll-partial-threshold=240 \
-+  -plugin-opt=enable-unroll-and-jam -plugin-opt=unroll-and-jam-threshold=60 \
-+  -plugin-opt=enable-loop-versioning-licm \
-+  -plugin-opt=enable-unswitch-cost-multiplier \
-+  -plugin-opt=extra-vectorizer-passes \
-+  -plugin-opt=enable-epilogue-vectorization -plugin-opt=enable-early-exit-vectorization \
-+  -plugin-opt=slp-threshold=8 -plugin-opt=slp-schedule-budget=32 -plugin-opt=slp-split-alternate-instructions \
-+  -plugin-opt=enable-vplan-native-path \
-+  -plugin-opt=loop-vectorize-with-block-frequency \
-+  -plugin-opt=vectorizer-consider-reg-pressure -plugin-opt=vectorize-memory-check-threshold=8 -plugin-opt=vectorize-num-stores-pred=2 \
-+  -plugin-opt=vectorizer-min-trip-count=2 \
-+  -plugin-opt=load-store-vectorizer \
-+  -plugin-opt=enable-interleaved-mem-accesses \
-+  -plugin-opt=enable-masked-interleaved-mem-accesses -plugin-opt=lower-interleaved-accesses \
-+  -plugin-opt=gvn-add-phi-translation -plugin-opt=enable-gvn-sink -plugin-opt=enable-gvn-hoist \
-+  -plugin-opt=enable-memcpy-dag-opt \
-+  -plugin-opt=enable-memcpyopt-without-libcalls \
-+  -plugin-opt=enable-dse-initializes-attr-improvement -plugin-opt=enable-dse-partial-store-merging \
-+  -plugin-opt=instcombine-code-sinking -plugin-opt=sink-insts-to-avoid-spills \
-+  -plugin-opt=adce-remove-loops -plugin-opt=adce-remove-control-flow \
-+  -plugin-opt=hoist-common-insts -plugin-opt=enable-loop-simplifycfg-term-folding \
-+  -plugin-opt=consthoist-with-block-frequency -plugin-opt=consthoist-gep \
-+  -plugin-opt=enable-tbaa -plugin-opt=globals-aa -plugin-opt=globalopt \
-+  -plugin-opt=use-noalias-intrinsic-during-inlining \
-+  -plugin-opt=prefetch-distance=22 -plugin-opt=max-prefetch-iters-ahead=14 -plugin-opt=loop-prefetch-writes \
-+  -plugin-opt=enable-post-misched -plugin-opt=misched-regpressure -plugin-opt=max-sched-reorder=80 \
-+  -plugin-opt=enable-misched -plugin-opt=enable-aa-sched-mi \
-+  -plugin-opt=enable-ext-tsp-block-placement -plugin-opt=ext-tsp-apply-without-profile -plugin-opt=ext-tsp-block-placement-max-blocks=400 \
-+  -plugin-opt=post-RA-scheduler -plugin-opt=early-live-intervals -plugin-opt=optimize-regalloc \
-+  -plugin-opt=enable-spill-copy-elim \
-+  -plugin-opt=enable-indvars-post-increment-ranges \
-+  -plugin-opt=lsr-drop-solution -plugin-opt=lsr-exp-narrow -plugin-opt=lsr-insns-cost -plugin-opt=enable-lsr-phielim \
-+  -plugin-opt=loop-version-annotate-no-alias \
-+  -plugin-opt=hot-cold-static-analysis \
-+  -plugin-opt=enable-tail-merge $(USERLDFLAGS)
- 
- # These flags apply to all Rust code in the tree, including the kernel and
- # host programs.
-@@ -504,7 +555,7 @@ export rust_common_flags := --edition=2021 \
- 
- KBUILD_HOSTCFLAGS   := $(KBUILD_USERHOSTCFLAGS) $(HOST_LFS_CFLAGS) \
- 		       $(HOSTCFLAGS) -I $(srctree)/scripts/include
--KBUILD_HOSTCXXFLAGS := -Wall -O2 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS) \
-+KBUILD_HOSTCXXFLAGS := -Wall -O3 $(HOST_LFS_CFLAGS) $(HOSTCXXFLAGS) \
- 		       -I $(srctree)/scripts/include
- KBUILD_HOSTRUSTFLAGS := $(rust_common_flags) -O -Cstrip=debuginfo \
- 			-Zallow-features=
-@@ -590,7 +641,26 @@ LINUXINCLUDE    := \
+@@ -608,7 +608,23 @@ LINUXINCLUDE    := \
  
  KBUILD_AFLAGS   := -D__ASSEMBLY__ -fno-PIE
  
 -KBUILD_CFLAGS :=
 +KBUILD_CFLAGS := \
-+  -fdata-sections -ffunction-sections \
-+  -ffine-grained-bitfield-accesses \
 +  -mllvm -enable-load-pre -mllvm -enable-load-in-loop-pre -mllvm -enable-split-backedge-in-load-pre \
 +  -mllvm -basic-aa-recphi -mllvm -basic-aa-separate-storage \
 +  -mllvm -enable-gvn-memoryssa \
@@ -95,16 +21,65 @@ index e27c91ea56fc..c42da7a561f9 100644
 +  -mllvm -max-speculation-depth=12 \
 +  -mllvm -simplifycfg-merge-cond-stores -mllvm -simplifycfg-hoist-common \
 +  -mllvm -simplifycfg-hoist-cond-stores \
-+  -mllvm -simplifycfg-hoist-loads-with-cond-faulting -mllvm -simplifycfg-hoist-stores-with-cond-faulting \
 +  -mllvm -simplifycfg-sink-common \
 +  -mllvm -branch-fold-placement -mllvm -forward-switch-cond \
 +  -mllvm -hoist-const-loads -mllvm -hoist-const-stores
  KBUILD_CFLAGS += -fshort-wchar
  KBUILD_CFLAGS += -funsigned-char
  KBUILD_CFLAGS += -fno-common
-@@ -925,8 +995,8 @@ endif # need-config
+@@ -935,9 +951,58 @@ endif # need-config
+ 
  KBUILD_CFLAGS	+= -fno-delete-null-pointer-checks
  
++# Experimental LLVM ThinLTO tuning (ld.lld is invoked directly).
++# --mllvm passes options to LLVM; do not use -plugin-opt for these.
++# These are intentionally experimental and require checking against the
++# exact LLVM 24 build. Acceptance does not establish a performance benefit.
++ifeq ($(CONFIG_LTO_CLANG_THIN),y)
++KBUILD_LDFLAGS += --lto-O3
++KBUILD_LDFLAGS += \
++  --mllvm=-inline-threshold=420 \
++  --mllvm=-inlinehint-threshold=170 \
++  --mllvm=-inlinecold-threshold=110 \
++  --mllvm=-inline-deferral \
++  --mllvm=-inline-deferral-scale=4 \
++  --mllvm=-inline-savings-multiplier=2 \
++  --mllvm=-inline-savings-profitable-multiplier=3 \
++  --mllvm=-inline-size-allowance=28 \
++  --mllvm=-max-num-inline-blocks=14 \
++  --mllvm=-max-partial-inlining=8 \
++  --mllvm=-unroll-threshold=70 \
++  --mllvm=-unroll-max-count=10 \
++  --mllvm=-unroll-max-iteration-count-to-analyze=40 \
++  --mllvm=-unroll-allow-partial \
++  --mllvm=-unroll-partial-threshold=240 \
++  --mllvm=-enable-unroll-and-jam \
++  --mllvm=-unroll-and-jam-threshold=60 \
++  --mllvm=-enable-loop-versioning-licm \
++  --mllvm=-enable-unswitch-cost-multiplier \
++  --mllvm=-gvn-add-phi-translation \
++  --mllvm=-enable-gvn-sink \
++  --mllvm=-enable-gvn-hoist \
++  --mllvm=-enable-memcpy-dag-opt \
++  --mllvm=-enable-dse-initializes-attr-improvement \
++  --mllvm=-enable-dse-partial-store-merging \
++  --mllvm=-instcombine-code-sinking \
++  --mllvm=-sink-insts-to-avoid-spills \
++  --mllvm=-adce-remove-loops \
++  --mllvm=-adce-remove-control-flow \
++  --mllvm=-hoist-common-insts \
++  --mllvm=-enable-loop-simplifycfg-term-folding \
++  --mllvm=-consthoist-with-block-frequency \
++  --mllvm=-use-noalias-intrinsic-during-inlining \
++  --mllvm=-lsr-drop-solution \
++  --mllvm=-lsr-exp-narrow \
++  --mllvm=-lsr-insns-cost \
++  --mllvm=-enable-lsr-phielim \
++  --mllvm=-loop-version-annotate-no-alias \
++  --mllvm=-hot-cold-static-analysis \
++  --mllvm=-enable-tail-merge
++endif
++
  ifdef CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE
 -KBUILD_CFLAGS += -O2
 -KBUILD_RUSTFLAGS += -Copt-level=2
@@ -114,10 +89,10 @@ index e27c91ea56fc..c42da7a561f9 100644
  KBUILD_CFLAGS += -Os
  KBUILD_RUSTFLAGS += -Copt-level=s
 diff --git a/init/Kconfig b/init/Kconfig
-index 03f722dfc985..0616f8d086a4 100644
+index 4013781e0a029..1387990e777b4 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -1618,10 +1618,10 @@ choice
+@@ -1462,10 +1462,10 @@ choice
  	default CC_OPTIMIZE_FOR_PERFORMANCE
  
  config CC_OPTIMIZE_FOR_PERFORMANCE
