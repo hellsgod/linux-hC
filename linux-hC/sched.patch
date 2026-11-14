@@ -132,7 +132,7 @@ index 06bddaa738e52..faac7c2066d84 100644
  
  	if (steal >= cputime)
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 0f2364479f9d2..8efb2dcc57b1e 100644
+index b35e23f93bcd2..8b295167e3266 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
 @@ -820,12 +820,6 @@ static u64 ineligible_vruntime(struct cfs_rq *cfs_rq)
@@ -173,37 +173,16 @@ index 0f2364479f9d2..8efb2dcc57b1e 100644
 +		slice = cfs_rq_min_slice(cfs_rq);
 +
 +	vprot = min_vruntime(se->vprot, vruntime + calc_delta_fair(slice, se));
- 
--	se->vprot = min_vruntime(se->vprot, vruntime + calc_delta_fair(slice, se));
++
 +	if (sched_feat(PREEMPT_SHORT) && slice != se->slice)
 +		vprot = min_vruntime(vprot, ineligible_vruntime(cfs_rq));
-+
+ 
+-	se->vprot = min_vruntime(se->vprot, vruntime + calc_delta_fair(slice, se));
 +	se->vprot = vprot;
  }
  
  static inline bool protect_slice(struct sched_entity *se)
-@@ -3713,7 +3715,7 @@ static void update_task_scan_period(struct task_struct *p,
- 		p->mm->numa_next_scan = jiffies +
- 			msecs_to_jiffies(p->numa_scan_period);
- 
--		return;
-+		goto out;
- 	}
- 
- 	/*
-@@ -3757,7 +3759,10 @@ static void update_task_scan_period(struct task_struct *p,
- 
- 	p->numa_scan_period = clamp(p->numa_scan_period + diff,
- 			task_scan_min(p), task_scan_max(p));
--	memset(p->numa_faults_locality, 0, sizeof(p->numa_faults_locality));
-+
-+out:
-+	memset(p->numa_faults_locality, 0,
-+	       sizeof(p->numa_faults_locality));
- }
- 
- /*
-@@ -10080,8 +10085,14 @@ static inline bool set_preempt_buddy(struct cfs_rq *cfs_rq, struct sched_entity
+@@ -10083,8 +10085,14 @@ static inline bool set_preempt_buddy(struct cfs_rq *cfs_rq, struct sched_entity
  
  static inline bool set_short_buddy(struct cfs_rq *cfs_rq, struct sched_entity *pse)
  {
@@ -220,7 +199,7 @@ index 0f2364479f9d2..8efb2dcc57b1e 100644
  
  	set_next_buddy(cfs_rq, pse);
  	return true;
-@@ -12119,6 +12130,14 @@ static void record_sg_llc_stats(struct lb_env *env,
+@@ -12128,6 +12136,14 @@ static void record_sg_llc_stats(struct lb_env *env,
  	if (env->sd->child != rcu_dereference_all(per_cpu(sd_llc, env->dst_cpu)))
  		return;
  
@@ -236,10 +215,10 @@ index 0f2364479f9d2..8efb2dcc57b1e 100644
  	 * At this point we know this group spans a LLC domain.
  	 * Record the statistic of this group in its corresponding
 diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index 6c3fea3867139..4e293f81e4dc1 100644
+index baa3ac9b48f88..6546e196645f2 100644
 --- a/kernel/time/tick-sched.c
 +++ b/kernel/time/tick-sched.c
-@@ -763,12 +763,18 @@ static ktime_t tick_forward_now(ktime_t expires, ktime_t now)
+@@ -775,12 +775,18 @@ static ktime_t tick_forward_now(ktime_t expires, ktime_t now)
  	return expires + TICK_NSEC;
  }
  
@@ -261,7 +240,7 @@ index 6c3fea3867139..4e293f81e4dc1 100644
  
  	if (tick_sched_flag_test(ts, TS_FLAG_HIGHRES)) {
  		hrtimer_start(&ts->sched_timer,	expires, HRTIMER_MODE_ABS_PINNED_HARD);
-@@ -1329,6 +1335,12 @@ unsigned long tick_nohz_get_idle_calls_cpu(int cpu)
+@@ -1341,6 +1347,12 @@ unsigned long tick_nohz_get_idle_calls_cpu(int cpu)
  	return ts->idle_calls;
  }
  
@@ -274,7 +253,7 @@ index 6c3fea3867139..4e293f81e4dc1 100644
  void tick_nohz_idle_restart_tick(void)
  {
  	struct tick_sched *ts = this_cpu_ptr(&tick_cpu_sched);
-@@ -1341,7 +1353,7 @@ void tick_nohz_idle_restart_tick(void)
+@@ -1353,7 +1365,7 @@ void tick_nohz_idle_restart_tick(void)
  		 * no tiny amount of idle time is accounted twice.
  		 */
  		ts->idle_entrytime = ktime_get();
@@ -283,7 +262,7 @@ index 6c3fea3867139..4e293f81e4dc1 100644
  		tick_nohz_restart_sched_tick(ts, ts->idle_entrytime);
  	}
  }
-@@ -1385,7 +1397,7 @@ void tick_nohz_idle_exit(void)
+@@ -1397,7 +1409,7 @@ void tick_nohz_idle_exit(void)
  
  	if (tick_sched_flag_test(ts, TS_FLAG_STOPPED)) {
  		now = ktime_get();
