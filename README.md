@@ -91,7 +91,6 @@ This is not intended to be a kernel for everyone.
 - Built using my custom **LLVM/Clang 24** toolchain. [Repository](https://github.com/hellsgod/clang)
 - ThinLTO enabled by default.
 - Rust support enabled.
-- Custom compiler optimization flags targeting my AMD Ryzen 9 9950X.
 - Additional compiler and build configuration adjustments for my personal setup.
 
 ### Additional Patches
@@ -142,13 +141,7 @@ Then adjust the following paths to match your installation:
 
 The custom libclang path is used for Rust-related build components.
 
-### 3. Compiler Optimization Patch
-
-**WARNING: My `compiler-opt.patch` is intended for Zen 4/Zen 5 CPUs. Do not use it on other CPU architectures without reviewing and adjusting its contents.**
-
-Changing `_processor_opt` alone does not necessarily make the compiler optimization patch compatible with other CPUs.
-
-### 4. Build and Install
+### 3. Build and Install
 
 After reviewing the configuration, build and install the kernel using:
 
@@ -174,7 +167,7 @@ The module is built for the corresponding kernel version.
 
 This kernel is provided **as-is**, without any warranty or guarantee of stability, compatibility, or performance.
 
-It is developed and tested primarily on my own hardware. Experimental patches, release candidates, and custom compiler optimizations may introduce regressions or unexpected behavior.
+It is developed and tested primarily on my own hardware. Experimental patches, release candidates, and other optimizations may introduce regressions or unexpected behavior.
 
 Use it at your own risk.
 
