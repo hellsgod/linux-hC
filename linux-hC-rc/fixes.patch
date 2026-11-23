@@ -456,3 +456,15 @@ index 66e4b6a37783c..e187908d3f1e6 100644
  	echo "Installing System.map and config..."
  	mkdir -p "${builddir}"
  	cp System.map "${builddir}/System.map"
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index da0d9e19c4577..8a55571b9719d 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -8242,7 +8242,7 @@ static void dequeue_hierarchy(struct task_struct *p, int flags)
+ {
+ 	struct sched_entity *se = &p->se;
+ 	bool task_throttled = flags & DEQUEUE_THROTTLE;
+-	int h_nr_runnable = 0;
++	int h_nr_runnable = 1;
+ 	int h_nr_idle = task_has_idle_policy(p);
+ 	bool dequeue = true;
