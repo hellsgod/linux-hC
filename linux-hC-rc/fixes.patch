@@ -64,10 +64,10 @@ index df22113db9cd7..3b0ed46dfc233 100644
  	/* With PTI, we unconditionally serialize before running user code. */
  	if (cpu_feature_enabled(X86_FEATURE_PTI))
 diff --git a/arch/x86/kernel/cpu/amd.c b/arch/x86/kernel/cpu/amd.c
-index 3972966cb0237..3c1b91f5af75e 100644
+index 365bcbf56c768..8abc0d00dc88a 100644
 --- a/arch/x86/kernel/cpu/amd.c
 +++ b/arch/x86/kernel/cpu/amd.c
-@@ -1029,6 +1029,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
+@@ -1034,6 +1034,7 @@ static void init_amd_zen4(struct cpuinfo_x86 *c)
  	}
  }
  
@@ -75,7 +75,7 @@ index 3972966cb0237..3c1b91f5af75e 100644
  static const struct x86_cpu_id zen5_rdseed_microcode[] = {
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x02, 0x1, 0x0b00215a),
  	ZEN_MODEL_STEP_UCODE(0x1a, 0x08, 0x1, 0x0b008121),
-@@ -1054,6 +1055,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
+@@ -1059,6 +1060,11 @@ static void init_amd_zen5(struct cpuinfo_x86 *c)
  	    !cpu_has(c, X86_FEATURE_TLBSYNC_SFW_NO))
  		set_cpu_bug(c, X86_BUG_TLBI);
  }
@@ -88,7 +88,7 @@ index 3972966cb0237..3c1b91f5af75e 100644
  static void init_amd(struct cpuinfo_x86 *c)
  {
 diff --git a/drivers/gpu/drm/gud/gud_connector.c b/drivers/gpu/drm/gud/gud_connector.c
-index 8141c3a1e30ad..5c0065c876a77 100644
+index 9d689c6ee3249..d65615adfffff 100644
 --- a/drivers/gpu/drm/gud/gud_connector.c
 +++ b/drivers/gpu/drm/gud/gud_connector.c
 @@ -399,11 +399,8 @@ static int gud_connector_add_tv_mode(struct gud_device *gdrm, struct drm_connect
@@ -105,11 +105,24 @@ index 8141c3a1e30ad..5c0065c876a77 100644
  		modes[i] = mode;
  	}
  
+diff --git a/drivers/media/i2c/maxim-serdes/max96717.c b/drivers/media/i2c/maxim-serdes/max96717.c
+index c76d092a30191..6aaa3e37c4067 100644
+--- a/drivers/media/i2c/maxim-serdes/max96717.c
++++ b/drivers/media/i2c/maxim-serdes/max96717.c
+@@ -574,7 +574,7 @@ static int max96717_conf_pin_config_get(struct pinctrl_dev *pctldev,
+ 	return 0;
+ }
+ 
+-static int max96717_conf_pin_config_set_one(struct max96717_priv *priv,
++static noinline int max96717_conf_pin_config_set_one(struct max96717_priv *priv,
+ 					    unsigned int offset,
+ 					    unsigned long config)
+ {
 diff --git a/include/linux/perf_event.h b/include/linux/perf_event.h
-index eb3f7bab498ca..64c29a90034bb 100644
+index e1e11500df097..e5f45eaac229b 100644
 --- a/include/linux/perf_event.h
 +++ b/include/linux/perf_event.h
-@@ -1639,7 +1639,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
+@@ -1638,7 +1638,7 @@ static inline void perf_event_task_migrate(struct task_struct *task)
  		task->sched_migrated = 1;
  }
  
@@ -261,10 +274,10 @@ index 82825e7754993..ce83fc74387d1 100644
  	if (vtime_accounting_enabled_this_cpu())
  		vtime_task_switch_generic(prev);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 04b62c16fa8ca..85589dd35e7bb 100644
+index 515b9d0353ce9..4e73f33d5fc7d 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -5147,7 +5147,7 @@ static inline void prepare_task(struct task_struct *next)
+@@ -5148,7 +5148,7 @@ static inline void prepare_task(struct task_struct *next)
  	WRITE_ONCE(next->on_cpu, 1);
  }
  
@@ -273,7 +286,7 @@ index 04b62c16fa8ca..85589dd35e7bb 100644
  {
  	/*
  	 * This must be the very last reference to @prev from this CPU. After
-@@ -5191,7 +5191,7 @@ static void zap_balance_callbacks(struct rq *rq)
+@@ -5192,7 +5192,7 @@ static void zap_balance_callbacks(struct rq *rq)
  	rq->balance_callback = found ? &balance_push_callback : NULL;
  }
  
@@ -282,7 +295,7 @@ index 04b62c16fa8ca..85589dd35e7bb 100644
  {
  	void (*func)(struct rq *rq);
  	struct balance_callback *next;
-@@ -5226,7 +5226,7 @@ struct balance_callback balance_push_callback = {
+@@ -5227,7 +5227,7 @@ struct balance_callback balance_push_callback = {
  	.func = balance_push,
  };
  
@@ -291,7 +304,7 @@ index 04b62c16fa8ca..85589dd35e7bb 100644
  __splice_balance_callbacks(struct rq *rq, bool split)
  {
  	struct balance_callback *head = rq->balance_callback;
-@@ -5300,7 +5300,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
+@@ -5301,7 +5301,7 @@ prepare_lock_switch(struct rq *rq, struct task_struct *next, struct rq_flags *rf
  	__acquire(__rq_lockp(this_rq()));
  }
  
@@ -300,7 +313,7 @@ index 04b62c16fa8ca..85589dd35e7bb 100644
  	__releases(__rq_lockp(rq))
  {
  	/*
-@@ -5334,7 +5334,7 @@ static inline void kmap_local_sched_out(void)
+@@ -5335,7 +5335,7 @@ static inline void kmap_local_sched_out(void)
  #endif
  }
  
@@ -309,7 +322,7 @@ index 04b62c16fa8ca..85589dd35e7bb 100644
  {
  #ifdef CONFIG_KMAP_LOCAL
  	if (unlikely(current->kmap_ctrl.idx))
-@@ -5388,7 +5388,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
+@@ -5389,7 +5389,7 @@ prepare_task_switch(struct rq *rq, struct task_struct *prev,
   * past. 'prev == current' is still correct but we need to recalculate this_rq
   * because prev may have moved to another CPU.
   */
@@ -319,10 +332,19 @@ index 04b62c16fa8ca..85589dd35e7bb 100644
  {
  	struct rq *rq = this_rq();
 diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index cfc982205b98c..71d69c200fe9c 100644
+index da0d9e19c4577..fd812666a597e 100644
 --- a/kernel/sched/fair.c
 +++ b/kernel/sched/fair.c
-@@ -13806,12 +13806,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
+@@ -8242,7 +8242,7 @@ static void dequeue_hierarchy(struct task_struct *p, int flags)
+ {
+ 	struct sched_entity *se = &p->se;
+ 	bool task_throttled = flags & DEQUEUE_THROTTLE;
+-	int h_nr_runnable = 0;
++	int h_nr_runnable = 1;
+ 	int h_nr_idle = task_has_idle_policy(p);
+ 	bool dequeue = true;
+ 
+@@ -13814,12 +13814,15 @@ static int sched_balance_rq(int this_cpu, struct rq *this_rq,
  		 * still unbalanced. ld_moved simply stays zero, so it is
  		 * correctly treated as an imbalance.
  		 */
@@ -341,10 +363,10 @@ index cfc982205b98c..71d69c200fe9c 100644
  		 * cur_ld_moved - load moved in current iteration
  		 * ld_moved     - cumulative load moved across iterations
 diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index 6c7c5633524a3..6a9a29615c46d 100644
+index a4e6696e3a516..16911b548ac6b 100644
 --- a/kernel/sched/sched.h
 +++ b/kernel/sched/sched.h
-@@ -1503,12 +1503,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
+@@ -1511,12 +1511,12 @@ static inline struct cpumask *sched_group_span(struct sched_group *sg);
  
  DECLARE_STATIC_KEY_FALSE(__sched_core_enabled);
  
@@ -359,7 +381,7 @@ index 6c7c5633524a3..6a9a29615c46d 100644
  {
  	return !static_branch_unlikely(&__sched_core_enabled);
  }
-@@ -1517,7 +1517,7 @@ static inline bool sched_core_disabled(void)
+@@ -1525,7 +1525,7 @@ static inline bool sched_core_disabled(void)
   * Be careful with this function; not for general use. The return value isn't
   * stable unless you actually hold a relevant rq->__lock.
   */
@@ -368,7 +390,7 @@ index 6c7c5633524a3..6a9a29615c46d 100644
  {
  	if (sched_core_enabled(rq))
  		return &rq->core->__lock;
-@@ -1525,7 +1525,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
+@@ -1533,7 +1533,7 @@ static inline raw_spinlock_t *rq_lockp(struct rq *rq)
  	return &rq->__lock;
  }
  
@@ -377,7 +399,7 @@ index 6c7c5633524a3..6a9a29615c46d 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	if (rq->core_enabled)
-@@ -1628,12 +1628,12 @@ static inline bool sched_core_disabled(void)
+@@ -1655,12 +1655,12 @@ static inline bool sched_core_disabled(void)
  	return true;
  }
  
@@ -392,7 +414,7 @@ index 6c7c5633524a3..6a9a29615c46d 100644
  	__returns_ctx_lock(rq_lockp(rq)) /* alias them */
  {
  	return &rq->__lock;
-@@ -1693,33 +1693,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
+@@ -1720,33 +1720,33 @@ extern void raw_spin_rq_lock_nested(struct rq *rq, int subclass)
  extern bool raw_spin_rq_trylock(struct rq *rq)
  	__cond_acquires(true, __rq_lockp(rq));
  
@@ -431,7 +453,7 @@ index 6c7c5633524a3..6a9a29615c46d 100644
  	__acquires(__rq_lockp(rq))
  {
  	unsigned long flags;
-@@ -1730,7 +1730,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
+@@ -1757,7 +1757,7 @@ static inline unsigned long _raw_spin_rq_lock_irqsave(struct rq *rq)
  	return flags;
  }
  
@@ -440,31 +462,3 @@ index 6c7c5633524a3..6a9a29615c46d 100644
  	__releases(__rq_lockp(rq))
  {
  	raw_spin_rq_unlock(rq);
-diff --git a/scripts/package/PKGBUILD b/scripts/package/PKGBUILD
-index 66e4b6a37783c..e187908d3f1e6 100644
---- a/scripts/package/PKGBUILD
-+++ b/scripts/package/PKGBUILD
-@@ -90,6 +90,11 @@ _package-headers() {
- 		"${srctree}/scripts/package/install-extmod-build" "${builddir}"
- 	fi
- 
-+	# required when DEBUG_INFO_BTF_MODULES is enabled
-+	if [ -f tools/bpf/resolve_btfids/resolve_btfids ]; then
-+		install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
-+	fi
-+
- 	echo "Installing System.map and config..."
- 	mkdir -p "${builddir}"
- 	cp System.map "${builddir}/System.map"
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index da0d9e19c4577..8a55571b9719d 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -8242,7 +8242,7 @@ static void dequeue_hierarchy(struct task_struct *p, int flags)
- {
- 	struct sched_entity *se = &p->se;
- 	bool task_throttled = flags & DEQUEUE_THROTTLE;
--	int h_nr_runnable = 0;
-+	int h_nr_runnable = 1;
- 	int h_nr_idle = task_has_idle_policy(p);
- 	bool dequeue = true;
