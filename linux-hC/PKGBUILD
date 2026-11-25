@@ -125,7 +125,7 @@
 # 3. Profile the kernel and convert the profile, see Generating the Profile for AutoFDO
 # 4. Put the profile into the sourcedir
 # 5. Run kernel build again with the _autofdo_profile_name path to profile specified
-: "${_autofdo:=no}"
+: "${_autofdo:=yes}"
 
 # Name for the AutoFDO profile
 : "${_autofdo_profile_name:=}"
