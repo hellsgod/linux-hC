@@ -35,6 +35,7 @@ pkgbase = linux-hC
 	source = poc-selector.patch
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/misc/dkms-clang.patch
 	source = nvidia-open-620.73.04.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/620.73.04.tar.gz
+	source = hC.afdo
 	source = https://raw.githubusercontent.com/cachyos/kernel-patches/master/7.3/sched/0001-bore.patch
 	b2sums = 78da05b71d4fb975d759e7e9f74917531fc06b0740cdf9eab69b1d7b838d6a0cc19a087a629bb41eb4ae77f9ca745cd309e4d90911e4b74347016a059b3fac02
 	b2sums = 8d9aeb4a99938946ffd9cc51f2cf02dbf91aef8a408f215a23659a3b581b7ea99302927bf35d3956102c50a79f69680f2350665085b78c16eacc48cee9239e51
@@ -46,6 +47,7 @@ pkgbase = linux-hC
 	b2sums = d0e210a5700565121685fbd18157b75dff98455ed8dd0d9516d33e1b4f89ebb93207cddc8508f3452df6257fae8ba212c0f798ce053717b3163248d62c802519
 	b2sums = c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e
 	b2sums = d0ec075da0db32fe064cd303d9f1ed2b44bc9142c193cf2600b092536003723ca62a9f7e9caa702dbb493fbe2428f654f8e98a1890fa1f3bb021ebc2a02c51ec
+	b2sums = e0352aef2506a7c6ffadd3e70a5b1c85d8b7b8a7dc755b8196ad7425688fd8dc83dd40c1b7788498a720314f521f4c4871237b0be0289f13ffc6d8032d339a23
 	b2sums = 2c1e9deca53a0cddd038c04b6ddecf6a995c21e08cc218cb1c76c3f0707f29159a5cf7c1b30958972ba1f4db2695d5425068f5bf57d666283ba5a9c8d7786df2
 
 pkgname = linux-hC

@@ -128,7 +128,7 @@
 : "${_autofdo:=yes}"
 
 # Name for the AutoFDO profile
-: "${_autofdo_profile_name:=}"
+: "${_autofdo_profile_name:=hC.afdo}"
 
 # Propeller should be applied, after the kernel is optimized with AutoFDO
 # Workflow:
@@ -786,4 +786,5 @@ b2sums=('78da05b71d4fb975d759e7e9f74917531fc06b0740cdf9eab69b1d7b838d6a0cc19a087
         'd0e210a5700565121685fbd18157b75dff98455ed8dd0d9516d33e1b4f89ebb93207cddc8508f3452df6257fae8ba212c0f798ce053717b3163248d62c802519'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
         'd0ec075da0db32fe064cd303d9f1ed2b44bc9142c193cf2600b092536003723ca62a9f7e9caa702dbb493fbe2428f654f8e98a1890fa1f3bb021ebc2a02c51ec'
+        'e0352aef2506a7c6ffadd3e70a5b1c85d8b7b8a7dc755b8196ad7425688fd8dc83dd40c1b7788498a720314f521f4c4871237b0be0289f13ffc6d8032d339a23'
         '2c1e9deca53a0cddd038c04b6ddecf6a995c21e08cc218cb1c76c3f0707f29159a5cf7c1b30958972ba1f4db2695d5425068f5bf57d666283ba5a9c8d7786df2')
