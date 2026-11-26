@@ -682,15 +682,16 @@ index 6bb75db087a2d..41a66fc15edf8 100644
  	if (gfp_pfmemalloc_allowed(gfp))
  		gfp_nomemalloc |= __GFP_NOWARN;
 diff --git a/scripts/Makefile.autofdo b/scripts/Makefile.autofdo
-index 57a3aba6ffc23..55fda66ad960c 100644
+index 57a3aba6ffc23..f5312711883f1 100644
 --- a/scripts/Makefile.autofdo
 +++ b/scripts/Makefile.autofdo
 @@ -13,13 +13,16 @@ endif
  ifdef CLANG_AUTOFDO_PROFILE
    CFLAGS_AUTOFDO_CLANG += -fprofile-sample-use=$(CLANG_AUTOFDO_PROFILE) -ffunction-sections
    CFLAGS_AUTOFDO_CLANG += -fsplit-machine-functions
+-  RUSTFLAGS_AUTOFDO_CLANG += -Zprofile-sample-use=$(CLANG_AUTOFDO_PROFILE) -Zfunction-sections=y
 +  CFLAGS_AUTOFDO_CLANG += $(if $(call clang-min-version,210000),-fno-sample-profile-use-profi)
-   RUSTFLAGS_AUTOFDO_CLANG += -Zprofile-sample-use=$(CLANG_AUTOFDO_PROFILE) -Zfunction-sections=y
++  RUSTFLAGS_AUTOFDO_CLANG += $(if $(call rustc-min-version,110000),-Cprofile-sample-use,-Zprofile-sample-use)=$(CLANG_AUTOFDO_PROFILE) -Zfunction-sections=y
    RUSTFLAGS_AUTOFDO_CLANG += -Cllvm-args=-split-machine-functions
 +  RUSTFLAGS_AUTOFDO_CLANG += -Cllvm-args=-sample-profile-use-profi=false
  endif
