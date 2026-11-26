@@ -89,7 +89,8 @@ This is not intended to be a kernel for everyone.
 ### Compiler and Build Configuration
 
 - Built using my custom **LLVM/Clang 24** toolchain. [Repository](https://github.com/hellsgod/clang)
-- ThinLTO enabled by default.
+- **ThinLTO** enabled by default.
+- **AutoFDO (Automatic Feedback-Directed Optimization)** enabled by default, using a profile collected on my AMD Ryzen 9 9950X during Linux kernel and LLVM compilation, schbench and desktop usage workloads.
 - Rust support enabled.
 - Additional compiler and build configuration adjustments for my personal setup.
 

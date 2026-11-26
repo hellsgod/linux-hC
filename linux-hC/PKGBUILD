@@ -125,10 +125,10 @@
 # 3. Profile the kernel and convert the profile, see Generating the Profile for AutoFDO
 # 4. Put the profile into the sourcedir
 # 5. Run kernel build again with the _autofdo_profile_name path to profile specified
-: "${_autofdo:=no}"
+: "${_autofdo:=yes}"
 
 # Name for the AutoFDO profile
-: "${_autofdo_profile_name:=}"
+: "${_autofdo_profile_name:=hC.afdo}"
 
 # Propeller should be applied, after the kernel is optimized with AutoFDO
 # Workflow:
@@ -205,16 +205,16 @@ fi
 }
 
 if _is_lto_kernel && [ "$_use_lto_suffix" = "yes"  ]; then
-    _pkgsuffix=hC-mobile-lto
+    _pkgsuffix="hC-mobile-lto"
 elif ! _is_lto_kernel && [ "$_use_gcc_suffix" = "yes" ]; then
-    _pkgsuffix=hC-mobile-gcc
+    _pkgsuffix="hC-mobile-gcc"
 else
-    _pkgsuffix=hC-mobile
+    _pkgsuffix="hC-mobile"
 fi
 
 pkgbase="linux-$_pkgsuffix"
 _major=7.3
-_minor=5
+_minor=6
 #_minorc=$((_minor+1))
 #_rcver=rc8
 pkgver=${_major}.${_minor}
@@ -248,7 +248,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=620.70.06
+_nv_ver=620.73.04
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -260,8 +260,7 @@ source=(
     "lru-cast.patch"
     "nap.patch"
     "pm.patch"
-    "poc-selector.patch"
-    "sched.patch")
+    "poc-selector.patch")
 
 # LLVM makedepends
 if _is_lto_kernel; then
@@ -778,15 +777,15 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('333bad17d6e6ae06935b08e8715cc617f59c0fdbab52dd1026a16b1125c8e693482946dc46f5b6e1f7c24a3919ddc44a8dd39f045dcb3d2da8b8001c113f13c0'
-        'd735ba455ff49fa361a9c92a2bfd2e194aa375491c0e30cf63b9e76d02a1ccee01b0a036c274174f358bb622b769223e9f15e2f7b8c7f25f6b8b6ebd81b70b0f'
+b2sums=('78da05b71d4fb975d759e7e9f74917531fc06b0740cdf9eab69b1d7b838d6a0cc19a087a629bb41eb4ae77f9ca745cd309e4d90911e4b74347016a059b3fac02'
+        '8d9aeb4a99938946ffd9cc51f2cf02dbf91aef8a408f215a23659a3b581b7ea99302927bf35d3956102c50a79f69680f2350665085b78c16eacc48cee9239e51'
         '8a2f6fd15eaade025738a31ac33c52324c865955ac571d2e6bb27ad28b97da865a7e33da2cc5047ca828144a76bd108593e0613424e8d5944b99f386dc4b057e'
-        'da18af484822378b84281a432ededd5f67c9808a7959730520e29ff171963f9f8850f2605b176ca38d032c5849e5d25d7c3e88dd6a265e58c237e87ecff496c4'
-        'c1ff7bb49195d3b71c62483e8fcf9e829157833d70b0559943a91244fc5999f2a797683ebcbdd033255c7098f1c3156dffeb3fcbf05af09eb5ed2a1e04c0f69b'
-        '53632b12b0f3a1dc5ef01f3b701e5b3bd92df8b1bc5c2f875892263db87df63e01bc5928e5ce09822c559af601e03e5858242ccef316ebebc13b7d768decf063'
+        '934d3a426a63b411e0e0f3b422d58a6cd455495a8f82a8402bd4bfecf8b089381ab96d08ebc66356a0f7f13bfacd57088743072ee3eb75ecb8cfde56baa06e05'
+        '330bd72923b66d687817058e3698b41175ee51b2984020e56cea0bb848575a28eeedd93037e9179ef212b56a37570125b9a6308315874cafb6e101f5c35a767d'
+        'bfe1766eef5a195cbd817834d18b5c6a68cd40735af0c036711c4073ff4ff09572b9089de97ba5082872628a1f8e7d3c1c0001472b7b4925454eac07c6740d81'
         '66c133eeba6fc67285ed31a493519217b568781a389113a4223e2f71c72c1a1d91e390b689668decb526bad506f5070d779c0a0543f382caf2b056ad0d6ee902'
         '71d4dc5f8a440419a6f3eeb35a6c31ee8c50586580ed640915b6fd1a6ce612ff35c9ebf62dcdd92b4a5d7b9d5d298d3ad6d649571f483882124d9051b11b54a6'
         'd0e210a5700565121685fbd18157b75dff98455ed8dd0d9516d33e1b4f89ebb93207cddc8508f3452df6257fae8ba212c0f798ce053717b3163248d62c802519'
-        'aad20c474eec6aae8a6dfaeeb8dfd831f2e291384433d85b88f1d88ab1bc04be9f45897eb9d0ad45f36273eb2189fb5dbd55d8a662d488dac5ef7b1a96062feb'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
-        'cb79a548377b58e5b2dd1140305d5d71d5f23485cbb5f73e268cb43e0277633e93f1d49e5bc7df7c181d585b357051afcf46caa894af0c209c72031dc9982f19')
+        'e0352aef2506a7c6ffadd3e70a5b1c85d8b7b8a7dc755b8196ad7425688fd8dc83dd40c1b7788498a720314f521f4c4871237b0be0289f13ffc6d8032d339a23'
+        '2c1e9deca53a0cddd038c04b6ddecf6a995c21e08cc218cb1c76c3f0707f29159a5cf7c1b30958972ba1f4db2695d5425068f5bf57d666283ba5a9c8d7786df2')

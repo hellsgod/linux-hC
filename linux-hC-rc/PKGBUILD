@@ -126,10 +126,10 @@
 # 3. Profile the kernel and convert the profile, see Generating the Profile for AutoFDO
 # 4. Put the profile into the sourcedir
 # 5. Run kernel build again with the _autofdo_profile_name path to profile specified
-: "${_autofdo:=no}"
+: "${_autofdo:=yes}"
 
 # Name for the AutoFDO profile
-: "${_autofdo_profile_name:=}"
+: "${_autofdo_profile_name:=hC.afdo}"
 
 # Propeller should be applied, after the kernel is optimized with AutoFDO
 # Workflow:
@@ -216,7 +216,7 @@ pkgbase="linux-$_pkgsuffix"
 _major=7.4
 _minor=0
 #_minorc=$((_minor+1))
-_rcver=rc3
+_rcver=rc4
 pkgver=${_major}.${_rcver}
 #_stable=${_major}.${_minor}
 #_stable=${_major}
@@ -248,7 +248,7 @@ makedepends=(
 )
 
 _patchsource="https://raw.githubusercontent.com/cachyos/kernel-patches/master/${_major}"
-_nv_ver=620.70.06
+_nv_ver=620.73.04
 _nv_pkg="NVIDIA-Linux-x86_64-${_nv_ver}"
 _nv_open_pkg="open-gpu-kernel-modules-${_nv_ver}"
 source=(
@@ -288,8 +288,7 @@ if _is_lto_kernel; then
 fi
 
 if [ "$_build_nvidia_open" = "yes" ]; then
-     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz"
-              "${_patchsource}/misc/nvidia/0005-Fix-build-on-Linux-7.4.patch")
+     source+=("nvidia-open-${_nv_ver}.tar.gz::https://github.com/NVIDIA/open-gpu-kernel-modules/archive/refs/tags/${_nv_ver}.tar.gz")
 fi
 
 # Use generated AutoFDO Profile
@@ -777,13 +776,14 @@ for _p in "${pkgname[@]}"; do
     }"
 done
 
-b2sums=('430f0b2976ef353edbeb48b2b9fe4c93b33344dac3637366bd8e8f87452fb416c2c480be32ccd523d839f655328959157a32af31840b9bd68a0cc408d28f8713'
+b2sums=('f1c99d5edbdc84b9ee39b646302b6551d846b823ee5425c61938a064a96e004b6e1c0bedcd15f4b1e389ed38b232377ee07ee0a01567e618c90e57bbe1ce6688'
         '8957f2b238491aadda2a4a75ba64b03a5469fcc4219f208a576d348e97215305ffae3f29e338d832b9ba09ba7556727cd65451e21fc646f4535b0e8124bc285c'
         '6f75fc5617f5ec7156f18ff26a10faf359061590fdd645f440a0f089802d932176776559ef76381465a692eb4cccd89a5d46ead7f54a65efffc04166ea7dd4c9'
-        'da18af484822378b84281a432ededd5f67c9808a7959730520e29ff171963f9f8850f2605b176ca38d032c5849e5d25d7c3e88dd6a265e58c237e87ecff496c4'
-        'd4507ba3958806cf168859aab5148bd94319baffe2e00f1e3e68adbaf6015f0c83013850336b637f682d4415d4117d8463b614ab0a7b32ce315c92b4a866a8fe'
-        'ac1c2c6e8f75835e7c97ce6f12186fe5dcad01e73de3845bf3b9222d3e5a29327de294a833cecf0993d2589859bcbc322a6f144513ba07f46c786d67c0d39f8c'
+        '934d3a426a63b411e0e0f3b422d58a6cd455495a8f82a8402bd4bfecf8b089381ab96d08ebc66356a0f7f13bfacd57088743072ee3eb75ecb8cfde56baa06e05'
+        '52654a6ddc853d27da21855bda55c790071aca1fe7547e56695395676fa26fa0294b9fa815b9474bec31fe593d5d34bae1b2a157497076e0fa1bc71a13348c2b'
+        'f4c79edf1ba9c6b0f35b30ce18f193d45341996d854b7e4cae9f72378f05ef7eb2f592c2c251412642775d5a8075a9a8da490ca11b81163a3ae14624a81f268a'
         '66c133eeba6fc67285ed31a493519217b568781a389113a4223e2f71c72c1a1d91e390b689668decb526bad506f5070d779c0a0543f382caf2b056ad0d6ee902'
         'bd3358e3ede1aefa64a7ff442ad3127e7f7fac70af5a46f3a507cdcde28b13513396f39c92ed4ea8edf7c394af8a1177536fcd2f17b1982c4aee8151aa7c31df'
         'c992567bd7dd8553432be496ffa1c17e2f5ebe9c7edb51945cf977e1b742dd6517c210d8843bb82744ca705efd07f8027cd7dde41b50215ebd707a34aa81462e'
-        '380c6ad52198b66ec7aa62a26727a358c31d3c103719231727dacb4200460975029b79d11cbffe51cb5a2946bcb258a5c5233996119bb43b153fc60a0b82fc29')
+        '134034d6874b70096f85abf4d89d4cceb0ce3d7296db4427dcf96305ee7fdc37d8315cebad262cb7a684d59d8c33850d1a0c6c411f55e4fc5f0aaa2d7207dcf8'
+        '38ba50fc214869270794d4d9ed91df3894e114590b66bf1de5d9f698ae355ffd59d0d3d2b8e0895ba04c08939c7857ac91d45c749b1876c21c0a6fea141d7208')
